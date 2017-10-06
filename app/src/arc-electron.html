@@ -32,7 +32,6 @@
 <link rel="import" href="../bower_components/variables-manager/variables-manager.html">
 <link rel="import" href="../bower_components/variables-evaluator/variables-evaluator.html">
 <link rel="import" href="../bower_components/request-saver/request-saver.html">
-<link rel="import" href="../bower_components/arc-loader-screen/arc-loader-screen.html">
 <link rel="import" href="../bower_components/arc-definitions/arc-definitions.html">
 <link rel="import" href="../bower_components/arc-license-dialog/arc-license-dialog.html">
 <link rel="import" href="../bower_components/arc-models/project-model.html">
@@ -56,40 +55,8 @@
       background-color: var(--primary-background-color);
     }
 
-    /*app-header {
-      z-index: 1;
-      /*background-color: var(--primary-color);*/
-      /*color: #fff;*/
-    }*/
-
-    app-header paper-icon-button {
-      color: #fff;
-    }
-
     [hidden] {
       display: none !important;
-    }
-
-    /*.drawer-content {
-      margin-top: var(--drawer-content-top, 64px);
-      height: calc(100% - var(--drawer-content-top, 64px));
-      overflow: auto;
-    }
-
-    app-drawer {
-      --app-drawer-content-container: {
-        background-color: #FAFAFA;
-      }
-    }*/
-
-    .loader {
-      display: none;
-    }
-
-    :host([unresolved]) .loader {
-      display: flex;
-      height: 100%;
-      align-items: center;
     }
 
     .mainPages > * {
