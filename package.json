@@ -1,0 +1,18 @@
+{
+  "name": "advanced-rest-client",
+  "version": "11.0.0",
+  "scripts": {
+    "start": "electron ."
+  },
+  "main": "app/main.js",
+  "devDependencies": {
+    "electron": "~1.7.8",
+    "electron-inspector": "^0.1.4",
+    "electron-rebuild": "^1.6.0"
+  },
+  "dependencies": {
+    "fs-extra": "^4.0.2",
+    "node-gyp": "^3.6.2",
+    "node-pre-gyp": "^0.6.38"
+  }
+}

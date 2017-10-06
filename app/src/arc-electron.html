@@ -1,0 +1,420 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/font-roboto-local/roboto.html">
+<link rel="import" href="../bower_components/paper-scroll-header-panel/paper-scroll-header-panel.html">
+<link rel="import" href="../bower_components/paper-drawer-panel/paper-drawer-panel.html">
+<link rel="import" href="../bower_components/paper-toolbar/paper-toolbar.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/arc-icons/arc-icons.html">
+<link rel="import" href="../bower_components/arc-menu/arc-menu.html">
+<link rel="import" href="../bower_components/paper-menu/paper-menu.html">
+<link rel="import" href="../bower_components/paper-menu-button/paper-menu-button.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/app-route/app-location.html">
+<link rel="import" href="../bower_components/app-route/app-route.html">
+<link rel="import" href="../bower_components/websocket-panel/websocket-panel.html">
+<link rel="import" href="../bower_components/arc-settings-panel/arc-settings-panel.html">
+<link rel="import" href="../bower_components/saved-requests-panel/saved-requests-panel.html">
+<link rel="import" href="../bower_components/history-panel/history-panel.html">
+<link rel="import" href="../bower_components/google-drive-browser/google-drive-browser.html">
+<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../bower_components/arc-data-import/arc-data-import.html">
+<link rel="import" href="../bower_components/arc-data-export/arc-data-export.html">
+<link rel="import" href="../bower_components/data-import-export-panel/data-import-export-panel.html">
+<link rel="import" href="../bower_components/search-bar/search-bar.html">
+<link rel="import" href="../bower_components/drop-file-importer/drop-file-importer.html">
+<link rel="import" href="../bower_components/authorization-data-saver/authorization-data-saver.html">
+<link rel="import" href="../bower_components/cookie-jar/cookie-jar.html">
+<link rel="import" href="../bower_components/response-history-saver/response-history-saver.html">
+<link rel="import" href="../bower_components/url-history-saver/url-history-saver.html">
+<link rel="import" href="../bower_components/variables-manager/variables-manager.html">
+<link rel="import" href="../bower_components/variables-evaluator/variables-evaluator.html">
+<link rel="import" href="../bower_components/request-saver/request-saver.html">
+<link rel="import" href="../bower_components/arc-loader-screen/arc-loader-screen.html">
+<link rel="import" href="../bower_components/arc-definitions/arc-definitions.html">
+<link rel="import" href="../bower_components/arc-license-dialog/arc-license-dialog.html">
+<link rel="import" href="../bower_components/arc-models/project-model.html">
+<link rel="import" href="../bower_components/arc-onboarding/arc-onboarding.html">
+<link rel="import" href="../bower_components/app-analytics/app-analytics.html">
+<link rel="import" href="../bower_components/app-analytics/app-analytics-custom.html">
+<link rel="import" href="../bower_components/app-logger/app-logger.html">
+<link rel="import" href="../bower_components/project-details/project-details.html">
+<link rel="import" href="../styles/app-theme.html">
+<link rel="import" href="arc-request-panel/arc-request-panel.html">
+<link rel="import" href="file-export/file-export.html">
+
+<dom-module id="arc-electron">
+  <template>
+    <style>
+    :host {
+      display: block;
+      position: relative;
+      min-height: 100vh;
+      -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+      background-color: var(--primary-background-color);
+    }
+
+    /*app-header {
+      z-index: 1;
+      /*background-color: var(--primary-color);*/
+      /*color: #fff;*/
+    }*/
+
+    app-header paper-icon-button {
+      color: #fff;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    /*.drawer-content {
+      margin-top: var(--drawer-content-top, 64px);
+      height: calc(100% - var(--drawer-content-top, 64px));
+      overflow: auto;
+    }
+
+    app-drawer {
+      --app-drawer-content-container: {
+        background-color: #FAFAFA;
+      }
+    }*/
+
+    .loader {
+      display: none;
+    }
+
+    :host([unresolved]) .loader {
+      display: flex;
+      height: 100%;
+      align-items: center;
+    }
+
+    .mainPages > * {
+      min-height: calc(100vh - 64px);
+      height: calc(100vh - 64px);
+    }
+
+    .content,
+    #pages {
+      min-height: 100%;
+      height: 100%;
+    }
+
+    paper-toolbar paper-icon-button {
+      color: rgba(255, 255, 255, 0.87);
+    }
+
+    paper-toolbar paper-icon-button:hover {
+      color: var(--hover-button-accent-color);
+    }
+
+    #drawerResizer {
+      position: absolute;
+      bottom: 0;
+      top: 0;
+      right: 0;
+      width: 3px;
+      background-color: transparent;
+      cursor: ew-resize;
+      transition: width 0.2s ease-in-out, background-color 0.2s ease-in-out;
+    }
+
+    #drawerResizer:hover {
+      background-color: #BDBDBD;
+      width: 6px;
+    }
+
+    .app-name {
+      font-family: 'Roboto', 'Noto', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 24px;
+    }
+
+    .drawer-toggle-button {
+      display: inline-block !important;
+    }
+
+    .drawer-pin {
+      display: none;
+    }
+    .drawer-pin.visible {
+      display: inline-block;
+    }
+    </style>
+
+    <app-location route="{{route}}" use-hash-as-path></app-location>
+    <app-route route="{{route}}" pattern="/:base" data="{{routeData}}"></app-route>
+    <app-route route="{{route}}" pattern="/project/:id" data="{{projectRoute}}"></app-route>
+    <app-route route="{{route}}" pattern="/request/:type/:id" data="{{requestRoute}}"></app-route>
+
+    <paper-drawer-panel responsive-width="1000px" id="paperDrawerPanel" force-narrow="{{forceNarrowLayout}}" narrow="{{narrowLayout}}" drawer-width="[[drawerWidth]]" disable-edge-swipe disable-swipe>
+      <paper-scroll-header-panel drawer>
+        <paper-toolbar class="main-toolbar">
+          <paper-icon-button icon="arc:menu" paper-drawer-toggle class="drawer-toggle-button" on-tap="_drawerToggle" title="Toggle drawer" alt="Drawer toggle icon"></paper-icon-button>
+          <div class="app-name flex">ARC</div>
+          <paper-icon-button icon="arc:pin-drawer" class$="[[_computePinDrawerClass(forceNarrowLayout, narrowLayout)]]" on-tap="_pinDrawer" title="Pin drawer" alt="Pin drawer"></paper-icon-button>
+        </paper-toolbar>
+        <arc-menu selected-request="[[selectedRequest]]" route-base="[[routeData.base]]"></arc-menu>
+        <div id="drawerResizer"></div>
+      </paper-scroll-header-panel>
+      <paper-scroll-header-panel main id="headerPanelMain">
+        <!-- Main Toolbar -->
+        <paper-toolbar id="mainToolbar" class="main-toolbar">
+          <paper-icon-button class="toolbar-hide" icon="arc:menu" paper-drawer-toggle title="Toggle drawer" alt="Drawer toggle icon"></paper-icon-button>
+          <div class="title">[[pageTitle]]</div>
+          <paper-menu-button horizontal-align="right">
+            <paper-icon-button icon="arc:more-vert" class="dropdown-trigger"></paper-icon-button>
+            <paper-menu class="dropdown-content">
+              <paper-icon-item on-tap="openAbout">
+                <iron-icon item-icon icon="arc:info-outline"></iron-icon>
+                About
+              </paper-icon-item>
+              <paper-icon-item on-tap="openLicense">
+                <span item-icon></span>
+                License
+              </paper-icon-item>
+              <paper-icon-item on-tap="openSettings">
+                <iron-icon item-icon icon="arc:settings"></iron-icon>
+                Preferences
+              </paper-icon-item>
+              <paper-icon-item on-tap="openImportExport">
+                <iron-icon item-icon icon="arc:import-export"></iron-icon>
+                Import and export data
+              </paper-icon-item>
+              <paper-icon-item on-tap="onNewWindow">
+                <iron-icon item-icon icon="arc:open-in-new"></iron-icon>
+                New window
+              </paper-icon-item>
+              <paper-icon-item on-tap="openIssueReport">
+                <iron-icon item-icon icon="arc:bug-report"></iron-icon>
+                Report an issue
+              </paper-icon-item>
+              <paper-icon-item on-tap="openLogs">
+                <iron-icon item-icon icon="arc:list"></iron-icon>
+                Toggle console
+              </paper-icon-item>
+            </paper-menu>
+          </paper-menu-button>
+        </paper-toolbar>
+        <!-- Main Content -->
+        <div class="content">
+          <!-- iron-pages -->
+          <iron-pages id="pages"
+            class="mainPages"
+            attr-for-selected="data-route"
+            selected-attribute="opened"
+            selected="[[routeData.base]]">
+            <arc-request-panel data-route="request" route-params="{{requestRoute}}"></arc-request-panel>
+            <websocket-panel attr-for-opened="opened" data-route="socket"></websocket-panel>
+            <history-panel attr-for-opened="opened" data-route="history"></history-panel>
+            <saved-requests-panel attr-for-opened="opened" data-route="saved"></saved-requests-panel>
+            <data-import-export-panel data-route="dataimport" api-key="592877543090-6tqu3mbhcbc3437cfj5f0ahjtui5tjac.apps.googleusercontent.com"></data-import-export-panel>
+            <arc-settings-panel data-route="settings"></arc-settings-panel>
+            <arc-about data-route="about"></arc-about>
+            <project-details attr-for-opened="opened" data-route="project" project-id="[[projectRoute.id]]" attr-for-opened="opened"></project-details>
+            <google-drive-browser data-route="drive" attr-for-opened="opened" api-key="592877543090-6tqu3mbhcbc3437cfj5f0ahjtui5tjac.apps.googleusercontent.com" access-token="[[accessToken]]" on-drive-file-picker-data="_openDriveRequest"></google-drive-browser>
+          </iron-pages>
+        </div>
+      </paper-scroll-header-panel>
+    </paper-drawer-panel>
+    <drop-file-importer></drop-file-importer>
+    <arc-license-dialog></arc-license-dialog>
+    <arc-onboarding></arc-onboarding>
+    <paper-toast id="errorToast" duration="5000"></paper-toast>
+    <paper-toast id="offlineToast" class="offline-toast" text="You are now offline. Can't make new requests."></paper-toast>
+    <search-bar id="content-search-bar" on-iron-overlay-opened="textSearchBarOpened"></search-bar>
+    <app-analytics
+      tracking-id="UA-18021184-6"
+      app-name="ARC"
+      app-id="[[appId]]"
+      app-version="[[appVersion]]"
+      disable-tracking="{{analyticsDisabled}}"
+      data-source="chrome-app">
+      <template is="dom-repeat" items="[[gaCustomMetrics]]">
+        <app-analytics-custom type="metric" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
+      </template>
+      <template is="dom-repeat" items="[[gaCustomDimensions]]">
+        <app-analytics-custom type="dimension" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
+      </template>
+    </app-analytics>
+    <app-analytics tracking-id="UA-18021184-14"
+      app-name="ARC"
+      app-id="[[appId]]"
+      app-version="[[appVersion]]"
+      data-source="chrome-app"
+      disable-tracking="{{analyticsDisabled}}">
+      <template is="dom-repeat" items="[[gaCustomMetrics]]">
+        <app-analytics-custom type="metric" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
+      </template>
+      <template is="dom-repeat" items="[[gaCustomDimensions]]">
+        <app-analytics-custom type="dimension" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
+      </template>
+    </app-analytics>
+    <app-analytics tracking-id="UA-71458341-2"
+      app-name="ARC"
+      app-id="[[appId]]"
+      app-version="[[appVersion]]"
+      data-source="chrome-app"
+      disable-tracking="{{analyticsDisabled}}">
+      <template is="dom-repeat" items="[[gaCustomMetrics]]">
+        <app-analytics-custom type="metric" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
+      </template>
+      <template is="dom-repeat" items="[[gaCustomDimensions]]">
+        <app-analytics-custom type="dimension" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
+      </template>
+    </app-analytics>
+    <app-logger></app-logger>
+    <arc-definitions></arc-definitions>
+    <variables-evaluator no-before-request></variables-evaluator>
+    <variables-manager></variables-manager>
+    <request-saver></request-saver>
+    <cookie-jar></cookie-jar>
+    <response-history-saver></response-history-saver>
+    <url-history-saver></url-history-saver>
+    <arc-data-export></arc-data-export>
+    <arc-data-import></arc-data-import>
+    <authorization-data-saver></authorization-data-saver>
+    <project-model></project-model>
+    <!-- Electron specific -->
+    <file-export></file-export>
+  </template>
+  <script>
+  const {ArcPreferences} = require('./scripts/arc-preferences');
+
+  Polymer({
+    is: 'arc-electron',
+
+    properties: {
+      drawerWidth: Number,
+      pageTitle: String,
+      selectedRequest: String,
+      route: Object,
+      routeData: Object,
+      appId: String,
+      appVersion: String,
+      gaCustomMetrics: Array,
+      gaCustomDimensions: Array
+    },
+
+    created: function() {
+      this.__prefs = new ArcPreferences();
+      this.__prefs.observe();
+    },
+
+    attached: function() {
+      this.listen(document.body, 'display-license', 'openLicense');
+    },
+
+    listeners: {
+      navigate: '_navigateHandler'
+    },
+
+    observers: [
+      '_routeDataChanged(routeData.*)'
+    ],
+
+    _routeDataChanged: function(record) {
+      console.log(record.base);
+    },
+
+    ready: function() {
+      // sets a default path of not initialized with path
+      if (!this.route.path) {
+        this.set('route.path', '/request/latest/0');
+      }
+    },
+
+    _navigateHandler: function(e) {
+      var params = e.detail;
+      var url;
+      switch (params.base) {
+        case 'default': url = '/request/latest/0'; break;
+        case 'history': url = '/history'; break;
+        case 'settings': url = '/settings'; break;
+        case 'about': url = '/about'; break;
+        case 'socket': url = '/socket'; break;
+        case 'saved': url = '/saved'; break;
+        case 'dataimport': url = '/dataimport'; break;
+        case 'project':
+          if (params.id) {
+            url = '/project/' + params.id;
+          }
+          break;
+        case 'request':
+          url = '/request/' + params.type + '/' + encodeURIComponent(params.id);
+          break;
+        case 'drive': url = '/drive'; break;
+      }
+      if (url) {
+        this.set('route.path', url);
+      } else {
+        throw new Error('The route is not handled correctly', params);
+      }
+    },
+
+    toggleDrawer: function() {
+      var layout = this.$.drawerLayout;
+      if (layout.forceNarrow || !layout.narrow) {
+        layout.forceNarrow = !layout.forceNarrow;
+      } else {
+        layout.drawer.toggle();
+      }
+    },
+
+    _computePinDrawerClass: function(forceNarrowLayout, narrowLayout) {
+      var clazz = 'drawer-pin';
+      if (forceNarrowLayout && narrowLayout) {
+        clazz += ' visible';
+      }
+      return clazz;
+    },
+
+    openAbout: function() {
+      this.fire('navigate', {
+        base: 'about'
+      });
+    },
+
+    /**
+     * Opens an issue tracker - new issue report.
+     */
+    openIssueReport: function() {
+      var appVersion = this.appVersion;
+      var message = 'Your description here\n\n';
+      message += '## Expected outcome\nWhat should happen?\n\n';
+      message += '## Actual outcome\nWhat happened?\n\n';
+      message += `## Versions\nApp: ${appVersion}\n`;
+      message += `Platform: ${navigator.appVersion}\n\n`;
+      message += '## Steps to reproduce\n1. \n2. \n3. ';
+      message = encodeURIComponent(message);
+      window.open('https://github.com/jarrodek/ChromeRestClient/issues/new?body=' + message);
+    },
+    /**
+     * Opens the import / export panel
+     */
+    openImportExport: function() {
+      this.fire('navigate', {
+        base: 'dataimport'
+      });
+    },
+    /**
+     * Opens the settings panel.
+     */
+    openSettings: function() {
+      this.fire('navigate', {
+        base: 'settings'
+      });
+    },
+
+    openLicense: function() {
+      var dialog = Polymer.dom(this.root).querySelector('arc-license-dialog');
+      dialog.opened = true;
+    }
+  });
+  </script>
+</dom-module>

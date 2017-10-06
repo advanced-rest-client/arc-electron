@@ -1,0 +1,84 @@
+<script>
+  const ipc = require('electron').ipcRenderer;
+  const fs = require('fs-extra');
+  Polymer({
+    is: 'file-export',
+
+    properties: {
+      lastContent: String,
+      lastType: String,
+      lastResolve: Object,
+      lastReject: Object
+    },
+
+    created: function() {
+      this._fileSavedHandler = this._fileSavedHandler.bind(this);
+    },
+
+    attached: function() {
+      this.listen(window, 'export-data', '_exportHandler');
+      ipc.on('saved-file', this._fileSavedHandler);
+    },
+
+    detached: function() {
+      this.unlisten(window, 'export-data', '_exportHandler');
+      ipc.removeListener('saved-file', this._fileSavedHandler);
+    },
+
+    _clear: function() {
+      this.lastType = undefined;
+      this.lastContent = undefined;
+      this.lastResolve = undefined;
+      this.lastReject = undefined;
+    },
+
+    _exportHandler: function(e) {
+      if (e.defaultPrevented) {
+        return;
+      }
+      e.preventDefault();
+      ipc.send('save-dialog', {
+        type: e.detail.type,
+        file: e.detail.file
+      });
+      this.lastContent = e.detail.data;
+      this.lastType = e.detail.type;
+      e.detail.result = new Promise((resolve, reject) => {
+        this.lastResolve = resolve;
+        this.lastReject = reject;
+      });
+    },
+
+    _fileSavedHandler: function(event, selectedPath) {
+      if (!selectedPath) {
+        this.lastResolve();
+        this._clear();
+        return;
+      }
+      return this._writeContent(selectedPath)
+      .then(() => this.lastResolve())
+      .catch(() => this.lastReject())
+      .then(() => this._clear());
+    },
+
+    _writeContent: function(path) {
+      var data = this.lastContent;
+      if (typeof data !== 'string') {
+        data = this._prepareData(data);
+      }
+      return fs.writeFile(path, data, 'utf8');
+    },
+
+    _isObject: function(o) {
+      return o !== null && typeof o === 'object' &&
+        Object.prototype.toString.call(o) === '[object Object]';
+    },
+
+    _prepareData: function(data) {
+      if (this._isObject(data) || data instanceof Array) {
+        return JSON.stringify(data);
+      }
+      return data;
+    }
+  });
+</script>

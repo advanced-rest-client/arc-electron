@@ -1,0 +1,16 @@
+{
+  "lint": {
+    "rules": ["polymer-2-hybrid"]
+  },
+  "entrypoint": "app/index.html",
+  "shell": "app/src/index.html",
+  "fragments": [
+
+  ],
+  "sources": [
+    "app/src/**/*"
+  ],
+  "extraDependencies": [
+    "app/bower_components/webcomponentsjs/*"
+  ]
+}
