@@ -21,6 +21,7 @@
     "PouchDB": true,
     "Request": true,
     "Headers": true,
-    "Response": true
+    "Response": true,
+    "ArcBehaviors": true
   }
 }

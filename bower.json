@@ -82,7 +82,8 @@
     "paper-dialog-behavior": "PolymerElements/paper-dialog-behavior#<2",
     "arc-icons": "advanced-rest-client/arc-icons#^1.0.23",
     "iron-flex-layout": "PolymerElements/iron-flex-layout#<2",
-    "paper-styles": "PolymerElements/paper-styles#<2"
+    "paper-styles": "PolymerElements/paper-styles#<2",
+    "headers-parser-behavior": "advanced-rest-client/headers-parser-behavior#^0.1.3"
   },
   "devDependencies": {
     "web-component-tester": "*",

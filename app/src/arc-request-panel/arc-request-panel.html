@@ -1,8 +1,22 @@
+<!--
+@license
+Copyright 2017 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/request-panel/request-panel.html">
 <link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
 <link rel="import" href="../../bower_components/saved-request-editor/saved-request-editor.html">
 <link rel="import" href="../../bower_components/bottom-sheet/bottom-sheet.html">
+<link rel="import" href="socket-request.html">
 
 <dom-module id="arc-request-panel">
   <template>
@@ -34,10 +48,10 @@
     <paper-toast text="The request has been saved" id="savedOk"></paper-toast>
     <paper-toast text="Can't restore request data. The type is unknown." id="typeMissingToast"></paper-toast>
     <paper-toast text="Request do not exists in local database." id="missingRequestToast"></paper-toast>
+    <socket-request id="socket"></socket-request>
   </template>
   <script>
     const {LatestRequest} = require('./scripts/latest-request.js');
-    const {SocketRequest} = require('./scripts/socket-request.js');
     Polymer({
       is: 'arc-request-panel',
 
@@ -103,24 +117,14 @@
           cancelable: true,
           composed: true
         });
-        // ElectronRequest.run(e.detail);
-        var request = new SocketRequest(e.detail);
-        request.send()
-        .then(() => {
-          console.log('The request was sent');
-        })
-        .catch(cause => {
-          console.error('Request error', cause);
-        });
+        this.$.socket.run(e.detail);
       },
-
       /**
        * Aborts the request.
        */
-      _abortHandler: function(e) {
-        // ElectronRequest.abort(e.detail.id);
+      _abortHandler: function() {
+        this.$.socket.abort();
       },
-
       /**
        * Restores saved in the datastore request data.
        *

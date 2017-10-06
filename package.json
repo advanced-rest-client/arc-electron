@@ -13,6 +13,7 @@
   "dependencies": {
     "fs-extra": "^4.0.2",
     "node-gyp": "^3.6.2",
-    "node-pre-gyp": "^0.6.38"
+    "node-pre-gyp": "^0.6.38",
+    "ntlm": "^0.1.3"
   }
 }

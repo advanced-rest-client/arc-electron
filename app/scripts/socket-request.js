@@ -1,3 +1,16 @@
+/**
+ * @license
+ * Copyright 2017 The Advanced REST client authors <arc@mulesoft.com>
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 const net = require('net');
 const tls = require('tls');
 const url = require('url');
@@ -10,13 +23,15 @@ class SocketRequest extends EventEmitter {
    *
    * @param {Object} request ARC's request object
    */
-  constructor(request) {
+  constructor(request, timeout) {
     super();
     this.arcRequest = Object.assign({}, request);
     this.uri = request.url;
     this.aborted = false;
     this.stats = {};
     this.state = 0;
+    this.socket = undefined;
+    this._timeout = timeout;
   }
 
   set uri(value) {
@@ -27,10 +42,13 @@ class SocketRequest extends EventEmitter {
     return this.__uri;
   }
 
+  get timeout() {
+    return this._timeout;
+  }
+
   /**
    * Status indicating thet expecting a ststus message.
    *
-   * @type {Number}
    * @default 0
    */
   static get STATUS() {
@@ -39,7 +57,6 @@ class SocketRequest extends EventEmitter {
   /**
    * Status indicating thet expecting headers.
    *
-   * @type {Number}
    * @default 1
    */
   static get HEADERS() {
@@ -48,7 +65,6 @@ class SocketRequest extends EventEmitter {
   /**
    * Status indicating thet expecting a body message.
    *
-   * @type {Number}
    * @default 2
    */
   static get BODY() {
@@ -57,7 +73,6 @@ class SocketRequest extends EventEmitter {
   /**
    * Status indicating thet the message has been read and connection is closing or closed.
    *
-   * @type {Number}
    * @default 0
    */
   static get DONE() {
@@ -71,6 +86,8 @@ class SocketRequest extends EventEmitter {
     this.state = SocketRequest.STATUS;
     this._rawBody = undefined;
     this._rawHeaders = undefined;
+    this.abort();
+    this.aborted = false;
   }
 
   _cleanUpRedirect() {
@@ -82,11 +99,30 @@ class SocketRequest extends EventEmitter {
   }
 
   send() {
-    return this.prepareMessage()
-    .then(message => this.connect(message))
-    .then(socket => this._addSocketListeners(socket))
-    .then(socket => socket.end());
+    this.abort();
+    this.aborted = false;
+    return this.connect()
+    .then(() => this.prepareMessage())
+    .then(message => this.writeMessage(message))
+    .catch(cause => {
+      this.abort();
+      throw cause;
+    });
   }
+
+  abort() {
+    this.aborted = true;
+    if (!this.socket) {
+      return;
+    }
+    // if (this.socket.destroyed) {
+    //   this.socket = undefined;
+    //   return;
+    // }
+    this.socket.pause();
+    this.socket.destroy();
+  }
+
   /**
    * Prepares a HTTP message from ARC's request object.
    *
@@ -100,44 +136,83 @@ class SocketRequest extends EventEmitter {
     return this._payloadMessage(payload)
     .then(buffer => {
       this._addContentLength(buffer);
+      this._handleAuthorization(buffer);
       return this._prepareMessage(buffer);
+    })
+    .then(message => {
+      if (this.auth) {
+        if (this.auth.headers) {
+          this.arcRequest.headers = this.auth.headers;
+          delete this.auth.headers;
+        }
+      }
+      return message;
+    });
+  }
+  /**
+   * Sends a data to a socket.
+   *
+   * @param {ArrayBuffer} message HTTP message to send
+   * @return {[type]} [description]
+   */
+  writeMessage(message) {
+    const buffer = Buffer.from(message);
+    this.arcRequest.messageSent = message;
+    this.stats.messageSendStart = performance.now();
+    return new Promise((resolve) => {
+      this.socket.write(buffer, () => {
+        this.stats.waitingStart = performance.now();
+        this.stats.send = this.stats.waitingStart - this.stats.messageSendStart;
+        this.emit('loadstart');
+        resolve();
+      });
     });
   }
   /**
    * Connects to a server and sends the message.
    *
-   * @param {ArrayBuffer} message HTTP message to send
-   * @return {Promise} Promise resolved when the message was sent.
+   * @return {Promise} Promise resolved when socket is connected.
    */
-  connect(message) {
-    const buffer = Buffer.from(message);
+  connect() {
     const port = this._getPort(this.uri.port, this.uri.protocol);
-    const host = this.uri.host;
+    const host = this.uri.hostname;
+    var promise;
     if (port === 443 || this.uri.protocol === 'https:') {
-      return this._connectTls(port, host, buffer);
+      promise = this._connectTls(port, host);
+    } else {
+      promise = this._connect(port, host);
     }
-    return this._connect(port, host, buffer);
+    return promise
+    .then(socket => {
+      if (this.timeout && this.timeout > 0) {
+        socket.setTimeout(this.timeout);
+      }
+      this.socket = socket;
+      this._addSocketListeners(socket);
+      socket.resume();
+      return socket;
+    });
   }
   /**
    * Connects to a server and writtes a message using insecured connection.
    *
    * @param {Number} port A port number to connect to.
    * @param {String} host A host name to connect to
-   * @param {Buffer} message An HTTP message to send.
    * @return {Promise} A promise resolved when the message was sent to a server
    */
-  _connect(port, host, message) {
-    return new Promise((resolve) => {
+  _connect(port, host) {
+    return new Promise((resolve, reject) => {
       const connectionStart = performance.now();
       const client = net.createConnection(port, host, {}, () => {
         this.stats.connect = performance.now() - connectionStart;
-        this.arcRequest.messageSent = message;
-        this.stats.messageSendStart = performance.now();
-        client.write(message, () => {
-          this.stats.waitingStart = performance.now();
-          this.stats.send = this.stats.waitingStart - this.stats.messageSendStart;
-        });
         resolve(client);
+      });
+      client.pause();
+      client.once('lookup', function(err, ip, addressType, host) {
+        console.log('loooooooooookup', err, ip, addressType, host);
+      });
+      client.once('error', function(err) {
+        reject(err);
       });
     });
   }
@@ -146,10 +221,9 @@ class SocketRequest extends EventEmitter {
    *
    * @param {Number} port A port number to connect to.
    * @param {String} host A host name to connect to
-   * @param {Buffer} message An HTTP message to send.
    * @return {Promise} A promise resolved when the message was sent to a server
    */
-  _connectTls(port, host, message) {
+  _connectTls(port, host) {
     const options = {
       rejectUnauthorized: false,
       requestCert: false,
@@ -162,16 +236,14 @@ class SocketRequest extends EventEmitter {
       const client = tls.connect(port, host, options, () => {
         secureStart = performance.now();
         this.stats.connect = performance.now() - connectionStart;
-        this.arcRequest.messageSent = message;
-        this.stats.messageSendStart = performance.now();
-        client.write(message, () => {
-          this.stats.waitingStart = performance.now();
-          this.stats.send = this.stats.waitingStart - this.stats.messageSendStart;
-        });
         resolve(client);
       });
+      client.pause();
       client.once('error', function(e) {
         reject(e);
+      });
+      client.once('lookup', function(err, ip, addressType, host) {
+        console.log('loooooooooookup TLS', err, ip, addressType, host);
       });
       client.once('secureConnect', () => {
         this.stats.ssl = secureStart > -1 ? performance.now() - secureStart : -1;
@@ -191,7 +263,7 @@ class SocketRequest extends EventEmitter {
     var search = this.uri.search;
     var hash = this.uri.hash;
     var port = this._getPort(this.uri.port, this.uri.protocol);
-    var hostValue = this.uri.host;
+    var hostValue = this.uri.hostname;
 
     if (search) {
       path += search;
@@ -237,7 +309,8 @@ class SocketRequest extends EventEmitter {
    * @return {Number} A port number. Default to 80.
    */
   _getPort(port, protocol) {
-    if (port) {
+    port = Number(port);
+    if (port === port) {
       return port;
     }
     if (protocol === 'https:') {
@@ -277,6 +350,40 @@ class SocketRequest extends EventEmitter {
       return this._blob2buffer(payload);
     }
     return Promise.reject(new Error('Unsupported payload message'));
+  }
+  /**
+   * Alters authorization header depending on the `auth` object
+   */
+  _handleAuthorization() {
+    var auth = this.arcRequest.auth;
+    if (!auth) {
+      return;
+    }
+    switch (auth.method) {
+      case 'ntlm': return this._authorizeNtlm(auth);
+    }
+  }
+
+  _authorizeNtlm(authData) {
+    var {NtlmAuth} = require('./ntlm');
+    authData.url = this.arcRequest.url;
+    var auth = new NtlmAuth(authData);
+    if (!this.auth) {
+      this.auth = {
+        method: 'ntlm',
+        state: 0,
+        headers: this.arcRequest.headers
+      };
+      let msg = auth.createMessage1(this.uri.host);
+      this.arcRequest.headers = this.replaceHeader(this.arcRequest.headers,
+        'Authorization', 'NTLM ' + msg.toBase64());
+      console.log('New auth headers: ', this.arcRequest.headers);
+    } else if (this.auth && this.auth.state === 1) {
+      let msg = auth.createMessage3(this.auth.challengeHeader, this.uri.host);
+      this.auth.state = 2;
+      this.arcRequest.headers = this.replaceHeader(this.arcRequest.headers,
+        'authorization', 'NTLM ' + msg.toBase64());
+    }
   }
   /**
    * Transfers blob to `ArrayBuffer`.
@@ -331,6 +438,7 @@ class SocketRequest extends EventEmitter {
     }
     headers = headers.split(/\n(?=[^ \t]+)/gim);
     var updated = false;
+    var result = [];
     for (var i = 0, len = headers.length; i < len; i++) {
       let line = headers[i].trim();
       if (!line) {
@@ -341,13 +449,14 @@ class SocketRequest extends EventEmitter {
         continue;
       }
       updated = true;
-      headers[i] = name + ': ' + value;
+      let h = name + ': ' + value;
+      result.push(h);
       break;
     }
     if (!updated) {
-      headers.push(name + ': ' + value);
+      result.push(name + ': ' + value);
     }
-    return headers.join('\n');
+    return result.join('\n');
   }
 
   /**
@@ -453,7 +562,9 @@ class SocketRequest extends EventEmitter {
     var received = false;
     socket.on('data', (data) => {
       if (!received) {
-        this.stats.firstReceived = performance.now();
+        let now = performance.now();
+        this.stats.firstReceived = now;
+        this.stats.wait = now - this.stats.waitingStart;
         this.emit('firstbyte');
         received = true;
       }
@@ -487,18 +598,35 @@ class SocketRequest extends EventEmitter {
     }
     this.stats.lastReceived = performance.now();
     this.stats.receive = this.stats.lastReceived - this.stats.firstReceived;
-
-    console.log(this._response);
     var status = this._response.status;
     if (status >= 300 && status < 400) {
       if (this._reportRedirect(status)) {
         return;
       }
     } else if (status === 401 && this.auth) {
-      debugger;
-    } else if (status === 401) {
-      debugger;
+      switch (this.auth.method) {
+        case 'ntlm':
+          this.handleNtlmResponse();
+          return;
+      }
     }
+    this.emit('loadend');
+    this._publishResponse({
+      includeRedirects: true
+    });
+  }
+
+  handleNtlmResponse() {
+    if (this.auth.state === 0) {
+      if (this._response.headers.has('www-authenticate')) {
+        this.auth.state = 1;
+        this.auth.challengeHeader = this._response.headers.get('www-authenticate');
+        this._cleanUpRedirect();
+        return this.prepareMessage()
+        .then(message => this.writeMessage(message));
+      }
+    }
+    delete this.auth;
     this.emit('loadend');
     this._publishResponse({
       includeRedirects: true
@@ -535,7 +663,9 @@ class SocketRequest extends EventEmitter {
       return false;
     }
     redirectOptions.location = this._response.headers.get(locationHeader);
-    this._redirectRequest(redirectOptions);
+    process.nextTick(() => {
+      this._redirectRequest(redirectOptions);
+    });
     return true;
   }
 
@@ -793,7 +923,7 @@ class SocketRequest extends EventEmitter {
   // Check the response headers and end the request if nescesary.
   _postHeaders(data) {
     if (this.arcRequest.method === 'HEAD') {
-      // there will be no payload anyway. (spec defined)
+      this._reportResponse();
       return;
     }
     if (data.length === 0) {
@@ -804,14 +934,14 @@ class SocketRequest extends EventEmitter {
         let length = Number(this._response.headers.get('Content-Length'));
         // NaN never equals NaN. This is faster.
         if (length === length && length === 0) {
-          // TODO: call report response.
+          this._reportResponse();
           return;
         }
       } else if (!this._response.headers.has('Transfer-Encoding') ||
         !this._response.headers.get('Transfer-Encoding')) {
         // Fix for https://github.com/jarrodek/socket-fetch/issues/6
         // There is no body in the response.
-        // TODO: call report response.
+        this._reportResponse();
         return;
       }
       return;
@@ -1170,11 +1300,9 @@ class SocketRequest extends EventEmitter {
   _publishResponse(opts) {
     return this._createResponse(opts)
     .then(response => {
-      this.emit('load', {
-        response: response,
-        request: this.arcRequest
-      });
+      this.emit('load', response, this.arcRequest);
       this._cleanUp();
+      this.abort();
     })
     .catch((e) => {
       this._errorRequest({
