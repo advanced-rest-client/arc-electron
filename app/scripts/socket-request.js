@@ -1014,15 +1014,27 @@ class SocketRequest extends EventEmitter {
       newArray.set(this._rawBody);
       newArray.set(data, len);
       this._rawBody = newArray;
-      console.log('Appended data to body.');
       if (newArray.length >= this._contentLength) {
-        console.log('Response ready. Calling it.');
         this._reportResponse();
       }
     }
   }
 
+  __combineInt8Array(existing, newArray) {
+    if (!existing) {
+      return newArray;
+    }
+    let sum = new Int8Array(existing.length + newArray.length);
+    sum.set(existing);
+    sum.set(newArray, existing.length);
+    return sum;
+  }
+
   _processBodyChunked(data) {
+    if (this.__bodyChunk) {
+      data = this.__combineInt8Array(this.__bodyChunk, data);
+      this.__bodyChunk = undefined;
+    }
     while (true) {
       if (this._chunkSize === 0 && this.indexOfSubarray(data, [13, 10, 13, 10]) === 0) {
         this._reportResponse();
@@ -1030,12 +1042,11 @@ class SocketRequest extends EventEmitter {
       }
       if (!this._chunkSize) {
         data = this.readChunkSize(data);
-        console.log('Chunk size: ', this._chunkSize);
         if (!this._chunkSize && this._chunkSize !== 0) {
+          this.__bodyChunk = this.__combineInt8Array(this.__bodyChunk, data);
           // It may happen that node's buffer cuts the data
           // just before the chunk size.
           // It should proceed it in next portion of the data.
-          console.warn('The chunk size was null!');
           return;
         }
         if (!this._chunkSize) {
