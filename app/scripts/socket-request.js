@@ -998,11 +998,9 @@ class SocketRequest extends EventEmitter {
       return this._processBodyChunked(data);
     }
     if (!this._rawBody) {
-      console.log('Creating new body');
       this._rawBody = new Uint8Array(data.length);
       this._rawBody.set(data);
       if (this._rawBody.length >= this._contentLength) {
-        console.log('Response ready. Calling it.');
         this._reportResponse();
       }
     } else {
@@ -1053,12 +1051,9 @@ class SocketRequest extends EventEmitter {
         }
       }
       let size = Math.min(this._chunkSize, data.length);
-      console.log('Part size: ', size);
       if (!this._rawBody) {
-        console.log('Creating new body');
         this._rawBody = new Uint8Array(data.subarray(0, size));
       } else {
-        console.log('Appending to the body');
         let bodySize = size + this._rawBody.length;
         let body = new Uint8Array(bodySize);
         body.set(this._rawBody);
@@ -1067,14 +1062,13 @@ class SocketRequest extends EventEmitter {
       }
 
       this._chunkSize -= size;
-      console.log('Body size is: ', this._rawBody.length, ' and chunk size left is: ',
-        this._chunkSize);
       if (data.length === 0) {
-        console.warn('Next chunk will start with CRLF!');
+        // console.warn('Next chunk will start with CRLF!');
+        return;
       }
       data = data.subarray(size + 2); // + CR
       if (data.length === 0) {
-        console.log('No more data here. Waiting for new chunk');
+        // console.log('No more data here. Waiting for new chunk');
         return;
       }
     }
