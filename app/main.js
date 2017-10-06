@@ -49,3 +49,7 @@ ipc.on('save-dialog', function(event, args) {
     event.sender.send('saved-file', filename);
   });
 });
+
+ipc.on('new-window', function() {
+  arcApp.wm.open();
+});

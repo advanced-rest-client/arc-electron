@@ -454,6 +454,11 @@
       e.stopPropagation();
       e.stopImmediatePropagation();
       window.open(target.href);
+    },
+
+    onNewWindow: function() {
+      const ipc = require('electron').ipcRenderer;
+      ipc.send('new-window');
     }
   });
   </script>
