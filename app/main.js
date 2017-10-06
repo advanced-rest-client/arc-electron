@@ -53,3 +53,7 @@ ipc.on('save-dialog', function(event, args) {
 ipc.on('new-window', function() {
   arcApp.wm.open();
 });
+
+ipc.on('toggle-devtools', (event) => {
+  event.sender.webContents.toggleDevTools();
+});

@@ -459,6 +459,11 @@
     onNewWindow: function() {
       const ipc = require('electron').ipcRenderer;
       ipc.send('new-window');
+    },
+
+    openLogs: function() {
+      const ipc = require('electron').ipcRenderer;
+      ipc.send('toggle-devtools');
     }
   });
   </script>
