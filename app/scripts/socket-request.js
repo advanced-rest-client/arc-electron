@@ -424,6 +424,7 @@ class SocketRequest extends EventEmitter {
       return headers;
     }
     headers = headers.split(/\n(?=[^ \t]+)/gim);
+    var lowerName = name.toLowerCase();
     var updated = false;
     var result = [];
     for (var i = 0, len = headers.length; i < len; i++) {
@@ -431,14 +432,18 @@ class SocketRequest extends EventEmitter {
       if (!line) {
         continue;
       }
-      let pos = line.toLowerCase().indexOf(name);
+      if (updated) {
+        result.push(line);
+        continue;
+      }
+      let pos = line.toLowerCase().indexOf(lowerName);
       if (pos !== 0) {
+        result.push(line);
         continue;
       }
       updated = true;
       let h = name + ': ' + value;
       result.push(h);
-      break;
     }
     if (!updated) {
       result.push(name + ': ' + value);
