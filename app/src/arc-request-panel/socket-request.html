@@ -358,6 +358,9 @@ the License.
         return 0;
       }
       var value = 0;
+      if (stats.dns && stats.dns > 0) {
+        value += stats.dns;
+      }
       if (stats.connect && stats.connect > 0) {
         value += stats.connect;
       }
@@ -378,6 +381,7 @@ the License.
 
     _cleanTimings: function(stats) {
       var result = {
+        dns: stats.dns || -1,
         connect: stats.connect || -1,
         receive: stats.receive || -1,
         send: stats.send || -1,

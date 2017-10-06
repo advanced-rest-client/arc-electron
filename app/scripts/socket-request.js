@@ -203,13 +203,15 @@ class SocketRequest extends EventEmitter {
   _connect(port, host) {
     return new Promise((resolve, reject) => {
       const connectionStart = performance.now();
+      var afterLookup;
       const client = net.createConnection(port, host, {}, () => {
-        this.stats.connect = performance.now() - connectionStart;
+        this.stats.connect = performance.now() - afterLookup;
         resolve(client);
       });
       client.pause();
-      client.once('lookup', function(err, ip, addressType, host) {
-        console.log('loooooooooookup', err, ip, addressType, host);
+      client.once('lookup', () => {
+        afterLookup = performance.now();
+        this.stats.dns = afterLookup - connectionStart;
       });
       client.once('error', function(err) {
         reject(err);
@@ -233,17 +235,19 @@ class SocketRequest extends EventEmitter {
     return new Promise((resolve, reject) => {
       const connectionStart = performance.now();
       var secureStart = -1;
+      var afterLookup;
       const client = tls.connect(port, host, options, () => {
         secureStart = performance.now();
-        this.stats.connect = performance.now() - connectionStart;
+        this.stats.connect = performance.now() - afterLookup;
         resolve(client);
       });
       client.pause();
       client.once('error', function(e) {
         reject(e);
       });
-      client.once('lookup', function(err, ip, addressType, host) {
-        console.log('loooooooooookup TLS', err, ip, addressType, host);
+      client.once('lookup', () => {
+        afterLookup = performance.now();
+        this.stats.dns = afterLookup - connectionStart;
       });
       client.once('secureConnect', () => {
         this.stats.ssl = secureStart > -1 ? performance.now() - secureStart : -1;
