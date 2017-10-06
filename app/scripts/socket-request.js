@@ -115,10 +115,10 @@ class SocketRequest extends EventEmitter {
     if (!this.socket) {
       return;
     }
-    // if (this.socket.destroyed) {
-    //   this.socket = undefined;
-    //   return;
-    // }
+    if (this.socket.destroyed) {
+      this.socket = undefined;
+      return;
+    }
     this.socket.pause();
     this.socket.destroy();
   }
@@ -309,9 +309,11 @@ class SocketRequest extends EventEmitter {
    * @return {Number} A port number. Default to 80.
    */
   _getPort(port, protocol) {
-    port = Number(port);
-    if (port === port) {
-      return port;
+    if (port) {
+      port = Number(port);
+      if (port === port) {
+        return port;
+      }
     }
     if (protocol === 'https:') {
       return 443;
