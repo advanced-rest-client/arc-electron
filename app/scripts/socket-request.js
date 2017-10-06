@@ -339,16 +339,17 @@ class SocketRequest extends EventEmitter {
       payload = this._normalizeString(payload);
       var encoder = new TextEncoder();
       var encoded = encoder.encode(payload);
-      return encoded.buffer;
+      return Promise.resolve(encoded.buffer);
     }
     if (payload instanceof ArrayBuffer) {
       return Promise.resolve(payload);
     }
     if (payload instanceof FormData) {
-      return this._fd2buffer(payload)
+      let _conventer = require('./form-data');
+      return _conventer(payload)
       .then(result => {
         let headers = this.arcRequest.headers;
-        this.arcRequest.headers = this.replaceHeader(headers, 'content-type', result.contentType);
+        this.arcRequest.headers = this.replaceHeader(headers, 'Content-Type', result.type);
         return result.buffer;
       });
     }
@@ -407,26 +408,6 @@ class SocketRequest extends EventEmitter {
         reject(e.message);
       });
       reader.readAsArrayBuffer(blob);
-    });
-  }
-  /**
-   * Transforms FormData into ArrayBuffer.
-   *
-   * @param {FormData} body A `FormData` object to transform
-   * @return {Promise} A promise resolved to `ArrayBuffer`
-   */
-  _fd2buffer(body) {
-    let request = new Request(this.arcRequest.url, {
-      method: this.arcRequest.method,
-      body: body
-    });
-    return request.arrayBuffer()
-    .then(buffer => {
-      let contentType = request.headers.get('content-type');
-      return {
-        contentType: contentType,
-        buffer: buffer
-      };
     });
   }
   /**
