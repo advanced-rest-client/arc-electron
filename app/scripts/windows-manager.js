@@ -41,7 +41,7 @@ class ArcWindowsManager {
       y: session.position.y,
       backgroundColor: '#00A2DF',
       webPreferences: {
-        partition: 'persist:arc-window-' + index
+        partition: 'persist:arc-window'
       }
     });
     mainWindow.__arcIndex = index;
@@ -91,7 +91,6 @@ class ArcWindowsManager {
 
   __readyShowHandler(e) {
     e.sender.show();
-    debugger;
   }
 }
 
