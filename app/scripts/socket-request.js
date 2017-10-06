@@ -494,14 +494,12 @@ class SocketRequest extends EventEmitter {
       return;
     }
     var size = buffer ? buffer.byteLength : 0;
-    // HEAD must set content length header even if it's not carreing payload.
     var headers = this.arcRequest.headers;
+    // HEAD must set content length header even if it's not carreing payload.
     if (headers) {
       if (headers.toLowerCase().indexOf('content-length') === -1) {
-        if (headers.substr(-1) === '\n') {
-          headers += '\n';
-        }
-        headers += 'content-length: ' + size;
+        let header = 'Content-Length';
+        headers = this.replaceHeader(headers, header, size);
       } else {
         // The app should not replace provided value (???)
         // headers = this.replaceHeader(headers, 'content-length', size);
