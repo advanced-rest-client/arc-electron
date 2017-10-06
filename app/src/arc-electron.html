@@ -122,7 +122,7 @@
     <paper-drawer-panel responsive-width="1000px" id="paperDrawerPanel" force-narrow="{{forceNarrowLayout}}" narrow="{{narrowLayout}}" drawer-width="[[drawerWidth]]" disable-edge-swipe disable-swipe>
       <paper-scroll-header-panel drawer>
         <paper-toolbar class="main-toolbar">
-          <paper-icon-button icon="arc:menu" paper-drawer-toggle class="drawer-toggle-button" on-tap="_drawerToggle" title="Toggle drawer" alt="Drawer toggle icon"></paper-icon-button>
+          <paper-icon-button icon="arc:menu" paper-drawer-toggle class="drawer-toggle-button" on-tap="toggleDrawer" title="Toggle drawer" alt="Drawer toggle icon"></paper-icon-button>
           <div class="app-name flex">ARC</div>
           <paper-icon-button icon="arc:pin-drawer" class$="[[_computePinDrawerClass(forceNarrowLayout, narrowLayout)]]" on-tap="_pinDrawer" title="Pin drawer" alt="Pin drawer"></paper-icon-button>
         </paper-toolbar>
@@ -257,7 +257,6 @@
     is: 'arc-electron',
 
     properties: {
-      drawerWidth: Number,
       pageTitle: String,
       selectedRequest: String,
       route: Object,
@@ -265,7 +264,22 @@
       appId: String,
       appVersion: String,
       gaCustomMetrics: Array,
-      gaCustomDimensions: Array
+      gaCustomDimensions: Array,
+      drawerWidth: {
+        type: String,
+        value: '360px'
+      },
+      forceNarrowLayout: {
+        type: Boolean,
+        value: false
+      },
+      narrowLayout: {
+        type: Boolean,
+        value: false
+      },
+
+      _drawerInitTrackWidth: Number,
+      _drawerInitTransition: Number
     },
 
     created: function() {
@@ -278,7 +292,9 @@
     },
 
     listeners: {
-      navigate: '_navigateHandler'
+      navigate: '_navigateHandler',
+      'drawerResizer.track': '_drawerTrack',
+      tap: '_handleLinks'
     },
 
     observers: [
@@ -325,12 +341,13 @@
     },
 
     toggleDrawer: function() {
-      var layout = this.$.drawerLayout;
-      if (layout.forceNarrow || !layout.narrow) {
-        layout.forceNarrow = !layout.forceNarrow;
-      } else {
-        layout.drawer.toggle();
+      if (this.narrowLayout) {
+        return;
       }
+      this.forceNarrowLayout = !this.forceNarrowLayout;
+      this.async(function() {
+        this.$.paperDrawerPanel.closeDrawer();
+      }, 1);
     },
 
     _computePinDrawerClass: function(forceNarrowLayout, narrowLayout) {
@@ -345,6 +362,11 @@
       this.fire('navigate', {
         base: 'about'
       });
+    },
+
+    // Pin drawer back to the app.
+    _pinDrawer: function() {
+      this.forceNarrowLayout = false;
     },
 
     /**
@@ -381,6 +403,57 @@
     openLicense: function() {
       var dialog = Polymer.dom(this.root).querySelector('arc-license-dialog');
       dialog.opened = true;
+    },
+
+    _drawerTrack: function(e) {
+      switch (e.detail.state) {
+        case 'start': this.__drawerTrackStart(); break;
+        case 'track': this.__drawerTrack(e.detail); break;
+        case 'end': this.__drawerTrackEnd(e.detail); break;
+      }
+    },
+
+    __drawerTrackStart: function() {
+      var main = this.$.paperDrawerPanel.$.main;
+      this.$.paperDrawerPanel.$.drawer.classList.remove('transition-drawer');
+      this._drawerInitTransition = getComputedStyle(main).getPropertyValue('transition');
+      main.style.transition = 'left ease-in-out 0.01s';
+      this._drawerInitTrackWidth = Number(this.drawerWidth.replace('px', ''));
+    },
+
+    __drawerTrack: function(detail) {
+      var newWidth = this._drawerInitTrackWidth + detail.dx;
+      if (newWidth <= 10) {
+        newWidth = 10;
+      }
+      this.drawerWidth = newWidth + 'px';
+      this.$.paperDrawerPanel.$.main.style.transition = 'left ease-in-out 0.01s';
+    },
+
+    __drawerTrackEnd: function(detail) {
+      this.$.paperDrawerPanel.$.drawer.classList.add('transition-drawer');
+      this.$.paperDrawerPanel.$.main.style.transition = this._drawerInitTransition;
+      var newWidth = this._drawerInitTrackWidth + detail.dx;
+      if (newWidth <= 10) {
+        newWidth = 10;
+      }
+      this.drawerWidth = newWidth + 'px';
+      this._drawerInitTrackWidth = undefined;
+      this._drawerInitTransition = undefined;
+    },
+
+    _handleLinks: function(e) {
+      var target = e.path[0];
+      if (!target) {
+        return;
+      }
+      if (target.nodeName !== 'A') {
+        return;
+      }
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      window.open(target.href);
     }
   });
   </script>
