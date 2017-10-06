@@ -572,6 +572,19 @@ class SocketRequest extends EventEmitter {
     socket.on('end', () => {
       this.stats.lastReceived = performance.now();
       this.stats.receive = this.stats.lastReceived - this.stats.firstReceived;
+      if (this.stats !== SocketRequest.DONE) {
+        if (!this._response) {
+          // The parser havn't found the end of message so there was no message!
+          this._errorRequest(new Error('Connection closed without sending a data'));
+        } else {
+          // There is an issue with the response. Size missmatch? Anyway,
+          // it tries to create a response from current data.
+          this.emit('loadend');
+          this._publishResponse({
+            includeRedirects: true
+          });
+        }
+      }
     });
     socket.on('error', (err) => {
       this._errorRequest(err);
