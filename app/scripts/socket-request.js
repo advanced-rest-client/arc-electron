@@ -1314,6 +1314,7 @@ class SocketRequest extends EventEmitter {
    * @param {Object} opts See #_createResponse for more info.
    */
   _publishResponse(opts) {
+    this.state = SocketRequest.DONE;
     return this._createResponse(opts)
     .then(response => {
       this.emit('load', response, this.arcRequest);
