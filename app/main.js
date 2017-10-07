@@ -3,6 +3,11 @@ const app = electron.app;
 const ipc = require('electron').ipcMain;
 const dialog = require('electron').dialog;
 const {ArcWindowsManager} = require('./scripts/windows-manager');
+const log = require('electron-log');
+const {autoUpdater} = require('electron-updater');
+autoUpdater.logger = log;
+autoUpdater.logger.transports.file.level = 'info';
+log.info('App starting...');
 
 class Arc {
   constructor() {
@@ -17,6 +22,7 @@ class Arc {
 
   _readyHandler() {
     this.wm.open();
+    autoUpdater.checkForUpdates();
   }
   // Quits when all windows are closed.
   _allClosedHandler() {
@@ -30,6 +36,10 @@ class Arc {
     if (!this.wm.hasWindow) {
       this.wm.open();
     }
+  }
+
+  notifyWindows(type, ...args) {
+    this.wm.notifyAll(type, args);
   }
 }
 
@@ -56,4 +66,25 @@ ipc.on('new-window', function() {
 
 ipc.on('toggle-devtools', (event) => {
   event.sender.webContents.toggleDevTools();
+});
+
+// Auto updater
+autoUpdater.on('checking-for-update', () => {
+  arcApp.notifyWindows('autoupdate-checking-for-update');
+});
+autoUpdater.on('update-available', (info) => {
+  arcApp.notifyWindows('autoupdate-update-available', info);
+});
+autoUpdater.on('update-not-available', (info) => {
+  arcApp.notifyWindows('autoupdate-update-not-available', info);
+});
+autoUpdater.on('error', (err) => {
+  arcApp.notifyWindows('autoupdate-error', err);
+});
+autoUpdater.on('download-progress', (progressObj) => {
+  arcApp.notifyWindows('autoupdate-download-progress', progressObj);
+});
+autoUpdater.on('update-downloaded', (info) => {
+  arcApp.notifyWindows('autoupdate-update-downloaded', info);
+  // autoUpdater.quitAndInstall();
 });

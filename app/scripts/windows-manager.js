@@ -17,6 +17,17 @@ class ArcWindowsManager {
   get hasWindow() {
     return this.windows.length > 0;
   }
+  /**
+   * Notifies all opened windows with event data.
+   *
+   * @param {String} type Event type (channel name)
+   * @param {?Array} args List of arguments.
+   */
+  notifyAll(type, args) {
+    this.windows.forEach(win => {
+      win.webContents.send(type, args);
+    });
+  }
 
   open(path) {
     var index = this.windows.length;
