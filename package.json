@@ -12,7 +12,10 @@
   },
   "scripts": {
     "start": "electron .",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "electron-builder install-app-deps",
+    "build-l": "npx electron-builder -l",
+    "build-w": "npx electron-builder -w",
+    "build-m": "npx electron-builder -m"
   },
   "main": "app/main.js",
   "devDependencies": {
@@ -37,12 +40,12 @@
     "files": [
       "app"
     ],
-    "fileAssociations": {
-      "ext": "arc",
-      "description": "Open in Advanced REST Client"
-    },
     "mac": {
-      "category": "public.app-category.developer-tools"
+      "category": "public.app-category.developer-tools",
+      "target": [{
+        "target": "dmg",
+        "arch": ["x64"]
+        }]
     },
     "dmg": {
       "contents": [
@@ -60,13 +63,23 @@
     },
     "linux": {
       "category": "Development",
-      "target": [
-        "AppImage",
-        "deb",
-        "rpm"
+      "target": [{
+          "target": "deb",
+          "arch": ["x64", "ia32"]
+        }, {
+          "target": "rpm",
+          "arch": ["x64", "ia32"]
+        }
       ],
       "vendor": "Mulesoft",
       "synopsis": "A developert tool to test a HTTP request"
+    },
+    "win": {
+      "artifactName": "arc-${version}-${arch}.${ext}",
+      "target": [{
+        "target": "nsis",
+        "arch": ["x64", "ia32"]
+      }]
     },
     "publish": [
       {
