@@ -1,4 +1,5 @@
 <script>
+(function() {
   const ipc = require('electron').ipcRenderer;
   const fs = require('fs-extra');
   Polymer({
@@ -81,4 +82,5 @@
       return data;
     }
   });
+})();
 </script>

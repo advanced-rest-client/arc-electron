@@ -1,5 +1,4 @@
 const path = require('path');
-const fs = require('fs-extra');
 const {ArcPreferences} = require('./arc-preferences');
 /**
  * A module responsible for storing / restoring latest request from user FS.

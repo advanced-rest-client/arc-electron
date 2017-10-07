@@ -252,6 +252,7 @@
   </template>
   <script>
   const {ArcPreferences} = require('./scripts/arc-preferences');
+  const ipc = require('electron').ipcRenderer;
 
   Polymer({
     is: 'arc-electron',
@@ -288,7 +289,15 @@
     },
 
     attached: function() {
-      this.listen(document.body, 'display-license', 'openLicense');
+      Polymer.RenderStatus.afterNextRender(this, function() {
+        this.listen(document.body, 'display-license', 'openLicense');
+        this._observeMainEvents();
+      });
+    },
+
+    detacheded: function() {
+      this.unlisten(document.body, 'display-license', 'openLicense');
+      this._unobserveMainEvents();
     },
 
     listeners: {
@@ -311,6 +320,31 @@
       if (!this.route.path) {
         this.set('route.path', '/request/latest/0');
       }
+    },
+
+    // Starts listening for main script events.
+    _observeMainEvents: function() {
+      if (!this.__ueh) {
+        this.__ueh = this._updateEventHandler.bind(this);
+      }
+      ipc.on('checking-for-update', this.__ueh);
+      ipc.on('update-available', this.__ueh);
+      ipc.on('update-not-available', this.__ueh);
+      ipc.on('autoupdate-error', this.__ueh);
+      ipc.on('download-progress', this.__ueh);
+      ipc.on('update-downloaded', this.__ueh);
+    },
+
+    _unobserveMainEvents: function() {
+      if (!this.__ueh) {
+        return;
+      }
+      ipc.removeListener('checking-for-update', this.__ueh);
+      ipc.removeListener('update-available', this.__ueh);
+      ipc.removeListener('update-not-available', this.__ueh);
+      ipc.removeListener('autoupdate-error', this.__ueh);
+      ipc.removeListener('download-progress', this.__ueh);
+      ipc.removeListener('update-downloaded', this.__ueh);
     },
 
     _navigateHandler: function(e) {
@@ -458,12 +492,10 @@
     },
 
     onNewWindow: function() {
-      const ipc = require('electron').ipcRenderer;
       ipc.send('new-window');
     },
 
     openLogs: function() {
-      const ipc = require('electron').ipcRenderer;
       ipc.send('toggle-devtools');
     },
 
@@ -471,6 +503,11 @@
       const {clipboard} = require('electron');
       clipboard.writeText(e.detail.value);
       e.preventDefault();
+    },
+
+    _updateEventHandler: function(...args) {
+      // TODO: add support for update events
+      console.log('Update event: ', args);
     }
   });
   </script>
