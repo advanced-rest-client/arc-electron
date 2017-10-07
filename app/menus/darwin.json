@@ -3,7 +3,7 @@
       "label": "ARC",
       "submenu": [
         {"label": "About ARC", "command": "application:about"},
-        {"label": "Version", "enabled": false},
+        {"label": "VERSION", "enabled": false},
         {"label": "Restart and Install Update", "command": "application:install-update", "visible": false},
         {"label": "Check for Update", "command": "application:check-for-update", "visible": false},
         {"label": "Checking for Update", "enabled": false, "visible": false},

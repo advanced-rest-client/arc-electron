@@ -18,7 +18,6 @@ class ArcMainMenu extends EventEmitter {
     this._getTemplate()
     .then(template => this._createFromTemplate(template))
     .then(() => Menu.setApplicationMenu(this.topMenu))
-    .then(() => this.updateVersion())
     .catch(cause => {
       let message = 'Menu template file was not found.';
       console.error(message);
@@ -99,27 +98,6 @@ class ArcMainMenu extends EventEmitter {
     }
   }
 
-  updateVersion() {
-    var name = this._platformToName(process.platform);
-    var version = app.getVersion();
-    this['_' + name + 'UpdateVersion'](version);
-  }
-
-  _darwinUpdateVersion(version) {
-    var item = this.topMenu.items[0].submenu.items[0];
-    item.label = 'Version: ' + version;
-  }
-
-  _winUpdateVersion(version) {
-    var item = this.topMenu.items[3].submenu[0];
-    item.label = 'Version: ' + version;
-  }
-
-  _linuxUpdateVersion(version) {
-    var item = this.topMenu.items[3].submenu[0];
-    item.label = 'Version: ' + version;
-  }
-
   _itemAction(command, menuItem, browserWindow) {
     this.emit('menu-action', command, browserWindow);
   }
@@ -143,6 +121,9 @@ class ArcMainMenu extends EventEmitter {
     }
     if (options.submenu) {
       options.submenu = this._createSubMenu(options.submenu);
+    }
+    if (options.label === 'VERSION') {
+      options.label = 'Version: ' + app.getVersion();
     }
     return new MenuItem(options);
   }
