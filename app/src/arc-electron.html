@@ -294,7 +294,8 @@
     listeners: {
       navigate: '_navigateHandler',
       'drawerResizer.track': '_drawerTrack',
-      tap: '_handleLinks'
+      tap: '_handleLinks',
+      'content-copy': '_copyContentHandler'
     },
 
     observers: [
@@ -464,6 +465,12 @@
     openLogs: function() {
       const ipc = require('electron').ipcRenderer;
       ipc.send('toggle-devtools');
+    },
+
+    _copyContentHandler: function(e) {
+      const {clipboard} = require('electron');
+      clipboard.writeText(e.detail.value);
+      e.preventDefault();
     }
   });
   </script>
