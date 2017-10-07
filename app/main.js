@@ -68,6 +68,8 @@ class Arc {
       case 'show-settings':
       case 'about':
       case 'open-license':
+      case 'import-data':
+      case 'export-data':
         win.webContents.send(windowCommand, action);
       break;
       case 'new-window':

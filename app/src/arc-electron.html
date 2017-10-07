@@ -519,6 +519,24 @@
         ipc.send('toggle-devtools');
       },
 
+      openImport: function() {
+        this.fire('navigate', {
+          base: 'dataimport'
+        });
+        var panel = this.$$('data-import-export-panel');
+        panel.hideExport = true;
+        panel.hideImport = false;
+      },
+
+      openExport: function() {
+        this.fire('navigate', {
+          base: 'dataimport'
+        });
+        var panel = this.$$('data-import-export-panel');
+        panel.hideExport = false;
+        panel.hideImport = true;
+      },
+
       _copyContentHandler: function(e) {
         const {
           clipboard
@@ -564,6 +582,8 @@
           case 'show-settings': this.openSettings(); break;
           case 'about': this.openAbout(); break;
           case 'open-license': this.openLicense(); break;
+          case 'import-data': this.openImport(); break;
+          case 'export-data': this.openExport(); break;
         }
       }
     });

@@ -17,7 +17,10 @@
         "label": "File",
         "submenu": [
           {"label": "Save", "command": "request:save", "accelerator": "CommandOrControl+s"},
-          {"label": "Save as...", "command": "request:save-as", "accelerator": "CommandOrControl+Shift+s"}
+          {"label": "Save as...", "command": "request:save-as", "accelerator": "CommandOrControl+Shift+s"},
+          {"type": "separator"},
+          {"label": "Import data", "command": "application:import-data"},
+          {"label": "Export data", "command": "application:export-data"}
         ]
       }, {
         "label": "View",
