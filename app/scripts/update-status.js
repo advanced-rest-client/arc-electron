@@ -5,12 +5,13 @@ autoUpdater.logger = log;
 autoUpdater.logger.transports.file.level = 'info';
 
 /**
- * A module responsible for storing / restoring user settings.
+ * A module to check for updates.
  */
 class UpdateStatus extends ArcBase {
-  constructor(windowManager) {
+  constructor(windowManager, appMenu) {
     super();
     this.wm = windowManager;
+    this.menu = appMenu;
     this.state = 0;
     this.lastInfoObject = undefined;
     this._ensureScope();
@@ -34,6 +35,8 @@ class UpdateStatus extends ArcBase {
     this._updateErrorHandler = this._updateErrorHandler.bind(this);
     this._downloadProgressHandler = this._downloadProgressHandler.bind(this);
     this._downloadReadyHandler = this._downloadReadyHandler.bind(this);
+    this.installUpdate = this.installUpdate.bind(this);
+    this.check = this.check.bind(this);
   }
 
   _addListeners() {
@@ -61,24 +64,28 @@ class UpdateStatus extends ArcBase {
     this.state = 1;
     this.lastInfoObject = undefined;
     this.notifyWindows('autoupdate-checking-for-update');
+    this.menu.updateStatusChnaged('checking-for-update');
   }
 
   _updateAvailableHandler(info) {
     this.state = 2;
     this.lastInfoObject = info;
     this.notifyWindows('autoupdate-update-available', info);
+    this.menu.updateStatusChnaged('download-progress');
   }
 
   _updateNotAvailableHandler(info) {
     this.state = 3;
     this.lastInfoObject = info;
     this.notifyWindows('autoupdate-update-not-available', info);
+    this.menu.updateStatusChnaged('not-available');
   }
 
   _updateErrorHandler(error) {
     this.state = 4;
     this.lastInfoObject = error;
     this.notifyWindows('autoupdate-error', error);
+    this.menu.updateStatusChnaged('not-available');
   }
 
   _downloadProgressHandler(progressObj) {
@@ -90,7 +97,11 @@ class UpdateStatus extends ArcBase {
     this.state = 6;
     this.lastInfoObject = info;
     this.notifyWindows('autoupdate-update-downloaded', info);
-    // autoUpdater.quitAndInstall();
+    this.menu.updateStatusChnaged('update-downloaded');
+  }
+
+  installUpdate() {
+    autoUpdater.quitAndInstall();
   }
 }
 exports.UpdateStatus = UpdateStatus;

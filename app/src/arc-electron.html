@@ -205,310 +205,367 @@
       <template is="dom-repeat" items="[[gaCustomMetrics]]">
         <app-analytics-custom type="metric" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
       </template>
-      <template is="dom-repeat" items="[[gaCustomDimensions]]">
+  <template is="dom-repeat" items="[[gaCustomDimensions]]">
         <app-analytics-custom type="dimension" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
       </template>
-    </app-analytics>
-    <app-analytics tracking-id="UA-18021184-14"
-      app-name="ARC"
-      app-id="[[appId]]"
-      app-version="[[appVersion]]"
-      data-source="chrome-app"
-      disable-tracking="{{analyticsDisabled}}">
-      <template is="dom-repeat" items="[[gaCustomMetrics]]">
+  </app-analytics>
+  <app-analytics tracking-id="UA-18021184-14" app-name="ARC" app-id="[[appId]]" app-version="[[appVersion]]" data-source="chrome-app" disable-tracking="{{analyticsDisabled}}">
+    <template is="dom-repeat" items="[[gaCustomMetrics]]">
         <app-analytics-custom type="metric" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
       </template>
-      <template is="dom-repeat" items="[[gaCustomDimensions]]">
+    <template is="dom-repeat" items="[[gaCustomDimensions]]">
         <app-analytics-custom type="dimension" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
       </template>
-    </app-analytics>
-    <app-analytics tracking-id="UA-71458341-2"
-      app-name="ARC"
-      app-id="[[appId]]"
-      app-version="[[appVersion]]"
-      data-source="chrome-app"
-      disable-tracking="{{analyticsDisabled}}">
-      <template is="dom-repeat" items="[[gaCustomMetrics]]">
+  </app-analytics>
+  <app-analytics tracking-id="UA-71458341-2" app-name="ARC" app-id="[[appId]]" app-version="[[appVersion]]" data-source="chrome-app" disable-tracking="{{analyticsDisabled}}">
+    <template is="dom-repeat" items="[[gaCustomMetrics]]">
         <app-analytics-custom type="metric" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
       </template>
-      <template is="dom-repeat" items="[[gaCustomDimensions]]">
+    <template is="dom-repeat" items="[[gaCustomDimensions]]">
         <app-analytics-custom type="dimension" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
       </template>
-    </app-analytics>
-    <app-logger></app-logger>
-    <arc-definitions></arc-definitions>
-    <variables-evaluator no-before-request></variables-evaluator>
-    <variables-manager></variables-manager>
-    <request-saver></request-saver>
-    <cookie-jar></cookie-jar>
-    <response-history-saver></response-history-saver>
-    <url-history-saver></url-history-saver>
-    <arc-data-export></arc-data-export>
-    <arc-data-import></arc-data-import>
-    <authorization-data-saver></authorization-data-saver>
-    <project-model></project-model>
-    <!-- Electron specific -->
-    <file-export></file-export>
+  </app-analytics>
+  <app-logger></app-logger>
+  <arc-definitions></arc-definitions>
+  <variables-evaluator no-before-request></variables-evaluator>
+  <variables-manager></variables-manager>
+  <request-saver></request-saver>
+  <cookie-jar></cookie-jar>
+  <response-history-saver></response-history-saver>
+  <url-history-saver></url-history-saver>
+  <arc-data-export></arc-data-export>
+  <arc-data-import></arc-data-import>
+  <authorization-data-saver></authorization-data-saver>
+  <project-model></project-model>
+  <!-- Electron specific -->
+  <file-export></file-export>
   </template>
   <script>
-  const {ArcPreferences} = require('./scripts/arc-preferences');
-  const ipc = require('electron').ipcRenderer;
+    const {
+      ArcPreferences
+    } = require('./scripts/arc-preferences');
+    const ipc = require('electron').ipcRenderer;
 
-  Polymer({
-    is: 'arc-electron',
+    Polymer({
+      is: 'arc-electron',
 
-    properties: {
-      pageTitle: String,
-      selectedRequest: String,
-      route: Object,
-      routeData: Object,
-      appId: String,
-      appVersion: String,
-      gaCustomMetrics: Array,
-      gaCustomDimensions: Array,
-      drawerWidth: {
-        type: String,
-        value: '360px'
+      properties: {
+        pageTitle: String,
+        selectedRequest: String,
+        route: Object,
+        routeData: Object,
+        appId: String,
+        appVersion: String,
+        gaCustomMetrics: Array,
+        gaCustomDimensions: Array,
+        drawerWidth: {
+          type: String,
+          value: '360px'
+        },
+        forceNarrowLayout: {
+          type: Boolean,
+          value: false
+        },
+        narrowLayout: {
+          type: Boolean,
+          value: false
+        },
+
+        _drawerInitTrackWidth: Number,
+        _drawerInitTransition: Number
       },
-      forceNarrowLayout: {
-        type: Boolean,
-        value: false
-      },
-      narrowLayout: {
-        type: Boolean,
-        value: false
+
+      created: function() {
+        this.__prefs = new ArcPreferences();
+        this.__prefs.observe();
       },
 
-      _drawerInitTrackWidth: Number,
-      _drawerInitTransition: Number
-    },
+      attached: function() {
+        Polymer.RenderStatus.afterNextRender(this, function() {
+          this.listen(document.body, 'display-license', 'openLicense');
+          this._observeMainEvents();
+        });
+      },
 
-    created: function() {
-      this.__prefs = new ArcPreferences();
-      this.__prefs.observe();
-    },
+      detacheded: function() {
+        this.unlisten(document.body, 'display-license', 'openLicense');
+        this._unobserveMainEvents();
+      },
 
-    attached: function() {
-      Polymer.RenderStatus.afterNextRender(this, function() {
-        this.listen(document.body, 'display-license', 'openLicense');
-        this._observeMainEvents();
-      });
-    },
+      listeners: {
+        navigate: '_navigateHandler',
+        'drawerResizer.track': '_drawerTrack',
+        tap: '_handleLinks',
+        'content-copy': '_copyContentHandler'
+      },
 
-    detacheded: function() {
-      this.unlisten(document.body, 'display-license', 'openLicense');
-      this._unobserveMainEvents();
-    },
+      observers: [
+        '_routeDataChanged(routeData.*)'
+      ],
 
-    listeners: {
-      navigate: '_navigateHandler',
-      'drawerResizer.track': '_drawerTrack',
-      tap: '_handleLinks',
-      'content-copy': '_copyContentHandler'
-    },
+      _routeDataChanged: function(record) {
+        console.log(record.base);
+      },
 
-    observers: [
-      '_routeDataChanged(routeData.*)'
-    ],
+      ready: function() {
+        // sets a default path of not initialized with path
+        if (!this.route.path) {
+          this.set('route.path', '/request/latest/0');
+        }
+      },
 
-    _routeDataChanged: function(record) {
-      console.log(record.base);
-    },
+      // Starts listening for main script events.
+      _observeMainEvents: function() {
+        if (!this.__ueh) {
+          this.__ueh = this._updateEventHandler.bind(this);
+          this.__rah = this._requestActionHandler.bind(this);
+          this.__ch = this._commandHandler.bind(this);
+        }
+        ipc.on('checking-for-update', this.__ueh);
+        ipc.on('update-available', this.__ueh);
+        ipc.on('update-not-available', this.__ueh);
+        ipc.on('autoupdate-error', this.__ueh);
+        ipc.on('download-progress', this.__ueh);
+        ipc.on('update-downloaded', this.__ueh);
+        ipc.on('request-action', this.__rah);
+        ipc.on('command', this.__ch);
+      },
 
-    ready: function() {
-      // sets a default path of not initialized with path
-      if (!this.route.path) {
-        this.set('route.path', '/request/latest/0');
+      _unobserveMainEvents: function() {
+        if (!this.__ueh) {
+          return;
+        }
+        ipc.removeListener('checking-for-update', this.__ueh);
+        ipc.removeListener('update-available', this.__ueh);
+        ipc.removeListener('update-not-available', this.__ueh);
+        ipc.removeListener('autoupdate-error', this.__ueh);
+        ipc.removeListener('download-progress', this.__ueh);
+        ipc.removeListener('update-downloaded', this.__ueh);
+        ipc.removeListener('request-action', this.__rah);
+        ipc.removeListener('command', this.__ch);
+      },
+
+      _navigateHandler: function(e) {
+        var params = e.detail;
+        var url;
+        switch (params.base) {
+          case 'default':
+            url = '/request/latest/0';
+            break;
+          case 'history':
+            url = '/history';
+            break;
+          case 'settings':
+            url = '/settings';
+            break;
+          case 'about':
+            url = '/about';
+            break;
+          case 'socket':
+            url = '/socket';
+            break;
+          case 'saved':
+            url = '/saved';
+            break;
+          case 'dataimport':
+            url = '/dataimport';
+            break;
+          case 'project':
+            if (params.id) {
+              url = '/project/' + params.id;
+            }
+            break;
+          case 'request':
+            url = '/request/' + params.type + '/' + encodeURIComponent(params.id);
+            break;
+          case 'drive':
+            url = '/drive';
+            break;
+        }
+        if (url) {
+          this.set('route.path', url);
+        } else {
+          throw new Error('The route is not handled correctly', params);
+        }
+      },
+
+      toggleDrawer: function() {
+        if (this.narrowLayout) {
+          return;
+        }
+        this.forceNarrowLayout = !this.forceNarrowLayout;
+        this.async(function() {
+          this.$.paperDrawerPanel.closeDrawer();
+        }, 1);
+      },
+
+      _computePinDrawerClass: function(forceNarrowLayout, narrowLayout) {
+        var clazz = 'drawer-pin';
+        if (forceNarrowLayout && narrowLayout) {
+          clazz += ' visible';
+        }
+        return clazz;
+      },
+
+      openAbout: function() {
+        this.fire('navigate', {
+          base: 'about'
+        });
+      },
+
+      // Pin drawer back to the app.
+      _pinDrawer: function() {
+        this.forceNarrowLayout = false;
+      },
+
+      /**
+       * Opens an issue tracker - new issue report.
+       */
+      openIssueReport: function() {
+        var appVersion = this.appVersion;
+        var message = 'Your description here\n\n';
+        message += '## Expected outcome\nWhat should happen?\n\n';
+        message += '## Actual outcome\nWhat happened?\n\n';
+        message += `## Versions\nApp: ${appVersion}\n`;
+        message += `Platform: ${navigator.appVersion}\n\n`;
+        message += '## Steps to reproduce\n1. \n2. \n3. ';
+        message = encodeURIComponent(message);
+        window.open('https://github.com/jarrodek/ChromeRestClient/issues/new?body=' + message);
+      },
+      /**
+       * Opens the import / export panel
+       */
+      openImportExport: function() {
+        this.fire('navigate', {
+          base: 'dataimport'
+        });
+      },
+      /**
+       * Opens the settings panel.
+       */
+      openSettings: function() {
+        this.fire('navigate', {
+          base: 'settings'
+        });
+      },
+
+      openLicense: function() {
+        var dialog = Polymer.dom(this.root).querySelector('arc-license-dialog');
+        dialog.opened = true;
+      },
+
+      _drawerTrack: function(e) {
+        switch (e.detail.state) {
+          case 'start':
+            this.__drawerTrackStart();
+            break;
+          case 'track':
+            this.__drawerTrack(e.detail);
+            break;
+          case 'end':
+            this.__drawerTrackEnd(e.detail);
+            break;
+        }
+      },
+
+      __drawerTrackStart: function() {
+        var main = this.$.paperDrawerPanel.$.main;
+        this.$.paperDrawerPanel.$.drawer.classList.remove('transition-drawer');
+        this._drawerInitTransition = getComputedStyle(main).getPropertyValue('transition');
+        main.style.transition = 'left ease-in-out 0.01s';
+        this._drawerInitTrackWidth = Number(this.drawerWidth.replace('px', ''));
+      },
+
+      __drawerTrack: function(detail) {
+        var newWidth = this._drawerInitTrackWidth + detail.dx;
+        if (newWidth <= 10) {
+          newWidth = 10;
+        }
+        this.drawerWidth = newWidth + 'px';
+        this.$.paperDrawerPanel.$.main.style.transition = 'left ease-in-out 0.01s';
+      },
+
+      __drawerTrackEnd: function(detail) {
+        this.$.paperDrawerPanel.$.drawer.classList.add('transition-drawer');
+        this.$.paperDrawerPanel.$.main.style.transition = this._drawerInitTransition;
+        var newWidth = this._drawerInitTrackWidth + detail.dx;
+        if (newWidth <= 10) {
+          newWidth = 10;
+        }
+        this.drawerWidth = newWidth + 'px';
+        this._drawerInitTrackWidth = undefined;
+        this._drawerInitTransition = undefined;
+      },
+
+      _handleLinks: function(e) {
+        var target = e.path[0];
+        if (!target) {
+          return;
+        }
+        if (target.nodeName !== 'A') {
+          return;
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        window.open(target.href);
+      },
+
+      onNewWindow: function() {
+        ipc.send('new-window');
+      },
+
+      openLogs: function() {
+        ipc.send('toggle-devtools');
+      },
+
+      _copyContentHandler: function(e) {
+        const {
+          clipboard
+        } = require('electron');
+        clipboard.writeText(e.detail.value);
+        e.preventDefault();
+      },
+
+      _updateEventHandler: function(...args) {
+        // TODO: add support for update events
+        console.log('Update event: ', args);
+      },
+      /**
+       * Handles action performed in main thread (menu action) related to
+       * a request.
+       *
+       * @param {String} action Action name to perform.
+       */
+      _requestActionHandler: function(event, action) {
+        if (this.routeData.base !== 'request') {
+          return;
+        }
+        switch (action) {
+          case 'save':
+            this.$$('arc-request-panel').onSave({});
+            break;
+          case 'save-as':
+            this.$$('arc-request-panel').onSave({
+              source: 'shortcut',
+              shift: true
+            });
+            break;
+        }
+      },
+      /**
+       * Handles action performed in main thread (menu action) related to
+       * an application.
+       *
+       * @param {String} action Action name to perform.
+       */
+      _commandHandler: function(event, action) {
+        switch (action) {
+          case 'show-settings': this.openSettings(); break;
+          case 'about': this.openAbout(); break;
+          case 'open-license': this.openLicense(); break;
+        }
       }
-    },
-
-    // Starts listening for main script events.
-    _observeMainEvents: function() {
-      if (!this.__ueh) {
-        this.__ueh = this._updateEventHandler.bind(this);
-      }
-      ipc.on('checking-for-update', this.__ueh);
-      ipc.on('update-available', this.__ueh);
-      ipc.on('update-not-available', this.__ueh);
-      ipc.on('autoupdate-error', this.__ueh);
-      ipc.on('download-progress', this.__ueh);
-      ipc.on('update-downloaded', this.__ueh);
-    },
-
-    _unobserveMainEvents: function() {
-      if (!this.__ueh) {
-        return;
-      }
-      ipc.removeListener('checking-for-update', this.__ueh);
-      ipc.removeListener('update-available', this.__ueh);
-      ipc.removeListener('update-not-available', this.__ueh);
-      ipc.removeListener('autoupdate-error', this.__ueh);
-      ipc.removeListener('download-progress', this.__ueh);
-      ipc.removeListener('update-downloaded', this.__ueh);
-    },
-
-    _navigateHandler: function(e) {
-      var params = e.detail;
-      var url;
-      switch (params.base) {
-        case 'default': url = '/request/latest/0'; break;
-        case 'history': url = '/history'; break;
-        case 'settings': url = '/settings'; break;
-        case 'about': url = '/about'; break;
-        case 'socket': url = '/socket'; break;
-        case 'saved': url = '/saved'; break;
-        case 'dataimport': url = '/dataimport'; break;
-        case 'project':
-          if (params.id) {
-            url = '/project/' + params.id;
-          }
-          break;
-        case 'request':
-          url = '/request/' + params.type + '/' + encodeURIComponent(params.id);
-          break;
-        case 'drive': url = '/drive'; break;
-      }
-      if (url) {
-        this.set('route.path', url);
-      } else {
-        throw new Error('The route is not handled correctly', params);
-      }
-    },
-
-    toggleDrawer: function() {
-      if (this.narrowLayout) {
-        return;
-      }
-      this.forceNarrowLayout = !this.forceNarrowLayout;
-      this.async(function() {
-        this.$.paperDrawerPanel.closeDrawer();
-      }, 1);
-    },
-
-    _computePinDrawerClass: function(forceNarrowLayout, narrowLayout) {
-      var clazz = 'drawer-pin';
-      if (forceNarrowLayout && narrowLayout) {
-        clazz += ' visible';
-      }
-      return clazz;
-    },
-
-    openAbout: function() {
-      this.fire('navigate', {
-        base: 'about'
-      });
-    },
-
-    // Pin drawer back to the app.
-    _pinDrawer: function() {
-      this.forceNarrowLayout = false;
-    },
-
-    /**
-     * Opens an issue tracker - new issue report.
-     */
-    openIssueReport: function() {
-      var appVersion = this.appVersion;
-      var message = 'Your description here\n\n';
-      message += '## Expected outcome\nWhat should happen?\n\n';
-      message += '## Actual outcome\nWhat happened?\n\n';
-      message += `## Versions\nApp: ${appVersion}\n`;
-      message += `Platform: ${navigator.appVersion}\n\n`;
-      message += '## Steps to reproduce\n1. \n2. \n3. ';
-      message = encodeURIComponent(message);
-      window.open('https://github.com/jarrodek/ChromeRestClient/issues/new?body=' + message);
-    },
-    /**
-     * Opens the import / export panel
-     */
-    openImportExport: function() {
-      this.fire('navigate', {
-        base: 'dataimport'
-      });
-    },
-    /**
-     * Opens the settings panel.
-     */
-    openSettings: function() {
-      this.fire('navigate', {
-        base: 'settings'
-      });
-    },
-
-    openLicense: function() {
-      var dialog = Polymer.dom(this.root).querySelector('arc-license-dialog');
-      dialog.opened = true;
-    },
-
-    _drawerTrack: function(e) {
-      switch (e.detail.state) {
-        case 'start': this.__drawerTrackStart(); break;
-        case 'track': this.__drawerTrack(e.detail); break;
-        case 'end': this.__drawerTrackEnd(e.detail); break;
-      }
-    },
-
-    __drawerTrackStart: function() {
-      var main = this.$.paperDrawerPanel.$.main;
-      this.$.paperDrawerPanel.$.drawer.classList.remove('transition-drawer');
-      this._drawerInitTransition = getComputedStyle(main).getPropertyValue('transition');
-      main.style.transition = 'left ease-in-out 0.01s';
-      this._drawerInitTrackWidth = Number(this.drawerWidth.replace('px', ''));
-    },
-
-    __drawerTrack: function(detail) {
-      var newWidth = this._drawerInitTrackWidth + detail.dx;
-      if (newWidth <= 10) {
-        newWidth = 10;
-      }
-      this.drawerWidth = newWidth + 'px';
-      this.$.paperDrawerPanel.$.main.style.transition = 'left ease-in-out 0.01s';
-    },
-
-    __drawerTrackEnd: function(detail) {
-      this.$.paperDrawerPanel.$.drawer.classList.add('transition-drawer');
-      this.$.paperDrawerPanel.$.main.style.transition = this._drawerInitTransition;
-      var newWidth = this._drawerInitTrackWidth + detail.dx;
-      if (newWidth <= 10) {
-        newWidth = 10;
-      }
-      this.drawerWidth = newWidth + 'px';
-      this._drawerInitTrackWidth = undefined;
-      this._drawerInitTransition = undefined;
-    },
-
-    _handleLinks: function(e) {
-      var target = e.path[0];
-      if (!target) {
-        return;
-      }
-      if (target.nodeName !== 'A') {
-        return;
-      }
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-      window.open(target.href);
-    },
-
-    onNewWindow: function() {
-      ipc.send('new-window');
-    },
-
-    openLogs: function() {
-      ipc.send('toggle-devtools');
-    },
-
-    _copyContentHandler: function(e) {
-      const {clipboard} = require('electron');
-      clipboard.writeText(e.detail.value);
-      e.preventDefault();
-    },
-
-    _updateEventHandler: function(...args) {
-      // TODO: add support for update events
-      console.log('Update event: ', args);
-    }
-  });
+    });
   </script>
 </dom-module>
