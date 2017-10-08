@@ -1,0 +1,28 @@
+{
+  "name": "payload-parser-behavior",
+  "version": "0.2.1",
+  "license": "Apache-2.0 OR CC-BY-4.0",
+  "description": "Headers parser behavior to be impplemented with elements that needs to parse headers data",
+  "devDependencies": {
+    "polymer-cli": "^1.2.0"
+  },
+  "private": false,
+  "main": [
+    "payload-parser-behavior.html"
+  ],
+  "author": "jarrod",
+  "scripts": {
+    "lint": "node_modules/.bin/polymer lint payload-parser-behavior.html --rules polymer-1",
+    "test-sauce": "node_modules/.bin/polymer test --plugin sauce --job-name \"payload-parser-behavior:local-test\"",
+    "test": "node_modules/.bin/polymer test --plugin local",
+    "deps": "npm install --quiet && bower install --quiet",
+    "update-deps": "npm update --quiet && bower update --quiet"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/advanced-rest-client/payload-parser-behavior.git"
+  },
+  "bugs": {
+    "url": "https://github.com/advanced-rest-client/payload-parser-behavior/issues"
+  }
+}

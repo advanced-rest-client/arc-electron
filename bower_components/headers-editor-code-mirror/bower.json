@@ -1,0 +1,32 @@
+{
+  "name": "headers-editor-code-mirror",
+  "description": "Libraries related to code mirror used in headers editor.",
+  "authors": [
+    "The Advanced REST client authors <arc@mulesoft.com>"
+  ],
+  "keywords": [
+    "web-components",
+    "polymer",
+    "headers editor",
+    "HTTP headers",
+    "Code Mirror"
+  ],
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:advanced-rest-client/headers-editor-code-mirror.git"
+  },
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.0.0"
+  },
+  "devDependencies": {},
+  "ignore": [
+    "**/.*",
+    "dependencyci.yml",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tasks"
+  ],
+  "version": "0.1.2"
+}

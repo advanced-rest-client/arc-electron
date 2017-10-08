@@ -1,0 +1,96 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <title>request-timings demo</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../arc-demo-helpers/arc-demo-snippet.html">
+
+  <link rel="import" href="../request-timings.html">
+
+  <style is="custom-style" include="demo-pages-shared-styles">
+
+    .vertical-section-container {
+      max-width: 600px;
+    }
+
+  </style>
+</head>
+<body unresolved>
+  <div class="vertical-section-container centered">
+    <h3>The request-timings element</h3>
+    <arc-demo-snippet>
+      <template>
+        <request-timings></request-timings>
+        <script>
+
+        var timings = {
+          startTime: 1483368432132,
+          blocked: 7.75,
+          dns: 279.38,
+          connect: 883.12,
+          ssl: 633.05,
+          send: 0.29,
+          wait: 649.88,
+          receive: 1.71
+        };
+        // So the IE11 will notice the element...
+        window.setTimeout(function() {
+          document.querySelector('request-timings').timings = timings;
+        }, 1000);
+        </script>
+        <style is="custom-style">
+        :root {
+          --request-timings: {
+            color: rgba(0, 0, 0, 0.74);
+            font-family: 'Roboto', 'Noto', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            font-size: 14px;
+            font-weight: 400;
+            line-height: 20px;
+          }
+        }
+        </style>
+      </template>
+    </arc-demo-snippet>
+    <h3>Minimal settings</h3>
+    <arc-demo-snippet>
+      <template>
+        <request-timings class="colored"></request-timings>
+        <script>
+        var timings = {
+          startTime: 1483368432132,
+          connect: 883.12,
+          send: 0.29,
+          wait: 649.88,
+          receive: 1.71
+        };
+        window.setTimeout(function() {
+          document.querySelectorAll('request-timings')[1].timings = timings;
+        }, 1000);
+        </script>
+        <style is="custom-style">
+        .colored {
+          --request-timings-progress-color: red;
+        }
+        </style>
+      </template>
+    </arc-demo-snippet>
+  </div>
+</body>
+</html>

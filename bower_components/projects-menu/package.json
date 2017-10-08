@@ -1,0 +1,31 @@
+{
+  "name": "projects-menu",
+  "version": "0.1.6",
+  "license": "Apache-2.0 OR CC-BY-4.0",
+  "description": "A list of history items in the ARC main menu",
+  "devDependencies": {
+    "bower": "^1.8.0",
+    "polymer-cli": "^1.2.0"
+  },
+  "private": false,
+  "main": [
+    "projects-menu.html"
+  ],
+  "author": "The Advanced REST client authors <arc@mulesoft.com>",
+  "scripts": {
+    "serve": "polymer serve",
+    "lint": "polymer lint projects-menu.html --rules polymer-1",
+    "test-sauce": "polymer test --plugin sauce --job-name \"projects-menu:local-test\"",
+    "test": "polymer test --plugin local",
+    "deps": "npm install --quiet && bower install --quiet",
+    "update-deps": "npm update --quiet && bower update --quiet"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/advanced-rest-client/projects-menu.git"
+  },
+  "bugs": {
+    "url": "https://github.com/advanced-rest-client/projects-menu/issues",
+    "email": "arc@mulesoft.com"
+  }
+}

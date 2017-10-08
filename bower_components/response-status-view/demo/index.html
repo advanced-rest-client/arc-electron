@@ -1,0 +1,271 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <title>response-status-view demo</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+  <link rel="import" href="../../paper-input/paper-input.html">
+  <link rel="import" href="../../paper-input/paper-textarea.html">
+  <link rel="import" href="../../paper-tabs/paper-tabs.html">
+  <link rel="import" href="../../paper-tabs/paper-tab.html">
+  <link rel="import" href="../../iron-pages/iron-pages.html">
+  <link rel="import" href="../../paper-button/paper-button.html">
+  <link rel="import" href="../../paper-checkbox/paper-checkbox.html">
+  <link rel="import" href="../../arc-definitions/arc-definitions.html">
+
+  <link rel="import" href="../response-status-view.html">
+
+  <style is="custom-style" include="demo-pages-shared-styles">
+
+    :root {
+      --main-section-block: {
+        background-color: #fff;
+        padding: 40px;
+        margin-bottom: 40px;
+        @apply(--shadow-elevation-4dp);
+      }
+      --arc-font-code: {
+        font-family: monospace;
+      }
+    }
+
+    body {
+      background-color: #EEEEEE;
+    }
+
+    .vertical-section-container {
+      max-width: 900px;
+    }
+
+    .row {
+      @apply(--layout-horizontal);
+      width: 100%;
+    }
+
+    paper-textarea {
+      width: 100%;
+    }
+
+    .status-code-input {
+      margin-right: 8px;
+      min-width: 120px;
+    }
+
+    .info {
+      color: rgba(0, 0, 0, 0.54);
+    }
+
+    iron-pages {
+      margin-bottom: 40px;
+    }
+
+    .redirect-timings-form {
+      margin-bottom: 24px;
+      border: 1px #e5e5e5 solid;
+      padding: 16px;
+    }
+
+    .response-data-form {
+      @apply(--main-section-block);
+    }
+
+    .response-status-section {
+      background-color: #ffffff;
+      padding: 40px;
+      @apply(--main-section-block);
+    }
+
+    .basic-options {
+      margin: 12px 0;
+    }
+
+    .basic-options paper-checkbox {
+      margin-right: 12px;
+    }
+  </style>
+</head>
+<body unresolved>
+  <template is="dom-bind" id="app">
+    <div class="vertical-section-container centered">
+      <h3>Display data form</h3>
+      <section class="response-data-form">
+        <p class="info">Set up the request / response data.</p>
+
+        <div class="basic-options">
+          <paper-checkbox checked="{{isXhr}}">XHR type of request</paper-checkbox>
+          <paper-checkbox checked="{{isError}}">Error in the response</paper-checkbox>
+        </div>
+
+        <div class="basic-options">
+          <p class="info">Request info</p>
+          <paper-input type="text" value="{{requestMethod}}" label="HTTP method" required auto-validate></paper-input>
+          <paper-input type="text" value="{{requestUrl}}" label="Request URL" required auto-validate></paper-input>
+        </div>
+
+        <paper-tabs selected="{{selectedTab}}">
+          <paper-tab>Basic settings</paper-tab>
+          <paper-tab hidden$="[[isXhr]]">Response timings</paper-tab>
+          <paper-tab hidden$="[[isXhr]]">Redirect headers</paper-tab>
+          <paper-tab hidden$="[[isXhr]]">Redirect timings</paper-tab>
+        </paper-tabs>
+        <iron-pages selected="[[selectedTab]]">
+          <section>
+            <div class="row">
+              <paper-input class="status-code-input" type="number" value="{{statusCode}}" step="1" min="100" max="599" label="Status code" required auto-validate></paper-input>
+              <paper-input type="text" value="{{statusMessage}}" label="Status message"></paper-input>
+            </div>
+            <div class="row">
+              <paper-textarea label="Request headers" value="{{requestHeaders}}"></paper-textarea>
+            </div>
+            <div class="row">
+              <paper-textarea label="Response headers" value="{{responseHeaders}}"></paper-textarea>
+            </div>
+            <div class="row">
+              <paper-input type="number" value="{{loadingTime}}" step="0.001" min="1" label="Total loading time"></paper-input>
+            </div>
+          </section>
+          <section hidden$="[[isXhr]]">
+            <div class="redirect-timings-form">
+              <div class="row">
+                <paper-input type="number" value="{{timings.connect}}" step="0.0001" label="Connect"></paper-input>
+                <paper-input type="number" value="{{timings.send}}" step="0.0001" label="Send"></paper-input>
+                <paper-input type="number" value="{{timings.wait}}" step="0.0001" label="Wait time"></paper-input>
+                <paper-input type="number" value="{{timings.receive}}" step="0.0001" label="Receive time"></paper-input>
+              </div>
+              <div class="row">
+                <paper-input type="number" value="{{timings.blocked}}" step="0.0001" label="Blocked"></paper-input>
+                <paper-input type="number" value="{{timings.dns}}" step="0.0001" label="DNS"></paper-input>
+                <paper-input type="number" value="{{timings.ssl}}" step="0.0001" label="SSL"></paper-input>
+              </div>
+            </div>
+          </section>
+          <section hidden$="[[isXhr]]">
+            <template is="dom-repeat" items="{{redirects}}">
+              <div class="row">
+                <paper-input class="status-code-input" type="number" value="{{item.status}}" step="1" min="100" max="599" label="Status code" required auto-validate></paper-input>
+                <paper-input type="text" value="{{item.statusText}}" label="Status message"></paper-input>
+              </div>
+              <paper-textarea label="Redirect headers #[[index]]" value="{{item.headers}}"></paper-textarea>
+            </template>
+            <paper-button on-tap="addRedirectHeader">Add redirect headers</paper-button>
+          </section>
+          <section hidden$="[[isXhr]]">
+            <template is="dom-repeat" items="{{redirectTimings}}">
+              <div class="redirect-timings-form">
+                <div class="row">
+                  <paper-input type="number" value="{{item.connect}}" step="0.0001" label="Connect"></paper-input>
+                  <paper-input type="number" value="{{item.send}}" step="0.0001" label="Send"></paper-input>
+                  <paper-input type="number" value="{{item.wait}}" step="0.0001" label="Wait time"></paper-input>
+                  <paper-input type="number" value="{{item.receive}}" step="0.0001" label="Receive time"></paper-input>
+                </div>
+                <div class="row">
+                  <paper-input type="number" value="{{item.blocked}}" step="0.0001" label="Blocked"></paper-input>
+                  <paper-input type="number" value="{{item.dns}}" step="0.0001" label="DNS"></paper-input>
+                  <paper-input type="number" value="{{item.ssl}}" step="0.0001" label="SSL"></paper-input>
+                </div>
+              </div>
+            </template>
+            <paper-button on-tap="addRedirectTimings">Add redirect timings</paper-button>
+          </section>
+        </iron-pages>
+      </section>
+      <h3>The `response-status-view`</h3>
+      <section class="response-status-section">
+        <response-status-view
+          opened
+          status-code="[[statusCode]]"
+          status-message="[[statusMessage]]"
+          request-headers="[[requestHeaders]]"
+          response-headers="[[responseHeaders]]"
+          loading-time="[[loadingTime]]"
+          http-message="[[_computeHttpMessage(requestHeaders)]]"
+          redirects="[[redirects]]"
+          redirect-timings="[[redirectTimings]]"
+          timings="[[timings]]"
+          is-xhr="[[isXhr]]"
+          response-error="[[responseError]]"
+          request-method="[[requestMethod]]"
+          request-url="[[requestUrl]]"></response-status-view>
+      </section>
+    </div>
+    <arc-definitions></arc-definitions>
+  </template>
+
+  <script>
+  (function(app) {
+    var initHeaders = 'content-type: application/json\ncontent-length: 128\n';
+    initHeaders += 'content-encoding: gzip';
+    app.selectedTab = 0;
+    app.statusCode = 200;
+    app.loadingTime = 124.12;
+    app.statusMessage = 'OK';
+    app.requestHeaders = 'accept: application/json';
+    app.responseHeaders = initHeaders;
+    app.redirects = [];
+    app.redirectTimings = [];
+    app.requestUrl = 'https://anypoint.mulesoft.com/';
+    app.requestMethod = 'GET';
+    app.timings = {
+      connect: 12.1345,
+      send: 2.12,
+      wait: 135.15,
+      receive: 112.412
+    };
+    app.isXhr = false;
+    app.isError = false;
+    app.responseError = undefined;
+    app.observers = [
+      '_isErrorChanged(isError)'
+    ];
+
+    app._isErrorChanged = function(isError) {
+      if (isError) {
+        app.responseError = new Error('Error in the response.');
+      } else {
+        app.responseError = undefined;
+      }
+    };
+
+    app._computeHttpMessage = function(headers) {
+      if (!headers) {
+        return undefined;
+      }
+      var msg = 'GET /get HTTP/1.1\n';
+      msg += headers;
+      return msg;
+    };
+    app.addRedirectHeader = function() {
+      app.push('redirects', {
+        headers: 'Location: https://domain.com\n',
+        status: 301,
+        statusText: 'Moved'
+      });
+    };
+    app.addRedirectTimings = function() {
+      app.push('redirectTimings', {
+        connect: 12.1345,
+        send: 2.12,
+        wait: 135.15,
+        receive: 112.412
+      });
+    };
+  })(document.querySelector('#app'));
+  </script>
+</body>
+</html>

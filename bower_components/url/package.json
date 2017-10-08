@@ -1,0 +1,10 @@
+{
+  "name": "url-polyfill",
+  "version": "0.5.7",
+  "main": "url.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/webcomponents/URL.git"
+  },
+  "license": "SAX-PD"
+}

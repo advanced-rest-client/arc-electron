@@ -1,0 +1,274 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../arc-polyfills/arc-polyfills.html">
+<link rel="import" href="../app-pouchdb/pouchdb.html">
+<!--
+# url-history-saver web component for ARC
+
+An element that saves Request URL in the history and serves list of saved URLs.
+
+The API of this element can be called directly and it is event based.
+You can either call `query()` or `store()` function or use corresponding
+`url-history-query` and `url-history-store` custom events
+
+The `url-history-query` event expects the `q` property set on the `detail`
+object. It will be passed to the `query()` function and result of calling this
+function is set on detail's `result` property.
+
+### Example
+
+```javascript
+var event = new CustomEvent('url-history-query', {
+  detail: {
+    q: 'http://mulesoft.com/path/'
+  },
+  cancelable: true,
+  bubbles: true, // if not fired on window object
+  composed: true // if fired in shaddow DOM
+});
+document.dispatchEvent(event);
+```
+
+The `url-history-store` expects to read a `value` property of the `detail`
+object and it passes it to the `store()` function. Unlike the other event,
+it doesn't adds promise to the details object.
+
+### Example
+
+```javascript
+var event = new CustomEvent('url-history-store', {
+  detail: {
+    value: 'http://mulesoft.com/path/'
+  },
+  cancelable: true,
+  bubbles: true, // if not fired on window object
+  composed: true // if fired in shaddow DOM
+});
+document.dispatchEvent(event);
+```
+
+Both events are cancelled and propagation of the event is stopped. Therefore
+the event should have to be dispatched with `caneclable` flag set to true.
+
+The element listens for events on the `window` object so it can be placed
+anywhere in the DOM.
+
+### Example
+
+```html
+<body>
+  <url-history-saver></url-history-saver>
+</body>
+```
+
+@group Logic Elements
+@element url-history-saver
+-->
+<script>
+Polymer({
+  is: 'url-history-saver',
+
+  attached: function() {
+    this.listen(window, 'url-history-store', '_handleStore');
+    this.listen(window, 'url-history-query', '_handleQuery');
+  },
+
+  detached: function() {
+    this.unlisten(window, 'url-history-store', '_handleStore');
+    this.unlisten(window, 'url-history-query', '_handleQuery');
+  },
+  /**
+   * @return {PouchDB} A PouchDB instance.
+   */
+  get _db() {
+    return new PouchDB('url-history', {
+      // jscs:disable
+      revs_limit: 100
+      // jscs:enable
+    });
+  },
+  /**
+   * Handles `url-history-store` custom event and stores an URL in the
+   * datastore.
+   * The event is canceled and propagation is topped upon handling. The
+   * event should be fired with `cancelable` flag set to `true`.
+   *
+   * It calls `store()` function with the `value` property of the `detail`
+   * object as an attribute.
+   *
+   * It creates a new `result` property on the `detail` object which is a
+   * result of calling `store()` function.
+   */
+  _handleStore: function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    var url = e.detail.value;
+    if (!url) {
+      throw new Error('The "url" property is not defined.');
+    }
+    e.detail.result = this.store(url);
+  },
+  /**
+   * It creates new entry if the URL wasn't already in the data store or
+   * updates a `time` and `cnt` property of existing item.
+   *
+   * @param {String} url A URL to store in the history store.
+   * @return {Promise} Resolved promise to the insert response of PouchDB
+   * object (`ok`, `id` and `rev` keys)
+   */
+  store: function(url) {
+    var context = this;
+    var db = this._db;
+    return db.get(url)
+    .catch(function(e) {
+      if (e.status === 404) {
+        return;
+      }
+      return context._handleException(e);
+    })
+    .then(function(doc) {
+      if (!doc) {
+        doc = {
+          _id: url,
+          cnt: 1,
+          time: Date.now()
+        };
+      } else {
+        doc.cnt++;
+        doc.time = Date.now();
+      }
+      return db.put(doc);
+    })
+    .catch(function(e) {
+      return context._handleException(e);
+    });
+  },
+
+  /**
+   * Handles the `url-history-query` custom event.
+   * It cancels the event and prohibiits bubbling. Therefore the event should be
+   * fired as a `cancelable`. It adds the `result` property to the `detail`
+   * object which carries a Promise that will resolve to a list of PouchDB
+   * documentnts. It is the same as result as for calling `query()` functiuon.
+   *
+   * The event must contain a `q` property with the query string that is passed
+   * to the `query()` function.
+   */
+  _handleQuery: function(e, detail) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    var q = detail.q;
+    if (!q) {
+      e.detail.error = true;
+      e.detail.message = 'You must set query parameter';
+      return;
+    }
+    e.detail.result = this.query(q);
+  },
+  /**
+   * Gets a list of maching URLs from the datastore.
+   * List elements are carrying the `url` property with the full
+   * URL and `cnt` property with number of times this URL has been updated in
+   * the data store. `cnt` is used to sort the results.
+   *
+   * Additional properties are regular PouchDB properties like `_id` and `_rev`.
+   *
+   * @param {String} q A string to search for. It result with entries that url
+   * contains (not start with!) a `q`.
+   * @return {Promise} Resolved promise to a list of history items.
+   */
+  query: function(q) {
+    var db = this._db;
+    var context = this;
+    return db.allDocs()
+    .then(function(response) {
+      return response.rows.filter(function(item) {
+        var url = item.id;
+        return url.indexOf(q) !== -1;
+      });
+    })
+    .then(function(matches) {
+      return matches.map(function(i) {
+        return db.get(i.id);
+      });
+    })
+    .then(function(r) {
+      return Promise.all(r);
+    })
+    .then(function(items) {
+      // That's for sorting function.
+      items = items.map(function(i) {
+        var d = new Date(i.time);
+        d.setHours(0);
+        d.setMinutes(0);
+        d.setSeconds(0);
+        d.setMilliseconds(0);
+        i._time = d.getTime();
+        i.url = i._id;
+        return i;
+      });
+      return items.sort(context._sortFunction);
+    })
+    .catch(function(cause) {
+      return context._handleException(cause);
+    });
+  },
+  /**
+   * A function used to sort query list items. It relays on two properties that
+   * are set by query function on array entries: `_time` which is a timestamp of
+   * the entry and `cnt` which is number of times the URL has been used.
+   */
+  _sortFunction: function(a, b) {
+    var aTime = a._time;
+    var bTime = b._time;
+    var aCnt = a.cnt;
+    var bCnt = b.cnt;
+    if (aTime > bTime) {
+      return 1;
+    }
+    if (aTime === bTime) {
+      if (aCnt > bCnt) {
+        return 1;
+      }
+      if (aCnt < bCnt) {
+        return -1;
+      }
+      return 0;
+    }
+    return -1;
+  },
+  // Handles exceptions to log message ad throws the same exception
+  _handleException: function(e) {
+    this.fire('app-log', {
+      'message': ['Url history model', e],
+      'level': 'error'
+    });
+    console.error('Url history model', e);
+    var message;
+    if (e instanceof Error) {
+      message = e.message;
+    } else {
+      message = JSON.stringify(e);
+    }
+    this.fire('send-analytics', {
+      type: 'exception',
+      description: message,
+      fatal: true
+    });
+    throw new Error(e.message || e);
+  }
+});
+</script>

@@ -1,0 +1,518 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../paper-masked-input/paper-masked-input.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../arc-icons/arc-icons.html">
+<link rel="import" href="../paper-styles/paper-styles.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../iron-form/iron-form.html">
+<link rel="import" href="../paper-item/paper-item.html">
+<link rel="import" href="../paper-toast/paper-toast.html">
+<link rel="import" href="../paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../paper-listbox/paper-listbox.html">
+<link rel="import" href="../oauth2-scope-selector/oauth2-scope-selector.html">
+<link rel="import" href="../paper-spinner/paper-spinner.html">
+<link rel="import" href="auth-methods-behavior.html">
+<!--
+The `<auth-method-oauth1>` element displays a form to provide the OAuth 1a settings.
+
+### Example
+```
+<auth-method-oauth1 consumer-key="xyz" toke="abc"></auth-method-oauth1>
+```
+
+### Required form fields
+- Consumer key
+- Token
+- Timestamp
+- Nonce
+- Signature method
+
+### Styling
+`<auth-methods>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--auth-method-oauth1` | Mixin applied to the element. | `{}`
+`--auth-method-panel` | Mixin applied to all auth elements. | `{}`
+
+### Theming
+Use this mixins as a theming option across all ARC elements.
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--icon-button` | Mixin applied to `paper-icon-buttons`. | `{}`
+`--icon-button-hover` | Mixin applied to `paper-icon-buttons` when hovered. | `{}`
+`--input-line-color` | Mixin applied to the input underline | `{}`
+`--form-label` | Mixin applied to form labels. It will not affect `paper-*` labels | `{}`
+`--auth-button` | Mixin applied to authorization and next buttons` | `{}`
+`--auth-button-hover` | Mixin for :hover state for authorization and next buttons` | `{}`
+`--auth-button-disabled` | Mixin for disabled state for authorization and next buttons` | `{}`
+
+@group UI Elements
+@element auth-method-oauth1
+@demo demo/oauth1.html
+-->
+<dom-module id="auth-method-oauth1">
+  <template>
+    <style>
+    :host {
+      display: block;
+      @apply(--auth-method-panel);
+      @apply(--auth-method-oauth1);
+
+      --paper-icon-button: {
+        color: var(--hint-trigger-color, rgba(0, 0, 0, 0.54));
+        transition: color 0.25s linear;
+        @apply(--icon-button);
+      }
+
+      --paper-icon-button-hover: {
+        color: var(--hint-trigger-hover-color, rgba(0, 0, 0, 0.78));
+        @apply(--icon-button-hover);
+      }
+
+      --paper-input-container-focus-color: {
+        @apply(--input-line-color);
+      }
+    }
+
+    paper-input,
+    paper-masked-input {
+      max-width: 700px;
+    }
+
+    .hints .hint {
+      display: none;
+      color: rgba(0, 0, 0, 0.54);
+    }
+
+    .hints .hint[active] {
+      display: block;
+    }
+
+    .form-panel {
+      @apply(--layout-horizontal);
+    }
+
+    .form {
+      @apply(--layout-flex);
+      max-width: 700px;
+    }
+
+    .hints {
+      margin-left: 0;
+      padding-left: 0;
+      border-left: 1px rgba(0,0,0,0) solid;
+      max-width: 300px;
+      width: 0;
+      @apply(--paper-font-body1);
+      transition: width 0.35s linear, margin 0.2s linear, padding 0.2s linear, border-color 0.15s linear;
+      overflow: hidden;
+    }
+
+    .hints.active {
+      width: 100%;
+      margin-left: 16px;
+      padding-left: 16px;
+      border-left-color: rgba(0,0,0,0.12);
+      overflow: auto;
+    }
+
+    oauth2-scope-selector {
+      margin: 24px 0;
+    }
+
+    .grant-dropdown {
+      width: 320px;
+    }
+
+    .auth-button {
+      background-color: var(--primary-color);
+      color: rgba(255, 255, 255, 0.87);
+      @apply(--auth-button);
+    }
+
+    .auth-button:hover {
+      @apply(--auth-button-hover);
+    }
+
+    .auth-button[disabled] {
+      background-color: rgba(0, 0, 0, 0.24);
+      color: rgba(0, 0, 0, 0.54);
+      @apply(--auth-button-disabled);
+    }
+
+    .authorize-actions {
+      margin-top: 12px;
+    }
+
+    .read-only-param-field {
+      padding: 12px;
+      background-color: rgba(0, 0, 0, 0.12);
+      @apply(--paper-font-body1);
+      display: block;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      word-break: break-all;
+    }
+
+    .current-token {
+      margin-top: 24px;
+    }
+
+    .top-line {
+      @apply(--layout-horizontal);
+      @apply(--layout-center);
+    }
+
+    .enable-container {
+      @apply(--layout-flex);
+    }
+
+    label {
+      @apply(--form-label);
+    }
+
+    </style>
+
+    <div class="form-panel">
+      <div class="form">
+        <form is="iron-form" id="form">
+
+          <paper-masked-input auto-validate required label="Consumer key" value="{{consumeKey}}" data-field="consumeKey" on-focus="_activateHint" on-blur="_deactivateHint" on-mouseover="_activateHint" on-mouseout="_deactivateHint" autocomplete="on"></paper-masked-input>
+          <paper-masked-input label="Consumer secret" value="{{consumerSecret}}" data-field="consumerSecret" on-focus="_activateHint" on-blur="_deactivateHint" on-mouseover="_activateHint" on-mouseout="_deactivateHint" autocomplete="on"></paper-masked-input>
+          <paper-masked-input auto-validate required label="Token" value="{{token}}" data-field="token" on-focus="_activateHint" on-blur="_deactivateHint" on-mouseover="_activateHint" on-mouseout="_deactivateHint" autocomplete="on"></paper-masked-input>
+          <paper-masked-input label="Token secret" value="{{tokenSecret}}" data-field="tokenSecret" on-focus="_activateHint" on-blur="_deactivateHint" on-mouseover="_activateHint" on-mouseout="_deactivateHint" autocomplete="on"></paper-masked-input>
+
+          <paper-input auto-validate required label="Timestamp" value="{{timestamp}}" type="text" data-field="timestamp" on-focus="_activateHint" on-blur="_deactivateHint" on-mouseover="_activateHint" on-mouseout="_deactivateHint" autocomplete="on">
+            <paper-icon-button suffix on-tap="_genTimestamp" icon="arc:cached" alt="Regenerate input icon" title="Regenerate timestamp"></paper-icon-button>
+            <paper-icon-button suffix on-tap="_clearField" icon="arc:clear" alt="Clear input icon" title="Clear input"></paper-icon-button>
+          </paper-input>
+
+          <paper-input auto-validate required label="Nonce" value="{{nonce}}" type="text" data-field="nonce" on-focus="_activateHint" on-blur="_deactivateHint" on-mouseover="_activateHint" on-mouseout="_deactivateHint" autocomplete="on">
+            <paper-icon-button suffix on-tap="_genNonce" icon="arc:cached" alt="Regenerate input icon" title="Regenerate nonce"></paper-icon-button>
+            <paper-icon-button suffix on-tap="_clearField" icon="arc:clear" alt="Clear input icon" title="Clear input"></paper-icon-button>
+          </paper-input>
+
+          <paper-input label="Realm" value="{{realm}}" type="text" data-field="realm" on-focus="_activateHint" on-blur="_deactivateHint" on-mouseover="_activateHint" on-mouseout="_deactivateHint" autocomplete="on"></paper-input>
+
+          <paper-dropdown-menu label="Signature method" class="grant-dropdown" required auto-validate>
+            <paper-listbox class="dropdown-content" selected="{{signatureMethod}}" attr-for-selected="data-type">
+              <paper-item data-type="HMAC-SHA256">HMAC-SHA256</paper-item>
+              <paper-item data-type="HMAC-SHA1">HMAC-SHA1</paper-item>
+              <paper-item data-type="PLAINTEXT">PLAINTEXT</paper-item>
+            </paper-listbox>
+          </paper-dropdown-menu>
+
+          <div class="authorize-actions">
+            <paper-button disabled$="[[_authorizing]]" class="auth-button" on-tap="authorize">Authorize</paper-button>
+            <paper-spinner active="[[_authorizing]]"></paper-spinner>
+          </div>
+
+          <div class="current-token" hidden$="[[!signatureValue]]">
+            <label>Current signature</label>
+            <p class="read-only-param-field">[[signatureValue]]</p>
+          </div>
+        </form>
+      </div>
+      <div class$="[[_computeHintsClass(hintsEnabled)]]">
+        <p class="hint" field="consumeKey">The consumer key identifies which application is making the request. It can be found in your provider's API console.</p>
+        <p class="hint" field="consumerSecret">The consumer secret is generated by your provider unique string for your app. Check provider's console to get the code.</p>
+        <p class="hint" field="token">The token typically represents a user’s permission to share access to their account with your application. You can typically generate the token in your provider's API console.</p>
+        <p class="hint" field="tokenSecret">A secret used by the application to establish ownership of a given Token. As stored by the Service Provider.</p>
+        <p class="hint" field="timestamp">The timestamp parameter indicates when the request was created. This value should be the number of seconds since the Unix epoch at the point the request is generated, and should be easily generated in most programming languages.</p>
+        <p class="hint" field="nonce">The nonce is a unique token your application should generate for each unique request. It was autogenerated when you've opened this form.</p>
+        <p class="hint" field="realm"></p>
+      </div>
+    </div>
+    <paper-toast text="" duration="5000"></paper-toast>
+  </template>
+  <script>
+  Polymer({
+    is: 'auth-method-oauth1',
+    behaviors: [ArcBehaviors.AuthMethodsBehavior],
+    /**
+     * Fired when user requested to perform an authorization.
+     * The details object vary depends on the `grantType` property.
+     * However this event always fire two properties set on the `detail` object: `type` and
+     * `clientId`.
+     *
+     * @event oauth1-token-requested
+     * @param {String} consumeKey The consumer key. May be undefined if not provided.
+     * @param {String} consumerSecret May be undefined if not provided.
+     * @param {String} token May be undefined if not provided.
+     * @param {String} tokenSecret May be undefined if not provided.
+     * @param {String} timestamp May be undefined if not provided.
+     * @param {String} nonce May be undefined if not provided.
+     * @param {String} realm May be undefined if not provided.
+     * @param {String} signatureMethod May be undefined if not provided.
+     */
+    /**
+     * Fired when the any of the auth method settings has changed.
+     * This event will be fired quite frequently - each time anything in the text field changed.
+     * With one exception. This event will not be fired if the validation of the form didn't passed.
+     *
+     * @event auth-settings-changed
+     * @param {Object} settings Current settings. See the
+     * `oauth1-token-requested` for detailed description.
+     * @param {String} type The authorization type - oauth1
+     */
+    properties: {
+      // Client ID aka consumer key
+      consumeKey: {
+        type: String,
+        notify: true
+      },
+      // The client secret aka consumer secret
+      consumerSecret: {
+        type: String,
+        notify: true
+      },
+      // Oauth 1 token (from the oauth console)
+      token: {
+        type: String,
+        notify: true
+      },
+      // Oauth 1 token secret (from the oauth console)
+      tokenSecret: {
+        type: String,
+        notify: true
+      },
+      // Timestamp
+      timestamp: {
+        type: Number,
+        notify: true
+      },
+      // The nonce generated for this request
+      nonce: {
+        type: String,
+        notify: true
+      },
+      // Optional realm
+      realm: {
+        type: String,
+        notify: true
+      },
+      /**
+       * Signature method. Enum {`HMAC-SHA256`, `HMAC-SHA1`, `PLAINTEXT`}
+       */
+      signatureMethod: {
+        type: String,
+        value: 'HMAC-SHA1',
+        notify: true
+      },
+      // Signature generated for this set of parameters.
+      signatureValue: {
+        type: String,
+        value: ''
+      },
+      // If true then half of the space will be available for hints.
+      hintsEnabled: {
+        type: Boolean,
+        value: false
+      },
+      // True when currently authorizing the user.
+      _authorizing: Boolean
+    },
+
+    observers: [
+      //jscs:disable
+      '_settingsChanged(consumeKey, consumerSecret, token, tokenSecret, timestamp, nonce, realm, signatureMethod)'
+      //jscs:enable
+    ],
+
+    attached: function() {
+      this.listen(window, 'oauth1-error', '_oauth1ErrorHandler');
+    },
+
+    detached: function() {
+      this.unlisten(window, 'oauth1-error', '_oauth1ErrorHandler');
+    },
+
+    ready: function() {
+      this._genTimestamp();
+      this._genNonce();
+    },
+
+    /**
+     * Gets a map of current settings (user provided data).
+     */
+    get settings() {
+      return this._getSettings();
+    },
+
+    /**
+     * Validate the form.
+     *
+     * @param {Boolean} passive If true then it will check validity of the form but will not
+     * highlight the fields when invalid. Default to false.
+     * @return {Boolean} `true` if valid, `false` otherwise.
+     */
+    validate: function(passive) {
+      return passive ? this.$.form.checkValidity() : this.$.form.validate();
+    },
+
+    _settingsChanged: function() {
+      var validationResult = this.$.form.validate();
+      if (!validationResult) {
+        return;
+      }
+      var settings = this._getSettings();
+      var detail = {
+        settings: settings,
+        type: 'oauth1'
+      };
+      this.fire('auth-settings-changed', detail);
+    },
+
+    _getSettings: function() {
+      return {
+        consumeKey: this.consumeKey,
+        consumerSecret: this.consumerSecret,
+        token: this.token,
+        tokenSecret: this.tokenSecret,
+        timestamp: this.timestamp,
+        nonce: this.nonce,
+        realm: this.realm,
+        signatureMethod: this.signatureMethod
+      };
+    },
+
+    // Removes a value from the (paper-)input going up through path of the event.
+    _clearField: function(e) {
+      e = Polymer.dom(e);
+      var path = e.path;
+      var inputTarget;
+      while ((inputTarget = path.shift())) {
+        if (inputTarget.nodeName === 'INPUT' || inputTarget.nodeName === 'PAPER-INPUT') {
+          break;
+        }
+      }
+      if (!inputTarget) {
+        return;
+      }
+      inputTarget.value = '';
+    },
+    // Handler for UI events to activate a hint.
+    _activateHint: function(e) {
+      if (!this.hintsEnabled) {
+        return;
+      }
+      var field = this.__getHintField(e);
+      if (!field) {
+        return;
+      }
+      field.setAttribute('active', true);
+    },
+    // Handler for UI events to deactivate a hint.
+    _deactivateHint: function(e) {
+      if (!this.hintsEnabled) {
+        return;
+      }
+      var field = this.__getHintField(e);
+      if (!field) {
+        return;
+      }
+      field.removeAttribute('active');
+    },
+    // Searches the DOM for related to evet's target hint.
+    __getHintField: function(e) {
+      e = Polymer.dom(e);
+      var set = e.localTarget.dataset;
+      if (!('field' in set)) {
+        return;
+      }
+      var field = set.field;
+      return Polymer.dom(this.root).querySelector('.hint[field="' + field + '"]');
+    },
+    // Computes class for hints pane depending on `hintsEnabled` state.
+    _computeHintsClass: function(hintsEnabled) {
+      var clazz = 'hints';
+      if (hintsEnabled) {
+        clazz += ' active';
+      }
+      return clazz;
+    },
+    // Toggles hits panel
+    _toggleHints: function() {
+      this.hintsEnabled = !this.hintsEnabled;
+    },
+
+    // Handler for "authorize" button click. Sends the `oauth2-token-requested` event.
+    authorize: function() {
+      var detail = {};
+      if (this.consumeKey) {
+        detail.consumeKey = this.consumeKey;
+      }
+      if (this.consumeKey) {
+        detail.consumeKey = this.consumeKey;
+      }
+      if (this.consumerSecret) {
+        detail.consumerSecret = this.consumerSecret;
+      }
+      if (this.token) {
+        detail.token = this.token;
+      }
+      if (this.tokenSecret) {
+        detail.tokenSecret = this.tokenSecret;
+      }
+      if (this.timestamp) {
+        detail.timestamp = this.timestamp;
+      }
+      if (this.nonce) {
+        detail.nonce = this.nonce;
+      }
+      if (this.realm) {
+        detail.realm = this.realm;
+      }
+      if (this.signatureMethod) {
+        detail.signatureMethod = this.signatureMethod;
+      }
+      this.fire('oauth1-token-requested', detail);
+    },
+
+    _oauth1ErrorHandler: function(e, detail) {
+      this._authorizing = false;
+
+      var toast = this.$$('paper-toast');
+      toast.text = detail.message;
+      toast.opened = true;
+    },
+
+    _genTimestamp: function() {
+      var t = Math.floor(Date.now() / 1000);
+      this.timestamp = t;
+    },
+
+    _genNonce: function(length) {
+      var result = [];
+      var chrs = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      var chrsLength = chrs.length;
+      length = Number(length || 32);
+      if (length !== length) {
+        length = 32;
+      }
+      for (var i = 0; i < length; i++) {
+        result[result.length] = (chrs[Math.floor(Math.random() * chrsLength)]);
+      }
+      this.nonce = result.join('');
+    }
+
+  });
+  </script>
+</dom-module>

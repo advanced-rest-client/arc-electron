@@ -1,0 +1,50 @@
+{
+  "name": "web-socket",
+  "version": "1.0.6",
+  "license": "Apache-2.0",
+  "description": "A we-socket element for Polymer.",
+  "authors": [
+    "The Advanced REST Client authors",
+    "Pawel Psztyc <jarrodek@gmail.com>"
+  ],
+  "scripts": {
+		"lint": "gulp lint",
+    "deps": "npm install && bower install"
+	},
+  "repository": {
+		"type": "git",
+		"url": "git://github.com/advanced-rest-client/web-socket.git"
+	},
+  "bugs": {
+		"url": "https://github.com/advanced-rest-client/web-socket/issues"
+	},
+  "private": false,
+  "devDependencies": {
+    "conventional-github-releaser": "^1.1.1",
+    "gulp-conventional-changelog": "^1.1.0",
+    "del": "^1.1.1",
+    "gulp": "^3.8.5",
+    "gulp-batch": "^1.0.5",
+    "gulp-bump": "^2.1.0",
+    "gulp-crisper": "^0.0.5",
+    "gulp-flatten": "0.0.4",
+    "gulp-git": "^1.7.1",
+    "gulp-html-extract": "^0.0.3",
+    "gulp-if": "^2.0.0",
+    "gulp-insert-lines": "0.0.4",
+    "gulp-jscs": "^3.0.0",
+    "gulp-jscs-stylish": "^1.1.2",
+    "gulp-jshint": "^1.6.3",
+    "gulp-load-plugins": "^1.2.4",
+    "gulp-replace": "^0.5.3",
+    "gulp-size": "^1.0.0",
+    "gulp-util": "^3.0.7",
+    "jshint-stylish": "^2.0.0",
+    "merge-stream": "^0.1.8",
+    "run-sequence": "^1.0.2",
+    "tiny-lr": "^0.1.6"
+  },
+  "engines": {
+    "node": ">=0.10.0"
+  }
+}

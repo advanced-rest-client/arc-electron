@@ -1,0 +1,119 @@
+<!--
+@license
+Copyright 2017 The Advanced REST client authors <arc@mulesoft.com>
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<script>
+(function(global) {
+  'use strict';
+
+  global.ArcBehaviors = global.ArcBehaviors || {};
+  /**
+   * A behavior to implement an element that is aware when it's displayed
+   * to the user. It allows to specify an attribute that is used to compute
+   * whether the element is opened or closed.
+   *
+   * The reason to use this behavior is to prohibit any computations that
+   * shouldn't be pergormed when the element is not displayed. For example it
+   * can be used if route parameters are directly passed to the element and
+   * it may perform computation even if router conencted element that controls
+   * view disabled the element (hidden it from the view).
+   *
+   * Elements implementing this behavior have `_isOpened` private property that tells
+   * the element if the element is currently in use. This property can be controlled by the
+   * `attrForOpened` property. If the property is set and corresponding to it's
+   * value attribute is set then the element is considered as opened.
+   * Also, if the element doesn't have `attrForOpened` value the `_isOpened`
+   * property is set to true.
+   *
+   * ### Example
+   *
+   * ```html
+   * <iron-pages selected-attribute="opened" selected="0">
+   *  <implementation-1 attr-for-opened="opened"></implementation-1>
+   *  <implementation-2 attr-for-opened="opened"></implementation-2>
+   * </iron-pages>
+   * ```
+   * In the example, first child of the `<iron-pages>` element has `opened`
+   * attribute set. This attribute change is recognized by this element and
+   * `_isOpened` attribute value is updated.
+   *
+   * @polymerBehavior ArcBehaviors.OpenablePanelBehavior
+   */
+  global.ArcBehaviors.OpenablePanelBehavior = {
+    properties: {
+      /**
+       * An attribute name describing if the element is currently displayed.
+       * If set, the element will not compute values until the attribute becomes truly.
+       *
+       * This is helpful when this editor is used alongside other payload editors and only one
+       * at the time should perform a computation.
+       *
+       * Note that setting a property instead of attribute will not work. It must be an
+       * attribute.
+       */
+      attrForOpened: String,
+      /**
+       * Will be set to true if the element is opened and `attrForOpened` is set or if
+       * `attrForOpened` is not set when the element is initialized.
+       */
+      _isOpened: Boolean
+    },
+    // Returns a value of the `attrForOpened` camel cased
+    get _propertyForOpened() {
+      if (!this.attrForOpened) {
+        return;
+      }
+      return Polymer.CaseMap.dashToCamelCase(this.attrForOpened);
+    },
+    // Returns current value of the `attrForOpened` attribute
+    get _openedValue() {
+      var prop = this._propertyForOpened;
+      if (prop) {
+        return this.hasAttribute(prop);
+      }
+      return true;
+    },
+
+    observers: [
+      '__attrForOpenedChanged(attrForOpened)'
+    ],
+
+    ready: function() {
+      this.__attrForOpenedChanged(this.attrForOpened);
+    },
+
+    attributeChanged: function(name) {
+      var prop = this._propertyForOpened;
+      if (prop && prop === name) {
+        this.__updateOpenedState(name);
+      }
+    },
+    // Sets `_isOpened` to true if the `attrForOpened` is removed.
+    __attrForOpenedChanged: function(attrForOpened) {
+      if (!attrForOpened && !this._isOpened) {
+        this.set('_isOpened', true);
+      } else if (attrForOpened) {
+        this.__updateOpenedState(attrForOpened);
+      }
+    },
+
+    __updateOpenedState: function(name) {
+      var state = this.getAttribute(name) !== null;
+      if (this._isOpened !== state) {
+        this.set('_isOpened', state);
+      }
+    }
+  };
+})(window);
+</script>

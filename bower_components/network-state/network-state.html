@@ -1,0 +1,82 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<!--
+`<network-state>` A simple element to detect and notify online/offline swtatus
+
+### Example
+```
+<network-state online="{{networkEnabled}}"></network-state>
+```
+
+@group Logic Elements
+@element network-state
+@demo demo/index.html
+-->
+<script>
+Polymer({
+  is: 'network-state',
+
+  /**
+   * Fired when online state changed.
+   *
+   * @event network-state-changed
+   * @param {Boolean} online The state of the network.
+   */
+
+  properties: {
+    // True when online, false when offline.
+    online: {
+      type: Boolean,
+      readOnly: true,
+      notify: true,
+      value: function() {
+        return navigator.onLine;
+      }
+    }
+  },
+
+  observers: ['_onlineChanged(online)'],
+
+  attached: function() {
+    this.listen(window, 'offline', '_onOffline');
+    this.listen(window, 'online', '_onOnline');
+  },
+
+  detached: function() {
+    this.unlisten(window, 'offline', '_onOffline');
+    this.unlisten(window, 'online', '_onOnline');
+  },
+
+  ready: function() {
+    this._onlineChanged(this.online);
+  },
+  // Handler for the `online` browser event
+  _onOnline: function() {
+    this._setOnline(true);
+  },
+  // Handler for the `offline` browser event
+  _onOffline: function() {
+    this._setOnline(false);
+  },
+
+  _onlineChanged: function(state) {
+    this.fire('network-state-changed', {
+      online: state
+    }, {
+      composed: true
+    });
+  }
+});
+</script>

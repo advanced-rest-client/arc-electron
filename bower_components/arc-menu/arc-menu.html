@@ -1,0 +1,215 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../projects-menu/projects-menu.html">
+<link rel="import" href="../saved-menu/saved-menu.html">
+<link rel="import" href="../history-menu/history-menu.html">
+<link rel="import" href="../paper-item/paper-item.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../iron-selector/iron-selector.html">
+<link rel="import" href="../arc-icons/arc-icons.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+
+<!--
+Side navigation for Advanced REST Client.
+
+### Example
+```
+<arc-menu selected-request="request-id" route-base="request"></arc-menu>
+```
+
+### Styling
+`<arc-menu>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--arc-menu` | Mixin applied to the element | `{}`
+`--arc-menu-item-background-color` | Background color of each menu item | `transparent`
+`--arc-menu-selected-background-color` | Background color of selected menu item | `--accent-color`
+`--arc-menu-selected-color` | Color of selected menu item | `#fff`
+`--arc-menu-hover-background-color` | Background color of menu item when hovering | `#cccccc`
+
+@group UI Elements
+@element arc-menu
+@demo demo/index.html
+-->
+<dom-module id="arc-menu">
+  <template>
+    <style>
+    :host {
+      display: block;
+      height: var(--arc-menu-height, 100vh);
+      background-color: var(--arc-menu-background-color, #EEEEEE);
+      @apply --layout-vertical;
+      @apply --arc-menu;
+    }
+
+    .menu {
+      @apply --layout-flex;
+      @apply --layout-vertical;
+      overflow: hidden;
+    }
+
+    .flex {
+      @apply --layout-flex;
+    }
+
+    paper-item {
+      cursor: pointer;
+      transition: background-color 0.15s linear;
+      background-color: var(--arc-menu-item-background-color, transparent);
+    }
+
+    paper-item:focus {
+      background-color: var(--arc-menu-selected-background-color, --accent-color);
+      color: var(--arc-menu-selected-color, #fff);
+    }
+
+    paper-item:focus::before {
+      background-color: transparent;
+    }
+
+    paper-item.iron-selected {
+      background-color: var(--arc-menu-selected-background-color, --accent-color);
+      color: var(--arc-menu-selected-color, #fff);
+    }
+
+    paper-item.iron-selected paper-icon-button {
+      color: var(--arc-menu-selected-color, #fff);
+    }
+
+    paper-item:not(:focus):not(.iron-selected):not([selected]):hover {
+      background-color: var(--arc-menu-hover-background-color, #cccccc);
+    }
+
+    .toggle-icon {
+      transform: rotateZ(0deg);
+      transition: transform 0.3s linear;
+    }
+
+    .toggle-icon.opened {
+      transform: rotateZ(-180deg);
+    }
+
+    history-menu,
+    saved-menu,
+    projects-menu {
+      @apply --layout-flex;
+    }
+
+    paper-icon-button {
+      cursor: pointer;
+    }
+    </style>
+    <iron-selector selected="[[routeBase]]" attr-for-selected="data-route" rel="menu" class="menu">
+      <paper-item data-route="request" on-tap="_itemTap">HTTP request</paper-item>
+      <paper-item data-route="socket" on-tap="_itemTap">Socket</paper-item>
+
+      <paper-item data-route="history">
+        <span data-route="history" on-tap="_itemTap" class="flex">History</span>
+        <paper-icon-button icon="arc:expand-more" title="Toogle history quick list" class$="toggle-icon [[_computeToggleIconClass(historyOpened)]]" on-tap="_toggleHistoryOpened"></paper-icon-button>
+      </paper-item>
+      <template is="dom-if" if="[[historyOpened]]">
+        <history-menu attr-for-opened="opened" opened$="[[historyOpened]]" selected-item="[[selectedRequest]]"></history-menu>
+      </template>
+
+      <paper-item data-route="saved">
+        <span data-route="saved" on-tap="_itemTap" class="flex">Saved</span>
+        <paper-icon-button icon="arc:expand-more" title="Toogle saved quick list" class$="toggle-icon [[_computeToggleIconClass(savedOpened)]]" on-tap="_toggleSavedOpened"></paper-icon-button>
+      </paper-item>
+      <template is="dom-if" if="[[savedOpened]]">
+        <saved-menu attr-for-opened="opened" opened$="[[savedOpened]]" selected-item="[[selectedRequest]]"></saved-menu>
+      </template>
+
+      <paper-item on-tap="_toggleProjectsOpened" title="Toogle projects list">
+        <span class="flex">Projects</span>
+        <paper-icon-button icon="arc:expand-more" class$="toggle-icon [[_computeToggleIconClass(projectsOpened)]]"></paper-icon-button>
+      </paper-item>
+      <template is="dom-if" if="[[projectsOpened]]">
+        <projects-menu opened$="{{projectsOpened}}" attr-for-opened="opened" selected-request="[[selectedRequest]]"></projects-menu>
+      </template>
+    </iron-selector>
+  </template>
+  <script>
+  Polymer({
+    is: 'arc-menu',
+    /**
+     * Fired when querying for hosting application version number.
+     * The hosting application should handle this event by setting
+     * `version` property on event's `detail` object.
+     *
+     * @event app-version
+     */
+    /**
+     * Fired when the user requested to see the logs.
+     *
+     * @event logs-requested
+     */
+    /**
+     * Fired when the user requested to open new window of the application.
+     *
+     * The event has the same properties as the `navigate` custom event. It is
+     * a description of the init route for the apps new window. All properties
+     * are optional and default route is used instead.
+     *
+     * @event app-new-window
+     */
+    properties: {
+      // Id if currently selected in the view request (history or saved)
+      selectedRequest: String,
+      // A route base value.
+      routeBase: String,
+      // If true "history" panel is opened
+      historyOpened: Boolean,
+      // If true "saved" panel is opened
+      savedOpened: Boolean,
+      // If true "projects" panel is opened
+      projectsOpened: Boolean
+    },
+    // Computes class for the toggle's button icon.
+    _computeToggleIconClass: function(opened) {
+      return opened ? 'opened' : undefined;
+    },
+    // Toggles history list opened state
+    _toggleHistoryOpened: function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      this.historyOpened = !this.historyOpened;
+    },
+    // Toggles saved list opened state
+    _toggleSavedOpened: function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      this.savedOpened = !this.savedOpened;
+    },
+    // Toggles projects list opened state
+    _toggleProjectsOpened: function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      this.projectsOpened = !this.projectsOpened;
+    },
+    // Handler for active menu item tap event
+    _itemTap: function(e) {
+      var target = Polymer.dom(e).localTarget;
+      var routeBase = target.dataset.route;
+      if (!routeBase) {
+        throw new Error('Route not found in the item');
+      }
+      this.fire('navigate', {
+        base: routeBase
+      });
+    }
+  });
+  </script>
+</dom-module>

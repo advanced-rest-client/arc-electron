@@ -1,0 +1,45 @@
+{
+  "name": "fetch-polyfill",
+  "description": "A web components wrapper for the fetch polyfill from the https://github.com/github/fetch",
+  "version": "0.1.1",
+  "license": "Apache-2.0 OR CC-BY-4.0",
+  "authors": [
+    "The Advanced REST client authors <arc@mulesoft.com>"
+  ],
+  "keywords": [
+    "web-components",
+    "polymer",
+    "fetch",
+    "polyfill"
+  ],
+  "private": true,
+  "main": [
+    "fetch-polyfill.html"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:advanced-rest-client/fetch-polyfill.git"
+  },
+  "dependencies": {
+    "fetch": "^2.0.1"
+  },
+  "devDependencies": {},
+  "ignore": [
+    "**/.*",
+    "dependencyci.yml",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tasks"
+  ],
+  "homepage": "https://github.com/advanced-rest-client/fetch-polyfill",
+  "_release": "0.1.1",
+  "_resolution": {
+    "type": "version",
+    "tag": "0.1.1",
+    "commit": "041b640fff47cfa2e63ec448fbae5031d25f8cf7"
+  },
+  "_source": "https://github.com/advanced-rest-client/fetch-polyfill.git",
+  "_target": "^0.1.1",
+  "_originalSource": "advanced-rest-client/fetch-polyfill"
+}

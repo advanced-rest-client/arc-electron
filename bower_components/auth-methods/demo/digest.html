@@ -1,0 +1,65 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <title>auth-methods demo</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../arc-demo-helpers/arc-demo-snippet.html">
+  <link rel="import" href="../../paper-toggle-button/paper-toggle-button.html">
+  <link rel="import" href="../auth-methods.html">
+
+  <style is="custom-style" include="demo-pages-shared-styles">
+
+    .vertical-section-container {
+      max-width: 600px;
+    }
+    output {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+  </style>
+</head>
+<body unresolved>
+  <div class="vertical-section-container centered">
+    <h3>The `auth-method-digest`</h3>
+    <arc-demo-snippet url="https://api.domain.com/path/to/resource?parm=value" method="GET">
+      <template>
+        <auth-method-digest request-url="[[url]]" http-method="[[method]]" no-stepper="[[noStepper]]"></auth-method-digest>
+
+        <paper-toggle-button checked="{{noStepper}}">Hide stepper</paper-toggle-button>
+        <output id="log"></output>
+        <style>auth-method-digest {margin-bottom: 40px;}</style>
+
+        <script>
+          var basic = document.querySelector('auth-method-digest');
+          var output = document.querySelector('output');
+          basic.addEventListener('auth-settings-changed', function(e) {
+            var settings = e.detail.settings;
+            var text = 'Current settings:\n';
+            text += JSON.stringify(settings, null, 2);
+            this.innerHTML = text;
+          }.bind(output));
+          basic.addEventListener('error', function(e) {
+            this.innerHTML += e.detail.error.message + '\n';
+          }.bind(output));
+        </script>
+      </template>
+    </arc-demo-snippet>
+  </div>
+</body>
+</html>

@@ -1,0 +1,64 @@
+{
+  "name": "request-save-dialog",
+  "description": "A save request dialog for ARC",
+  "version": "0.1.1",
+  "license": "Apache-2.0 OR CC-BY-4.0",
+  "authors": [
+    "The Advanced REST client authors <arc@mulesoft.com>"
+  ],
+  "keywords": [
+    "web-components",
+    "polymer",
+    "save dialog",
+    "request"
+  ],
+  "private": true,
+  "main": [
+    "request-save-dialog.html"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:advanced-rest-client/request-save-dialog.git"
+  },
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.9.2",
+    "iron-overlay-behavior": "PolymerElements/iron-overlay-behavior#<2",
+    "iron-resizable-behavior": "PolymerElements/iron-resizable-behavior#<2",
+    "app-pouchdb": "advanced-rest-client/app-pouchdb#^1.0.0",
+    "paper-styles": "PolymerElements/paper-styles#<2",
+    "iron-flex-layout": "PolymerElements/iron-flex-layout#<2",
+    "paper-checkbox": "PolymerElements/paper-checkbox#<2",
+    "paper-input": "PolymerElements/paper-input#<2",
+    "paper-button": "PolymerElements/paper-button#<2",
+    "paper-combobox": "advanced-rest-client/paper-combobox#^0.1.1",
+    "iron-form": "PolymerElements/iron-form#<2"
+  },
+  "devDependencies": {
+    "iron-component-page": "polymerelements/iron-component-page#1.0.0",
+    "web-component-tester": "^6.0.0",
+    "paper-styles": "polymerelements/paper-styles#^1.0.2",
+    "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^1.0.0",
+    "iron-test-helpers": "PolymerElements/iron-test-helpers#^1.4.0",
+    "test-fixture": "PolymerElements/test-fixture#^3.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0",
+    "paper-toast": "PolymerElements/paper-toast#<2"
+  },
+  "ignore": [
+    "**/.*",
+    "dependencyci.yml",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tasks"
+  ],
+  "homepage": "https://github.com/advanced-rest-client/request-save-dialog",
+  "_release": "0.1.1",
+  "_resolution": {
+    "type": "version",
+    "tag": "0.1.1",
+    "commit": "7f5b6585be3896d258918d6fce576d15c8eebcf6"
+  },
+  "_source": "https://github.com/advanced-rest-client/request-save-dialog.git",
+  "_target": "^0.1.1",
+  "_originalSource": "advanced-rest-client/request-save-dialog"
+}

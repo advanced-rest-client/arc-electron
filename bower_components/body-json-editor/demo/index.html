@@ -1,0 +1,98 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <title>body-json-editor demo</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../arc-demo-helpers/arc-demo-snippet.html">
+
+  <link rel="import" href="../body-json-editor.html">
+
+  <style is="custom-style" include="demo-pages-shared-styles">
+
+  :root {
+    --icon-button: {
+      color: rgba(0, 0, 0, 0.54);
+      transition: color 0.3s linear;
+    }
+
+    --icon-button-hover: {
+      color: var(--accent-color);
+    }
+  }
+
+  .vertical-section-container {
+    max-width: 600px;
+  }
+
+  output {
+    display: block;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  </style>
+</head>
+<body unresolved>
+  <div class="vertical-section-container centered">
+    <h3>The `body-json-editor`</h3>
+    <arc-demo-snippet json='{"test": "value", "numeric": 1234, "float": 1234.5678, "boolean": true, "nullable": null, "empty":""}'>
+      <template>
+        <body-json-editor value="[[json]]"></body-json-editor>
+        <output></output>
+        <script>
+        var json = document.querySelectorAll('body-json-editor')[0];
+        json.addEventListener('value-changed', function(e) {
+          document.querySelectorAll('output')[0].innerHTML = e.detail.value;
+        });
+        </script>
+      </template>
+    </arc-demo-snippet>
+
+    <h3>Array value</h3>
+    <arc-demo-snippet json='["test", 123, 1234.5678, true]'>
+      <template>
+        <body-json-editor value="[[json]]"></body-json-editor>
+        <output></output>
+        <script>
+        var json = document.querySelectorAll('body-json-editor')[1];
+        json.addEventListener('value-changed', function(e) {
+          document.querySelectorAll('output')[1].innerHTML = e.detail.value;
+        });
+        </script>
+      </template>
+    </arc-demo-snippet>
+
+    <h3>Narrow layout</h3>
+    <arc-demo-snippet json='{"test": "value", "numeric": 1234, "float": 1234.5678, "boolean": true, "nullable": null, "empty":""}'>
+      <template>
+        <body-json-editor narrow value="[[json]]"></body-json-editor>
+        <output></output>
+        <script>
+        var json = document.querySelectorAll('body-json-editor')[2];
+        json.addEventListener('value-changed', function(e) {
+          document.querySelectorAll('output')[2].innerHTML = e.detail.value;
+        });
+        </script>
+      </template>
+    </arc-demo-snippet>
+
+    <h3>With RAML type</h3>
+    <a href="raml.html">See demo page</a>
+  </div>
+</body>
+</html>

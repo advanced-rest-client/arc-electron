@@ -1,0 +1,63 @@
+{
+  "name": "saved-request-editor",
+  "description": "An applet to edit saved request data",
+  "version": "0.1.5",
+  "license": "Apache-2.0 OR CC-BY-4.0",
+  "authors": [
+    "The Advanced REST client authors <arc@mulesoft.com>"
+  ],
+  "keywords": [
+    "web-components",
+    "polymer"
+  ],
+  "private": true,
+  "main": [
+    "saved-request-editor.html"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:advanced-rest-client/saved-request-editor.git"
+  },
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.9.2",
+    "iron-resizable-behavior": "PolymerElements/iron-resizable-behavior#<2",
+    "app-pouchdb": "advanced-rest-client/app-pouchdb#^1.0.0",
+    "iron-flex-layout": "PolymerElements/iron-flex-layout#<2",
+    "paper-checkbox": "PolymerElements/paper-checkbox#<2",
+    "paper-input": "PolymerElements/paper-input#<2",
+    "paper-button": "PolymerElements/paper-button#<2",
+    "paper-combobox": "advanced-rest-client/paper-combobox#^0.1.1",
+    "iron-form": "PolymerElements/iron-form#<2",
+    "iron-collapse": "PolymerElements/iron-collapse#<2",
+    "arc-icons": "advanced-rest-client/arc-icons#^1.0.23",
+    "paper-icon-button": "PolymerElements/paper-icon-button#<2"
+  },
+  "devDependencies": {
+    "iron-component-page": "polymerelements/iron-component-page#1.0.0",
+    "web-component-tester": "^6.0.0",
+    "paper-styles": "PolymerElements/paper-styles#<2",
+    "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^1.0.0",
+    "iron-test-helpers": "PolymerElements/iron-test-helpers#^1.4.0",
+    "test-fixture": "PolymerElements/test-fixture#^3.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0",
+    "arc-demo-helpers": "advanced-rest-client/arc-demo-helpers#^1.0.18"
+  },
+  "ignore": [
+    "**/.*",
+    "dependencyci.yml",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tasks"
+  ],
+  "homepage": "https://github.com/advanced-rest-client/saved-request-editor",
+  "_release": "0.1.5",
+  "_resolution": {
+    "type": "version",
+    "tag": "0.1.5",
+    "commit": "50ff61af289b0e0422dd04de223e6446c5f0bb52"
+  },
+  "_source": "https://github.com/advanced-rest-client/saved-request-editor.git",
+  "_target": "^0.1.1",
+  "_originalSource": "advanced-rest-client/saved-request-editor"
+}

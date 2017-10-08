@@ -1,0 +1,203 @@
+{
+  "MeetupCandidateList": [{
+    "firstName": "Alice",
+    "lastName": "Wang",
+    "location": "San Francisco,California",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Emeric",
+    "lastName": "Colombe",
+    "location": "Denver,Colorado",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Adam",
+    "lastName": "Williams",
+    "location": "San Francisco, California",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "John",
+    "lastName": "Tobias",
+    "location": "San Francisco, California",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Michael",
+    "lastName": "Ryan",
+    "location": "San Francisco,California",
+    "Topic": "Microservices"
+  }, {
+    "firstName": "Fan",
+    "lastName": "Bai",
+    "location": "San Francisco, California",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Gabriel",
+    "lastName": "Hernandez",
+    "location": "San Francisco, California",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Steven",
+    "lastName": "Butt",
+    "location": "San Francisco, California",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Min",
+    "lastName": "Ren",
+    "location": "San Francisco, California",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Firat",
+    "lastName": "Kart",
+    "location": "San Francisco, California",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Sai",
+    "lastName": "Siripurapu",
+    "location": "San Francisco, California",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Steven",
+    "lastName": "Barnes",
+    "location": "San Francisco, California",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Diepvu",
+    "lastName": "Le",
+    "location": "San Francisco, California",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Alex",
+    "lastName": "Kazantsev",
+    "location": "San Francisco, California",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Anuradha",
+    "lastName": "Sastri",
+    "location": "San Francisco,California",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Shallin",
+    "lastName": "Singh",
+    "location": "San Francisco,California",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Howard",
+    "lastName": " Weingram",
+    "location": "San Francisco,California",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Jose",
+    "lastName": "Rodriguez",
+    "location": "San Francisco,California",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Prajwal",
+    "lastName": "KeshavaReddy",
+    "location": "San Francisco,California",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Yiang",
+    "lastName": "Hu",
+    "location": "Seattle,Washington",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Chris",
+    "lastName": "Rees",
+    "location": "Kirkland,Washington",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Marty",
+    "lastName": "Grogan",
+    "location": "Seattle,Washington",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Billy",
+    "lastName": "Pricer",
+    "location": "Seattle,Washington",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Dáran",
+    "lastName": "Zhang",
+    "location": "New York, New York",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Qing",
+    "lastName": "Ji",
+    "location": "New York,New York",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Derek",
+    "lastName": "White",
+    "location": "Dallas/Fort Worth Area",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Richa",
+    "lastName": "Sahu",
+    "location": "San Francisco,California",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Shivani",
+    "lastName": "Gowrishankar",
+    "location": "San Francisco,California",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Suhas",
+    "lastName": "Jog",
+    "location": "San Francisco,California",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Sumanth",
+    "lastName": "Mudiyam",
+    "location": "San Francisco,California",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Giannis",
+    "lastName": "Neokleous",
+    "location": "New York, New York",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Yulia",
+    "lastName": "Savinkova",
+    "location": "New York, New York",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Derek",
+    "lastName": "Passen",
+    "location": "Chicago, Illinois",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Michael",
+    "lastName": "Kong",
+    "location": "Chicago,Illionois",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Prashant",
+    "lastName": "Pandey",
+    "location": "Chicago,Illinois",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Christopher",
+    "lastName": "Marth",
+    "location": "Boulder, Colorado",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Jake",
+    "lastName": "Morgan",
+    "location": "Atlanta,Georgia",
+    "Topic": "Rembedded software:Robotics:devices"
+  }, {
+    "firstName": "Paul",
+    "lastName": "Anderson",
+    "location": "Chicago,Illinois",
+    "Topic": "embedded software:Robotics:devices"
+  }, {
+    "firstName": "Jesus",
+    "lastName": "DeOliveira",
+    "location": "London, United Kingdom",
+    "Topic": "Boston,Massachusetts"
+  }, {
+    "firstName": "David",
+    "lastName": "Berlind",
+    "location": "Atlanta,Georgia",
+    "Topic": "embedded software:Robotics:devices"
+  }]
+}

@@ -1,0 +1,55 @@
+{
+  "name": "pouchdb",
+  "version": "6.3.4",
+  "description": "PouchDB is a pocket-sized database",
+  "main": "./lib/index.js",
+  "jsnext:main": "./lib/index.es.js",
+  "author": "Dale Harvey <dale@arandomurl.com>",
+  "license": "Apache-2.0",
+  "repository": "https://github.com/pouchdb/pouchdb",
+  "browser": {
+    "./lib/index.js": "./lib/index-browser.js",
+    "./lib/index.es.js": "./lib/index-browser.es.js"
+  },
+  "jspm": {
+    "main": "dist/pouchdb.js"
+  },
+  "tonicExampleFilename": "tonic-example.js",
+  "keywords": [
+    "db",
+    "couchdb",
+    "pouchdb"
+  ],
+  "tags": [
+    "db",
+    "couchdb",
+    "pouchdb"
+  ],
+  "dependencies": {
+    "argsarray": "0.0.1",
+    "buffer-from": "0.1.1",
+    "clone-buffer": "1.0.0",
+    "debug": "2.6.4",
+    "double-ended-queue": "2.1.0-0",
+    "immediate": "3.0.6",
+    "inherits": "2.0.3",
+    "level-codec": "7.0.0",
+    "level-write-stream": "1.0.0",
+    "leveldown": "1.5.0",
+    "levelup": "1.3.8",
+    "lie": "3.1.1",
+    "ltgt": "2.2.0",
+    "readable-stream": "1.0.33",
+    "request": "2.80.0",
+    "spark-md5": "3.0.0",
+    "through2": "2.0.3",
+    "uuid": "^3.1.0",
+    "vuvuzela": "1.0.3"
+  },
+  "module": "./lib/index.es.js",
+  "files": [
+    "lib",
+    "dist",
+    "tonic-example.js"
+  ]
+}

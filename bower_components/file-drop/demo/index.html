@@ -1,0 +1,81 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+  <title>file-drop demo</title>
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+  <link rel="import" href="../file-drop.html">
+  <style is="custom-style" include="demo-pages-shared-styles">
+  .vertical-section-container {
+    max-width: 600px;
+  }
+  </style>
+</head>
+
+<body unresolved>
+  <div class="vertical-section-container centered">
+    <h3>Multiple selector</h3>
+    <demo-snippet>
+      <template>
+        <file-drop multiple id="multipleDrop"></file-drop>
+        <output id="multipleList"></output>
+      </template>
+    </demo-snippet>
+
+    <h3>Accept mime</h3>
+    <demo-snippet>
+      <template>
+        <file-drop multiple accept="image/*" id="acceptDrop"></file-drop>
+        <output id="acceptList"></output>
+      </template>
+    </demo-snippet>
+  </div>
+  <script>
+  document.body.addEventListener('file-accepted', (e) => {
+    switch (e.target.id) {
+      case 'multipleDrop':
+        document.querySelector('#multipleList').innerHTML = '';
+        e.detail.file.forEach((item) => traverseFileTree(item, '', '#multipleList'));
+        break;
+      case 'acceptDrop':
+        document.querySelector('#acceptList').innerHTML = '';
+        e.detail.file.forEach((item) => traverseFileTree(item, '', '#acceptList'));
+        break;
+    }
+  });
+  // http://stackoverflow.com/a/11410455/1127848
+  function traverseFileTree(item, path, target) {
+    path = path || '';
+    if (item.isDirectory) {
+      let dirReader = item.createReader();
+      dirReader.readEntries((entry) => {
+        for (let i = 0; i < entry.length; i++) {
+          traverseFileTree(entry[i], path + item.name + '/', target);
+        }
+      });
+    } else {
+      // Case for regular FileEntry from input field.
+      let t = document.querySelector(target);
+      let p = document.createElement('p');
+      p.appendChild(document.createTextNode(path + item.name));
+      t.appendChild(p);
+    }
+  }
+  </script>
+</body>
+
+</html>

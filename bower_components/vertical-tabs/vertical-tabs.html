@@ -1,0 +1,646 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-menu-behavior/iron-menubar-behavior.html">
+<link rel="import" href="../iron-resizable-behavior/iron-resizable-behavior.html">
+<link rel="import" href="vertical-tabs-icons.html">
+<!--
+`<vertical-tabs>` A vertical tabs made in the material design style. It uses paper-tab as a tab UI.
+
+### Example
+```
+<vertical-tabs selected="{{selected}}">
+  <paper-tab>Tab one</paper-tab>
+  <paper-tab>Tab two</paper-tab>
+  <paper-tab>Tab three</paper-tab>
+
+  <iron-pages content selected="{{selected}}">
+    <section>
+      <img src="http://lorempixel.com/400/200/cats/"/>
+    </section>
+    <section>
+      <img src="http://lorempixel.com/400/250/cats/"/>
+    </section>
+    <section>
+      <img src="http://lorempixel.com/400/300/cats/"/>
+    </section>
+  </iron-pages>
+</vertical-tabs>
+```
+
+By default the tabs will be rended on the right hand side. When `align-left` attribute is set in
+this element (or `alignLeft` property set to true) then tabs will be rendered on the left hand side.
+
+Note that this element will not include `<paper-tab>` element nor it is its dependency.
+You can use any other HTML element to render tabs.
+
+### Content distribution
+This element will reneder any child as a tab element. Because of complicaticated styling in
+horizontal mode it is allowed to pass one child that contains `[content]` attribute. It will be
+placed as a tabs content. However, you can place the content yourself and style it.
+
+### Content overflow
+Whe elemet will take 100% available width. The content will take available space that is the rest
+what tabs will left. If the content is bigger than available space it will push tabs out of the
+bounds of parent element. It is expacted behavior. To prohibit it you can use the
+`--paper-tabs-content` mixin and apply CSS rules that will prevent it from happening. For example:
+```
+<style is="custom-style">
+  vertical-tabs {
+    --paper-tabs-content: {
+      max-width: 100%;
+      overflow: auto;
+    }
+  }
+</style>
+```
+
+### Styling
+`<vertical-tabs>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--vertical-tabs` | Mixin applied to the element | `{}`
+`--paper-tabs-selection-bar-color` | Color for the selection bar | `--paper-yellow-a100`
+`--paper-tabs-selection-bar` | Mixin applied to the selection bar | `{}`
+`--paper-tabs` | Mixin applied to the tabs | `{}`
+`--paper-tabs-content` | Mixin applied to the content container of tabs | `{}`
+
+
+@group UI Elements
+@element vertical-tabs
+@demo demo/app.html
+-->
+<dom-module id="vertical-tabs">
+  <template>
+    <style>
+    :host {
+      @apply(--layout-horizontal);
+      position: relative;
+
+    }
+
+    #contentContainer {
+      @apply(--layout-flex);
+      @apply(--paper-tabs-content);
+    }
+
+    #tabbedContainer {
+      @apply(--layout-vertical);
+      @apply(--layout-center);
+      font-size: 14px;
+      font-weight: 500;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      -webkit-user-select: none;
+      user-select: none;
+      /* NOTE: Both values are needed, since some phones require the value to be `transparent`. */
+      -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+      -webkit-tap-highlight-color: transparent;
+      @apply(--paper-tabs);
+    }
+
+    #tabsContainer {
+      position: relative;
+      white-space: nowrap;
+      @apply(--layout);
+      -ms-flex: 1 1 auto;
+      -webkit-flex: 1;
+      flex: 1;
+    }
+
+    #tabsContent {
+      height: 100%;
+      -moz-flex-basis: auto;
+      -ms-flex-basis: auto;
+      flex-basis: auto;
+    }
+
+    #tabsContent.scrollable {
+      overflow: hidden;
+      position: relative;
+      white-space: nowrap;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .not-visible {
+      opacity: 0;
+      cursor: default;
+    }
+
+    paper-icon-button {
+      width: 48px;
+      height: 48px;
+      padding: 12px;
+      margin: 0 4px;
+    }
+
+    #selectionBar {
+      position: absolute;
+      width: 2px;
+      top: 0;
+      left: 0;
+      height: 48px;
+      background-color: var(--paper-tabs-selection-bar-color, --paper-yellow-a100);
+        -webkit-transform: scale(0);
+      transform: scale(0);
+        -webkit-transform-origin: left center;
+      transform-origin: left center;
+        transition: -webkit-transform;
+      transition: transform;
+
+      @apply(--paper-tabs-selection-bar);
+    }
+
+    #selectionBar.align-right {
+      right: 0;
+      left: auto;
+    }
+
+    #selectionBar.expand {
+      transition-duration: 0.15s;
+      transition-timing-function: cubic-bezier(0.4, 0.0, 1, 1);
+    }
+
+    #selectionBar.contract {
+      transition-duration: 0.18s;
+      transition-timing-function: cubic-bezier(0.0, 0.0, 0.2, 1);
+    }
+
+    #tabsContent > ::content > *:not(#selectionBar) {
+      height: 48px;
+      display: block;
+      overflow: auto;
+    }
+
+    :host([align-left]) {
+      @apply(--layout-horizontal-reverse);
+    }
+
+    :host([align-left]) #selectionBar {
+      left: auto;
+      right: 0;
+    }
+
+    .tabShaddow {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 8px;
+      opacity: 0;
+      transition: opacity 0.35s linear;
+    }
+
+    .tabShaddow.top {
+      box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.18) inset;
+      top: -4px;
+
+    }
+    .tabShaddow.top.active {
+      opacity: 1;
+    }
+
+    .tabShaddow.bottom {
+      box-shadow: 0px -2px 4px rgba(0, 0, 0, 0.18) inset;
+      bottom: -4px;
+    }
+
+    .tabShaddow.bottom.active {
+      opacity: 1;
+    }
+
+    </style>
+
+
+      <div id="contentContainer">
+        <content select="[content]"></content>
+      </div>
+      <div id="tabbedContainer">
+        <paper-icon-button icon="vertical-tabs:keyboard-arrow-up" class$="[[_computeScrollButtonClass(_topHidden, scrollable, hideScrollButtons)]]" on-up="_onScrollButtonUp" on-down="_onTopScrollButtonDown" tabindex="-1"></paper-icon-button>
+        <div id="tabsContainer" on-track="_scroll" on-down="_down">
+          <div class$="[[_computeScrollShaddowClass(_topHidden, scrollable, hideScrollButtons, 'top')]]"></div>
+          <div id="tabsContent" class$="[[_computeTabsContentClass(scrollable, fitContainer)]]">
+            <div id="selectionBar" class$="[[_computeSelectionBarClass(noBar, alignRight)]]" on-transitionend="_onBarTransitionEnd"></div>
+            <content select="*"></content>
+          </div>
+          <div class$="[[_computeScrollShaddowClass(_bottomHidden, scrollable, hideScrollButtons, 'bottom')]]" class="bottomShaddow"></div>
+        </div>
+        <paper-icon-button icon="vertical-tabs:keyboard-arrow-down" class$="[[_computeScrollButtonClass(_bottomHidden, scrollable, hideScrollButtons)]]" on-up="_onScrollButtonUp" on-down="_onRightScrollButtonDown" tabindex="-1"></paper-icon-button>
+      </div>
+
+  </template>
+  <script>
+  Polymer({
+    is: 'vertical-tabs',
+
+    behaviors: [
+      Polymer.IronResizableBehavior,
+      Polymer.IronMenubarBehavior
+    ],
+
+    properties: {
+      /**
+       * If true, ink ripple effect is disabled. When this property is changed,
+       * all descendant `<paper-tab>` elements have their `noink` property
+       * changed to the new value as well.
+       */
+      noink: {
+        type: Boolean,
+        value: false,
+        observer: '_noinkChanged'
+      },
+
+      /**
+       * If true, the selection bar to indicate the selected tab will not be shown.
+       */
+      noBar: {
+        type: Boolean,
+        value: false
+      },
+
+      /**
+       * If true, the slide effect for the selection bar is disabled.
+       */
+      noSlide: {
+        type: Boolean,
+        value: false
+      },
+
+      /**
+       * If true, tabs are scrollable and the tab width is based on the label width.
+       */
+      scrollable: {
+        type: Boolean,
+        value: false
+      },
+
+      /**
+       * If true, tabs expand to fit their container. This currently only applies when
+       * scrollable is true.
+       */
+      fitContainer: {
+        type: Boolean,
+        value: false
+      },
+
+      /**
+       * If true, dragging on the tabs to scroll is disabled.
+       */
+      disableDrag: {
+        type: Boolean,
+        value: false
+      },
+
+      /**
+       * If true, scroll buttons (left/right arrow) will be hidden for scrollable tabs.
+       */
+      hideScrollButtons: {
+        type: Boolean,
+        value: false
+      },
+
+      /**
+       * If true, the tabs are aligned to the right (the selection bar appears at the right).
+       */
+      alignRight: {
+        type: Boolean,
+        value: false
+      },
+
+      selectable: {
+        type: String,
+        value: 'paper-tab'
+      },
+
+      /**
+       * If true, tabs are automatically selected when focused using the
+       * keyboard.
+       */
+      autoselect: {
+        type: Boolean,
+        value: false
+      },
+
+      /**
+       * The delay (in milliseconds) between when the user stops interacting
+       * with the tabs through the keyboard and when the focused item is
+       * automatically selected (if `autoselect` is true).
+       */
+      autoselectDelay: {
+        type: Number,
+        value: 0
+      },
+      // If true, tabs are rendered on the left side
+      alignLeft: {
+        type: Boolean,
+        value: false,
+        reflectToAttribute: true
+      },
+
+      _step: {
+        type: Number,
+        value: 4
+      },
+
+      _holdDelay: {
+        type: Number,
+        value: 1
+      },
+
+      _topHidden: {
+        type: Boolean,
+        value: true
+      },
+
+      _bottomHidden: {
+        type: Boolean,
+        value: true
+      },
+
+      _previousTab: {
+        type: Object
+      }
+    },
+
+    hostAttributes: {
+      role: 'tablist'
+    },
+
+    listeners: {
+      'iron-resize': '_onTabSizingChanged',
+      'iron-items-changed': '_onTabSizingChanged',
+      'iron-select': '_onIronSelect',
+      'iron-deselect': '_onIronDeselect'
+    },
+
+    keyBindings: {
+      'left:keyup right:keyup': '_onArrowKeyup'
+    },
+
+    created: function() {
+      this._holdJob = null;
+      this._pendingActivationItem = undefined;
+      this._pendingActivationTimeout = undefined;
+      this._bindDelayedActivationHandler = this._delayedActivationHandler.bind(this);
+      this.addEventListener('blur', this._onBlurCapture.bind(this), true);
+    },
+
+    ready: function() {
+      this.setScrollDirection('y', this.$.tabsContainer);
+    },
+
+    detached: function() {
+      this._cancelPendingActivation();
+    },
+
+    _noinkChanged: function(noink) {
+      var childTabs = Polymer.dom(this).querySelectorAll('paper-tab');
+      childTabs.forEach(noink ? this._setNoinkAttribute : this._removeNoinkAttribute);
+    },
+
+    _setNoinkAttribute: function(element) {
+      element.setAttribute('noink', '');
+    },
+
+    _removeNoinkAttribute: function(element) {
+      element.removeAttribute('noink');
+    },
+
+    _computeScrollButtonClass: function(hideThisButton, scrollable, hideScrollButtons) {
+      if (!scrollable || hideScrollButtons) {
+        return 'hidden';
+      }
+
+      if (hideThisButton) {
+        return 'not-visible';
+      }
+
+      return '';
+    },
+
+    _computeScrollShaddowClass: function(hideThisBar, scrollable, hideScrollButtons, dir) {
+      if (!scrollable || hideScrollButtons) {
+        return 'hidden';
+      }
+
+      var clazz = 'tabShaddow ' + dir;
+
+      if (hideThisBar) {
+        return clazz;
+      }
+
+      return clazz + ' active';
+    },
+
+    _computeTabsContentClass: function(scrollable, fitContainer) {
+      return scrollable ? 'scrollable' + (fitContainer ? ' fit-container' : '') : ' fit-container';
+    },
+
+    _computeSelectionBarClass: function(noBar, alignRight) {
+      if (noBar) {
+        return 'hidden';
+      } else if (alignRight) {
+        return 'align-right';
+      }
+
+      return '';
+    },
+
+    // TODO(cdata): Add `track` response back in when gesture lands.
+
+    _onTabSizingChanged: function() {
+      this.debounce('_onTabSizingChanged', function() {
+        this._scroll();
+        this._tabChanged(this.selectedItem);
+      }, 10);
+    },
+
+    _onIronSelect: function(event) {
+      this._tabChanged(event.detail.item, this._previousTab);
+      this._previousTab = event.detail.item;
+      this.cancelDebouncer('tab-changed');
+    },
+
+    _onIronDeselect: function(/* event */) {
+      this.debounce('tab-changed', function() {
+        this._tabChanged(null, this._previousTab);
+        this._previousTab = null;
+        // See polymer/polymer#1305
+      }, 1);
+    },
+
+    _activateHandler: function() {
+      // Cancel item activations scheduled by keyboard events when any other
+      // action causes an item to be activated (e.g. clicks).
+      this._cancelPendingActivation();
+
+      Polymer.IronMenuBehaviorImpl._activateHandler.apply(this, arguments);
+    },
+
+    /**
+     * Activates an item after a delay (in milliseconds).
+     */
+    _scheduleActivation: function(item, delay) {
+      this._pendingActivationItem = item;
+      this._pendingActivationTimeout = this.async(
+          this._bindDelayedActivationHandler, delay);
+    },
+
+    /**
+     * Activates the last item given to `_scheduleActivation`.
+     */
+    _delayedActivationHandler: function() {
+      var item = this._pendingActivationItem;
+      this._pendingActivationItem = undefined;
+      this._pendingActivationTimeout = undefined;
+      item.fire(this.activateEvent, null, {
+        bubbles: true,
+        cancelable: true
+      });
+    },
+
+    /**
+     * Cancels a previously scheduled item activation made with
+     * `_scheduleActivation`.
+     */
+    _cancelPendingActivation: function() {
+      if (this._pendingActivationTimeout !== undefined) {
+        this.cancelAsync(this._pendingActivationTimeout);
+        this._pendingActivationItem = undefined;
+        this._pendingActivationTimeout = undefined;
+      }
+    },
+
+    _onArrowKeyup: function(/* event */) {
+      if (this.autoselect) {
+        this._scheduleActivation(this.focusedItem, this.autoselectDelay);
+      }
+    },
+
+    _onBlurCapture: function(event) {
+      // Cancel a scheduled item activation (if any) when that item is
+      // blurred.
+      if (event.target === this._pendingActivationItem) {
+        this._cancelPendingActivation();
+      }
+    },
+
+    get _tabContainerScrollSize() {
+      return Math.max(
+        0,
+        this.$.tabsContent.scrollHeight -
+          this.$.tabsContent.offsetHeight
+      );
+    },
+
+    _scroll: function(e, detail) {
+      if (!this.scrollable) {
+        return;
+      }
+
+      var ddx = (detail && -detail.ddx) || 0;
+      this._affectScroll(ddx);
+    },
+
+    _down: function(/* e */) {
+      // go one beat async to defeat IronMenuBehavior
+      // autorefocus-on-no-selection timeout
+      this.async(function() {
+        if (this._defaultFocusAsync) {
+          this.cancelAsync(this._defaultFocusAsync);
+          this._defaultFocusAsync = null;
+        }
+      }, 1);
+    },
+
+    _affectScroll: function(dx) {
+      this.$.tabsContent.scrollTop += dx;
+
+      var scrollTop = this.$.tabsContent.scrollTop;
+
+      this._topHidden = scrollTop === 0;
+      this._bottomHidden = scrollTop === this._tabContainerScrollSize;
+    },
+
+    _onTopScrollButtonDown: function() {
+      this._scrollToTop();
+      this._holdJob = setInterval(this._scrollToTop.bind(this), this._holdDelay);
+    },
+
+    _onRightScrollButtonDown: function() {
+      this._scrollToBottom();
+      this._holdJob = setInterval(this._scrollToBottom.bind(this), this._holdDelay);
+    },
+
+    _onScrollButtonUp: function() {
+      clearInterval(this._holdJob);
+      this._holdJob = null;
+    },
+
+    _scrollToTop: function() {
+      this._affectScroll(-this._step);
+    },
+
+    _scrollToBottom: function() {
+      this._affectScroll(this._step);
+    },
+
+    _tabChanged: function(tab /*, old*/) {
+      if (!tab) {
+        // Remove the bar without animation.
+        this.$.selectionBar.classList.remove('expand');
+        this.$.selectionBar.classList.remove('contract');
+        this._positionBar(0);
+        return;
+      }
+      var tabRect = tab.getBoundingClientRect();
+      this._top = tab.offsetTop;
+      if (this.noSlide) {
+        this.$.selectionBar.classList.remove('expand');
+        this.$.selectionBar.classList.remove('contract');
+        this._positionBar(this._calcPercent(tab.offsetTop, tabRect.height));
+        return;
+      }
+
+      // bar animation: expand
+      this.$.selectionBar.classList.add('expand');
+      this._positionBar(this._calcPercent(tab.offsetTop, tabRect.height));
+    },
+
+    _calcPercent: function(w, w0) {
+      return 100 * w / w0;
+    },
+
+    _positionBar: function(top) {
+      top = top || 0;
+      this.transform(
+          'translateY(' + top + '%)',
+          this.$.selectionBar);
+    },
+
+    _onBarTransitionEnd: function(/* e */) {
+      var cl = this.$.selectionBar.classList;
+      if (cl.contains('expand')) {
+        cl.remove('expand');
+        cl.add('contract');
+      } else if (cl.contains('contract')) {
+        cl.remove('contract');
+      }
+    }
+  });
+  </script>
+</dom-module>

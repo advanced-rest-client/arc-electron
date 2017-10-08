@@ -1,0 +1,45 @@
+{
+  "name": "filesystem-behavior",
+  "version": "1.1.8",
+  "license": "LICENSE.txt",
+  "description": "A filesystem behavior for filesystem elements.",
+  "authors": [
+    "Pawel Psztyc",
+    "Advanced REST client team"
+  ],
+  "keywords": [
+    "web-components",
+    "polymer",
+    "files",
+    "filesystem",
+    "chrome"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/advanced-rest-client/filesystem-behavior.git"
+  },
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.1.0"
+  },
+  "devDependencies": {
+    "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
+    "paper-styles": "PolymerElements/paper-styles#^1.0.4"
+  },
+  "main": [
+    "filesystem-behavior.html",
+    "filesystem-app-behavior.html",
+    "sync-filesystem-behavior.html",
+    "web-filesystem-behavior.html"
+  ],
+  "ignore": [],
+  "homepage": "https://github.com/advanced-rest-client/filesystem-behavior",
+  "_release": "1.1.8",
+  "_resolution": {
+    "type": "version",
+    "tag": "1.1.8",
+    "commit": "9e73fc7e40e7e50d28eaccf3af5a5effd7696cc2"
+  },
+  "_source": "https://github.com/advanced-rest-client/filesystem-behavior.git",
+  "_target": "^1.1.6",
+  "_originalSource": "advanced-rest-client/filesystem-behavior"
+}

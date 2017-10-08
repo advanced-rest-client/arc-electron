@@ -1,0 +1,31 @@
+{
+  "name": "drop-file-importer",
+  "version": "0.1.1",
+  "license": "Apache-2.0 OR CC-BY-4.0",
+  "description": "An element that reads data from file drop",
+  "devDependencies": {
+    "bower": "^1.8.0",
+    "polymer-cli": "^1.2.0"
+  },
+  "private": false,
+  "main": [
+    "drop-file-importer.html"
+  ],
+  "author": "The Advanced REST client authors <arc@mulesoft.com>",
+  "scripts": {
+    "serve": "node_modules/.bin/polymer serve",
+    "lint": "node_modules/.bin/polymer lint drop-file-importer.html --rules polymer-1",
+    "test-sauce": "node_modules/.bin/polymer test --plugin sauce --job-name \"drop-file-importer:local-test\"",
+    "test": "node_modules/.bin/polymer test --plugin local",
+    "deps": "npm install --quiet && bower install --quiet",
+    "update-deps": "npm update --quiet && bower update --quiet"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/advanced-rest-client/drop-file-importer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/advanced-rest-client/drop-file-importer/issues",
+    "email": "arc@mulesoft.com"
+  }
+}

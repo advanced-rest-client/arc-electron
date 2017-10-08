@@ -1,0 +1,82 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <title>form-data-editor demo</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+  <link rel="import" href="../../paper-checkbox/paper-checkbox.html">
+  <link rel="import" href="../form-data-editor.html">
+
+  <style is="custom-style" include="demo-pages-shared-styles">
+
+    .vertical-section-container {
+      max-width: 600px;
+    }
+
+    output:before {
+      content: 'Current value: '
+    }
+
+    output {
+      color: rgba(0,0,0,0.74);
+      display: block;
+      margin-top: 24px;
+    }
+  </style>
+</head>
+<body unresolved>
+  <div class="vertical-section-container centered">
+    <h3>The `form-data-editor`</h3>
+    <demo-snippet>
+      <template is="dom-bind">
+        <form-data-editor value="{{paylaod}}"></form-data-editor>
+        <output>[[paylaod]]</output>
+      </template>
+    </demo-snippet>
+
+    <h3>Narrow layout</h3>
+    <demo-snippet>
+      <template is="dom-bind">
+        <form-data-editor value="{{paylaod}}" narrow></form-data-editor>
+        <output>[[paylaod]]</output>
+      </template>
+    </demo-snippet>
+
+    <h3>With auto-encode attribute</h3>
+    <demo-snippet>
+      <template is="dom-bind">
+        <form-data-editor value="{{paylaod}}" auto-encode></form-data-editor>
+        <output>[[paylaod]]</output>
+      </template>
+    </demo-snippet>
+
+    <h3>With attrForOpened</h3>
+    <demo-snippet>
+      <template is="dom-bind">
+        <form-data-editor value="{{paylaod}}" attr-for-opened="enabled" enabled$="[[enabled]]"></form-data-editor>
+        <output>[[paylaod]]</output>
+        <paper-checkbox checked="{{enabled}}">Element enabled</paper-checkbox>
+      </template>
+    </demo-snippet>
+
+    <h3>With RAML type</h3>
+    <a href="raml.html">RAML demo</a>
+  </div>
+</body>
+</html>

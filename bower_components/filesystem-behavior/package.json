@@ -1,0 +1,61 @@
+{
+  "name": "filesystem-behavior",
+  "version": "1.1.8",
+  "description": "A filesystem behavior for filesystem elements.",
+  "author": "Pawel Psztyc, The ARC team <jarrodek@gmail.com>",
+  "scripts": {
+		"lint": "gulp lint"
+	},
+  "repository": {
+		"type": "git",
+		"url": "git://github.com/advanced-rest-client/filesystem-behavior.git"
+	},
+  "bugs": {
+		"url": "https://github.com/advanced-rest-client/filesystem-behavior/issues"
+	},
+  "keywords": [
+		"web-components",
+    "polymer",
+    "files",
+    "filesystem",
+    "chrome"
+	],
+  "private": false,
+  "devDependencies": {
+    "conventional-github-releaser": "^1.1.1",
+    "crisper": "git+https://git@github.com/scarygami/crisper.git",
+    "del": "^1.1.1",
+    "gulp": "^3.8.5",
+    "gulp-connect": "^2.3.1",
+    "gulp-html-extract": "^0.0.3",
+    "gulp-if": "^2.0.0",
+    "gulp-jscs": "^3.0.0",
+    "gulp-jscs-stylish": "^1.1.2",
+    "gulp-jshint": "^1.6.3",
+    "gulp-load-plugins": "^1.1.0",
+    "jshint-stylish": "^2.0.0",
+    "gulp-batch": "^1.0.5",
+    "gulp-bump": "^2.1.0",
+    "gulp-conventional-changelog": "^1.1.0",
+    "gulp-flatten": "0.0.4",
+    "gulp-git": "^1.7.1",
+    "gulp-replace": "^0.5.3",
+    "gulp-size": "^1.0.0",
+    "gulp-util": "^3.0.7",
+    "jshint-stylish": "^2.0.0",
+    "merge-stream": "^0.1.8",
+    "run-sequence": "^1.1.5",
+    "tiny-lr": "^0.1.6"
+  },
+  "engines": {
+		"node": ">=0.10.0"
+	},
+	 "analyze": true,
+	 "license": "Apache 2.0",
+   "main": [
+     "filesystem-behavior.html",
+     "filesystem-app-behavior.html",
+     "sync-filesystem-behavior.html",
+     "web-filesystem-behavior.html"
+   ]
+}

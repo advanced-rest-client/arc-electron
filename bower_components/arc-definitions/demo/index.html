@@ -1,0 +1,90 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <title>arc-definitions demo</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+  <link rel="import" href="../../polymer/polymer.html">
+
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+
+    <link rel="import" href="../../paper-input/paper-input.html">
+    <link rel="import" href="../../paper-radio-group/paper-radio-group.html">
+    <link rel="import" href="../../paper-radio-button/paper-radio-button.html">
+    <link rel="import" href="../../paper-button/paper-button.html">
+
+  <link rel="import" href="../arc-definitions.html">
+
+  <style is="custom-style" include="demo-pages-shared-styles">
+
+    .vertical-section-container {
+      max-width: 600px;
+    }
+
+  </style>
+</head>
+<body unresolved>
+  <div class="vertical-section-container centered">
+    <h3>Status codes</h3>
+    <demo-snippet>
+      <template is="dom-bind">
+        <arc-definitions id="codes" status-codes="{{codes}}"></arc-definitions>
+        <ul>
+        <template is="dom-repeat" items="[[codes]]">
+          <li>
+            <b>[[item.key]] [[item.label]]</b>
+            <p>[[item.desc]]</p>
+          </li>
+        </template>
+        </ul>
+      </template>
+    </demo-snippet>
+
+    <h3>Query headers</h3>
+    <demo-snippet>
+      <template>
+        <arc-definitions id="headers"></arc-definitions>
+        <paper-input label="Header name" id="headerName"></paper-input>
+        <paper-radio-group selected="request" id="type">
+          <paper-radio-button name="request">Request headers</paper-radio-button>
+          <paper-radio-button name="response">Response headers</paper-radio-button>
+        </paper-radio-group>
+        <paper-button raised id="queryButton">Query</paper-button>
+
+        <ul>
+        <template is="dom-repeat" id="queryResults">
+          <li><b>[[item.key]]</b> - [[item.desc]]</li>
+        </template>
+        </ul>
+
+        <script>
+          document.querySelector('#queryButton').addEventListener('tap', function() {
+            var type = document.querySelector('#type').selected;
+            var name = document.querySelector('#headerName').value;
+            var event = new CustomEvent('query-headers', {
+              'detail': {'type': type, 'query': name},
+              'bubbles': true
+            });
+            document.dispatchEvent(event);
+            document.querySelector('#queryResults').items = event.detail.headers;
+          });
+        </script>
+      </template>
+    </demo-snippet>
+  </div>
+</body>
+</html>

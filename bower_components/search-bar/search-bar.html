@@ -1,0 +1,240 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../iron-a11y-keys/iron-a11y-keys.html">
+<link rel="import" href="../iron-overlay-behavior/iron-overlay-behavior.html">
+<link rel="import" href="../iron-resizable-behavior/iron-resizable-behavior.html">
+<link rel="import" href="../arc-icons/arc-icons.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../paper-styles/shadow.html">
+<!--
+A search bar for the Advanced REST Client
+
+The search bar mimics Chrome's search bar. This element is only relevant for
+Chrome application.
+
+### Example
+```
+<search-bar opened></search-bar>
+```
+
+### Styling
+`<search-bar>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--search-bar` | Mixin applied to the element | `{}`
+`--search-bar-background-color` | Background color of the search bar | `#fff`
+`--search-bar-border-color` | Border color of the search bar | `--main-section-border-color`
+`--search-bar-counters` | Mixin applied to the counters labels | `{}`
+
+@group UI Elements
+@element search-bar
+@demo demo/index.html
+-->
+<dom-module id="search-bar">
+  <template>
+    <style>
+    :host {
+      @apply --arc-font-body1;
+      display: block;
+      position: fixed;
+      top: 0px;
+      right: 4px;
+      @apply --layout-horizontal;
+      @apply --layout-center;
+      background-color: var(--search-bar-background-color, #fff);
+      border: 1px var(--search-bar-border-color, --main-section-border-color) solid;
+      border-radius: 2px;
+      padding: 0 12px;
+      @apply --shadow-elevation-2dp;
+      @apply --search-bar;
+    }
+
+    .counters {
+      @apply --search-bar-counters;
+    }
+    </style>
+    <paper-input label="Search text" no-label-float value="{{value}}" id="input">
+      <div suffix class="counters">[[selected]] of [[searchCount]]</div>
+    </paper-input>
+    <paper-icon-button icon="arc:keyboard-arrow-up" title="Previous" on-tap="highlightPrevious"></paper-icon-button>
+    <paper-icon-button icon="arc:keyboard-arrow-down" title="Next" on-tap="highlightNext"></paper-icon-button>
+    <paper-icon-button icon="arc:close" title="Close" on-tap="close"></paper-icon-button>
+    <iron-a11y-keys id="a11y" target="[[input]]" keys="enter" on-keys-pressed="highlightNext"></iron-a11y-keys>
+  </template>
+  <script>
+  Polymer({
+    is: 'search-bar',
+    behaviors: [
+      Polymer.IronOverlayBehavior,
+      Polymer.IronResizableBehavior
+    ],
+    properties: {
+      // overrides IronOverlayBehavior property
+      noCancelOnOutsideClick: {
+        type: Boolean,
+        value: true
+      },
+      // Current text search value
+      value: {
+        type: String,
+        value: '',
+        notify: true
+      },
+      // Number of marked text occurances
+      searchCount: {
+        type: Number,
+        value: 0,
+        readOnly: true
+      },
+      //
+      selected: {
+        type: Number,
+        value: 0,
+        readOnly: true
+      },
+
+      /**
+       * Last target for `search-counted`. The `search-mark` event will be fired back with
+       * this value.
+       */
+      target: HTMLElement,
+      // A search input element
+      input: {
+        type: Object,
+        value: function() {
+          return this.$.input;
+        }
+      }
+    },
+
+    observers: [
+      '_searchOpened(opened)',
+      '_valueChanged(value)'
+    ],
+
+    attached: function() {
+      this.listen(window, 'search-bar-search-mark-count', '_onSearchMarkCount');
+    },
+
+    detached: function() {
+      this.unlisten(window, 'search-bar-search-mark-count', '_onSearchMarkCount');
+    },
+
+    _searchOpened: function(opened) {
+      var value;
+      if (opened) {
+        value = this.value;
+        this.focusInput();
+      }
+      this.fire('search-bar-opened-changed', {
+        opened: opened,
+        value: value
+      });
+    },
+
+    focusInput: function() {
+      this.async(() => {
+        let i = this.$.input;
+        i.inputElement.focus();
+        i.inputElement.select();
+      }, 1);
+    },
+    /**
+     * Sends `search-bar-input-changed` on value change.
+     */
+    _valueChanged: function(value) {
+      this.fire('search-bar-input-changed', {
+        value: value,
+        lastTarget: this.target
+      });
+    },
+    /**
+     * A handler for event fired by elements that implement search in text functionality.
+     * Number received in `e.detail` will be used in display as a number of occuances.
+     *
+     * If more than one element may fire the event at the same time, a controller element should
+     * intersept the event, cancel it and in debuncer fire sum of the events.
+     *
+     * @param {CustomEvent} e e.detail contains a number of occuances.
+     */
+    _onSearchMarkCount: function(e) {
+      var n = Number(e.detail.count);
+      if (n !== n) {
+        n = 0;
+      }
+      if (this.searchCount === 0 && n > 0) {
+        this._setSelected(0);
+        this._notifyPosition(0);
+      } else if (n === 0) {
+        this._setSelected(0);
+      }
+      this._setSearchCount(n);
+      this.target = e.detail.searchTarget;
+    },
+
+    // Send a signal to highlight next occurrence.
+    highlightPrevious: function() {
+      var n = this.searchCount;
+      if (n === 0) {
+        if (this.selected !== 0) {
+          this._setSelected(0);
+        }
+        return;
+      }
+      var pos = this.selected;
+      if (pos <= 1) {
+        pos = n;
+      } else {
+        pos--;
+      }
+      this._setSelected(pos);
+      this._notifyPosition(pos - 1);
+    },
+    // Send a signal to highlight previous occurrence.
+    highlightNext: function() {
+      var n = this.searchCount;
+      if (n === 0) {
+        if (this.selected !== 0) {
+          this._setSelected(0);
+        }
+        return;
+      }
+      var pos = this.selected;
+      if (pos >= n) {
+        pos = 1;
+      } else {
+        pos += 1;
+      }
+      this._setSelected(pos);
+      this._notifyPosition(pos - 1);
+    },
+    /**
+     * Sends the `search-bar-search-position-changed` custom event to notify
+     * that the user requested to highlight new position.
+     *
+     * @param {Number} position Position index to notify
+     */
+    _notifyPosition: function(position) {
+      this.fire('search-bar-search-position-changed', {
+        position: position,
+        searchTarget: this.target
+      });
+    }
+  });
+  </script>
+</dom-module>

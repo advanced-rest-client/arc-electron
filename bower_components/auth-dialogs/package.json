@@ -1,0 +1,35 @@
+{
+  "name": "auth-dialogs",
+  "version": "0.1.3",
+  "license": "Apache-2.0 OR CC-BY-4.0",
+  "description": "Authorization dialogs for the Advanced REST CLient",
+  "devDependencies": {
+    "polymer-cli": "^1.2.0"
+  },
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "private": false,
+  "main": [
+    "auth-dialog-basic.html",
+    "auth-dialog-ntlm.html",
+    "authorization-dialog.html"
+  ],
+  "author": "The Advanced REST client authors <arc@mulesoft.com>",
+  "scripts": {
+    "serve": "node_modules/.bin/polymer serve",
+    "lint": "node_modules/.bin/polymer lint authorization-dialog.html auth-dialogs-behavior.html auth-dialog-ntlm.html auth-dialog-basic.html --rules polymer-1",
+    "test-sauce": "node_modules/.bin/polymer test --plugin sauce --job-name \"auth-dialogs:local-test\"",
+    "test": "node_modules/.bin/polymer test --plugin local",
+    "deps": "npm install --quiet && bower install --quiet",
+    "update-deps": "npm update --quiet && bower update --quiet"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/advanced-rest-client/auth-dialogs.git"
+  },
+  "bugs": {
+    "url": "https://github.com/advanced-rest-client/auth-dialogs/issues",
+    "email": "arc@mulesoft.com"
+  }
+}

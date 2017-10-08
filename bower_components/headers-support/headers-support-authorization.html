@@ -1,0 +1,122 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../headers-support-behavior/headers-support-behavior.html">
+<link rel="import" href="../headers-support-behavior/headers-support-styles.html">
+<link rel="import" href="../paper-masked-input/paper-masked-input.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<!--
+`<headers-support-authorization>` is an element that provides headers fill
+support for authorization header.
+
+Currently it supports basic authorization only.
+
+### Example
+```
+<headers-support-authorization></headers-support-authorization>
+```
+
+### Styling
+Check `ArcBehaviors.FillSupportBehavior` for styling options.
+
+@group UI Elements
+@element headers-support-authorization
+@demo demo/index.html
+-->
+<dom-module id="headers-support-authorization">
+  <template>
+    <style include="headers-support-styles"></style>
+    <h2>Basic authorization</h2>
+    <div>
+      <paper-input label="User name" value="{{username}}" type="text"></paper-input>
+      <paper-masked-input label="Password" value="{{password}}" type="text"></paper-masked-input>
+    </div>
+    <div class="buttons">
+      <paper-button dialog-dismiss>Cancel</paper-button>
+      <paper-button dialog-confirm>Accept</paper-button>
+    </div>
+  </template>
+  <script>
+  Polymer({
+    is: 'headers-support-authorization',
+
+    behaviors: [ArcBehaviors.FillSupportBehavior],
+
+    hostAttributes: {
+      'header-support': 'authorization'
+    },
+
+    listeners: {
+      'iron-overlay-closed': '_onClosed'
+    },
+
+    properties: {
+      // Value of the username field
+      username: String,
+      // Value of the password field
+      password: String
+    },
+
+    observers: [
+      '_setValueIfNeeded(opened, value)'
+    ],
+
+    _setValueIfNeeded: function(opened, value) {
+      if (opened) {
+        this._setCurrentValues(value);
+      }
+    },
+
+    _resetInputs: function() {
+      this.set('username', '');
+      this.set('password', '');
+    },
+
+    // Sets values in form from current inpits in headers editor
+    _setCurrentValues: function(currentValue) {
+      this._resetInputs();
+      if (!currentValue) {
+        return;
+      }
+      currentValue = currentValue.replace('Basic ', '');
+      currentValue = currentValue.replace('basic ', '');
+      currentValue = currentValue.trim();
+      var enc;
+      try {
+        enc = atob(currentValue);
+      } catch (e) {
+        return;
+      }
+      var parts = enc.split(':');
+      if (!parts.length) {
+        return;
+      }
+      this.set('username', parts[0]);
+      if (parts[1]) {
+        this.set('password', parts[1]);
+      }
+    },
+
+    _onClosed: function(e) {
+      if (e.detail.canceled || !e.detail.confirmed) {
+        return;
+      }
+      var enc = this.username + ':' + this.password;
+      var value = 'Basic ' + btoa(enc);
+      this.setValue(value);
+    }
+  });
+  </script>
+</dom-module>

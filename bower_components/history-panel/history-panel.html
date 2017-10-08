@@ -1,0 +1,1106 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../history-list-items/history-list-items.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../arc-icons/arc-icons.html">
+<link rel="import" href="../paper-menu-button/paper-menu-button.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../paper-listbox/paper-listbox.html">
+<link rel="import" href="../paper-item/paper-icon-item.html">
+<link rel="import" href="../paper-progress/paper-progress.html">
+<link rel="import" href="../paper-toast/paper-toast.html">
+<link rel="import" href="../openable-panel-behavior/openable-panel-behavior.html">
+<link rel="import" href="../app-pouchdb/pouchdb.html">
+<link rel="import" href="../arc-models/request-model.html">
+<link rel="import" href="../app-pouchdb-quick-search/pouchdb-quick-search.html">
+<link rel="import" href="../paper-dialog/paper-dialog.html">
+<link rel="import" href="../tutorial-toast/tutorial-toast.html">
+<link rel="import" href="../bottom-sheet/bottom-sheet.html">
+<link rel="import" href="../saved-request-detail/saved-request-detail.html">
+<link rel="import" href="../saved-request-editor/saved-request-editor.html">
+<link rel="import" href="../paper-fab/paper-fab.html">
+<!--
+ARC's requests history view
+
+Contains complete UI to support saved requests view.
+It needs the following components to be present in the DOM to support full
+functionality:
+
+-   arc-data-export - to prepare export object
+-   chrome-file-export or any other file export element to save file to disk
+
+### Example
+
+```
+<history-panel></history-panel>
+```
+
+### Styling
+`<history-panel>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--history-panel` | Mixin applied to the element | `{}`
+`--arc-font-headline` | Mixin applied to the header | `{}`
+`--arc-font-subhead` | Mixin applied to the subheader | `{}`
+`--history-panel-loader` | Mixin applied to the loader element | `{}`
+`--history-panel-list` | Mixin apllied to the list element | `{}`
+`--history-panel-toast-revert-button` | Mixin appllied to the rever button in the data delete confirmation toast | `{}`
+`--warning-primary-color` | Main color of the warning messages | `#FF7043`
+`--warning-contrast-color` | Contrast color for the warning color | `#fff`
+`--error-toast` | Mixin applied to the error toast | `{}`
+`--empty-info` | Mixin applied to the label rendered when no data is available. | `{}`
+`--history-panel-fab-background-color` | Color of the fab button in the details panel | `--primary-color`
+
+@group UI Elements
+@element history-panel
+@demo demo/index.html
+-->
+<dom-module id="history-panel">
+  <template>
+    <style>
+    :host {
+      display: block;
+      position: relative;
+      @apply --layout-vertical;
+      @apply --history-panel;
+    }
+
+    .header {
+      @apply --layout-horizontal;
+      @apply --layout-center;
+    }
+
+    h2 {
+      margin-left: 16px;
+      @apply --arc-font-headline;
+      @apply --layout-flex;
+    }
+
+    h3 {
+      margin-left: 16px;
+      @apply --arc-font-subhead;
+    }
+
+    paper-button>iron-icon {
+      margin-left: 12px;
+    }
+
+    paper-listbox iron-icon {
+      color: rgba(0, 0, 0, 0.54);
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    paper-progress {
+      width: 100%;
+      @apply --history-panel-loader;
+    }
+
+    history-list-items {
+      @apply --layout-flex;
+      @apply --history-panel-list;
+    }
+
+    .revert-button {
+      height: 38px;
+      @apply --history-panel-toast-revert-button;
+    }
+
+    .secondary-action {
+      color: var(--primary-color);
+      height: 36px;
+      font-size: 14px;
+    }
+
+    #dataClearDialog {
+      background-color: var(--warning-primary-color, #FF7043);
+      color: var(--warning-contrast-color, #fff);
+    }
+
+    #dataClearDialog paper-button {
+      color: #fff;
+      background-color: transparent;
+    }
+
+    .error-toast {
+      background-color: var(--warning-primary-color, #FF7043);
+      color: var(--warning-contrast-color, #fff);
+      @apply --error-toast;
+    }
+
+    .empty-info {
+      margin-left: 16px;
+      font-size: 16px;
+      @apply --empty-info;
+    }
+
+    .command {
+      margin: 0 8px;
+    }
+
+    #requestDetailsContainer,
+    #requestEditorContainer {
+      min-width: 40%;
+      max-width: 60%;
+      left: 20%;
+    }
+
+    #requestDetailsContainer paper-fab {
+      position: absolute;
+      right: 16px;
+      top: -28px;
+    }
+
+    #requestDetailsContainer paper-fab {
+      --paper-fab-background: var(--history-panel-fab-background-color, --primary-color);
+    }
+
+    tutorial-toast {
+      position: absolute;
+    }
+    </style>
+    <div class="header">
+      <h2>History</h2>
+      <div class="header-actions">
+        <paper-menu-button dynamic-align id="mainMenu">
+          <paper-icon-button icon="arc:more-vert" class="dropdown-trigger"></paper-icon-button>
+          <paper-listbox class="dropdown-content" id="mainMenuOptions">
+            <paper-icon-item on-tap="_onExportAll">
+              <iron-icon icon="arc:archive" item-icon></iron-icon>
+              Export all
+            </paper-icon-item>
+            <paper-icon-item on-tap="_deleteAllClick">
+              <iron-icon icon="arc:delete" item-icon></iron-icon>
+              Delete all
+            </paper-icon-item>
+          </paper-listbox>
+        </paper-menu-button>
+      </div>
+    </div>
+    <template is="dom-if" if="[[loading]]">
+      <paper-progress indeterminate></paper-progress>
+    </template>
+    <template is="dom-if" if="[[dataUnavailable]]">
+      <p class="empty-info">The requests list is empty.</p>
+    </template>
+    <template is="dom-if" if="[[!listHidden]]">
+      <h3>Loaded requests ([[items.length]])</h3>
+      <history-list-items
+        items=[[items]]
+        empty="[[searchListEmpty]]"
+        on-list-items-threshold="_listThreshold"
+        on-list-items-delete="_onDelete"
+        on-list-item-open="_onOpen"
+        on-list-items-export="_onExport"
+        on-list-items-search="_onSearch"
+        on-list-item-details="_onDetails"></history-list-items>
+    </template>
+    <tutorial-toast opened="[[dataUnavailable]]">
+      Send a request from the request panel and this request will appear here.
+    </tutorial-toast>
+    <bottom-sheet id="requestDetailsContainer" with-backdrop on-iron-overlay-opened="_resizeSheetContent">
+      <paper-fab icon="arc:keyboard-arrow-right" data-action="load-request-detail" title="Load request" on-tap="_loadRequestDetails"></paper-fab>
+      <saved-request-detail
+        id="requestDetails"
+        is-history
+        on-delete-request="_deleteRequestDetails"
+        on-edit-request="_editRequestDetails"></saved-request-detail>
+    </bottom-sheet>
+    <bottom-sheet id="requestEditorContainer" with-backdrop on-iron-overlay-opened="_resizeEditorSheetContent">
+      <saved-request-editor
+        id="requestEditor"
+        is-history
+        on-cancel-request-edit="_cancelRequestEdit"
+        on-save-request="_saveRequestEdit"></saved-request-detail>
+    </bottom-sheet>
+    <paper-toast id="noModel" class="error-toast" text="Model not found. Please, report an issue."></paper-toast>
+    <paper-toast id="errorToast" class="error-toast" duration="5000"></paper-toast>
+    <paper-toast id="revertError" class="error-toast" text="Unable to revert changes. Please, report an issue."></paper-toast>
+    <paper-toast id="noExport" class="error-toast" text="Export module not found. Please, report an issue."></paper-toast>
+    <paper-toast id="preparingDataToast" text="Preparing data to export. This can take a moment." duration="0"></paper-toast>
+    <paper-toast id="dataClearErrorToast" class="error-toast" text="Datasore delete error. Please report an issue"></paper-toast>
+    <paper-toast id="deleteToast" duration="7000">
+      <paper-button class="revert-button" on-tap="revertDeleted">Revert</paper-button>
+    </paper-toast>
+    <paper-toast id="indexBuildToast" duration="0" text="Building the index is taking more time than usual. Please, wait a moment.">
+      <paper-button class="revert-button" on-tap="closeIndexBuildMessage">Close</paper-button>
+    </paper-toast>
+    <paper-toast id="requestSaved" text="The request has been added to saved list."></paper-toast>
+    <paper-dialog id="dataClearDialog" on-iron-overlay-closed="_onClearDialogResult">
+      <h2>Danger zone</h2>
+      <p>This will remove all data from the data store. Without option to restore it.</p>
+      <p>Maybe you should create a backup first?</p>
+      <div class="buttons">
+        <paper-button dialog-dismiss autofocus>Cancel</paper-button>
+        <paper-button dialog-confirm class="action-button">Destroy</paper-button>
+      </div>
+    </paper-dialog>
+    <request-model events-target="[[_eventSource]]"></request-model>
+  </template>
+  <script>
+  Polymer({
+    is: 'history-panel',
+
+    behaviors: [ArcBehaviors.OpenablePanelBehavior],
+
+    /**
+     * Fired when navigation was requested
+     *
+     * @event navigate
+     * @param {String} base The base route. It's always `request`
+     * @param {String} type Type of the request to open. It's always `history`
+     * @param {String} id ID of the request to open.
+     */
+    /**
+     * Fired when the name changed. `project-model` handles this event to update
+     * the name.  This event is cancelable. A non-cancelable `request-object-changed`
+     * event is fired when the request name has been updated.
+     *
+     * @event request-name-changed
+     * @param {Object} request The request object with changed name
+     * @param {String} name New name of the request
+     * @param {String} type Always `history-requests`
+     */
+    /**
+     * Fired when requests are to be deleted. Informs the model to delete items.
+     *
+     * @event request-objects-deleted
+     * @param {Array} items List of ids to delete
+     * @param {String} type Always `history-requests`
+     */
+    /**
+     * Fired when the "revert" delete button has been used.
+     * Informs the requests model to restore the data.
+     *
+     * @event request-objects-undeleted
+     * @param {Array} items List of requests to delete
+     * @param {String} type Always `history-requests`
+     */
+    properties: {
+      // List of saved items restored from the datastore.
+      items: {
+        type: Array,
+        observer: '_itemsChanged'
+      },
+      // Computed value, true if `items` is set.
+      hasItems: {
+        type: Boolean,
+        readOnly: true,
+        value: false
+      },
+      // True when loading data from the datastore.
+      loading: {
+        type: Boolean,
+        readOnly: true,
+        notify: true
+      },
+      // current query options
+      queryOptions: {
+        type: Object,
+        readOnly: true,
+        value: function() {
+          return {
+            limit: 150,
+            descending: true,
+            // jscs:disable
+            include_docs: true
+            // jscs:enable
+          };
+        }
+      },
+      // Event source for the data models.
+      _eventSource: {
+        type: Object,
+        value: function() {
+          return this;
+        }
+      },
+      // List of requests that has been recently removed
+      _latestDeleted: Array,
+      // Current search query.
+      isSearch: {
+        type: Boolean,
+        value: false
+      },
+      // Computed value, true if the requests lists is hidden.
+      listHidden: {
+        type: Boolean,
+        value: true,
+        computed: '_computeListHidden(hasItems, isSearch)'
+      },
+      /**
+       * Computed value. True when the query has been performed and no items
+       * has been returned. It is different from `listHidden` where less
+       * conditions has to be checked. It is set to true when it doesn't
+       * have items, is not loading and is search.
+       */
+      searchListEmpty: {
+        type: Boolean,
+        computed: '_computeSearchListEmpty(hasItems, loading, isSearch)'
+      },
+      /**
+       * A computed flag that determines that the query to the databastore
+       * has been performed and empty result was returned.
+       * This can be true only if not in search.
+       */
+      dataUnavailable: {
+        type: Boolean,
+        computed: '_computeDataUnavailable(hasItems, loading, isSearch)'
+      }
+    },
+    // An instance od PouchDB.
+    get db() {
+      return new PouchDB('history-requests');
+    },
+
+    observers: [
+      '_processOnShow(_isOpened)'
+    ],
+
+    attached: function() {
+      this.listen(window, 'request-object-changed', '_handleObjectChanged');
+      this.listen(window, 'request-object-deleted', '_handleObjectDeleted');
+    },
+
+    detached: function() {
+      this.unlisten(window, 'request-object-changed', '_handleObjectChanged');
+      this.unlisten(window, 'request-object-deleted', '_handleObjectDeleted');
+    },
+
+    // Handler for the `request-object-deleted` custom event.
+    _handleObjectDeleted: function(e) {
+      if (e.cancelable || !this.items) {
+        return;
+      }
+      var id = e.detail.id;
+      var index = this.items.findIndex(item => item._id === id);
+      if (index === -1) {
+        return;
+      }
+      this.splice('items', index, 1);
+    },
+    // Handler for the `request-object-change` event to update a saved item.
+    _handleObjectChanged: function(e) {
+      if (e.cancelable || e.detail.type !== 'history-requests') {
+        return;
+      }
+      if (this.isSearch) {
+        return this._objectChangedSearch(e.detail);
+      }
+      var id = e.detail.oldId;
+      if (this.items) {
+        var index = this.items.findIndex(item => item._id === id);
+        if (index >= 0) {
+          this.set(['items', index], e.detail.request);
+          return;
+        }
+      }
+      this._pushToItems(e.detail.request);
+    },
+
+    /**
+     * A function to react on request object change when search is
+     * performed.
+     *
+     * @param {Object]} data `request-object-changed` event's `detail` object.
+     */
+    _objectChangedSearch: function(data) {
+      var request = data.request;
+      var id = data.oldId;
+      if (this._beforeQueryItems && this._beforeQueryItems.length) {
+        let index = this._beforeQueryItems.findIndex(item => item._id === id);
+        if (index > -1) {
+          this._beforeQueryItems[index] = request;
+        }
+      }
+      if (!this._requestMatchFilter(request)) {
+        return;
+      }
+      if (this.items) {
+        var itemsIndex = this.items.findIndex(item => item._id === id);
+        if (itemsIndex > -1) {
+          this.set(['items', itemsIndex], request);
+          return;
+        }
+      }
+      this._pushToItems(request);
+    },
+    /**
+     * Checks if a request matches current query filter.
+     *
+     * @param {Object} request A request object to test.
+     * @return {Boolean} True if the request matches a keyword entered in the
+     * list view.
+     */
+    _requestMatchFilter: function(request) {
+      var keyword = this.$$('history-list-items').keyword;
+      if (!keyword) {
+        return true;
+      }
+      var idCompare = this._prepareQuery(keyword);
+      if (request._id.toLowerCase().indexOf(idCompare) !== -1) {
+        return true;
+      }
+      keyword = keyword.toLowerCase();
+      if (request.headers && request.headers.toLowerCase().indexOf(keyword) !== -1) {
+        return true;
+      }
+      if (request.payload && request.payload.indexOf &&
+        request.payload.toLowerCase().indexOf(keyword) !== -1) {
+        return true;
+      }
+      if (request.description && request.description.indexOf &&
+        request.description.toLowerCase().indexOf(keyword) !== -1) {
+        return true;
+      }
+      return false;
+    },
+    /**
+     * Adds a request item to the list of items.
+     * The list is sorted before adding it to the view.
+     *
+     * @param {Object} item Request object tp add.
+     */
+    _pushToItems: function(item) {
+      var items = this.items || [];
+      items.push(item);
+      items.sort(this._sortFn);
+      items = this._processHeaders(items);
+      this.set('items', Array.from(items));
+      var view = this.$$('history-list-items');
+      view.refresh();
+    },
+
+    // Queries the datastore for a data if data are not set already.
+    _processOnShow: function(opened) {
+      if (!opened) {
+        return;
+      }
+      var items = this.items;
+      if (items && items.length) {
+        return;
+      }
+      this.loadNext();
+    },
+    // Computes and sets value for `hasItems` property
+    _itemsChanged: function(value) {
+      if (value && value.length) {
+        this._setHasItems(true);
+      } else {
+        this._setHasItems(false);
+      }
+    },
+    // refreshes the state of the panel.
+    reset() {
+      delete this.queryOptions.startkey;
+      delete this.queryOptions.skip;
+      this.set('items', undefined);
+      this.loadNext();
+    },
+    /**
+     * Resets the state after finishing search. It restors previous items
+     * without changing query options.
+     */
+    _resetSearch: function() {
+      this.set('items', this._beforeQueryItems);
+      this.isSearch = false;
+      this._beforeQueryItems = undefined;
+      if (!this.items) {
+        this.loadNext();
+      }
+    },
+    // Called when the list view reached scroll treshold.
+    _listThreshold: function() {
+      this.loadNext();
+    },
+    /**
+     * Loads next page of results. It runs the task in a debouncer set
+     * to 10 miliseconds.
+     */
+    loadNext: function() {
+      if (this.isSearch) {
+        return;
+      }
+      this.debounce('saved-load-page', this._loadPage, 10);
+    },
+
+    /**
+     * Loads next page of results from the datastore.
+     * Pagination used here has been described in PouchDB pagination strategies
+     * document.
+     */
+    _loadPage: function() {
+      if (this.isSearch || this.loading) {
+        return;
+      }
+      this._setLoading(true);
+      return this.db.allDocs(this.queryOptions)
+        .then(response => this._updateQueryOptions(response))
+        .then(response => this._processResponse(response))
+        .then(items => this._processHeaders(items))
+        .then(items => this._appendItems(items))
+        .then(() => {
+          this._setLoading(false);
+        })
+        .catch(error => this._handleError(error));
+    },
+
+    /**
+     * Updates `queryOptions`'s `startKey` property for faster pagination
+     * as described in PouchDB tutorial.
+     * @param {Object} response Query result of PouchDB.
+     * @return {Object} The same `response` object for chaining in Promise.
+     */
+    _updateQueryOptions: function(response) {
+      if (response && response.rows.length > 0) {
+        this.queryOptions.startkey = response.rows[response.rows.length - 1].key;
+        this.queryOptions.skip = 1;
+      }
+      return response;
+    },
+    /**
+     * Prepares data to display in the view.
+     *
+     * @param {Object} response Query result of PouchDB.
+     * @return {Array} List of request to be passed to the list view.
+     */
+    _processResponse: function(response) {
+      if (!response || !response.rows.length) {
+        return;
+      }
+      let list = response.rows.map(item => item.doc);
+      list = list.filter(item => item._id.indexOf('_design') !== 0);
+      list.sort(this._sortFn);
+      return list;
+    },
+    /**
+     * Sort function for the saved items.
+     */
+    _sortFn: function(a, b) {
+      if (a.updated > b.updated) {
+        return -1;
+      }
+      if (a.updated < b.updated) {
+        return 1;
+      }
+      return 0;
+    },
+    /**
+     * Creates day headers for current list of requests.
+     * @param {Array} items List of history objects
+     * @return {Array} History list with view model properties
+     */
+    _processHeaders: function(items) {
+      if (!items || !items.length) {
+        return items;
+      }
+      var days = [];
+      items.forEach(item => {
+        let d = this._computeHistoryTime(item.updated);
+        if (days.indexOf(d) === -1) {
+          days[days.length] = d;
+          item.hasHeader = true;
+          item.header = d;
+        } else {
+          item.hasHeader = false;
+        }
+        return item;
+      });
+      return items;
+    },
+    // Computes label of the history header.
+    _computeHistoryTime: function(date) {
+      var d = new Date(Number(date));
+      var options = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      };
+      return new Intl.DateTimeFormat(undefined, options).format(d);
+    },
+    /**
+     * Appends array items to the `items` property. It should be used instead of
+     * direct manipulation of the `items` array.
+     * @param {[type]} items [description]
+     * @return {[type]} [description]
+     */
+    _appendItems: function(items) {
+      if (!items) {
+        return;
+      }
+      var existing = this.items;
+      if (!existing) {
+        return this.set('items', items);
+      }
+      items.forEach(item => this.push('items', item));
+    },
+    /**
+     * Computes value of the `listHidden` property.
+     * List is hidden when no items are found and it is not searching.
+     */
+    _computeListHidden: function(hasItems, isSearch) {
+      if (isSearch) {
+        return false;
+      }
+      return !hasItems;
+    },
+    // Computes value for the `searchListEmpty` property
+    _computeSearchListEmpty: function(hasItems, loading, isSearch) {
+      return isSearch && !loading && !hasItems;
+    },
+    // Computes value for the `dataUnavailable` proeprty
+    _computeDataUnavailable: function(hasItems, loading, isSearch) {
+      return !isSearch && !loading && !hasItems;
+    },
+    _handleError: function(cause) {
+      this._setLoading(false);
+      this.fire('app-log', {
+        message: ['Querying saved requests', cause.message],
+        level: 'error'
+      });
+      console.error('Querying saved requests', cause);
+      throw cause;
+    },
+    // Handles user action to load a request item into the editor.
+    _onOpen: function(e) {
+      var id = e.detail.item._id;
+      this.fire('navigate', {
+        base: 'request',
+        type: 'history',
+        id: id
+      }, {
+        composed: true,
+        cancelable: true
+      });
+      this.$.requestDetailsContainer.opened = false;
+    },
+    // Handles items delete event.
+    _onDelete: function(e) {
+      var data = e.detail.items;
+      return this._delete(data);
+    },
+    // Deletes a request from the details panel.
+    _deleteRequestDetails: function() {
+      var data = [this.$.requestDetails.request];
+      this.$.requestDetailsContainer.opened = false;
+      return this._delete(data);
+    },
+    /**
+     * Performs a delete action of request items.
+     *
+     * @param {Array<Object>} deleted List of deleted items.
+     * @return {[type]} [description]
+     */
+    _delete: function(deleted) {
+      var event = this.fire('request-objects-deleted', {
+        items: deleted.map(item => item._id),
+        type: 'history-requests'
+      }, {
+        cancelable: true,
+        composed: true
+      });
+      if (!event.defaultPrevented) {
+        this.$.noModel.opened = true;
+        return;
+      }
+      return event.detail.result
+      .then(updated => {
+        return Object.keys(updated).map(id => {
+          return {
+            _id: id,
+            _rev: updated[id]
+          };
+        });
+      })
+      .then(deleted => {
+        this._latestDeleted = deleted;
+        let msg;
+        if (deleted.length === 1) {
+          msg = 'The request has been removed.';
+        } else {
+          msg = deleted.length + ' requests has been removed.';
+        }
+        this.$.deleteToast.text = msg;
+        this.$.deleteToast.opened = true;
+      });
+    },
+    /**
+     * Restores removed requests.
+     * It does nothing if `_latestDeleted` is not set or empty.
+     *
+     * @return {Promise} A promise resolved when objects were restored
+     */
+    revertDeleted: function() {
+      this.$.deleteToast.opened = false;
+      var deleted = this._latestDeleted;
+      if (!deleted || !deleted.length) {
+        return Promise.resolve();
+      }
+      var event = this.fire('request-objects-undeleted', {
+        items: deleted,
+        type: 'history-requests'
+      }, {
+        cancelable: true,
+        composed: true
+      });
+      if (!event.defaultPrevented) {
+        this.$.noModel.opened = true;
+        return Promise.reject(new Error('Model not found'));
+      }
+      return event.detail.result.catch(cause => {
+        this.$.revertError.opened = true;
+        throw cause;
+      });
+    },
+
+    // Handles the export event. Fires `export-project` custom event
+    _onExport: function(e) {
+      this._exportItems(e.detail.items);
+    },
+    // Menu item handler to export all project data
+    _onExportAll: function() {
+      this.$.mainMenu.opened = false;
+      Polymer.RenderStatus.afterNextRender(this, function() {
+        this.$.mainMenuOptions.selected = -1;
+      });
+      var event = this.fire('export-user-data', {
+        type: 'history'
+      }, {
+        cancelable: true,
+        composed: true
+      });
+      if (!event.defaultPrevented) {
+        this.$.noExport.opened = true;
+        return;
+      }
+      this.$.preparingDataToast.opened = true;
+      event.detail.result.then(() => {
+        this.$.preparingDataToast.opened = false;
+      });
+    },
+    /**
+     * Dispatches the `export-project` event with relevant data.
+     *
+     * @param {Array} requests List of request to export with the project.
+     */
+    _exportItems: function(requests) {
+      var event = this.fire('export-requests', {
+        requests: requests
+      }, {
+        cancelable: true,
+        composed: true
+      });
+      if (!event.defaultPrevented) {
+        this.$.noExport.opened = true;
+        return;
+      }
+    },
+    /**
+     * Handler for the `list-items-search` event fired by the list view
+     * Sets `isSearch` property and calls `query()` function to perform the
+     * query.
+     */
+    _onSearch: function(e) {
+      this.query(e.detail.q);
+    },
+    /**
+     * Opens the request details applet with the request.
+     */
+    _onDetails: function(e) {
+      var request = e.detail.item;
+      this.$.requestDetails.request = request;
+      this.$.requestDetailsContainer.opened = true;
+    },
+    /**
+     * Fires `navigate` event for currently loaded in the details request.
+     */
+    _loadRequestDetails: function() {
+      this.fire('navigate', {
+        base: 'request',
+        type: 'history',
+        id: this.$.requestDetails.request._id
+      }, {
+        composed: true,
+        cancelable: true
+      });
+      this.$.requestDetailsContainer.opened = false;
+    },
+    /**
+     * Performs a query on a saved items. The query is performewd on two stages.
+     * First stage searches through the meta properties saved in the object's
+     * `_id` property (url, method). This query is fast and
+     * reports results almost immidietly. Second stage is to perform full text
+     * search on the items. This required building an index and then performing
+     * the search so it may take a long time in cases of lots of data stored
+     * in the datastore.
+     *
+     * @param {String} query The query to performs. Pass empty stirng
+     * (or nothing) to reset quesy state.
+     * @return {Promise} Resolved promise when the query ends.
+     */
+    query: function(query) {
+      if (!query) {
+        return this._resetSearch();
+      }
+      this.isSearch = true;
+      if (!this._beforeQueryItems) {
+        this._beforeQueryItems = this.items;
+      }
+      this.set('items', undefined);
+      query = this._prepareQuery(query);
+      var encodedQuery = encodeURIComponent(query);
+      var stRunIds;
+      this._setLoading(true);
+      return this.db.allDocs()
+      .then(result => this._filterQuery(encodedQuery, result))
+      .then(ids => {
+        stRunIds = ids;
+        return this._getMatchedDocuments(ids);
+      })
+      .then(docs => this._appendItems(docs))
+      .then(() => this._fullSearch(query, stRunIds))
+      .then(() => {
+        this._setLoading(false);
+      })
+      .catch(error => this._handleError(error));
+    },
+    /**
+     * Prepares the user query to be used in the datasore simple search.
+     * @param {String} query User query
+     * @return {String} Transformed query
+     */
+    _prepareQuery: function(query) {
+      query = String(query);
+      query = query.toLowerCase();
+      if (query[0] === '_') {
+        query = query.substr(1);
+      }
+      return query;
+    },
+    /**
+     * A map function to be used with simple search results.
+     *
+     * @param {String} query User query
+     * @param {Object} result PouchDB query result.
+     * @return {Array<String>} List of object IDs that match query criteria.
+     */
+    _filterQuery: function(query, result) {
+      let matches = result.rows.filter(item => item.id.toLowerCase().indexOf(query) !== -1);
+      matches = matches.map(item => item.id);
+      return matches;
+    },
+    /**
+     * Queries the datastore for the documents descibed in `ids` list.
+     *
+     * @param {Array<String>} ids List of object IDs to get from the datastore.
+     * @return {Promise} A promise resolved to a list of documents.
+     */
+    _getMatchedDocuments: function(ids) {
+      return this.db.allDocs({
+        keys: ids,
+        // jscs:disable
+        include_docs: true
+        // jscs:enable
+      })
+      .then(result => {
+        return result.rows.map(item => item.doc);
+      });
+    },
+    /**
+     * Performs a full search on request's properties that are not in the `_id`.
+     *
+     * First time use will cause an index to be build. It may take some time.
+     *
+     * @param {String} query Raw user query
+     * @param {?Array<String>} addedIds List of datastore IDs of objects that are
+     * already on the results list (after performing simple query). Items that
+     * are already on this list won't be reported.
+     * @return {[type]} [description]
+     */
+    _fullSearch: function(query, addedIds) {
+      addedIds = addedIds || [];
+      this._indexBuildTimeout = setTimeout(this._indexTimeout.bind(this), 7000);
+      var mm = Math.round(100 / query.split(/\s/).length);
+      return this.db.search({
+        query: query,
+        fields: ['headers', 'payload', 'description'],
+        mm: mm + '%',
+        // jscs:disable
+        include_docs: true
+        // jscs:enable
+      })
+      .then(response => {
+        if (this._indexBuildTimeout) {
+          clearTimeout(this._indexBuildTimeout);
+          this._indexBuildTimeout = undefined;
+        }
+        if (this.$.indexBuildToast.opened) {
+          this.$.indexBuildToast.opened = false;
+        }
+        if (!response || !response.rows.length) {
+          return;
+        }
+        let list = response.rows;
+        if (addedIds.length) {
+          list = list.filter(item => addedIds.indexOf(item.id) === -1);
+        }
+        list = list.map(item => item.doc);
+        this._appendItems(list);
+      });
+    },
+    /**
+     * Called when index builder timeout reasonable computation time.
+     * It informs the user that the index is building and it may take a while
+     * to complete the task.
+     */
+    _indexTimeout: function() {
+      this.$.indexBuildToast.opened = true;
+    },
+    // Closes the index building message
+    closeIndexBuildMessage: function() {
+      this.$.indexBuildToast.opened = false;
+    },
+    // Handler for delete all menu option click
+    _deleteAllClick: function() {
+      this.$.mainMenu.opened = false;
+      Polymer.RenderStatus.afterNextRender(this, function() {
+        this.$.mainMenuOptions.selected = -1;
+      });
+      this.$.dataClearDialog.opened = true;
+    },
+    // Called when delete datastore dialog is closed.
+    _onClearDialogResult: function(e, detail) {
+      if (!detail.confirmed) {
+        return;
+      }
+      this._clearDatastore();
+    },
+    /**
+     * Removes all data from the datastore and then fires
+     */
+    _clearDatastore: function() {
+      this.db.destroy()
+      .then(() => {
+        this.fire('datastore-destroyed', {
+          datastore: 'history-requests'
+        });
+        this.reset();
+      })
+      .catch(cause => {
+        this.$.dataClearErrorToast.opened = true;
+        this.fire('app-log', {
+          message: ['Error deleting database', cause],
+          level: cause
+        });
+        console.error(cause);
+        throw cause;
+      });
+    },
+
+    /**
+     * Opens request details editor in place of the request details applet.
+     */
+    _editRequestDetails: function() {
+      this.$.requestEditor.request = this.$.requestDetails.request;
+      this.$.requestDetails.request = undefined;
+      this.$.requestDetailsContainer.opened = false;
+      this.$.requestEditorContainer.opened = true;
+    },
+    _resizeSheetContent: function() {
+      this.$.requestDetails.notifyResize();
+    },
+    _resizeEditorSheetContent: function() {
+      this.$.requestEditor.notifyResize();
+    },
+    _cancelRequestEdit: function() {
+      this.$.requestEditorContainer.opened = false;
+      this.$.requestEditor.request = undefined;
+    },
+    /**
+     * Prepares a detail object for the `save-request-data` event.
+     *
+     * @param {Object} opts Map of saving request options returned from save
+     *                      panel / dialog
+     * @param {Object} request The request object to update.
+     * @return {Object} Event's detail object.
+     */
+    _prepareSaveRequestEvent: function(opts, request) {
+      var data = Object.assign({}, request);
+      data.name = opts.name;
+      if (opts.description) {
+        data.description = opts.description;
+      } else if (data.description) {
+        delete data.description;
+      }
+      opts.override = false;
+      delete data._id;
+      delete data._rev;
+      delete data.hasHeader;
+      delete data.header;
+      var detail = {
+        request: data,
+        opts: opts
+      };
+      detail.opts.drive = opts.isDrive ? true : false;
+      delete opts.isDrive;
+      return detail;
+    },
+    /**
+     * Dispatches the event to save request data in the data store.
+     * @param {CustomEvent} e The `save-request` event dispatched from the editor.
+     */
+    _saveRequestEdit: function(e) {
+      var detail = this._prepareSaveRequestEvent(e.detail, e.detail.request);
+      var event = this.fire('save-request-data', detail, {
+        cancelable: true,
+        composed: true
+      });
+      this.$.requestEditorContainer.opened = false;
+      this.$.requestEditor.request = undefined;
+      if (!event.defaultPrevented) {
+        let message = 'Unable to save the request.\n';
+        message += 'The "save-request-data" event is not handled.';
+        console.error(message);
+        this.fire('app-log', {
+          'message': [message],
+          'level': 'error'
+        });
+        this.$.errorToast.text = message;
+        this.$.errorToast.opened = true;
+        return Promise.reject(new Error('Save event not handled'));
+      }
+      return event.detail.result
+      .then(() => {
+        this.$.requestSaved.opened = true;
+      })
+      .catch(cause => {
+        console.error('Save request error', cause);
+        this.fire('app-log', {
+          'message': ['Unable to save the request.', cause],
+          'level': 'error'
+        });
+        this.$.errorToast.text = 'Unable to save current request. ' + cause.message;
+        this.$.errorToast.opened = true;
+      });
+    }
+  });
+  </script>
+</dom-module>

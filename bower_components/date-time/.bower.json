@@ -1,0 +1,52 @@
+{
+  "name": "date-time",
+  "description": "An element to display formatted date and time",
+  "license": "Apache-2.0 OR CC-BY-4.0",
+  "authors": [
+    "The Advanced REST client authors <arc@mulesoft.com>"
+  ],
+  "keywords": [
+    "web-components",
+    "polymer"
+  ],
+  "private": true,
+  "main": [
+    "date-time.html"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:advanced-rest-client/date-time.git"
+  },
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.0.0"
+  },
+  "devDependencies": {
+    "iron-component-page": "polymerelements/iron-component-page#1.0.0",
+    "web-component-tester": "^4.0.0",
+    "paper-styles": "polymerelements/paper-styles#^1.0.2",
+    "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^1.0.0",
+    "iron-test-helpers": "PolymerElements/iron-test-helpers#^1.0.0",
+    "test-fixture": "PolymerElements/test-fixture#^1.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0",
+    "arc-demo-helpers": "advanced-rest-client/arc-demo-helpers#^1.0.10"
+  },
+  "ignore": [
+    "**/.*",
+    "dependencyci.yml",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tasks"
+  ],
+  "version": "0.1.2",
+  "homepage": "https://github.com/advanced-rest-client/date-time",
+  "_release": "0.1.2",
+  "_resolution": {
+    "type": "version",
+    "tag": "0.1.2",
+    "commit": "3734bbf9214e3f2ef9bda499fc924d47c5fac425"
+  },
+  "_source": "https://github.com/advanced-rest-client/date-time.git",
+  "_target": "^0.1.2",
+  "_originalSource": "advanced-rest-client/date-time"
+}

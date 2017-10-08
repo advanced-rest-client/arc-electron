@@ -1,0 +1,31 @@
+{
+  "name": "arc-data-import",
+  "version": "0.1.3",
+  "license": "Apache-2.0 OR CC-BY-4.0",
+  "description": "An element that imports data into the ARC datastore",
+  "devDependencies": {
+    "bower": "^1.8.0",
+    "polymer-cli": "^1.2.0"
+  },
+  "private": false,
+  "main": [
+    "arc-data-import.html"
+  ],
+  "author": "The Advanced REST client authors <arc@mulesoft.com>",
+  "scripts": {
+    "serve": "node_modules/.bin/polymer serve",
+    "lint": "node_modules/.bin/polymer lint arc-data-import.html --rules polymer-1",
+    "test-sauce": "node_modules/.bin/polymer test --plugin sauce --job-name \"arc-data-import:local-test\"",
+    "test": "node_modules/.bin/polymer test --plugin local",
+    "deps": "npm install --quiet && bower install --quiet",
+    "update-deps": "npm update --quiet && bower update --quiet"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/advanced-rest-client/arc-data-import.git"
+  },
+  "bugs": {
+    "url": "https://github.com/advanced-rest-client/arc-data-import/issues",
+    "email": "arc@mulesoft.com"
+  }
+}

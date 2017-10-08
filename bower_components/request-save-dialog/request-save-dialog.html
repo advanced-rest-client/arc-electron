@@ -1,0 +1,438 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-resizable-behavior/iron-resizable-behavior.html">
+<link rel="import" href="../iron-overlay-behavior/iron-overlay-behavior.html">
+<link rel="import" href="../app-pouchdb/pouchdb.html">
+<link rel="import" href="../paper-styles/shadow.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-combobox/paper-combobox.html">
+<link rel="import" href="../iron-form/iron-form.html">
+<!--
+A save request dialog for Advanced REST Client.
+
+The element knows nothing about the request content so it has to be used in a
+context of a request (request panel).
+
+It accepts `name`, `isSaved` and `projectId` properties for requests that are
+already saved in the datastore. This values must be set by the application that
+hosts the element.
+
+Each time the dialog is opened it queries for a list of projects in the datastore.
+
+The element fires `save-request` custom event when the user use "save" or
+"override" option in the UI. To react on a cancel event (fired after pressing ESC,
+clicking outside the dialog or after pressing "cancel" button) listen for
+`iron-overlay-canceled` event.
+
+### Example
+```
+<request-save-dialog is-saved name="test" on-save-request="_saveRequest"></request-save-dialog>
+```
+
+### Styling
+`<request-save-dialog>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--request-save-dialog` | Mixin applied to the element | `{}`
+`--request-save-dialog-caption` | Mixin applied to the save options caption | `{}`
+`--request-save-dialog-caption-color` | Color of the save options caption | `#737373`
+`--arc-font-body1` | Theme mixin, applied to the dialog | `{}`
+`--arc-font-title` | Theme mixin, applied to the dialog title. It overrides the `--paper-dialog-title` mixin. | `{}`
+`--arc-font-caption` | Theme mixin, | `{}`
+
+@group UI Elements
+@element request-save-dialog
+@demo demo/index.html
+-->
+<dom-module id="request-save-dialog">
+  <template>
+    <style>
+    :host {
+      display: block;
+      margin: 24px 40px;
+      -webkit-overflow-scrolling: touch;
+      background: var(--paper-dialog-background-color, --primary-background-color);
+      color: var(--paper-dialog-color, --primary-text-color);
+      @apply --arc-font-body1;
+      @apply --shadow-elevation-16dp;
+      @apply --paper-dialog;
+      @apply --request-save-dialog;
+    }
+
+    :host > * {
+      padding: 0 24px;
+    }
+
+    h2 {
+      position: relative;
+      margin: 0;
+      @apply --paper-dialog-title;
+      @apply --arc-font-title;
+    }
+
+    .title-area {
+      padding-top: 24px;
+      padding-bottom: 24px;
+      @apply --layout-horizontal;
+    }
+
+    .buttons {
+      position: relative;
+      padding: 8px 8px 8px 24px;
+      margin: 0 0 24px;
+      color: var(--paper-dialog-button-color, --primary-color);
+      @apply --layout-horizontal;
+      @apply --layout-end-justified;
+    }
+
+    .options-panel {
+      margin-top: 24px;
+      margin-bottom: 24px;
+    }
+
+    .options-panel paper-checkbox {
+      margin-right: 12px;
+    }
+
+    .caption {
+      @apply --arc-font-caption;
+      margin-bottom: 8px;
+      color: var(--request-save-dialog-caption-color, #737373);
+      font-size: 13px;
+      font-weight: 200;
+      @apply --request-save-dialog-caption;
+    }
+    </style>
+    <div class="title-area">
+      <h2>Save request</h2>
+    </div>
+    <section>
+      <form is="iron-form" id="form" method="post" on-iron-form-presubmit="_formSubmit">
+        <paper-input label="Request name (required)" required auto-validate error-message="Name is required" value="{{name}}"></paper-input>
+
+        <div class="options-panel">
+          <div class="caption">Save options</div>
+          <paper-checkbox checked="{{isDrive}}">Save to Google Drive</paper-checkbox>
+          <paper-checkbox checked="{{isProject}}">Save in project</paper-checkbox>
+        </div>
+
+        <template is="dom-if" if="[[isProject]]">
+          <paper-combobox label="Add to a project" value="{{projectName}}" source="[[_computeAutocomplete(projects)]]" on-iron-overlay-closed="_refocusCombobox" required auto-validate error-message="Project name is required" tabindex="-1"></paper-combobox>
+        </template>
+      </form>
+    </section>
+    <div class="buttons">
+      <paper-button dialog-dismiss on-tap="_cancel" data-action="cancel">Cancel</paper-button>
+      <template is="dom-if" if="[[isSaved]]">
+        <paper-button dialog-confirm on-tap="_override" data-action="override">Override</paper-button>
+        <paper-button dialog-confirm on-tap="_save" data-action="save-new">Save as new</paper-button>
+      </template>
+      <template is="dom-if" if="[[!isSaved]]">
+        <paper-button dialog-confirm on-tap="_save" data-action="save">Save</paper-button>
+      </template>
+    </div>
+  </template>
+  <script>
+  Polymer({
+    is: 'request-save-dialog',
+    behaviors: [
+      Polymer.IronOverlayBehavior,
+      Polymer.IronResizableBehavior
+    ],
+    hostAttributes: {
+      'role': 'dialog',
+      'tabindex': '-1'
+    },
+    properties: {
+      /**
+       * Name of the request.
+       */
+      name: String,
+      /**
+       * Should be set if the request has been already saved in the datastore.
+       * Adds UI controls to override or save as new.
+       */
+      isSaved: {
+        type: Boolean,
+        value: false
+      },
+      /**
+       * True when saving request to Google Drive.
+       */
+      isDrive: Boolean,
+      /**
+       * Set when the user selects the "Save in project" option. Should also
+       * be set if request has been added to the project.
+       */
+      isProject: Boolean,
+      /**
+       * List of available projects
+       */
+      projects: Array,
+      /**
+       * Name of the project entered into the combo box selector.
+       */
+      projectName: String,
+      /**
+       * Computed value, true if the project already exists so entered value
+       * represents a name of already saved project.
+       * Use `this.projectId` to get project `_id` property for selected name
+       */
+      projectIsNew: {
+        type: Boolean,
+        computed: '_computeProjectIsNew(projects.*, projectName)'
+      },
+      /**
+       * Selected project ID. Should be set to if the request has been already
+       * associated with the project.
+       */
+      projectId: String,
+      /**
+       * Set if the user chooses to override current request.
+       */
+      override: {
+        type: Boolean,
+        readOnly: true
+      }
+    },
+
+    // PouchDB's handler to the projects database.
+    get _projectDb() {
+      return new PouchDB('legacy-projects');
+    },
+    /**
+     * Selected project database info
+     */
+    get projectInfo() {
+      var projects = this.projects;
+      if (!projects || !projects.length) {
+        return;
+      }
+      var projectName = this.projectName;
+      if (!projectName) {
+        return;
+      }
+      projectName = projectName.toLowerCase();
+      return projects.find(item => item.name.toLowerCase() === projectName);
+    },
+
+    observers: [
+      '_computeProjectName(projectId, projects.*)',
+      '_projectIsNewChanged(projectIsNew)',
+      '_ensureComboClosed(projects, isProject)'
+    ],
+
+    listeners: {
+      'iron-overlay-opened': '_updateProjectsList'
+    },
+
+    /**
+     * Resets the state of the UI
+     */
+    reset: function() {
+      this.isSaved = false;
+      this.isDrive = false;
+      this.name = '';
+      this.isProject = false;
+      this.projectName = '';
+      this.set('projects', []);
+    },
+    /**
+     * Cancels save action and closes the overlay.
+     */
+    _cancel: function() {
+      this.close();
+    },
+    /**
+     * Sets `override` to `false` and sends the form.
+     */
+    _save: function() {
+      this._setOverride(false);
+      this._sendForm();
+    },
+    /**
+     * Sets `override` to `true` and sends the form.
+     */
+    _override: function() {
+      this._setOverride(true);
+      this._sendForm();
+    },
+    // Validates and submits the form.
+    _sendForm: function() {
+      if (!this.$.form.validate()) {
+        return;
+      }
+      this.$.form.submit();
+    },
+    // Updates list of available projects after the overlay is opened.
+    _updateProjectsList: function(e) {
+      if (e.target !== this) {
+        return;
+      }
+      var db = this._projectDb;
+      return db.allDocs({
+        // jscs:disable
+        include_docs: true
+        // jscs:enable
+      })
+      .then(function(r) {
+        return r.rows.map(function(i) {
+          return i.doc;
+        });
+      })
+      .then(result => result.sort(this._projectsSortFn))
+      .then(result => {
+        this.set('projects', result);
+      })
+      .catch(err => {
+        this.fire('send-analytics', {
+          type: 'exception',
+          description: 'save-dialog-view:' + err.message,
+          fatal: false
+        });
+        this.fire('app-log', {'message': err, 'level': 'error'});
+        throw new Error(err.message);
+      });
+    },
+    // Sort function used to sort projects in order.
+    _projectsSortFn: function(a, b) {
+      if (a.order === b.order) {
+        return 0;
+      }
+      if (a.order > b.order) {
+        return 1;
+      }
+      if (a.order < b.order) {
+        return -1;
+      }
+    },
+    /**
+     * Computes a list of suggestion for autocomplete element.
+     * From the list of `projects` it takes names for each project and returns
+     * new list for suggestions.
+     */
+    _computeAutocomplete: function(projects) {
+      if (!projects || !projects.length) {
+        return;
+      }
+      return projects.map(item => item.name);
+    },
+    /**
+     * Computes if currently entered project name already exists in the
+     * datastore.
+     * @return {Boolean} True if current `projectName` is not associated with
+     * any of the existing projects.
+     */
+    _computeProjectIsNew: function() {
+      return !this.projectInfo;
+    },
+    /**
+     * Sends the `save-request` custom event with computed detail object.
+     */
+    _formSubmit: function(event) {
+      event.preventDefault();
+      var detail = this._computeEventDetail();
+      if (detail.isProject && !detail.projectId && !detail.projectName) {
+        return;
+      }
+      this.fire('save-request', detail, {
+        composed: true,
+        cancelable: true
+      });
+      this.close();
+    },
+    /**
+     * Computes `save-request` custom event's `detail` object
+     * @return {Object} A detail property of the event.
+     */
+    _computeEventDetail: function() {
+      var detail = {
+        name: this.name,
+        override: this.override,
+        isDrive: this.isDrive,
+        isProject: this.isProject
+      };
+      if (detail.isProject) {
+        if (this.projectIsNew || !this.projects) {
+          detail.projectName = this.projectName;
+          detail.projectIsNew = true;
+        } else {
+          detail.projectId = this.projectId;
+          detail.projectIsNew = false;
+        }
+      }
+      return detail;
+    },
+    /**
+     * Function used to compute project name when projectId changes.
+     * It is used when project ID changes from the outside of the element to
+     * indicate that the existing request already belongs to a project.
+     */
+    _computeProjectName: function(projectId, projectsRecord) {
+      if (!projectId || !projectsRecord || !projectsRecord.base) {
+        return;
+      }
+      var project = projectsRecord.base.find(item => item._id === projectId);
+      if (!project) {
+        return;
+      }
+      if (this.projectName !== project.name) {
+        this.set('projectName', project.name);
+      }
+    },
+    // Computes `projectId` property when `projectIsNew` changes.
+    _projectIsNewChanged: function(projectIsNew) {
+      if (projectIsNew) {
+        return;
+      }
+      var info = this.projectInfo;
+      if (!info) {
+        console.error('Project is not new but no info is available.');
+        return;
+      }
+      this.set('projectId', info._id);
+    },
+    /**
+     * It refocuses the combobox after it looses focus when the autocomplete
+     * element closes.
+     */
+    _refocusCombobox: function() {
+      var combo = this.$$('paper-combobox');
+      combo.focus();
+    },
+    /**
+     * The `IronOverlayBehavior` focuses of the combobox (which is using
+     * `IronOverlayBehavior` as well in paper-autocomplete element) and it
+     * opend the autocomplete. This closes the autocomplete after the `source`
+     * property change (projects list). I wasn't able to determine how not to
+     * focus on the element when the overlay is opened. This is simple
+     * walkaround.
+     */
+    _ensureComboClosed: function(projects, isProject) {
+      if (isProject && projects && projects.length) {
+        setTimeout(() => {
+          var combo = this.$$('paper-combobox');
+          combo.opened = false;
+          combo.blur();
+        }, 1);
+      }
+    }
+  });
+  </script>
+</dom-module>

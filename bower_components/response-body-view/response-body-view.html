@@ -1,0 +1,800 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../arc-icons/arc-icons.html">
+<link rel="import" href="../iron-pages/iron-pages.html">
+<link rel="import" href="../response-raw-viewer/response-raw-viewer.html">
+<link rel="import" href="../xml-viewer/xml-viewer.html">
+<link rel="import" href="../json-viewer/json-viewer.html">
+<link rel="import" href="../response-highlighter/response-highlighter.html">
+<link rel="import" href="../clipboard-copy/clipboard-copy.html">
+<link rel="import" href="../paper-dialog/paper-dialog.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../paper-toast/paper-toast.html">
+<link rel="import" href="../json-table/json-table.html">
+<link rel="import" href="../paper-tooltip/paper-tooltip.html">
+
+<!--
+`<response-body-view>` An element to display a HTTP response body.
+
+The element will try to select best view for given `contentType`. It will
+choose the JSON viewer for JSON response and XML viewer for XML responses.
+Otherise it will display a syntax hagligter.
+
+Note that the `contentType` property **must** be set in order to display any
+view.
+
+### Save content to file
+
+The element uses the web way of file saving. However, it sends the
+`export-data` custom event first to check if hosting application implements
+other save functionality. See event description for more information.
+
+### Example
+```
+<response-body-view
+  response-text="I am the resposne"
+  content-type="text/plain"></response-body-view>
+```
+
+### Build in text search
+
+In some environments (like Chrome applications) text search is not offered by
+the platform and it must be build into the application. This element support
+such situaltion by handling search events:
+
+-   `search-bar-opened-changed` Means that the search bar has been opened / closed
+-   `search-bar-input-changed` Means that the user provided a value to the search input
+-   `search-bar-search-position-changed` Means that the user requested to highlight next / previous item.
+
+`search-bar-opened-changed` and `search-bar-input-changed` have `lastTarget` and
+`value` properties set on the `detail` object. `value` (String) represents user input and
+`lastTarget` (HTMLElement or undefined), if set, represents last view that interacted with the element.
+If the `lastTarget` is set and is not this element then it will not handle the event.
+
+`search-bar-search-position-changed` contains `position` (Number) that represents index
+of the maked word to highlight. `searchTarget` means the same as `lastTarget`.
+
+The element listend for the events on `window` object.
+
+### Styling
+`<response-body-view>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--response-body-view` | Mixin applied to the element | `{}`
+`--response-body-view-dialog-title` | Mixin applied to dialog title | `{}`
+`--response-body-view-preview-close` | Mixin applied to the response preview close button | `{}`
+`--response-body-view-content-actions` | Mixin applied to the content actions container | `{}`
+`--response-body-view-dialog-buttons` | Mixin applied to the dialog buttons container | `{}`
+`--response-body-view-dialog-close` | Mixin applied to dialog's close button | `{}`
+`--response-body-view-dialog-close-hover` | Mixin applied to dialog's close button when hovering | `{}`
+`--response-body-view-dialog-download` | Mixin applies to dialog's download button | `{}`
+`--response-body-view-dialog-download-hover` | Mixin applies to dialog's download button when hovering | `{}`
+
+@group UI Elements
+@element response-body-view
+@demo demo/index.html
+-->
+<dom-module id="response-body-view">
+  <template>
+    <style>
+    :host {
+      display: block;
+      position: relative;
+      @apply --response-body-view;
+    }
+
+    #webView {
+      width: 100%;
+      height: 100%;
+      background-color: #fff;
+      border: 0;
+      margin-top: 12px;
+    }
+
+    #saveDialog {
+      min-width: 320px;
+    }
+
+    paper-icon-button[active] {
+      background-color: var(--response-raw-viewer-button-active, #BDBDBD);
+      border-radius: 50%;
+    }
+
+    .close-preview {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      background: #fff;
+      color: rgba(0,0,0,0.74);
+      @apply --response-body-view-preview-close;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    .content-actions {
+      @apply --layout-horizontal;
+      @apply --layout-center;
+      @apply --response-body-view-content-actions;
+    }
+
+    .dialog-title {
+      @apply --arc-font-common-base;
+      @apply --response-body-view-dialog-title;
+    }
+
+    .buttons {
+      @apply --response-body-view-dialog-buttons;
+    }
+
+    .button-dismiss {
+      @apply --response-body-view-dialog-close;
+    }
+
+    .button-dismiss:hover {
+      @apply --response-body-view-dialog-close-hover;
+    }
+
+    .button-download {
+      @apply --response-body-view-dialog-download;
+    }
+
+    .button-download:hover {
+      @apply(--response-body-view-dialog-download-hover);
+    }
+
+    .download-link {
+      text-decoration: none;
+      color: inherit;
+      outline: none;
+    }
+    </style>
+    <template is="dom-if" if="[[hasData]]">
+      <div class="content-actions" hidden$="[[contentPreview]]">
+        <span>
+          <paper-icon-button icon="arc:content-copy" on-tap="_copyToClipboard"></paper-icon-button>
+          <paper-tooltip animation-delay="200">Copy content to clipboard</paper-tooltip>
+        </span>
+        <span>
+          <paper-icon-button icon="arc:archive" on-tap="_saveFile"></paper-icon-button>
+          <paper-tooltip animation-delay="200">Save content to file</paper-tooltip>
+        </span>
+        <span>
+          <paper-icon-button icon="arc:code" toggles active="{{rawView}}"></paper-icon-button>
+          <paper-tooltip animation-delay="200">Toogle raw response view</paper-tooltip>
+        </span>
+        <template is="dom-if" if="[[_computeRenderPreviewResponse(activeView)]]">
+          <span>
+            <paper-icon-button icon="arc:visibility" toggles active="{{contentPreview}}"></paper-icon-button>
+            <paper-tooltip animation-delay="200">Preview response</paper-tooltip>
+          </span>
+        </template>
+        <template is="dom-if" if="[[isJson]]">
+          <span>
+            <paper-icon-button icon="arc:view-column" toggles active="{{jsonTableView}}"></paper-icon-button>
+            <paper-tooltip animation-delay="200">Toggle structured table view</paper-tooltip>
+          </span>
+        </template>
+        <template is="dom-if" if="[[_computeRenderWithRaw(activeView)]]">
+          <span>
+            <paper-icon-button icon="arc:wrap-text" toggles active="{{rawTextWrap}}"></paper-icon-button>
+            <paper-tooltip animation-delay="200">Toggle text wrapping</paper-tooltip>
+          </span>
+        </template>
+      </div>
+    </template>
+
+    <iron-pages selected="{{activeView}}" hidden$="[[contentPreview]]">
+      <section>
+        <response-raw-viewer response-text="[[_raw]]" wrap-text$="[[rawTextWrap]]"></response-raw-viewer>
+      </section>
+      <section>
+        <template is="dom-if" if="[[isParsed]]" restamp="true">
+          <response-highlighter response-text="[[_raw]]" content-type="[[contentType]]"></response-highlighter>
+        </template>
+      </section>
+      <section>
+        <template is="dom-if" if="[[isJson]]" restamp="true">
+          <json-viewer json="[[_raw]]"></json-viewer>
+        </template>
+      </section>
+      <section>
+        <template is="dom-if" if="[[isXml]]" restamp="true">
+          <xml-viewer xml="[[_raw]]"></xml-viewer>
+        </template>
+      </section>
+      <section>
+        <template is="dom-if" if="[[_computeRenderJsonTable(isJson, jsonTableView)]]" restamp="true">
+          <json-table json="[[_raw]]"></json-table>
+        </template>
+      </section>
+    </iron-pages>
+
+    <iframe id="webView" hidden$="[[!contentPreview]]"></iframe>
+    <paper-icon-button class="close-preview" title="Close the preview" icon="arc:close" on-tap="closePreview" hidden$="[[!contentPreview]]"></paper-icon-button>
+
+    <paper-dialog id="saveDialog" on-iron-overlay-closed="_downloadDialogClose">
+      <h2 class="dialog-title">Saving to file</h2>
+      <div>
+        <p>Your file is now ready to download.</p>
+      </div>
+      <div class="buttons">
+        <paper-button class="button-dismiss" dialog-dismiss>Close</paper-button>
+        <a href$="[[downloadFileUrl]]" autofocus download$="[[downloadFileName]]" on-tap="_downloadIconTap" target="_blank" class="download-link">
+          <paper-button class="button-download">Download file</paper-icon>
+        </a>
+      </div>
+    </paper-dialog>
+
+    <clipboard-copy content="[[_raw]]"></clipboard-copy>
+    <paper-toast id="safariDownload" text="Safari doesn't support file download. Please, use other browser."></paper-toast>
+    <paper-toast id="highlightTimeout"></paper-toast>
+
+    <script id="preview" type="text/html">
+      <!DOCTYPE html><html><head><title>Advanced REST client - preview</title><style>
+        body,html{overflow:auto;margin:0;padding:0}body{margin:16px;min-height:200px}
+        </style></head><body></body></html>
+    </script>
+  </template>
+  <script>
+  (function() {
+    'use strict';
+    /* global webkitURL */
+    window.URL = URL || webkitURL;
+    Polymer({
+      is: 'response-body-view',
+      /**
+       * Fired when the element request to export data outside the application.
+       *
+       * Application can handle this event if it support native UX of file saving.
+       * In this case this event must be canceled by calling `preventDefault()`
+       * on it. If the event is not canceled then save to file dialog appears
+       * with a regular download link.
+       *
+       * @event export-data
+       * @param {String} data A text to save in the file.
+       * @param {String} type Data content type
+       * @param {String} file Suggested file name
+       */
+      /**
+       * Fired when the `jsonTableView` property change to inform other
+       * elements to switch corresponding view as well.
+       *
+       * @event json-table-state-changed
+       * @param {Boolean} enabled If true then the view is enabled.
+       */
+      /**
+       * Fired when text search on the element has been performed and
+       * number of search results are ready.
+       *
+       * @event search-bar-search-mark-count
+       * @param {Number} count Number of marked words
+       * @param {HTMLElement} searchTarget This element.
+       */
+      properties: {
+        /**
+         * Raw response as a response text.
+         */
+        responseText: {
+          type: String,
+          observer: '_responseTextChanged'
+        },
+        // A variable to be set after the `responseText` change
+        _raw: String,
+        /**
+         * The response content type.
+         */
+        contentType: String,
+        /**
+         * If true then the conent preview will be visible instead of the code view
+         */
+        contentPreview: {
+          type: Boolean,
+          value: false,
+          observer: '_contentPreviewChanged'
+        },
+        /**
+         * Computed value, true if the parsed view can be displayed.
+         * If false then the syntax highligter will be removed from the DOM
+         * so it will not try to do the parsing job if it is not necessary.
+         */
+        isParsed: {
+          type: Boolean,
+          value: false,
+          readOnly: true
+        },
+        /**
+         * Computed value, true if the JSON view can be displayed.
+         * If false then the syntax highligter will be removed from the DOM
+         * so it will not try to do the parsing job if it is not necessary.
+         */
+        isJson: {
+          type: Boolean,
+          value: false,
+          readOnly: true
+        },
+        /**
+         * Computed value, true if the XML view can be displayed.
+         * If false then the syntax highligter will be removed from the DOM
+         */
+        isXml: {
+          type: Boolean,
+          value: false,
+          readOnly: true
+        },
+        /**
+         * Selected view.
+         */
+        activeView: Number,
+        /**
+         * When saving a file this will be the download URL created by the
+         * `URL.createObjectURL` function.
+         */
+        downloadFileUrl: {
+          type: String,
+          readOnly: true
+        },
+        /**
+         * Autogenerated file name for the download file.
+         */
+        downloadFileName: {
+          type: String,
+          readOnly: true
+        },
+        // Is true then the text in "raw" preview will be wrapped.
+        rawTextWrap: Boolean,
+        // Computed value. True is current browser is Safari - the new IE.
+        isSafari: {
+          type: Boolean,
+          value: function() {
+            return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+          },
+          readOnly: true
+        },
+        /**
+         * Computed value, true if current environment support localStorage API.
+         * Chrome API doesn't support this API.
+         */
+        hasLocalStorage: {
+          type: Boolean,
+          readOnly: true,
+          value: function() {
+            try {
+              localStorage.__test__ = true;
+              delete localStorage.__test__;
+              return true;
+            } catch (e) {
+              return false;
+            }
+          }
+        },
+        // If set it opens the "raw" view.
+        rawView: Boolean,
+        // If set it opens the JSON table view.
+        jsonTableView: Boolean,
+        // Computed value, true if `contentType` and `_raw` are set
+        hasData: {
+          value: false,
+          type: Boolean,
+          computed: '_computeHasData(contentType, _raw)'
+        }
+      },
+
+      observers: [
+        '_contentTypeChanged(contentType, _raw)',
+        '_toggleViewSource(rawView)',
+        '_jsonTableViewChanged(jsonTableView)'
+      ],
+
+      listeners: {
+        'prism-highlight-timeout': '_onPrismHighlightTimeout'
+      },
+
+      attached: function() {
+        this.listen(window, 'storage', '_onStorageChanged');
+        this.listen(window, 'json-table-state-changed', '_onJsonTableStateChanged');
+        this.listen(window, 'search-bar-opened-changed', '_searchBarOpenedChanged');
+        this.listen(window, 'search-bar-input-changed', '_searchInputChanged');
+        this.listen(window, 'search-bar-search-position-changed', '_searchPositionChanged');
+      },
+
+      detached: function() {
+        this.unlisten(window, 'storage', '_onStorageChanged');
+        this.unlisten(window, 'json-table-state-changed', '_onJsonTableStateChanged');
+        this.unlisten(window, 'search-bar-opened-changed', '_searchBarOpenedChanged');
+        this.unlisten(window, 'search-bar-input-changed', '_searchInputChanged');
+        this.unlisten(window, 'search-bar-search-position-changed', '_searchPositionChanged');
+        if (this.__previewUrl) {
+          window.URL.revokeObjectURL(this.__previewUrl);
+          this.__previewUrl = undefined;
+        }
+      },
+      // The operation is async for performance reasons.
+      _responseTextChanged: function(payload) {
+        this._setIsXml(false);
+        this._setIsJson(false);
+        this._setIsParsed(false);
+
+        if (payload === undefined) {
+          return this.set('_raw', undefined);
+        }
+        if (payload === null || payload === false) {
+          return this.set('_raw', payload);
+        }
+        this.set('_raw', undefined);
+        if (!payload) {
+          return;
+        }
+
+        this.debounce('set-raw', function() {
+          this.set('_raw', this.responseText);
+        }, 1);
+      },
+      // Computes value for `hasData` property
+      _computeHasData: function(contentType, _raw) {
+        return !!(contentType && _raw);
+      },
+
+      _contentTypeChanged: function(contentType) {
+        var parsed = false;
+        var json = false;
+        var xml = false;
+        this.contentPreview = false;
+
+        if (contentType) {
+          if (contentType.indexOf('xml') !== -1) {
+            this.activeView = 3;
+            xml = true;
+          } else if (contentType.indexOf('json') !== -1) {
+            this.activeView = 2;
+            json = true;
+          } else {
+            this.activeView = 1;
+            parsed = true;
+          }
+        }
+        this._setIsXml(xml);
+        this._setIsJson(json);
+        this._setIsParsed(parsed);
+
+        if (json) {
+          this._ensureJsonTable();
+        }
+      },
+      /**
+       * When response's content type is JSON the view renders the
+       * JSON table element. This function reads current state for the table
+       * (if it is turned on) and handles view change if needed.
+       */
+      _ensureJsonTable: function() {
+        if (!this.hasLocalStorage) {
+          return;
+        }
+        var isTable = this._localStorageValueToBoolean(localStorage.jsonTableEnabled);
+        if (this.jsonTableView !== isTable) {
+          this.jsonTableView = isTable;
+        }
+        if (this.jsonTableView) {
+          this.activeView = 4;
+        } else if (this.activeView === 4) {
+          this.activeView = 2;
+        }
+      },
+
+      // Handler for `this.contentPreview` change.
+      _contentPreviewChanged: function(val) {
+        if (!this.isAttached) {
+          return;
+        }
+        if (val) {
+          this._openResponsePreview();
+        } else {
+          this._closeResponsePreview();
+        }
+      },
+      // Opens response preview in new layer
+      _openResponsePreview: function() {
+        if (!this.isAttached) {
+          return;
+        }
+        var context = this;
+        function onLoad() {
+          context.$.webView.contentWindow.document.body.innerHTML = context._raw;
+          context.async(function() {
+            context._resizePreviewWindow(context.$.webView.contentWindow.document.body.clientHeight);
+          }, 2);
+        }
+        if (!this.$.webView.src) {
+          var blob = new Blob([this.$.preview.textContent], {type: 'text/html'});
+          this.__previewUrl = window.URL.createObjectURL(blob);
+          this.$.webView.src = this.__previewUrl;
+          this.$.webView.addEventListener('load', function() {
+            onLoad();
+          });
+        } else {
+          onLoad();
+        }
+      },
+      // Closes response preview
+      _closeResponsePreview: function() {
+        if (!this.isAttached) {
+          return;
+        }
+        this.$.webView.contentWindow.document.body.innerHTML = '';
+      },
+      /**
+       * Sets height for the preview iframe
+       */
+      _resizePreviewWindow: function(height) {
+        if (!height) {
+          this.$.webView.style.height = 'auto';
+        } else {
+          this.$.webView.style.height = height + 'px';
+        }
+      },
+      /**
+       * Coppies current response text value to clipboard.
+       */
+      _copyToClipboard: function(e) {
+        var button = Polymer.dom(e).localTarget;
+        var copy = this.$$('clipboard-copy');
+        if (copy.copy()) {
+          button.icon = 'arc:done';
+        } else {
+          button.icon = 'arc:error';
+        }
+
+        this.async(function() {
+          this._resetCopyButtonState(button);
+        }, 1000);
+      },
+
+      _resetCopyButtonState: function(button) {
+        button.icon = 'arc:content-copy';
+      },
+
+      /**
+       * Fires the `export-data` custom event. If the event is not canceled
+       * then it will use default web implementation for file saving.
+       */
+      _saveFile: function() {
+        var e = this.fire('export-data', {
+          data: this._raw,
+          type: this.contentType,
+          file: 'response-data-export'
+        }, {
+          cancelable: true
+        });
+        if (e.defaultPrevented) {
+          return;
+        }
+        if (this.isSafari) {
+          this.$.safariDownload.opened = true;
+        } else {
+          this.saveToFile();
+        }
+      },
+
+      /**
+       * Creates a file object form current response text and opens a dialog
+       * with the link to a file.
+       */
+      saveToFile: function() {
+        var ext = '.';
+        if (this.isJson) {
+          ext += 'json';
+        } else if (this.isXml) {
+          ext += 'xml';
+        } else {
+          ext += 'txt';
+        }
+        var ct = this.contentType || 'text/plain';
+        var file = new Blob([this._raw], {
+          type: ct
+        });
+        var fileName = 'response-' + new Date().toISOString() + ext;
+        this._setDownloadFileUrl(URL.createObjectURL(file));
+        this._setDownloadFileName(fileName);
+        this.$.saveDialog.opened = true;
+      },
+      // Handler for download link click to prevent default and close the dialog.
+      _downloadIconTap: function() {
+        this.async(function() {
+          this.$.saveDialog.opened = false;
+        }, 250);
+      },
+      // Handler for file download dialog close.
+      _downloadDialogClose: function() {
+        URL.revokeObjectURL(this.downloadFileUrl);
+        this._setDownloadFileUrl(undefined);
+        this._setDownloadFileName(undefined);
+      },
+      /**
+       * Toggles "view source" or raw message view.
+       */
+      _toggleViewSource: function(opened) {
+        if (!opened) {
+          if (!this.__parsedView) {
+            return;
+          }
+          this.activeView = this.__parsedView;
+          this.__parsedView = undefined;
+          if (this.activeView === 2 && this.jsonTableView) {
+            this.jsonTableView = false;
+          }
+        } else {
+          if (this.jsonTableView) {
+            this._skipJsonTableEvent = true;
+            this.jsonTableView = false;
+            this._skipJsonTableEvent = false;
+          }
+          this.__parsedView = this.activeView;
+          this.activeView = 0;
+        }
+      },
+      // Handler for the `jsonTableView` property change.
+      _jsonTableViewChanged: function(state) {
+        if (state) {
+          if (this.rawView) {
+            this.__parsedView = undefined;
+            this.rawView = false;
+          }
+          this.activeView = 4;
+        } else {
+          this.activeView = 2;
+        }
+        if (this._skipJsonTableEvent) {
+          return;
+        }
+        if (this.hasLocalStorage && localStorage.jsonTableEnabled !== String(state)) {
+          window.localStorage.setItem('jsonTableEnabled', state);
+        }
+        this.fire('json-table-state-changed', {
+          enabled: state
+        });
+      },
+      /**
+       * Updates the value of the `jsonTableView` property when the
+       * corresponding localStorage property change.
+       */
+      _onStorageChanged: function(e) {
+        if (e.key !== 'jsonTableEnabled') {
+          return;
+        }
+        if (!e.newValue) {
+          return;
+        }
+        var v = this._localStorageValueToBoolean(e.newValue);
+        if (this.jsonTableView !== v) {
+          this._skipJsonTableEvent = true;
+          this.jsonTableView = v;
+          this._skipJsonTableEvent = false;
+        }
+      },
+      /**
+       * Reads the local value (always a string) as a boolean value.
+       *
+       * @param {String} value The value read from the local storage.
+       * @return {Boolean} Boolean value read from the value.
+       */
+      _localStorageValueToBoolean: function(value) {
+        if (!value) {
+          return false;
+        }
+        if (value === 'true') {
+          value = true;
+        } else {
+          value = false;
+        }
+        return value;
+      },
+
+      _onJsonTableStateChanged: function(e) {
+        if (e.target === this) {
+          return;
+        }
+        var enabled = e.detail.enabled;
+        if (enabled !== this.jsonTableView) {
+          this._skipJsonTableEvent = true;
+          this.jsonTableView = enabled;
+          this._skipJsonTableEvent = false;
+        }
+      },
+
+      closePreview: function() {
+        this.contentPreview = false;
+      },
+      /**
+       * Handler for the `prism-highlight-timeout` event. Displays "raw" view
+       * instead of syntax highlighting.
+       */
+      _onPrismHighlightTimeout: function(e) {
+        this.__parsedView = this.activeView;
+        this.activeView = 0;
+        this.$.highlightTimeout.text = e.detail.message;
+        this.$.highlightTimeout.opened = true;
+      },
+
+      _computeRenderWithRaw: function(activeView) {
+        return activeView === 0 ? true : false;
+      },
+
+      _computeRenderShowRaw: function(activeView) {
+        return activeView === 0 ? false : true;
+      },
+
+      _computeRenderPreviewResponse: function(activeView) {
+        return activeView === 1 ? true : false;
+      },
+
+      _computeRenderToggleTable: function(activeView) {
+        return activeView === 4 || activeView === 2 ? true : false;
+      },
+      /**
+       * Computes boolean value whether to render the JSON table element.
+       */
+      _computeRenderJsonTable: function(isJson, jsonTableView) {
+        return !!(isJson && jsonTableView);
+      },
+      // Called when search bar has been opened / closed
+      _searchBarOpenedChanged: function(e) {
+        this._searchInputChanged(e);
+      },
+
+      // search in response tab
+      _searchInputChanged: function(e) {
+        if (e.detail.lastTarget && e.detail.lastTarget !== this) {
+          return;
+        }
+        var panel;
+        switch (this.activeView) {
+          case 0: panel = 'response-raw-viewer'; break;
+          case 1: panel = 'response-highlighter'; break;
+          case 2: panel = 'json-viewer'; break;
+          case 3: panel = 'xml-viewer'; break;
+          default: return;
+        }
+        var element = this.$$(panel);
+        element.cleanMarked();
+        element.mark(e.detail.value);
+        var marked = element.markedCount;
+        this.fire('search-bar-search-mark-count', {
+          count: marked,
+          searchTarget: this
+        });
+      },
+      // Called when a search bar changed a position of a word
+      _searchPositionChanged: function(e) {
+        if (e.detail.searchTarget && e.detail.searchTarget !== this) {
+          return;
+        }
+        var panel;
+        switch (this.activeView) {
+          case 0: panel = 'response-raw-viewer'; break;
+          case 1: panel = 'response-highlighter'; break;
+          case 2: panel = 'json-viewer'; break;
+          case 3: panel = 'xml-viewer'; break;
+          default: return;
+        }
+        var element = this.$$(panel);
+        element.clearHighlight();
+        element.highlightMarked(e.detail.position);
+      }
+    });
+  })();
+  </script>
+</dom-module>

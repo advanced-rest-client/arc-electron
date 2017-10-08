@@ -1,0 +1,45 @@
+{
+  "name": "web-socket",
+  "version": "1.0.6",
+  "license": "Apache-2.0",
+  "description": "A websocket element for Polymer.",
+  "authors": [
+    "The Advanced REST Client authors",
+    "Pawel Psztyc <jarrodek@gmail.com>"
+  ],
+  "homepage": "https://github.com/advanced-rest-client/web-socket",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/advanced-rest-client/web-socket.git"
+  },
+  "keywords": [
+    "web-components",
+    "polymer",
+    "web-socket",
+    "socket"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.4.0"
+  },
+  "devDependencies": {
+    "iron-component-page": "PolymerElements/iron-component-page#^1.1.7",
+    "web-component-tester": "Polymer/web-component-tester#^3.3.6",
+    "test-fixture": "PolymerElements/test-fixture#^1.0.0",
+    "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^1.0.0",
+    "iron-test-helpers": "PolymerElements/iron-test-helpers#^1.0.0",
+    "paper-input": "^1.1.17",
+    "paper-button": "^1.0.13",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.22"
+  },
+  "main": "web-socket.html",
+  "ignore": [],
+  "_release": "1.0.6",
+  "_resolution": {
+    "type": "version",
+    "tag": "1.0.6",
+    "commit": "385f8166f4ee8fce1a38b581cf18cc46e7bd9edc"
+  },
+  "_source": "https://github.com/advanced-rest-client/web-socket.git",
+  "_target": "^1.0.6",
+  "_originalSource": "advanced-rest-client/web-socket"
+}

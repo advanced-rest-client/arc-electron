@@ -1,0 +1,31 @@
+{
+  "name": "pouchdb-collate",
+  "version": "1.2.0",
+  "description": "",
+  "main": "lib/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pouchdb/collate.git"
+  },
+  "keywords": [
+    "pouchdb",
+    "pouch",
+    "couch",
+    "couchdb"
+  ],
+  "scripts": {
+    "test": "./node_modules/.bin/jshint -c .jshintrc lib/*.js test/*.js && ./node_modules/istanbul/lib/cli.js test ./node_modules/mocha/bin/_mocha test/test.js",
+    "build": "mkdir -p dist && browserify lib/index.js -s pouchCollate -o dist/pouchdb-collate.js"
+  },
+  "license": "Apache",
+  "bugs": {
+    "url": "https://github.com/pouchdb/collate/issues"
+  },
+  "devDependencies": {
+    "chai": "~1.8.1",
+    "mocha": "~1.15.1",
+    "istanbul": "~0.1.46",
+    "browserify": "~2.36.1",
+    "jshint": "~2.3.0"
+  }
+}

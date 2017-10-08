@@ -1,0 +1,62 @@
+<link rel="import" href="../filesystem-behavior/filesystem-app-behavior.html">
+<!--
+@license
+Copyright 2016 Pawel Psztyc, The ARC team
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+
+<!--
+`chrome-app-filesystem` is an element to read and write to files using chrome
+ filesystem API.
+
+The app that is using this element must have `fileSystem` permission:
+
+```json
+"permissions": [
+  ...,
+  {
+    "fileSystem": ["write"]
+  }
+],
+```
+
+The `chrome-app-filesystem` element don't have it's own UI. It's only a helper element to us
+in your app's logic.
+
+
+### Example:
+```
+<chrome-app-filesystem
+  content="{{fileData}}"
+  readAs="json"
+  file-name="my-file.json"
+  on-file-read="fileReadHandler"
+  on-file-write="fileSaveHandler"
+  on-error="fileErrorHandler"></chrome-app-filesystem>
+```
+
+@group Chrome Apps Elements
+@element chrome-app-filesystem
+@hero hero.svg
+-->
+<dom-module id="chrome-app-filesystem">
+  <template>
+    <style>
+      :host {
+        display: none;
+      }
+    </style>
+  </template>
+</dom-module>
+<script src="chrome-app-filesystem.js"></script>

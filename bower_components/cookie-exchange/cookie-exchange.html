@@ -1,0 +1,187 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../chrome-connect/chrome-connect.html">
+<link rel="import" href="../headers-parser-behavior/headers-parser-behavior.html">
+<link rel="import" href="../events-target-behavior/events-target-behavior.html">
+<!--
+`<cookie-exchange>` Exchanges cookies insformation with ARC app using ARC extension.
+
+The element works with the
+<https://chrome.google.com/webstore/detail/arc-cookie-exchange/apcedakaoficjlofohhcmkkljehnmebp>
+extension to synchronize list of cookies with the browser.
+
+The element handles the `before-request` custom event so it applied headers if
+needed.
+
+### Example
+
+```html
+<cookie-exchange extension-id="apcedakaoficjlofohhcmkkljehnmebp"></cookie-exchange>
+```
+
+@group Logic Elements
+@element cookie-exchange
+-->
+<dom-module id="cookie-exchange">
+  <template>
+    <style>
+     :host {
+      display: none;
+    }
+    </style>
+    <chrome-connect id="sync" extension-id="[[externalId]]" connected="{{connected}}" on-message="_processMessage"></chrome-connect>
+  </template>
+  <script>
+  Polymer({
+    is: 'cookie-exchange',
+    behaviors: [ArcBehaviors.HeadersParserBehavior, ArcBehaviors.EventsTargetBehavior],
+    properties: {
+      // An id of the extension to connect to.
+      externalId: String,
+      // True if the app is connected to the external extension.
+      connected: Boolean,
+      /**
+       * Map of cookies received from the Cookie exchange extension.
+       */
+      cookies: Object
+    },
+
+    observers: [
+      '_setCookieCache(connected)'
+    ],
+
+    _attachListeners: function(node) {
+      this.listen(node, 'before-request', '_handleRequest');
+    },
+
+    _detachListeners: function(node) {
+      this.unlisten(node, 'before-request', '_handleRequest');
+    },
+
+    // When connected, refresh cookie cache.
+    _setCookieCache: function(connected) {
+      if (!connected) {
+        this.cookies = undefined;
+        return;
+      }
+      this.$.sync.postMessage({
+        payload: 'get-cookies'
+      });
+    },
+    // Process a message returned by the port.
+    _processMessage: function(e) {
+      var payload = e.detail.payload;
+      if (!payload) {
+        return;
+      }
+      switch (payload) {
+        case 'cookie-changed':
+          this.$.sync.postMessage({
+            payload: 'get-cookies'
+          });
+          break;
+        case 'get-cookies':
+          this.cookies = e.detail.cookies;
+          break;
+      }
+    },
+    // The `before-request` handler. Calls the `applyCookies` on `detail` object.
+    _handleRequest: function(e) {
+      this.applyCookies(e.detail);
+    },
+
+    /**
+     * Applies cached cookies to the request object.
+     * @param {Object} request A request object.
+     * @return {Object} The same request object with cookies applied to it.
+     */
+    applyCookies: function(request) {
+      if (!this.cookies) {
+        return request;
+      }
+      var host = this._computeHost(request.url);
+      if (!host) {
+        return request;
+      }
+      var str = this._buildCookieString(this.cookies, host);
+      if (!str) {
+        return request;
+      }
+
+      var headers = this.headersToJSON(request.headers);
+      var index = headers.findIndex(header => header.name.toLowerCase() === 'cookie');
+      if (index === -1) {
+        headers.push({
+          name: 'cookie',
+          value: str
+        });
+      } else {
+        headers[index].value = headers[index].value + '; ' + str;
+      }
+      request.headers = this.headersToString(headers);
+      return request;
+    },
+    /**
+     * Computes a host name from the URL.
+     * @param {String} url A URL of a resource.
+     * @return {String|undefined} A host name (lowercase) or undefined if the URL is
+     * empty, invalid or without host information.
+     */
+    _computeHost: function(url) {
+      if (!url) {
+        return;
+      }
+      var u;
+      try {
+        u = new URL(url);
+      } catch (e) {
+        return;
+      }
+      var host = u.hostname;
+      if (!host) {
+        return;
+      }
+      return host.toLowerCase();
+    },
+    /**
+     * Builds a `cookie` header string to be send with the request.
+     * @param {Object} cookies Map of cookies returned by the extension. Keys are
+     * domain names for the cookies. Value is an array of cookies.
+     * @param {String} host Request host name
+     * @return {String} A cookie header string. Empty string if there's no
+     * matching cookies information for the host.
+     */
+    _buildCookieString: function(cookies, host) {
+      var str = '';
+      if (!cookies || !Object.keys(cookies).length || !host) {
+        return str;
+      }
+      var cookieFn = (cookie) => {
+        if (str) {
+          str += '; ';
+        }
+        str += cookie.name + '=' + cookie.value;
+      };
+      for (let domain in cookies) {
+        if (domain.toLowerCase().indexOf(host) !== -1) {
+          cookies[domain].forEach(cookieFn);
+          break;
+        }
+      }
+      return str;
+    }
+  });
+  </script>
+</dom-module>

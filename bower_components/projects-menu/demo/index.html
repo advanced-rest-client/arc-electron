@@ -1,0 +1,163 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <title>projects-menu demo</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+  <link rel="import" href="../../paper-toast/paper-toast.html">
+
+  <script src="../test/data-generator.js"></script>
+  <script src="../../chance/dist/chance.min.js"></script>
+  <link rel="import" href="../projects-menu.html">
+
+  <style is="custom-style" include="demo-pages-shared-styles">
+
+    .vertical-section-container {
+      max-width: 600px;
+    }
+
+    projects-menu {
+      min-height: 600px;
+    }
+  </style>
+</head>
+<body unresolved>
+  <template is="dom-bind" id="app">
+    <div class="vertical-section-container centered">
+      <h3>The `projects-menu`</h3>
+
+      <projects-menu on-querying-changed="_queryingChanged" selected-project="[[selectedProject]]" selected-request="[[selectedRequest]]"></projects-menu>
+
+      <div class="controls">
+        <button on-tap="generate">Generate 100 requests items</button>
+        <button on-tap="delete">Clear data</button>
+        <button on-tap="refresh">Refresh data</button>
+
+        <div>
+          <label for="selectionIndex">Set project selected (by index)</label>
+          <input type="number" id="selectionIndex" min="0" title="Set project selected" value="{{selectedProjectIndex::input}}"/>
+        </div>
+        <template is="dom-if" if="[[displayRequestSelector]]">
+          <div>
+            <label for="requestSelectionIndex">Set request selected for current project (by index)</label>
+            <input type="number" id="requestSelectionIndex" min="0" title="Set request slected" on-input="_selectedRequestChanged"/>
+          </div>
+        </template>
+    </div>
+  </template>
+
+  <paper-toast id="genToast" text="The request data has been generated"></paper-toast>
+  <paper-toast id="delToast" text="The request data has been removed"></paper-toast>
+  <paper-toast id="navToast" text="" duration="7000"></paper-toast>
+  <script>
+  /* global DataGenerator */
+  window.addEventListener('navigate', function(e) {
+    var toast = document.getElementById('navToast');
+    var d = e.detail;
+    toast.text = 'Navigation ocurred to: ' + d.base + ', and id: ' + d.id;
+    toast.opened = true;
+  });
+  (function(scope) {
+    scope.displayRequestSelector = false;
+    scope.selectedProjectIndex = -1;
+    scope.observers = ['_selectedProjectChanged(selectedProjectIndex)'];
+    scope._queryingChanged = function(e) {
+      if (!e.detail.value) {
+        let menu = document.querySelector('projects-menu');
+        Polymer.RenderStatus.afterNextRender(menu, function() {
+          scope.projects = menu.items;
+        });
+      }
+    };
+    scope._selectedProjectChanged = function(index) {
+      index = Number(index);
+      if (index === -1) {
+        return;
+      }
+      // sets the ID of selected project
+      if (!index && index !== 0) {
+        scope.selectedProject = '';
+        scope.displayRequestSelector = false;
+      } else {
+        scope.selectedProject = scope.projects[index]._id;
+        scope._ensureRequestSelectorDisplay();
+      }
+    };
+
+    scope._ensureRequestSelectorDisplay = function() {
+      var menu = document.querySelector('projects-menu');
+      var node = Polymer.dom(menu.root)
+      .querySelectorAll('projects-menu-requests')[scope.selectedProjectIndex];
+      var requests = node.items;
+      if (!requests) {
+        var clb = function(e) {
+          if (e.detail.value) {
+            scope.displayRequestSelector = true;
+            node.removeEventListener('has-items-changed', clb);
+          }
+        };
+        node.addEventListener('has-items-changed', clb);
+      } else {
+        scope.displayRequestSelector = true;
+      }
+    };
+
+    scope._selectedRequestChanged = function(e) {
+      var index = e.target.value;
+      if (!scope.selectedProject) {
+        return;
+      }
+      var menu = document.querySelector('projects-menu');
+      var nodes = Polymer.dom(menu.root).querySelectorAll('projects-menu-requests');
+      var requests = nodes[scope.selectedProjectIndex].items;
+      scope.selectedRequest = requests[index]._id;
+    };
+
+    scope.refresh = function() {
+      document.querySelector('projects-menu').refresh();
+    };
+
+    scope.generate = function() {
+      DataGenerator.generateData(100)
+      .then(() => {
+        document.getElementById('genToast').opened = true;
+        var e = new CustomEvent('data-imported', {
+          bubbles: true
+        });
+        document.body.dispatchEvent(e);
+      });
+    };
+
+    scope.delete = function() {
+      DataGenerator.destroyData()
+      .then(() => {
+        document.getElementById('delToast').opened = true;
+        var e = new CustomEvent('datastore-destroyed', {
+          bubbles: true,
+          detail: {
+            datastore: 'legacy-projects'
+          }
+        });
+        document.body.dispatchEvent(e);
+      });
+    };
+  })(document.getElementById('app'));
+  </script>
+</body>
+</html>

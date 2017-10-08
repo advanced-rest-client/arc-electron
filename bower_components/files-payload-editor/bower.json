@@ -1,0 +1,49 @@
+{
+  "name": "files-payload-editor",
+  "description": "A request body editor to add files as a payload.",
+  "version": "0.1.4",
+  "license": "Apache-2.0 OR CC-BY-4.0",
+  "authors": [
+    "The Advanced REST client authors <arc@mulesoft.com>"
+  ],
+  "keywords": [
+    "web-components",
+    "polymer"
+  ],
+  "private": true,
+  "main": [
+    "files-payload-editor.html"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:advanced-rest-client/files-payload-editor.git"
+  },
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.9.2",
+    "iron-form-element-behavior": "PolymerElements/iron-form-element-behavior#^1.0.7",
+    "iron-validatable-behavior": "PolymerElements/iron-validatable-behavior#^1.1.2",
+    "paper-button": "PolymerElements/paper-button#^1.0.15",
+    "paper-icon-button": "PolymerElements/paper-icon-button#^1.1.6",
+    "arc-icons": "advanced-rest-client/arc-icons#^1.0.18",
+    "paper-material": "PolymerElements/paper-material#^v1.0.7",
+    "iron-icon": "PolymerElements/iron-icon#^1.0.13",
+    "request-payload-editor-behavior": "advanced-rest-client/request-payload-editor-behavior#^0.1.1"
+  },
+  "devDependencies": {
+    "iron-component-page": "polymerelements/iron-component-page#1.0.0",
+    "web-component-tester": "^6.0.0",
+    "paper-styles": "polymerelements/paper-styles#^1.0.2",
+    "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^1.0.0",
+    "iron-test-helpers": "PolymerElements/iron-test-helpers#^1.4.0",
+    "test-fixture": "PolymerElements/test-fixture#^3.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0"
+  },
+  "ignore": [
+    "**/.*",
+    "dependencyci.yml",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tasks"
+  ]
+}

@@ -1,0 +1,1113 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../arc-polyfills/arc-polyfills.html">
+<link rel="import" href="../app-pouchdb/pouchdb.html">
+<link rel="import" href="../events-target-behavior/events-target-behavior.html">
+<!--
+A manager for environments and variables. Non UI element that manages variables
+state and handle data storage.
+
+### Example
+```
+<variables-manager></variables-manager>
+```
+
+This element is designed to work with browser's event system. That means that
+each operation can be done by dispatching [CustomEvent](https://developer.mozilla.org/en/docs/Web/API/CustomEvent).
+
+**Important** Events that request data update (create/update/delete) must be
+cancellable. Otherwise the element will not handle the event at all.
+
+When the update event is handled it is cancelled so 1) other managers that
+exists in the DOM and listens fo the same event will not execute change 2)
+after execution the manager dispatches the same event which is not cancellable.
+UI element and other relevant parts of the application should handle only the
+event that is not cancellable because it contains data **after** the update
+has been stored in the datastore.
+
+### Example
+```javascript
+// requesting to create an environment
+var event = new CustomEvent('environment-updated', {
+  bubbles: true,
+  composed: true,
+  cancelable: true,
+  detail: {
+    name: 'Test environment'
+  }
+});
+document.dispatchEvent(event);
+
+console.log(event.defaultPrevented); // true
+```
+The event requesting data change is cancelled and propagation of the
+event is stopped. The same script should listen for the same event to
+check for data update:
+
+```javascript
+window.addEventListener('environment-updated', function(e) {
+  if (e.cancelable) {
+    // This event requesting data change. We shouldn't be interested in this
+    // event.
+    return;
+  }
+  var environment = e.detail.value;
+  console.log(environment._id, environment._rev);
+});
+```
+
+Updated object will have updated `_rev` property and `_id`. This are
+[PouchDb](https://pouchdb.com/api.html) properties to identify data in the
+datastore.
+
+## Events API
+
+### selected-environment-changed
+
+Changes currently selected environment in the manager. This event doesn't have
+to be cancelable. The change trigges request to read variables for new
+environment so `variables-list-changed` event is expected to be fired.
+
+#### Properties
+`value` (`string`) - Selected environment name
+
+### environment-updated
+
+Updates or creates new environment. This event have to be cancelable.
+If the `value` property contains `_id` then the object will be updated.
+
+#### Properties
+`value` (`object`) - Environment datastore object.
+
+### environment-deleted
+
+Deletes an environment. This event have to be cancelable.
+
+#### Properties
+`value` (`string`) - The `_id` property of the environment object.
+
+### environment-current
+
+Request for current environment information. This event have to be cancelable.
+The manager will set a `value` property on the details object so the event
+source should read it after the event is dispatched.
+
+Note: you have to set a detail object or otherwise it won't be created after
+the event is dispatched.
+
+```javascript
+var event = new CustomEvent('environment-current', {
+  bubbles: true,
+  composed: true,
+  cancelable: true,
+  detail: {}
+});
+document.dispatchEvent(event);
+if (event.defaultPrevented) {
+  console.log(event.detail.value); // Current environment
+}
+```
+
+### environment-list
+
+Request for current environments list information. This event have to be
+cancelable. The manager will set a `value` property on the details object so
+the event source should read it after the event is dispatched.
+
+Note: you have to set a detail object or otherwise it won't be created after
+the event is dispatched.
+
+Note: The value contains a list of user created environments (without
+the `default` environment). Therefore it can be `undefined` or empty array.
+
+```javascript
+var event = new CustomEvent('environment-list', {
+  bubbles: true,
+  composed: true,
+  cancelable: true,
+  detail: {}
+});
+document.dispatchEvent(event);
+if (event.defaultPrevented) {
+  console.log(event.detail.value); // All available environments.
+}
+```
+
+### variable-updated
+
+Updates or creates new variable. This event have to be cancelable.
+If the `value` property contains `_id` then the object will be updated.
+
+#### Properties
+`value` (`object`) - Variable datastore object.
+
+The object must contain `variable` (variable name), `value` (it's body) and
+`environment` properties. Otherwise an error will be throw.
+
+### variable-deleted
+
+Deletes an environment. This event have to be cancelable.
+
+#### Properties
+`value` (`string`) - The `_id` property of the variable object.
+
+### variable-list
+
+Request for current variables list information. This event have to be
+cancelable. The manager will set a `value` property on the details object so
+the event source should read it after the event is dispatched.
+
+Note: you have to set a detail object or otherwise it won't be created after
+the event is dispatched.
+
+Note: The value contains a list of user created variables. Therefore it can be
+`undefined` or empty array.
+
+Note: Additional `environment` property is set to the `detail` object to indicate
+to which environment the variables belongs.
+
+```javascript
+var event = new CustomEvent('variable-list', {
+  bubbles: true,
+  composed: true,
+  cancelable: true,
+  detail: {}
+});
+document.dispatchEvent(event);
+if (event.defaultPrevented) {
+  console.log(event.detail.value); // All available variables.
+  console.log(event.detail.environment); // Environment name.
+}
+```
+
+### Styling
+
+The element doesn't provide any UI.
+
+@group Logic Elements
+@element variables-manager
+@demo demo/index.html
+-->
+<script>
+Polymer({
+  is: 'variables-manager',
+
+  behaviors: [ArcBehaviors.EventsTargetBehavior],
+
+  /**
+   * Fired when selected environment has changed.
+   * This event is not fired if the change has been causes by the
+   * `selected-environment-changed` fired by other element.
+   *
+   * @event selected-environment-changed
+   * @param {String} value Name of the selected environment.
+   */
+
+  /**
+   * Fired when the list of available custom envrionments have been updated.
+   * Usually it means that the element has been initialized or the `environment`
+   * property has changed. UIs should update list of available environments from
+   * this events.
+   *
+   * The list do not contain the default environment.
+   *
+   * @event environments-list-changed
+   * @param {Array} value Array of PouchDB items with `_id` and `_rev` that
+   * should be present when updating the envitonment.
+   */
+
+  /**
+   * Fired when the list of variables for current environment has been read
+   * and set. UIs should update list of current varables from
+   * this events.
+   *
+   * @event variables-list-changed
+   * @param {Array} value Array of PouchDB items with `_id` and `_rev` that
+   * should be present when updating the envitonment.
+   * @param {String} environment Name of the environment the the variables
+   * belongs to.
+   */
+  /**
+   * Fired when the environment has been saved / updated in the data store.
+   *
+   * Event fired by this element is not cancellable. While request to update
+   * an evironment is cancellable (implementations cancels the event so it will
+   * be updated only once) this event isn't, to differentiate between this two
+   * states. Generally: cancellable event - request for change, not cancellable
+   * event - change has been applied to the data in the data store.
+   *
+   * @event environment-updated
+   * @param {Object} value Updated PouchDB document (with new `_rev`).
+   */
+  /**
+   * Fired when the environment has been deleted from the data store.
+   *
+   * Event fired by this element is not cancellable. While request to delete
+   * an evironment is cancellable (implementations cancels the event so it will
+   * be deleted only once) this event isn't, to differentiate between this two
+   * states. Generally: cancellable event - request for change, not cancellable
+   * event - change has been applied to the data in the data store.
+   *
+   * @event environment-deleted
+   * @param {String} value Id of the environment in the data store
+   * @param {String} rev Updated `_rev` after the environment was deleted.
+   */
+  /**
+   * Fired when the variable has been added to / updated in the data store.
+   *
+   * Event fired by this element is not cancellable. While request to delete
+   * an evironment is cancellable (implementations cancels the event so it will
+   * be deleted only once) this event isn't, to differentiate between this two
+   * states. Generally: cancellable event - request for change, not cancellable
+   * event - change has been applied to the data in the data store.
+   *
+   * @event variable-updated
+   * @param {Object} value Updated PouchDB document (with new `_rev`).
+   */
+  /**
+   * Fired when the variable has been deleted from the data store.
+   *
+   * Event fired by this element is not cancellable. While request to delete
+   * a variable is cancellable (implementations cancels the event so it will
+   * be deleted only once) this event isn't, to differentiate between this two
+   * states. Generally: cancellable event - request for change, not cancellable
+   * event - change has been applied to the data in the data store.
+   *
+   * @event variable-deleted
+   * @param {String} value Id of the variable in the data store
+   * @param {String} rev Updated `_rev` after the variable was deleted.
+   */
+  properties: {
+    /**
+     * Currently loaded environemnt.
+     */
+    environment: {
+      type: String,
+      value: 'default',
+      observer: '_environmentChanged'
+    },
+    /**
+     * List of available environments (except for "default").
+     */
+    environments: {
+      type: Array,
+      notify: false
+    },
+    /**
+     * List of variables associated with current `environment`.
+     */
+    variables: Array,
+  },
+  // PouchDB's handler to the environments database.
+  get _envDb() {
+    return new PouchDB('variables-environments');
+  },
+  // PouchDB's handler to the variables database.
+  get _varDb() {
+    return new PouchDB('variables');
+  },
+
+  observers: [
+    '_environmentsChanged(environments.*)',
+    '_variablesChanged(variables.*)'
+  ],
+
+  attached: function() {
+    this._updateEnvironmentsList();
+  },
+
+  _attachListeners: function(node) {
+    this.listen(node, 'selected-environment-changed', '_envChnageHandler');
+    this.listen(node, 'environment-updated', '_envUpdateHandler');
+    this.listen(node, 'environment-deleted', '_envDeleteHandler');
+    this.listen(node, 'environment-current', '_envGetCurrentHandler');
+    this.listen(node, 'environment-list', '_envListHandler');
+
+    this.listen(node, 'variable-updated', '_varUpdateHandler');
+    this.listen(node, 'variable-deleted', '_varDeleteHandler');
+    this.listen(node, 'variable-list', '_varListHandler');
+
+    this.listen(node, 'data-imported', '_dataImportHandler');
+
+    if (this.environment) {
+      this.fire('selected-environment-changed', {
+        value: this.environment
+      });
+    }
+  },
+
+  _detachListeners: function(node) {
+    this.unlisten(node, 'selected-environment-changed', '_envChnageHandler');
+    this.unlisten(node, 'environment-updated', '_envUpdateHandler');
+    this.unlisten(node, 'environment-deleted', '_envDeleteHandler');
+    this.unlisten(node, 'environment-current', '_envGetCurrentHandler');
+    this.unlisten(node, 'environment-list', '_envListHandler');
+
+    this.unlisten(node, 'variable-updated', '_varUpdateHandler');
+    this.unlisten(node, 'variable-deleted', '_varDeleteHandler');
+    this.unlisten(node, 'variable-list', '_varListHandler');
+
+    this.unlisten(node, 'data-imported', '_dataImportHandler');
+  },
+
+  /**
+   * Handler for the `environment` property change.
+   *
+   * Fires a `selected-environment-changed` custom event and updates list of variables
+   * in the environment.
+   */
+  _environmentChanged: function(environment) {
+    this.variables = undefined;
+    if (!this.__cancelEnvChangeEvent) {
+      this.fire('selected-environment-changed', {
+        value: environment
+      });
+    }
+    if (environment) {
+      this._updateVariablesList();
+    }
+  },
+  /**
+   * Handler for the `environments` property change.
+   *
+   * Fires a `environments-list-changed` custom event.
+   */
+  _environmentsChanged: function(record) {
+    if (this._cancelEnvironmentsChangeEvent) {
+      return;
+    }
+    var value = record && record.base;
+    if (value) {
+      // Need a copy of the less otherwise notification system
+      // in elements that uses this list won't work.
+      // Because complex object are passed by refenrence any change to the
+      // object elsewhere would result with change here and this is bad.
+      value = value.map(function(item) {
+        return Object.assign({}, item);
+      });
+    }
+    this.fire('environments-list-changed', {
+      value: value
+    });
+  },
+  /**
+   * Handler for the `variables` property change.
+   * Fires a `variables-list-changed` custom event.
+   */
+  _variablesChanged: function(record) {
+    if (this._cancelVariablesChangeEvent) {
+      return;
+    }
+    var value = record && record.base;
+    if (value) {
+      value = value.map(function(item) {
+        return Object.assign({}, item);
+      });
+    }
+    this.fire('variables-list-changed', {
+      value: value,
+      environment: this.environment
+    });
+  },
+  /**
+   * Get's a list of environments and updates the `environments` property.
+   *
+   * This task is asynchronus.
+   */
+  _updateEnvironmentsList: function() {
+    return this.listEnvironments()
+    .then(function(environments) {
+      this.set('environments', environments);
+    }.bind(this))
+    .catch(function(cause) {
+      this._handleException(cause);
+    }.bind(this));
+  },
+  /**
+   * Updates the list of variables for current environment.
+   *
+   * This task is asynchronus.
+   */
+  _updateVariablesList: function() {
+    var currentEnv = this.environment;
+    if (!currentEnv) {
+      return;
+    }
+    this.listVariables(currentEnv)
+    .then(function(variables) {
+      if (currentEnv !== this.environment) {
+        // In some cases (changing environemnt right after initialization)
+        // this may actually happen. Especially on slow IE.
+        var msg = 'Skipping setting variables list. Environment changed ';
+        msg += 'from %s to %s';
+        console.info(msg, currentEnv, this.environemnt);
+        return;
+      }
+      this.set('variables', variables);
+    }.bind(this))
+    .catch(function(cause) {
+      this._handleException(cause);
+    }.bind(this));
+  },
+  /**
+   * Lists all user defined environments.
+   *
+   * @return {Promise} Resolved promise with the list of environments.
+   */
+  listEnvironments: function() {
+    return this._envDb.allDocs({
+      // jscs:disable
+      include_docs: true
+      // jscs:enable
+    })
+    .then(function(docs) {
+      return docs.rows.map(function(i) {
+        return i.doc;
+      });
+    });
+  },
+  /**
+   * Refreshes list of variables for the `environemnt`.
+   *
+   * @param {?String} environemnt Name of the environment to get the variables
+   * from. If not set then `default` fill be used.
+   * @return {Promise} Resolved promise with the list of variables for the
+   * environment.
+   */
+  listVariables: function(environment) {
+    environment = environment || 'default';
+    environment = environment.toLowerCase();
+
+    return this._varDb.allDocs({
+      // jscs:disable
+      include_docs: true
+      // jscs:enable
+    })
+    .then(function(docs) {
+      return docs.rows.filter(function(item) {
+        if (!item.doc.environment) {
+          return false;
+        }
+        return item.doc.environment.toLowerCase() === environment;
+      })
+      .map(function(item) {
+        return item.doc;
+      });
+    });
+  },
+  /**
+   * Handles exceptions when occur by logging them to the console and
+   * sending an analytics report.
+   *
+   * @param {Error} cause An error object with description.
+   */
+  _handleException: function(cause) {
+    this.fire('app-log', {
+      'message': ['Listing environmants ' + cause.message, cause],
+      'level': 'error'
+    });
+    this.fire('send-analytics', {
+      type: 'exception',
+      description: 'Listing environmants ' + cause.message,
+      fatal: false
+    });
+    console.error(cause);
+  },
+  /**
+   * A handler for the `selected-environment-changed` custom event.
+   * Updates the `environment` property if the event was sent by other elemenet
+   * than `this`.
+   */
+  _envChnageHandler: function(e) {
+    if (Polymer.dom(e).rootTarget === this) {
+      return;
+    }
+    this.__cancelEnvChangeEvent = true;
+    this.set('environment', e.detail.value);
+    this.__cancelEnvChangeEvent = false;
+  },
+  /**
+   * Handler for the `data-imported` custom event. Refreshes list of environmants
+   * and variables.
+   */
+  _dataImportHandler: function() {
+    this._updateEnvironmentsList()
+    .then(function() {
+      return this._updateVariablesList();
+    }.bind(this));
+  },
+
+  _eventCancelled: function(e) {
+    var status = e.defaultPrevented || !e.cancelable;
+    if (!status) {
+      if (Polymer.dom(e).localRoot === this) {
+        return true;
+      }
+    }
+    return status;
+  },
+
+  _cancelEvent: function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  },
+
+  /**
+   * A handler for the `environment-updated` custom event.
+   * Updates the environment in the data store.
+   *
+   * The `environment-updated` custom event should be cancellable or the event
+   * won't be handled at all.
+   */
+  _envUpdateHandler: function(e) {
+    if (this._eventCancelled(e)) {
+      return;
+    }
+    this._cancelEvent(e);
+    this.updateEnvironment(e.detail.value, e);
+  },
+  /**
+   * A handler for the `environment-deleted` custom event.
+   * Deletes a variable in the data store.
+   *
+   * The `environment-deleted` custom event should be cancellable or the event
+   * won't be handled at all.
+   *
+   * The delete function fires non cancellable `environment-deleted` custom
+   * event so the UI components can use it to update their values.
+   */
+  _envDeleteHandler: function(e) {
+    if (this._eventCancelled(e)) {
+      return;
+    }
+    this._cancelEvent(e);
+    this.deleteEnvironment(e.detail.value, e);
+  },
+  /**
+   * A handler for the `environment-current` custom event.
+   * Adds a `value` propety of the event `detail` object with the name of the
+   * environment.
+   *
+   * The `environment-current` custom event should be cancellable or the event
+   * won't be handled at all.
+   */
+  _envGetCurrentHandler: function(e) {
+    if (this._eventCancelled(e)) {
+      return;
+    }
+    this._cancelEvent(e);
+    e.detail.value = this.environment;
+  },
+  /**
+   * A handler for the `environment-list` custom event.
+   * Adds a `value` propety of the event `detail` object with the array of the
+   * user defined environments objects. Each item is a PouchDb data store item
+   * (with `_id` and `_rev`).
+   *
+   * The `value` set on the details object can be undefined if the user haven't
+   * defined any environments or if the manager haven't restored the list yet.
+   * In the later case the event target element should listen for
+   * `environments-list-changed` event to update the list of available environments.
+   *
+   * The `environment-current` custom event should be cancellable or the event
+   * won't be handled at all.
+   */
+  _envListHandler: function(e) {
+    if (this._eventCancelled(e)) {
+      return;
+    }
+    this._cancelEvent(e);
+    e.detail.value = this.environments;
+  },
+
+  /**
+   * Updates an environment value.
+   *
+   * If the `value` doesn't contains the `_id` property a new environment will
+   * be created. The `_rev` property will be always updated to the latest value.
+   *
+   * After finish this method sends the `environment-updated` event that can't
+   * be cancelled so other managers that are present in the DOM will not update
+   * the value.
+   *
+   * @param {Object} data A PouchDB object to be stored. It should contain the
+   * `_id` property if the object is about to be updated. If the `_id` doesn't
+   * exists a new object is created.
+   * @param {?Event} e Optional. If it is called from the event handler, this
+   * is the event object. If initial validation fails then it will set `error`
+   * property on the `detail` object.
+   * @return {Promise}
+   */
+  updateEnvironment: function(data, e) {
+    if (!data.name) {
+      var error = new Error('Can\'t create an environment without the name.');
+      if (e && e.detail) {
+        e.detail.error = error;
+      }
+      return Promise.reject(error);
+    }
+    if (!data.created) {
+      data.created = Date.now();
+    }
+    if (data.created instanceof Date) {
+      data.created = data.created.getTime();
+    }
+    var promise;
+    var oldName;
+    if (!data._id) {
+      // creates new environment
+      promise = Promise.resolve(data);
+    } else {
+      promise = this._envDb.get(data._id)
+      .then(function(doc) {
+        if (data.name !== doc.name) {
+          oldName = doc.name;
+          doc.name = data.name;
+        }
+        data._rev = doc._rev;
+        return data;
+      })
+      .catch(function(error) {
+        if (error.status === 404) {
+          delete data._id;
+          return data;
+        }
+        throw new Error(error.message);
+      });
+    }
+    return promise.then(function(doc) {
+      return this._envDb[!!(doc._id) ? 'put' : 'post'](doc);
+    }.bind(this))
+    .then(function(result) {
+      if (!result.ok) {
+        this._handleException(result);
+        throw new Error(result.message);
+      }
+      data._id = result.id;
+      data._rev = result.rev;
+      this.fire('environment-updated', {
+        value: data
+      });
+      this.__updateEnvironmentItem(data);
+      if (oldName) {
+        this.__updateEnvironmentName(oldName, data);
+      }
+      return data;
+    }.bind(this))
+    .catch(function(cause) {
+      this._handleException(cause);
+      throw new Error(cause.message);
+    });
+  },
+
+  /**
+   * Updated the item in the `environments` array propery.
+   * Either add new property or updates existing one.
+   *
+   * @param {Object} data The PouchDB object.
+   */
+  __updateEnvironmentItem: function(data) {
+    var envs = this.environments;
+    this._cancelEnvironmentsChangeEvent = true;
+    if (!envs) {
+      this.set('environments', [data]);
+      this._cancelEnvironmentsChangeEvent = false;
+      return;
+    }
+    var index = envs.findIndex(function(item) {
+      return item._id === data._id;
+    });
+    if (~index) {
+      this.set(['environments', index], data);
+    } else {
+      this.push('environments', data);
+    }
+    this._cancelEnvironmentsChangeEvent = false;
+  },
+  /**
+   * A special case when the name of the environment changes.
+   * It updates any related to this environment variables.
+   *
+   * If this is current environment it also changes its name.
+   *
+   * @param {String} oldName Name of the environment befoe the change
+   * @param {String} data Updated data store entry
+   */
+  __updateEnvironmentName: function(oldName, data) {
+    var isCurrent = oldName === this.environment;
+    var promise;
+
+    if (isCurrent) {
+      promise = Promise.resolve(this.variables);
+    } else {
+      promise = this.listVariables(oldName);
+    }
+    promise.then(function(variables) {
+      if (!variables || !variables.length) {
+        return;
+      }
+      variables = variables.map(function(item) {
+        item.environment = data.name;
+        return item;
+      });
+      return this._varDb.bulkDocs(variables);
+    }.bind(this))
+    .then(function(result) {
+      if (!result || !result.length) {
+        return;
+      }
+      if (isCurrent) {
+        this.set('environment', data.name);
+        // setter will update list of variables
+      }
+    }.bind(this));
+  },
+
+  /**
+   * Deletes an environment from the data store.
+   *
+   * After updating the data store this method sends the `environment-deleted`
+   * event that can't be cancelled so other managers that are present in the DOM
+   * will not update the value again. If you don't need updated `_rev` you don't
+   * have to listen for this event.
+   *
+   * Because this function changes the `environments` array the
+   * `environments-list-changed` event is fired alongside the `environment-deleted`
+   * event.
+   *
+   * @param {Object} id The PouchDB `_id` property of the object to delete.
+   * @param {?Event} e Optional. If it is called from the event handler, this
+   * is the event object. If initial validation fails then it will set `error`
+   * property on the `detail` object.
+   * @return {Promise}
+   */
+  deleteEnvironment: function(id, e) {
+    if (!id) {
+      var error = new Error('Can\'t delete an environment without its id');
+      if (e && e.detail) {
+        e.detail.error = error;
+      }
+      return Promise.reject(error);
+    }
+    var environment;
+    var db = this._envDb;
+    return db.get(id)
+    .then(function(doc) {
+      environment = doc.name;
+      return db.remove(doc);
+    })
+    .then(function(result) {
+      if (!result.ok) {
+        this._handleException(result);
+        throw new Error(result.message);
+      }
+      // update list of environments.
+      if (this.environments) {
+        var index = this.environments.findIndex(function(item) {
+          return item._id === id;
+        });
+        if (~index) {
+          this._cancelEnvironmentsChangeEvent = true;
+          this.splice('environments', index, 1);
+          this._cancelEnvironmentsChangeEvent = false;
+        }
+      }
+      var detail = {
+        value: result.id,
+        rev: result.rev
+      };
+      this.fire('environment-deleted', detail);
+      this.async(function() {
+        this._afterDeleteEnvironment(environment);
+      });
+      return detail;
+    }.bind(this))
+    .catch(function(error) {
+      this._handleException(error);
+      throw new Error(error.message);
+    }.bind(this));
+  },
+  /**
+   * To be called after the environment has been deleted. It clears variables
+   * for the environment and if the environment is currently loaded environment
+   * then it clear cuerrent data.
+   *
+   * @param {String} environment The environment name.
+   */
+  _afterDeleteEnvironment: function(environment) {
+    if (!environment) {
+      return;
+    }
+    environment = environment.toLowerCase();
+    if (environment === 'default') {
+      return;
+    }
+
+    var promise;
+    var currentEnvironment = environment === this.environment;
+    if (currentEnvironment) {
+      promise = Promise.resolve(this.variables);
+    } else {
+      promise = this.listVariables(environment);
+    }
+
+    return promise
+    .then(function(variables) {
+      if (currentEnvironment) {
+        this.environment = 'default';
+      }
+      // It is possible to not have a result here.
+      if (!variables) {
+        return;
+      }
+      variables = variables.map(function(doc) {
+        doc._deleted = true;
+        return doc;
+      });
+      return this._envDb.bulkDocs(variables);
+    }.bind(this))
+    // This will not fire `variable-deleted` event because it doesn't make
+    // sense. UIs and managers should relay on `environment-deleted` event.
+    .catch(function(error) {
+      this._handleException(error);
+      throw new Error(error.message);
+    }.bind(this));
+  },
+  /**
+   * A handler for the `variable-updated` custom event.
+   * Updates the variable in the data store.
+   *
+   * The `variable-updated` custom event should be cancellable or the event
+   * won't be handled at all.
+   */
+  _varUpdateHandler: function(e) {
+    if (this._eventCancelled(e)) {
+      return;
+    }
+    this._cancelEvent(e);
+    this.updateVariable(e.detail.value, e);
+  },
+  /**
+   * Deletes a variable from the data store.
+   *
+   * If the `value` doesn't contains the `_id` property a new environment will
+   * be created. The `_rev` property will be always updated to the latest value.
+   *
+   * After finish this method sends the `environment-deleted` event that can't
+   * be cancelled so other managers that are present in the DOM will not update
+   * the value. If you don't need database record updated `_rev` you don't
+   * have to listen for this event.
+   *
+   * Because this function changes the `environments` array the
+   * `environments-list-changed` event is fired alongside the `environment-deleted`
+   * event.
+   *
+   * @param {Object} id The PouchDB `_id` property of the object to delete.
+   * @param {?Event} e Optional. If it is called from the event handler, this
+   * is the event object. If initial validation fails then it will set `error`
+   * property on the `detail` object.
+   */
+  _varDeleteHandler: function(e) {
+    if (this._eventCancelled(e)) {
+      return;
+    }
+    this._cancelEvent(e);
+    this.deleteVariable(e.detail.value, e);
+  },
+  /**
+   * A handler for the `variable-list` custom event.
+   *
+   * Adds a `value` propety of the event `detail` object with the array of the
+   * variables restored for current environment. Each item is a PouchDb data
+   * store item (with `_id` and `_rev`).
+   *
+   * The `value` set on the details object can be undefined if the this of
+   * variables haven't been read yet or if the yser haven't defined any
+   * variable for this environment.
+   * In the first case the event target element should listen for
+   * `variables-list-changed` event to update the list of available variables for
+   * current environment.
+   *
+   * Additionally it sets the `environment` property on the `detail` object
+   * with the name of current environment.
+   *
+   * List of properties added to the detail object is consistent with the
+   * `variables-list-changed` event fired by this event.
+   *
+   * The `variable-list` custom event should be cancellable or the event
+   * won't be handled at all. It's to prohibit handling the event by many
+   * managers (if more than one is in the DOM).
+   */
+  _varListHandler: function(e) {
+    if (this._eventCancelled(e)) {
+      return;
+    }
+    this._cancelEvent(e);
+    e.detail.value = this.variables;
+    e.detail.environment = this.environment;
+  },
+
+  /**
+   * Updates a variable value.
+   *
+   * If the `value` doesn't contains the `_id` property a new variable will
+   * be created. The `_rev` property will be always updated to the latest value
+   * so there's no need to set it on the object.
+   *
+   * After saving the data this method sends the `variable-updated` event that
+   * can't be cancelled so other managers that are present in the DOM will not
+   * update the value again.
+   *
+   * @param {Object} data A PouchDB object to be stored. It should contain the
+   * `_id` property if the object is about to be updated. If the `_id` doesn't
+   * exists a new object is created.
+   * @param {?Event} e Optional. If it is called from the event handler, this
+   * is the event object. If initial validation fails then it will set `error`
+   * property on the `detail` object.
+   * @return {Promise}
+   */
+  updateVariable: function(data, e) {
+    if (!data.variable) {
+      var m = 'Can\'t create a variable without the variable property';
+      var error = new Error(m);
+      if (e && e.detail) {
+        e.detail.error = error;
+      }
+      return Promise.reject(error);
+    }
+    var db = this._varDb;
+    var promise;
+    if (!data._id) {
+      // creates new environment
+      promise = Promise.resolve(data);
+    } else {
+      promise = db.get(data._id)
+      .then(function(doc) {
+        data._rev = doc._rev;
+        return data;
+      })
+      .catch(function(error) {
+        if (error.status === 404) {
+          delete data._id;
+          return data;
+        }
+        throw new Error(error.message);
+      });
+    }
+    return promise.then(function(doc) {
+      return db[doc._id ? 'put' : 'post'](doc);
+    })
+    .then(function(result) {
+      if (!result.ok) {
+        this._handleException(result);
+        throw new Error(result.message);
+      }
+      data._id = result.id;
+      data._rev = result.rev;
+      this.fire('variable-updated', {
+        value: data
+      });
+      this.__updateVariableItem(data);
+      return data;
+    }.bind(this));
+  },
+
+  /**
+   * Updated the item in the `variables` array propery.
+   * Either add new property or updates existing one.
+   *
+   * @param {Object} data The PouchDB object.
+   */
+  __updateVariableItem: function(data) {
+    if (data.environment !== this.environment) {
+      return;
+    }
+    this._cancelVariablesChangeEvent = true;
+    var vars = this.variables;
+    if (!vars) {
+      this.set('variables', [data]);
+      this._cancelVariablesChangeEvent = false;
+      return;
+    }
+    var index = vars.findIndex(function(item) {
+      return item._id === data._id;
+    });
+    if (~index) {
+      this.set(['variables', index], data);
+    } else {
+      this.push('variables', data);
+    }
+    this._cancelVariablesChangeEvent = false;
+  },
+  /**
+   * Deletes a variable from the data store.
+   *
+   * After updating the data store this method sends the `variable-deleted`
+   * event that can't be cancelled so other managers that are present in the DOM
+   * will not update the value again. If you don't need updated `_rev` you don't
+   * have to listen for this event.
+   *
+   * Because this function changes the `variables` array the
+   * `variables-list-changed` event is fired alongside the `variable-deleted`
+   * event.
+   *
+   * @param {Object} id The PouchDB `_id` property of the object to delete.
+   * @param {?Event} e Optional. If it is called from the event handler, this
+   * is the event object. If initial validation fails then it will set `error`
+   * property on the `detail` object.
+   * @return {Promise}
+   */
+  deleteVariable: function(id, e) {
+    if (!id) {
+      var error = new Error('Can\'t delete a variable without its id');
+      if (e && e.detail) {
+        e.detail.error = error;
+      }
+      return Promise.reject(error);
+    }
+    var db = this._varDb;
+    return db.get(id)
+    .then(function(doc) {
+      return db.remove(doc);
+    })
+    .then(function(result) {
+      if (!result.ok) {
+        return this._handleException(result);
+      }
+      // update list of environments.
+      if (this.variables) {
+        var index = this.variables.findIndex(function(item) {
+          return item._id === id;
+        });
+        if (~index) {
+          this._cancelVariablesChangeEvent = true;
+          this.splice('variables', index, 1);
+          this._cancelVariablesChangeEvent = false;
+        }
+      }
+      var detail = {
+        value: result.id,
+        rev: result.rev
+      };
+      this.fire('variable-deleted', detail);
+      return detail;
+    }.bind(this))
+    .catch(function(error) {
+      this._handleException(error);
+      throw new Error(error.message);
+    }.bind(this));
+  }
+});
+</script>

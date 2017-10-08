@@ -1,0 +1,61 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<!--
+Shared styles for all elements that implements headers support behaviour.
+-->
+<dom-module id="headers-support-styles">
+  <template>
+    <style>
+    :host {
+      display: block;
+      margin: 24px 40px;
+      -webkit-overflow-scrolling: touch;
+      background: var(--paper-dialog-background-color, --primary-background-color);
+      color: var(--paper-dialog-color, --primary-text-color);
+      @apply(--paper-font-body1);
+      @apply(--shadow-elevation-16dp);
+      @apply(--paper-dialog);
+    }
+
+    :host > * {
+      margin-top: 20px;
+      padding: 0 24px;
+    }
+
+    :host > *:first-child {
+      margin-top: 24px;
+    }
+    :host > *:last-child {
+      margin-bottom: 24px;
+    }
+
+    :host > h2 {
+      position: relative;
+      @apply(--paper-font-title);
+      @apply(--paper-dialog-title);
+    }
+
+    :host > .buttons {
+      position: relative;
+      padding: 8px 8px 8px 24px;
+      margin: 0;
+      margin-bottom: 24px;
+      color: var(--paper-dialog-button-color, --primary-color);
+      @apply(--layout-horizontal);
+      @apply(--layout-end-justified);
+    }
+    </style>
+  </template>
+</dom-module>

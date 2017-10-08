@@ -1,0 +1,300 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../app-pouchdb/pouchdb.html">
+<!--
+Import data store helper element.
+-->
+<script>
+  Polymer({
+    is: 'import-data-store',
+    get _savedDb() {
+      return new PouchDB('saved-requests');
+    },
+    get _historyDb() {
+      return new PouchDB('history-requests');
+    },
+    get _projectsDb() {
+      return new PouchDB('legacy-projects');
+    },
+    get _socketUrlDb() {
+      return new PouchDB('websocket-url-history');
+    },
+    get _urlDb() {
+      return new PouchDB('url-history');
+    },
+    get _variablesDb() {
+      return new PouchDB('variables');
+    },
+    get _variablesEnvsDb() {
+      return new PouchDB('variables-environments');
+    },
+    get _headersSetsDb() {
+      return new PouchDB('headers-sets');
+    },
+    get _cookiesDb() {
+      return new PouchDB('cookies');
+    },
+    get _authDataDb() {
+      return new PouchDB('auth-data');
+    },
+    /**
+     * Imports data into the data store.
+     *
+     * @param {Object} exportObj Normalized export object
+     * @return {Promise} Promise resolved to list of error messages, if any.
+     */
+    importData: function(exportObj) {
+      var errors = [];
+      var promise;
+      if (exportObj.requests && exportObj.requests.length) {
+        promise = this.importRequests(exportObj.requests);
+      } else {
+        promise = Promise.resolve();
+      }
+
+      function handleInfo(info) {
+        if (info && info.length) {
+          errors = errors.concat(info);
+        }
+      }
+
+      return promise
+      .then(info => {
+        handleInfo(info);
+        if (exportObj.projects && exportObj.projects.length) {
+          return this.importProjects(exportObj.projects);
+        }
+      })
+      .then(info => {
+        handleInfo(info);
+        if (exportObj.history && exportObj.history.length) {
+          return this.importHistory(exportObj.history);
+        }
+      })
+      .then(info => {
+        handleInfo(info);
+        let data = exportObj['websocket-url-history'];
+        if (data && data.length) {
+          return this.importWebsocketUrls(data);
+        }
+      })
+      .then(info => {
+        handleInfo(info);
+        let data = exportObj['url-history'];
+        if (data && data.length) {
+          return this.importUrls(data);
+        }
+      })
+      .then(info => {
+        handleInfo(info);
+        if (exportObj.cookies && exportObj.cookies.length) {
+          return this.importCookies(exportObj.cookies);
+        }
+      })
+      .then(info => {
+        handleInfo(info);
+        let data = exportObj['auth-data'];
+        if (data && data.length) {
+          return this.importAuthData(data);
+        }
+      })
+      .then(info => {
+        handleInfo(info);
+        let data = exportObj['headers-sets'];
+        if (data && data.length) {
+          return this.importHeaders(data);
+        }
+      })
+      .then(info => {
+        handleInfo(info);
+        if (exportObj.variables && exportObj.variables.length) {
+          return this.importVariables(exportObj.variables);
+        }
+      })
+      .then(info => {
+        handleInfo(info);
+        if (exportObj.variables && exportObj.variables.length) {
+          return this._importEnvironments(exportObj.variables);
+        }
+      })
+      .then(info => {
+        handleInfo(info);
+        return errors.length ? errors : undefined;
+      });
+    },
+
+    importRequests: function(requests) {
+      var db = this._savedDb;
+      return db.bulkDocs(requests)
+      .then(result => this._handleInsertResponse(result, requests, db));
+    },
+
+    importProjects: function(projects) {
+      var db = this._projectsDb;
+      return db.bulkDocs(projects)
+      .then(result => this._handleInsertResponse(result, projects, db));
+    },
+
+    importHistory: function(history) {
+      var db = this._historyDb;
+      return db.bulkDocs(history)
+      .then(result => this._handleInsertResponse(result, history, db));
+    },
+
+    importWebsocketUrls: function(urls) {
+      var db = this._socketUrlDb;
+      return db.bulkDocs(urls)
+      .then(result => this._handleInsertResponse(result, urls, db));
+    },
+
+    importUrls: function(urls) {
+      var db = this._urlDb;
+      return db.bulkDocs(urls)
+      .then(result => this._handleInsertResponse(result, urls, db));
+    },
+
+    importCookies: function(data) {
+      var db = this._cookiesDb;
+      return db.bulkDocs(data)
+      .then(result => this._handleInsertResponse(result, data, db));
+    },
+
+    importAuthData: function(data) {
+      var db = this._authDataDb;
+      return db.bulkDocs(data)
+      .then(result => this._handleInsertResponse(result, data, db));
+    },
+
+    importHeaders: function(data) {
+      var db = this._headersSetsDb;
+      return db.bulkDocs(data)
+      .then(result => this._handleInsertResponse(result, data, db));
+    },
+
+    importVariables: function(data) {
+      var db = this._variablesDb;
+      return db.bulkDocs(data)
+      .then(result => this._handleInsertResponse(result, data, db));
+    },
+
+    importEnvironments: function(data) {
+      var db = this._variablesEnvsDb;
+      return db.bulkDocs(data)
+      .then(result => this._handleInsertResponse(result, data, db));
+    },
+
+    _importEnvironments: function(variables) {
+      var userDefined = [];
+      variables.forEach(item => {
+        if (item.environment && item.environment !== 'default') {
+          let name = item.environment.toLowerCase();
+          if (userDefined.indexOf(name) === -1) {
+            userDefined.push(name);
+          }
+        }
+      });
+      if (!userDefined.length) {
+        return Promise.resolve();
+      }
+      var db = this._variablesEnvsDb;
+      db.allDocs({
+        // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
+        include_docs: true
+        // jscs:enable requireCamelCaseOrUpperCaseIdentifiers
+      })
+      .then(response => {
+        if (response && response.rows.length) {
+          response.rows.forEach(item => {
+            let doc = item.doc;
+            let name = doc.name.toLowerCase();
+            let index = userDefined.indexOf(name);
+            if (index > -1) {
+              userDefined.splice(index, 1);
+            }
+          });
+        }
+      })
+      .then(() => {
+        if (!userDefined.length) {
+          return;
+        }
+        var docs = userDefined.map(name => {
+          return {
+            name: name,
+            created: Date.now()
+          };
+        });
+        return db.bulkDocs(docs);
+      });
+    },
+
+    _handleInsertResponse: function(result, items, db) {
+      var conflicted = [];
+      var errors = [];
+
+      result.forEach((item, index) => {
+        if (item.error && item.status === 409) {
+          conflicted[conflicted.length] = items[index];
+        } else if (item.error) {
+          console.error('Can not insted saved request into the datastore.', item);
+          errors.push(item.messsage);
+        }
+      });
+      if (conflicted.length) {
+        return this._handleConflictedInserts(db, conflicted)
+        .then(result => {
+          if (!result) {
+            return errors;
+          }
+          return errors.concat(result);
+        });
+      }
+    },
+
+    _handleConflictedInserts: function(db, conflicted) {
+      var errors = [];
+      var keys = conflicted.map(item => item._id);
+
+      return db.allDocs({keys: keys})
+      .then(result => {
+        let promises = result.rows.map((i, index) => {
+          if (i.value.deleted) {
+            return db.get(i.id, {rev: i.value.rev})
+            .then(response => {
+              response._deleted = false;
+              return db.put(response);
+            })
+            .then((result) => {
+              conflicted[index]._rev = result.rev || result._rev;
+              return conflicted[index];
+            });
+          }
+          conflicted[index]._rev = i.value.rev;
+          return Promise.resolve(conflicted[index]);
+        });
+        return Promise.all(promises);
+      })
+      .then(data => db.bulkDocs(data))
+      .then(response => {
+        response.forEach(item => {
+          if (item.error) {
+            errors.push(item.messsage);
+          }
+        });
+        return errors.length ? errors : undefined;
+      });
+    }
+  });
+</script>

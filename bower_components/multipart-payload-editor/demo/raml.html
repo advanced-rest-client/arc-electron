@@ -1,0 +1,104 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <title>multipart-payload-editor demo RAML</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../arc-demo-helpers/raml-demo-page.html">
+  <link rel="import" href="../../font-roboto/roboto.html">
+  <link rel="import" href="../multipart-payload-editor.html">
+
+  <style>
+
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', 'Noto', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 20px;
+    background-color: #EEEEEE;
+  }
+
+  .element-wrapper {
+    margin-bottom: 40px;
+    background-color: #fff;
+    padding: 20px;
+    margin-left: 12px;
+  }
+  </style>
+</head>
+<body unresolved>
+  <template is="dom-bind" id="app">
+    <raml-demo-page selected-object="{{selected}}" is-method="{{isMethod}}" narrow="{{narrow}}">
+      <paper-item data-url$="[[testRaml]]">Test case with RAML 1.0</paper-item>
+      <h1>The raml-headers-form element</h1>
+      <div main>
+        <template is="dom-if" if="[[isMethod]]">
+          <template is="dom-if" if="[[hasMultipartBody]]">
+            <div class="element-wrapper">
+              <multipart-payload-editor raml-type="[[selectedObject]]" value="{{value}}"></multipart-payload-editor>
+            </div>
+            <h3>Current value</h3>
+            <code>[[value]]</code>
+          </template>
+          <template is="dom-if" if="[[!hasMultipartBody]]">
+            <p>Selected method doesn't support multipart bodies</p>
+          </template>
+        </template>
+        <p hidden$="[[isMethod]]">Select a method</p>
+        </div>
+    </raml-demo-page>
+  </template>
+  <script>
+  (function(app) {
+
+    app.observers = ['_selectedChanged(isMethod, selected)'];
+    app.hasMultipartBody = false;
+    app.selectedObject = undefined;
+
+    app._selectedChanged = function(isMethod, selected) {
+      if (!isMethod || !selected) {
+        app.hasMultipartBody = false;
+        return;
+      }
+      if (!selected.body || !selected.body.length) {
+        app.hasMultipartBody = false;
+        return;
+      }
+      for (var i = 0, len = selected.body.length; i < len; i++) {
+        if (selected.body[i].key === 'multipart/form-data') {
+          app.selectedObject = selected.body[i];
+          app.hasMultipartBody = true;
+          return;
+        }
+      }
+      app.hasMultipartBody = false;
+    };
+    var path = location.pathname;
+    if (~path.indexOf('.html')) {
+      path = path.substr(0, path.lastIndexOf('/') + 1);
+    }
+    var ramlRoot = location.protocol + '//' + location.host + path.replace('demo', 'test');
+    app.testRaml = ramlRoot + 'test.raml';
+  })(document.querySelector('template[is="dom-bind"]'));
+  </script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+{
+  "name": "response-history-saver",
+  "description": "An element that saves requests history in a datastore",
+  "version": "0.0.3",
+  "license": "Apache-2.0 OR CC-BY-4.0",
+  "authors": [
+    "The Advanced REST client authors <arc@mulesoft.com>"
+  ],
+  "keywords": [
+    "web-components",
+    "polymer"
+  ],
+  "private": true,
+  "main": [
+    "response-history-saver.html"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:advanced-rest-client/response-history-saver.git"
+  },
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.9.2",
+    "arc-polyfills": "advanced-rest-client/arc-polyfills#^0.1.8",
+    "app-pouchdb": "advanced-rest-client/app-pouchdb#^1.0.0",
+    "uuid-generator": "advanced-rest-client/uuid-generator#^1.0.4",
+    "url": "advanced-rest-client/URL#^0.6.0",
+    "fetch": "advanced-rest-client/fetch#2.1.0-arc"
+  },
+  "devDependencies": {
+    "iron-component-page": "polymerelements/iron-component-page#1.0.0",
+    "web-component-tester": "^6.0.0",
+    "paper-styles": "polymerelements/paper-styles#^1.0.2",
+    "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^1.0.0",
+    "iron-test-helpers": "PolymerElements/iron-test-helpers#^1.4.0",
+    "test-fixture": "PolymerElements/test-fixture#^3.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0",
+    "arc-demo-helpers": "advanced-rest-client/arc-demo-helpers#^1.0.13"
+  },
+  "ignore": [
+    "**/.*",
+    "dependencyci.yml",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tasks"
+  ],
+  "homepage": "https://github.com/advanced-rest-client/response-history-saver",
+  "_release": "0.0.3",
+  "_resolution": {
+    "type": "version",
+    "tag": "0.0.3",
+    "commit": "f9ce264a4e41f8513a148a9a4ba98134f747f892"
+  },
+  "_source": "https://github.com/advanced-rest-client/response-history-saver.git",
+  "_target": "^0.0.3",
+  "_originalSource": "advanced-rest-client/response-history-saver"
+}

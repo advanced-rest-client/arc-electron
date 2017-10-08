@@ -1,0 +1,110 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <title>request-panel demo</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+  <link rel="import" href="../../variables-evaluator/variables-evaluator.html">
+  <link rel="import" href="../../variables-manager/variables-manager.html">
+  <link rel="import" href="../../url-history-saver/url-history-saver.html">
+  <link rel="import" href="../../cookie-jar/cookie-jar.html">
+  <link rel="import" href="../../paper-toast/paper-toast.html">
+  <link rel="import" href="../request-panel.html">
+  <link rel="import" href="../test/demo-transport.html">
+
+  <style is="custom-style" include="demo-pages-shared-styles">
+    :root {
+      --demo-snippet-demo: {
+        padding: 0;
+        background-color: #CDDC39;
+        padding-bottom: 20px;
+      };
+    }
+
+    .vertical-section-container {
+      max-width: 1200px;
+    }
+
+    request-panel {
+      background-color: #fff;
+      min-height: 100vh;
+    }
+  </style>
+</head>
+<body unresolved>
+  <div class="vertical-section-container centered">
+    <h3>The `request-panel`</h3>
+    <demo-snippet>
+      <template is="dom-bind" id="demo1">
+        <cookie-jar></cookie-jar>
+        <url-history-saver></url-history-saver>
+        <variables-evaluator></variables-evaluator>
+        <variables-manager></variables-manager>
+        <demo-transport></demo-transport>
+        <request-panel request="[[request]]" xhr-extension></request-panel>
+      </template>
+    </demo-snippet>
+  </div>
+  <paper-toast id="transportToast" text="transport-request event handled"></paper-toast>
+  <paper-toast id="requestAbort" text="Request abort event detected"></paper-toast>
+  <paper-toast id="clearToast" text="Clear request state detected"></paper-toast>
+  <paper-toast id="saveToast" text="Save request state detected"></paper-toast>
+  <paper-toast id="xhrToast" text="Toggle XHR request state changed"></paper-toast>
+  <script>
+  var Demo = {
+    sendEvent: function(type, details, cancelable, node) {
+      var event = new CustomEvent(type, {
+        detail: details,
+        cancelable: cancelable || false,
+        bubbles: true
+      });
+      (node || document.body).dispatchEvent(event);
+      return event;
+    }
+  };
+  window.addEventListener('transport-request', function(e) {
+    document.getElementById('transportToast').opened = true;
+    Demo.sendEvent('url-history-store', {
+      value: e.detail.url
+    }, true);
+  });
+  function openToast(id) {
+    document.getElementById(id).opened = true;
+  }
+  window.addEventListener('abort-request', function() {
+    openToast('requestAbort');
+  });
+  window.addEventListener('request-clear-state', function() {
+    openToast('clearToast');
+  });
+  window.addEventListener('request-save-state', function() {
+    openToast('saveToast');
+  });
+  window.addEventListener('request-use-xhr-changed', function() {
+    openToast('xhrToast');
+  });
+  (function(scope) {
+    scope.request = {
+      url: window.location.href,
+      method: 'GET'
+    };
+  })(document.querySelector('#demo1'));
+  </script>
+</body>
+</html>

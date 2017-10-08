@@ -1,0 +1,253 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../headers-support-behavior/headers-support-behavior.html">
+<link rel="import" href="../headers-support-behavior/headers-support-styles.html">
+<link rel="import" href="../paper-dialog-scrollable/paper-dialog-scrollable.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../arc-icons/arc-icons.html">
+<link rel="import" href="../cookie-parser/cookie-parser.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<!--
+`<headers-support-authorization>` is an element that provides headers fill
+support for authorization header.
+
+Currently it supports basic authorization only.
+
+### Example
+```
+<headers-support-authorization></headers-support-authorization>
+```
+
+### Styling
+Check `ArcBehaviors.FillSupportBehavior` for styling options.
+
+@group UI Elements
+@element headers-support-cookie
+@demo demo/index.html
+-->
+<dom-module id="headers-support-cookie">
+  <template>
+    <style include="headers-support-styles"></style>
+    <style>
+    .actions-row {
+      margin-bottom: 8px;
+    }
+
+    .name-value {
+      @apply(--layout-horizontal);
+      @apply(--layout-flex);
+      @apply(--layout-relative);
+    }
+
+    .cookie-details {
+      @apply(--layout-horizontal);
+      @apply(--layout-flex);
+      @apply(--layout-wrap);
+    }
+
+    paper-input {
+      margin-right: 8px;
+    }
+
+    .cookie-details {
+      margin-bottom: 12px;
+    }
+
+    paper-dialog-scrollable {
+      padding: 0;
+    }
+    </style>
+    <h2>Cookie</h2>
+    <paper-dialog-scrollable id="scrollable">
+      <template is="dom-repeat" items="[[cookies]]" id="list">
+        <div class="cookie-row">
+          <div class="name-value">
+            <paper-input class="cookie-name" value="{{item.name}}" placeholder="Cookie name" no-label-float inline></paper-input>
+            <paper-input class="cookie-value" value="{{item.value}}" placeholder="Cookie value" no-label-float inline></paper-input>
+            <paper-icon-button icon="arc:edit" title="Edit cookie details" on-tap="_openCookieDetail" hidden$="[[clientCookie]]"></paper-icon-button>
+            <paper-icon-button icon="arc:close" title="Remove cookie" on-tap="_removeCookie"></paper-icon-button>
+          </div>
+          <div class="cookie-details" hidden$="{{!item.details}}">
+            <paper-input class="cookie-domain" value="{{item.domain}}" placeholder="Cookie domain" no-label-float inline></paper-input>
+            <paper-input class="cookie-path" value="{{item.path}}" placeholder="Cookie path" no-label-float inline></paper-input>
+            <paper-input class="cookie-expires" value="{{item.expires}}" placeholder="Expires" type="datetime-local" no-label-float inline></paper-input>
+          </div>
+        </div>
+      </template>
+      <div class="actions-row">
+        <paper-button raised on-tap="addEmptyCookie">Add cookie</paper-button>
+      </div>
+    </paper-dialog-scrollable>
+    <div class="buttons">
+      <paper-button dialog-dismiss>Cancel</paper-button>
+      <paper-button dialog-confirm>Accept</paper-button>
+    </div>
+  </template>
+  <script>
+  Polymer({
+    is: 'headers-support-cookie',
+
+    behaviors: [ArcBehaviors.FillSupportBehavior],
+
+    hostAttributes: {
+      'header-support': 'cookie'
+    },
+
+    listeners: {
+      'iron-overlay-closed': '_onClosed'
+    },
+
+    properties: {
+      withBackdrop: {
+        type: Boolean,
+        value: true
+      },
+      modal: {
+        type: Boolean,
+        value: true
+      },
+      // list of cookies displayed in a form.
+      cookies: Array,
+      /**
+       * If true it generates client cookies header string.
+       * It means that it will not display detailed form form (where domain,
+       * expires, etc can be edited) because clients doesn't send this
+       * information to the server.
+       */
+      clientCookie: Boolean
+    },
+
+    observers: [
+      '_setValueIfNeeded(opened, value)'
+    ],
+
+    attached: function() {
+      this.$.scrollable.dialogElement = this;
+    },
+
+    _setValueIfNeeded: function(opened, value) {
+      if (opened) {
+        this._setCurrentValues(value);
+        if (!this.cookies || !this.cookies.length) {
+          this.addEmptyCookie();
+        }
+        this.async(function() {
+          this.notifyResize();
+        }, 1);
+      }
+    },
+
+    _setCurrentValues: function(currentValue) {
+      var cookies = new Cookies(currentValue).cookies;
+      if (!cookies || !cookies.length) {
+        this.set('cookies', undefined);
+        return;
+      }
+      cookies = cookies.map(function(item) {
+        if (item.expires) {
+          item.expires = this.__computeExpiration(item.expires);
+        }
+        return item;
+      }, this);
+      this.set('cookies', cookies);
+    },
+
+    __computeExpiration: function(expires) {
+      var exp = new Date(expires);
+      if (exp.toString() === 'Invalid Date') {
+        return;
+      } else {
+        // The format is "yyyy-MM-ddThh:mm" followed by optional
+        // ":ss" or ":ss.SSS".
+        var y = exp.getFullYear();
+        var m = exp.getMonth() + 1;
+        var d = exp.getDate();
+        var h = exp.getHours();
+        var mi = exp.getMinutes();
+        var s = exp.getSeconds();
+        if (m < 10) {
+          m = '0' + m;
+        }
+        if (d < 10) {
+          d = '0' + d;
+        }
+        if (h < 10) {
+          h = '0' + h;
+        }
+        if (mi < 10) {
+          mi = '0' + mi;
+        }
+        if (s < 10) {
+          s = '0' + s;
+        }
+        var str = y + '-' + m + '-' + d + 'T' + h + ':' + mi + ':' + s;
+        return str;
+      }
+    },
+
+    _onClosed: function(e) {
+      if (e.detail.canceled || !e.detail.confirmed) {
+        return;
+      }
+      var list = this.cookies;
+      var cookies = new Cookies();
+      list.forEach(function(item) {
+        if (!item.name) {
+          return;
+        }
+        var opts = {};
+        if (item.domain) {
+          opts.domain = item.domain;
+        }
+        if (item.path) {
+          opts.path = item.path;
+        }
+        if (item.expires) {
+          opts.expires = item.expires;
+        }
+        cookies.set(item.name, item.value, opts);
+      });
+      var result = cookies.toString(true);
+      this.setValue(result);
+    },
+
+    addEmptyCookie: function() {
+      var obj = {
+        'name': '',
+        'value': ''
+      };
+      if (!this.cookies) {
+        this.set('cookies', [obj]);
+      } else {
+        this.push('cookies', obj);
+      }
+      this.async(function() {
+        this.notifyResize();
+      }, 1);
+    },
+
+    _removeCookie: function(e) {
+      var index = this.$.list.indexForElement(e.target);
+      this.splice('cookies', index, 1);
+    },
+
+    _openCookieDetail: function(e) {
+      var model = this.$.list.modelForElement(e.target);
+      model.set('item.details', !model.get('item.details'));
+    }
+  });
+  </script>
+</dom-module>

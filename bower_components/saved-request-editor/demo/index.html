@@ -1,0 +1,137 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <title>saved-request-editor demo</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+  <link rel="import" href="../../arc-demo-helpers/data-generator.html">
+  <link rel="import" href="../saved-request-editor.html">
+
+  <style is="custom-style" include="demo-pages-shared-styles">
+  body,
+  html {
+    background-color: #e5e5e5;
+  }
+  :root {
+    --primary-color: #00A2DF;
+    --arc-font-headline: {
+      @apply --paper-font-headline;
+    };
+    --arc-font-body1: {
+      @apply --paper-font-body1;
+    }
+    --arc-font-common-nowrap: {
+      @apply --paper-font-common-nowrap;
+    }
+    --action-button: {
+      color: #fff;
+      background-color: var(--primary-color);
+    };
+  }
+  .vertical-section-container {
+    max-width: 600px;
+  }
+  section[card] {
+    @apply(--shadow-elevation-4dp);
+    padding: 20px;
+    background: white;
+    margin-bottom: 40px;
+  }
+
+  output {
+    display: block;
+    white-space: pre-wrap;
+    margin-top: 24px;
+  }
+  </style>
+</head>
+<body unresolved>
+  <template is="dom-bind" id="app">
+    <div class="vertical-section-container centered">
+      <section card>
+        <saved-request-editor on-cancel-request-edit="_onCancel" on-save-request="_onSave"></saved-request-editor>
+      </section>
+
+      <section card>
+        <paper-button raised on-tap="assignRequest">Assign random request</paper-button>
+        <output></output>
+      </section>
+    </div>
+  </template>
+  <script>
+  /* global DataGenerator */
+  (function(app) {
+    function getRandom(min, max) {
+      min = Math.ceil(min);
+      max = Math.floor(max);
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+    app.init = function() {
+      DataGenerator.insertSavedIfNotExists()
+      .then(data => {
+        app.requests = data.requests;
+        app.fire('data-imported');
+      });
+    };
+
+    app.log = function(str) {
+      if (typeof str !== 'string') {
+        str = JSON.stringify(str);
+      }
+      document.querySelector('output').innerText = str;
+    };
+    app.assignRequest = function() {
+      var index = getRandom(0, app.requests.length);
+      var request = app.requests[index];
+      document.querySelector('saved-request-editor').request = request;
+    };
+    app._onCancel = function() {
+      app.log('Cancelled');
+    };
+
+    app._onSave = function(e) {
+      var data = e.detail;
+      var log = 'Request ';
+      if (data.override) {
+        log += 'override. ';
+      } else {
+        log += 'save. ';
+      }
+      if (data.isProject) {
+        log += 'Added to a project. ';
+        if (data.projectIsNew) {
+          log += 'Project is new. ';
+        } else {
+          log += 'Project already exists. ';
+        }
+      } else {
+        log += 'No project info. ';
+      }
+      if (data.isDrive) {
+        log += 'Saving request to the Drive. ';
+      }
+      app.log(log);
+    };
+    window.addEventListener('WebComponentsReady', function() {
+      app.init();
+    });
+  })(document.querySelector('#app'));
+  </script>
+</body>
+</html>

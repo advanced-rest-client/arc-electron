@@ -1,0 +1,111 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <title>json-viewer demo</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+  <link rel="import" href="../../paper-input/paper-textarea.html">
+  <link rel="import" href="../../paper-input/paper-input.html">
+  <link rel="import" href="../../paper-toast/paper-toast.html">
+  <link rel="import" href="../../arc-icons/arc-icons.html">
+  <link rel="import" href="../../paper-button/paper-button.html">
+  <link rel="import" href="../../fetch-polyfill/fetch-polyfill.html">
+  <link rel="import" href="../../promise-polyfill/promise-polyfill.html">
+
+  <link rel="import" href="../json-viewer.html">
+
+  <style is="custom-style" include="demo-pages-shared-styles">
+
+    .vertical-section-container {
+      max-width: 600px;
+    }
+
+    .query {
+      margin-bottom: 24px;
+    }
+
+  </style>
+</head>
+<body unresolved>
+  <div class="vertical-section-container centered">
+    <h3>Search in JSON view</h3>
+    <demo-snippet>
+      <template is="dom-bind" id="auto">
+        <paper-input class="query" label="Search in JSON" value="{{query}}"></paper-input>
+        <json-viewer debug query="[[query]]" whole-match json='{"test": "test", "numeric": 1234567, "boolean": true, "nullable": null, "array": ["test", 123456], "object": {"sub-property": "value"}, "long": 12345678901112131415, "link": "http://domain.com", "relativeLink": "/path/to/resource.html"}' on-action-link-change="_onLinkChange"></json-viewer>
+      </template>
+    </demo-snippet>
+
+    <h3>Content actions</h3>
+    <demo-snippet>
+      <template is="dom-bind" id="ca">
+        <json-viewer json="[[json]]" debug>
+          <paper-icon-button content-action title="Copy content to clipboard" icon="arc:content-copy" on-tap="_copyToClipboard"></paper-icon-button>
+          <paper-icon-button content-action title="See raw response" icon="arc:visibility" on-tap="_seeRaw"></paper-icon-button>
+          <paper-button content-action on-tap="_saveFile">save to file</paper-button>
+        </json-viewer>
+      </template>
+    </demo-snippet>
+
+    <h3>Live preview</h3>
+    <demo-snippet>
+      <template is="dom-bind" id="manual">
+        <paper-textarea label="Enter JSON value" value="{{json}}"></paper-textarea>
+        <json-viewer json="[[json]]" on-action-link-change="_onLinkChange"></json-viewer>
+      </template>
+    </demo-snippet>
+    <paper-toast></paper-toast>
+    <script>
+    function setToast(text) {
+      var toast = document.querySelector('paper-toast');
+      toast.text = text;
+      toast.opened = true;
+    }
+    var scopeAuto = document.querySelector('#auto');
+    var scopeManual = document.querySelector('#manual');
+    var scopeCa = document.querySelector('#ca');
+    scopeManual._onLinkChange = scopeAuto._onLinkChange = function(e) {
+      setToast(e.detail.url);
+    };
+    function getFromUrl(url) {
+      fetch(url)
+      .then(function(response) {
+        return response.text();
+      })
+      .then(function(text) {
+        scopeCa.json = text;
+      });
+    }
+    scopeCa._copyToClipboard = function() {
+      setToast('Copy to clipboad called');
+    };
+    scopeCa._seeRaw = function() {
+      setToast('Toggle raw view called');
+    };
+    scopeCa._saveFile = function() {
+      setToast('Save to file called');
+    };
+    function init() {
+      getFromUrl('./example.json');
+    }
+    window.addEventListener('WebComponentsReady', init);
+    </script>
+  </div>
+</body>
+</html>

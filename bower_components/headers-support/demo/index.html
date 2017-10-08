@@ -1,0 +1,114 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+  <title>headers-support demo</title>
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+  <link rel="import" href="../../paper-dropdown-menu/paper-dropdown-menu.html">
+  <link rel="import" href="../../paper-listbox/paper-listbox.html">
+  <link rel="import" href="../../paper-item/paper-item.html">
+  <link rel="import" href="../../paper-button/paper-button.html">
+  <link rel="import" href="../../iron-flex-layout/iron-flex-layout.html">
+  <link rel="import" href="../headers-support.html">
+  <style is="custom-style" include="demo-pages-shared-styles">
+  .vertical-section-container {
+    max-width: 600px;
+  }
+
+  .selector-row {
+    @apply(--layout-horizontal);
+  }
+  </style>
+</head>
+
+<body unresolved>
+  <template is="dom-bind" id="app">
+    <headers-support-authorization></headers-support-authorization>
+    <headers-support-content-type></headers-support-content-type>
+    <headers-support-cookie client-cookie></headers-support-cookie>
+    <headers-support-wsse></headers-support-wsse>
+
+    <div class="vertical-section-container centered">
+      <h3>The `headers-support`</h3>
+      <div class="selector-row">
+        <paper-dropdown-menu label="Select header name">
+          <paper-listbox class="dropdown-content" selected="{{header}}" attr-for-selected="data-type">
+            <paper-item data-type="authorization">Authorization</paper-item>
+            <paper-item data-type="content-type">Content-Type</paper-item>
+            <paper-item data-type="cookie">Cookie</paper-item>
+            <paper-item data-type="x-wsse">WSSE</paper-item>
+          </paper-listbox>
+        </paper-dropdown-menu>
+        <paper-button on-tap="_openProvider">Open editor</paper-button>
+      </div>
+      <template is="dom-if" if="[[lastUpdate]]">
+        <div>
+          <h5>Last value for the [[lastHeader]] header:</h5>
+          <output>[[lastUpdate]]</output>
+        </div>
+      </template>
+    </div>
+  </template>
+  <script>
+  (function(scope) {
+    scope.header = undefined;
+    scope.lastUpdate = undefined;
+    scope.lastHeader = undefined;
+
+    scope.values = {
+      'authorization': 'Basic aGVsbG86dXNlcg==',
+      'content-type': 'application/json',
+      'cookie': 'demo cookie=this is demo cookie!; other cookie=hello World',
+      'x-wsse': 'UsernameToken Username="test user", PasswordDigest="23vZ8C85Z8ggp5meD6yLd7j3n7k=", Nonce="OGQ5ZmUwNDJjY2Q2Nzk1Zg==", Created="2017-06-13T20:44:56.033Z"'
+    };
+
+    function fireEvent(type, detail) {
+      var event = new CustomEvent(type, {
+        bubbles: true,
+        composed: true,
+        cancelable: true,
+        detail: detail
+      });
+      document.dispatchEvent(event);
+      return event;
+    }
+
+    scope._openProvider = function() {
+      // it can either query selector by provider's `header-support` attribute
+      // but here I'll explain event based approach.
+      var value = scope.values[scope.header] || '';
+      var event = fireEvent('headers-support-requested', {
+        header: scope.header,
+        value: value
+      });
+      if (!event.defaultPrevented) {
+        window.alert('Provider not found.');
+      }
+    };
+
+    scope._onChanged = function(e) {
+      scope.lastUpdate = e.detail.value;
+      scope.lastHeader = e.detail.name;
+      scope.values[e.detail.name] = e.detail.value;
+    };
+
+    window.addEventListener('request-header-changed', scope._onChanged);
+  })(document.getElementById('app'));
+  </script>
+</body>
+
+</html>

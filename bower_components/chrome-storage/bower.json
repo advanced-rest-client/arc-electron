@@ -1,0 +1,41 @@
+{
+  "name": "chrome-storage",
+  "version": "1.0.9",
+  "license": "LICENSE.txt",
+  "description": "A Chrome storage API in a web component.",
+  "authors": [
+    "Pawel Psztyc"
+  ],
+  "main": "chrome-storage.html",
+  "homepage": "https://github.com/jarrodek/chrome-storage",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jarrodek/chrome-storage.git"
+  },
+  "keywords": [
+    "webcomponents", "polymer", "chrome-apps", "chrome", "storage"
+  ],
+  "private": false,
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.2.0"
+  },
+  "devDependencies": {
+    "iron-component-page": "PolymerElements/iron-component-page#^1.0.5",
+    "web-component-tester": "Polymer/web-component-tester#^3.3.6",
+    "paper-styles": "PolymerElements/paper-styles#^1.0.2",
+    "paper-checkbox": "PolymerElements/paper-checkbox#^1.0.1",
+    "paper-input": "PolymerElements/paper-input#^1.1.5",
+    "iron-list": "PolymerElements/iron-list#^1.2.2",
+    "chrome-app-livereload": "bestander/chrome-app-livereload#~0.0.5",
+    "test-fixture": "PolymerElements/test-fixture#^1.0.0"
+  },
+  "ignore": [
+    "/.*",
+    "package.json",
+    "gulpfile.js",
+    "/test/",
+    "/demo/",
+    "/chrome-app/",
+    ".gitignore"
+  ]
+}

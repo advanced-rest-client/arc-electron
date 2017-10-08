@@ -1,0 +1,103 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <title>saved-request-detail demo</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+  <link rel="import" href="../../arc-demo-helpers/data-generator.html">
+  <link rel="import" href="../../paper-toast/paper-toast.html">
+
+  <link rel="import" href="../saved-request-detail.html">
+  <link rel="import" href="../../paper-styles/paper-styles.html">
+
+  <style is="custom-style" include="demo-pages-shared-styles">
+  body,
+  html {
+    background-color: #e5e5e5;
+  }
+
+  :root {
+    --primary-color: #00A2DF;
+    --arc-font-headline: {
+      @apply --paper-font-headline;
+    };
+
+    --arc-font-body1: {
+      @apply --paper-font-body1;
+    }
+
+    --arc-font-common-nowrap: {
+      @apply --paper-font-common-nowrap;
+    }
+  }
+
+  .vertical-section-container {
+    max-width: 600px;
+  }
+
+  section[card] {
+    @apply(--shadow-elevation-4dp);
+    padding: 20px;
+    background: white;
+    margin-bottom: 40px;
+  }
+
+  </style>
+</head>
+<body unresolved>
+  <template is="dom-bind" id="app">
+    <div class="vertical-section-container centered">
+      <section card>
+        <saved-request-detail request="[[request]]" on-edit-request="_onEdit" on-delete-request="_onDelete" on-navigate="_onNavigate"></saved-request-detail>
+      </section>
+    </div>
+    <paper-toast id="navToast" text="Navigate to project event handled"></paper-toast>
+    <paper-toast id="deleteToast" text="Delete request event handled"></paper-toast>
+    <paper-toast id="editToast" text="Edit request event handled"></paper-toast>
+  </template>
+
+  <script>
+  /* global DataGenerator */
+  (function(app) {
+    app.init = function() {
+      DataGenerator.insertSavedIfNotExists()
+      .then(data => {
+        var request = data.requests.find(item => item.legacyProject && item.description);
+        if (!request) {
+          request = data.requests[0];
+        }
+        app.request = request;
+      });
+    };
+    app._onEdit = function() {
+      document.getElementById('editToast').opened = true;
+    };
+    app._onDelete = function() {
+      document.getElementById('deleteToast').opened = true;
+    };
+    app._onNavigate = function() {
+      document.getElementById('navToast').opened = true;
+    };
+    window.addEventListener('WebComponentsReady', function() {
+      app.init();
+    });
+  })(document.querySelector('#app'));
+  </script>
+</body>
+</html>

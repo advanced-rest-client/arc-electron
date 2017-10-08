@@ -1,0 +1,313 @@
+<!--
+@license
+Copyright 2017 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../app-pouchdb/pouchdb.html">
+<link rel="import" href="legacy-data-tranformer.html">
+<link rel="import" href="pouch-data-tranformer.html">
+<link rel="import" href="dexie-data-tranformer.html">
+<link rel="import" href="postman-data-tranformer.html">
+<link rel="import" href="import-data-store.html">
+<!--
+An element that imports data into the ARC datastore.
+
+Supported data import types:
+
+-   legacy (the first one) ARC data system
+-   legacy Dexie and HAR based data system
+-   current ARC export object
+-   Postman data export
+
+To import data it must be first normalized by calling `normalizeImportData`
+function. It creates datastore objects that are resdy to be inserted into the
+datastore.
+
+Objects that are missing IDs will be assigned a new ID. Because of that data
+duplication may occur.
+Request objects will generate the same ID unless the request is assigned to a
+project and project has new ID generated.
+
+Conflicts are resolved by replacing existing data with new one.
+
+### Example
+```html
+<arc-data-import></arc-data-import>
+<script>
+var importer = document.querySelector('arc-data-import');
+var data = await getFileContent();
+data = await importer.normalizeImportData();
+var errors = await importer.storeData(data);
+if (errors && errors.length) {
+  console.log(errors);
+}
+</script>
+```
+
+@group Logic Elements
+@element arc-data-import
+@demo demo/index.html
+-->
+<script>
+Polymer({
+  is: 'arc-data-import',
+
+  attached: function() {
+    this.listen(window, 'import-normalize', '_normalizeHandler');
+    this.listen(window, 'import-data', '_importHandler');
+  },
+
+  detached: function() {
+    this.unlisten(window, 'import-normalize', '_normalizeHandler');
+    this.unlisten(window, 'import-data', '_importHandler');
+  },
+  /**
+   * Handler for the `import-normalize`cutom event.
+   * It sets `result` property on the event's detail object which is the result
+   * of calling `normalizeImportData` function call.
+   *
+   * The event is canceled so it's save to have more than one instance of this
+   * element in the DOM.
+   */
+  _normalizeHandler: function(e) {
+    if (!e.detail || e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    var data = e.detail.content;
+    if (!data) {
+      e.detail.result = Promise.reject(new Error('Content property not set'));
+      return;
+    }
+    e.detail.result = this.normalizeImportData(data);
+  },
+  /**
+   * Handler for the `import-data` cutom event.
+   * It sets `result` property on the event's detail object which is a result
+   * of calling `storeData` function.
+   *
+   * The event is canceled so it's save to have more than one instance of this
+   * element in the DOM.
+   */
+  _importHandler: function(e) {
+    if (!e.detail || e.defaultPrevented) {
+      return;
+    }
+    e.preventDefault();
+    var data = e.detail.content;
+    if (!data) {
+      e.detail.result = Promise.reject(new Error('Content property not set'));
+      return;
+    }
+    e.detail.result = this.storeData(data);
+  },
+
+  /**
+   * Transforms any previous ARC export file to current export object.
+   *
+   * @param {String|Object} data Data from the import file.
+   * @return {Promise} Normalized data import object.
+   */
+  normalizeImportData: function(data) {
+    try {
+      data = this._prepareImportObject(data);
+    } catch (e) {
+      return Promise.reject(new Error('File not recognized. Not a JSON.'));
+    }
+    if (this._isArcFile(data)) {
+      return this._normalizeArc(data);
+    }
+    if (this._isPostman(data)) {
+      return this._normalizePostmap(data);
+    }
+    return Promise.reject(new Error('File not recognized'));
+  },
+  /**
+   * Normalizes any previous and current ARC file expot data to common model.
+   *
+   * @param {Object} data Imported data.
+   * @return {Promise} A promise resolved to ARC data export object.
+   */
+  _normalizeArc: function(data) {
+    switch (data.kind) {
+      case 'ARC#SavedHistoryDataExport':
+      case 'ARC#AllDataExport':
+      case 'ARC#SavedDataExport':
+      case 'ARC#HistoryDataExport':
+        return this._normalizeArcPouchSystem(data);
+      case 'ARC#requestsDataExport':
+        return this._normalizeArcDexieSystem(data);
+      default:
+        return this._normalizeArcLegacyData(data);
+    }
+  },
+
+  get _legacyTransformer() {
+    if (!this.__legacyTransformerElement) {
+      this.__legacyTransformerElement = document.createElement('legacy-data-tranformer');
+    }
+    return this.__legacyTransformerElement;
+  },
+
+  get _dexieTransformer() {
+    if (!this.__dexieTransformerElement) {
+      this.__dexieTransformerElement = document.createElement('dexie-data-tranformer');
+    }
+    return this.__dexieTransformerElement;
+  },
+
+  get _pouchTransformer() {
+    if (!this.__pouchTransformerElement) {
+      this.__pouchTransformerElement = document.createElement('pouch-data-tranformer');
+    }
+    return this.__pouchTransformerElement;
+  },
+
+  get _postmanTransformer() {
+    if (!this.__postmanTransformerElement) {
+      this.__postmanTransformerElement = document.createElement('postman-data-tranformer');
+    }
+    return this.__postmanTransformerElement;
+  },
+
+  get _dataStore() {
+    if (!this.__dataStoreElement) {
+      this.__dataStoreElement = document.createElement('import-data-store');
+    }
+    return this.__dataStoreElement;
+  },
+  // Normalizes export data from the GWT system.
+  _normalizeArcLegacyData: function(data) {
+    var transformer = this._legacyTransformer;
+    return transformer.transform(data);
+  },
+  // Normalizes export data from Dexie powered data store.
+  _normalizeArcDexieSystem: function(data) {
+    var transformer = this._dexieTransformer;
+    return transformer.transform(data);
+  },
+  // Normalizes ARC's data exported in PouchDB system
+  _normalizeArcPouchSystem: function(data) {
+    var transformer = this._pouchTransformer;
+    return transformer.transform(data);
+  },
+  // Normalizes Postman data into ARC's data model.
+  _normalizePostmap: function(data) {
+    var transformer = this._postmanTransformer;
+    return transformer.transform(data);
+  },
+  /**
+   * Stores import data in the datastore.
+   * It must be normalized by `normalizeImportData` first or it returns an
+   * error.
+   *
+   * @param {Obejct} importObject ARC import data
+   * @return {Promise} Resolved promise to list of errors or `undefined`
+   * if error were not reported.
+   */
+  storeData: function(importObject) {
+    if (!importObject) {
+      return Promise.reject(new Error('Missing required argument.'));
+    }
+    if (!importObject.kind || importObject.kind !== 'ARC#Import') {
+      return Promise.reject(new Error('Data not normalized for import.'));
+    }
+    var store = this._dataStore;
+    return store.importData(importObject)
+    .then(result => {
+      this.fire('data-imported');
+      return result;
+    });
+  },
+  /**
+   * Parses file data with JSON parser and throws an error if not a JSON.
+   * If the passed `data` is JS object it does nothing.
+   *
+   * @param {String|Object} data File content
+   * @return {Object} Parsed data.
+   */
+  _prepareImportObject: function(data) {
+    if (typeof data === 'string') {
+      try {
+        data = JSON.parse(data);
+      } catch (e) {
+        throw new Error('Unable to read the file. Not a JSON: ' + e.message);
+      }
+    }
+    return data;
+  },
+
+  /**
+   * Checks if passed `object` is the ARC export data.
+   *
+   * @param {Object} object A parsed JSON data.
+   * @return {Boolean} true if the passed object is an ARC file.
+   */
+  _isArcFile: function(object) {
+    if (!object || !this._isObject(object)) {
+      return false;
+    }
+    if (object.kind) {
+      if (object.kind.indexOf('ARC#') === 0) {
+        return true;
+      }
+    }
+    // Old export system does not have kind property.
+    // Have to check if it has required properties.
+    var arcEntries = ['projects', 'requests', 'history', 'url-history',
+      'websocket-url-history', 'variables', 'headers-sets', 'auth-data',
+      'cookies'
+    ];
+    for (let i = 0, len = arcEntries.length; i < len; i++) {
+      if (arcEntries[i] in object) {
+        return true;
+      }
+    }
+    if (this._isOldImport(object)) {
+      return true;
+    }
+    return false;
+  },
+
+  /**
+   * First export / import system had single request data only. This function checks if given
+   * file is from this ancient system.
+   *
+   * @param {Object} object Decoded JSON data.
+   */
+  _isOldImport: function(object) {
+    if (!(object.projects || object.requests || object.history)) {
+      if ('headers' in object && 'url' in object && 'method' in object) {
+        return true;
+      }
+    }
+    return false;
+  },
+  /**
+   * Checks if the passed argument is an Object.
+   *
+   * @param {any} object A value to test.
+   */
+  _isObject: function(object) {
+    return null !== object &&
+      typeof object === 'object' &&
+      Object.prototype.toString.call(object) === '[object Object]';
+  },
+  // Tests if data is a Postman data.
+  _isPostman: function(data) {
+    if (data.version && data.collections) {
+      return true;
+    }
+    return false;
+  }
+});
+</script>

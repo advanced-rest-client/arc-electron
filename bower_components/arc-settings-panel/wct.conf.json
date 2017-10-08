@@ -1,0 +1,21 @@
+{
+  "verbose": false,
+  "plugins": {
+    "local": {
+      "disabled": true,
+      "browsers": ["chrome", "firefox"]
+    },
+    "sauce": {
+      "disabled": true,
+      "browsers": [{
+        "browserName": "firefox",
+        "platform": "Windows 10",
+        "version": "latest-2"
+      }, {
+        "browserName": "chrome",
+        "platform": "Windows 10",
+        "version": "latest-2"
+      }]
+    }
+  }
+}

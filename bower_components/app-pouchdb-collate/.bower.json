@@ -1,0 +1,49 @@
+{
+  "name": "app-pouchdb-collate",
+  "description": "A component that support a pouchdb-collate plugin",
+  "author": "The Advanced REST client authors",
+  "keywords": [
+    "web-components",
+    "polymer"
+  ],
+  "private": true,
+  "main": [
+    "app-pouchdb-collate.html"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:advanced-rest-client/app-pouchdb-collate.git"
+  },
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.0.0",
+    "pouchdb-collate": "^1.2.0"
+  },
+  "devDependencies": {
+    "iron-component-page": "polymerelements/iron-component-page#1.0.0",
+    "web-component-tester": "^4.0.0",
+    "paper-styles": "polymerelements/paper-styles#^1.0.2",
+    "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^1.0.0",
+    "iron-test-helpers": "PolymerElements/iron-test-helpers#^1.0.0",
+    "test-fixture": "PolymerElements/test-fixture#^1.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0",
+    "paper-button": "PolymerElements/paper-button#^1.0.13"
+  },
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tasks"
+  ],
+  "version": "1.0.1",
+  "homepage": "https://github.com/advanced-rest-client/app-pouchdb-collate",
+  "_release": "1.0.1",
+  "_resolution": {
+    "type": "version",
+    "tag": "1.0.1",
+    "commit": "51782c9a29cbaa6ea87afced01c642749c3d41fe"
+  },
+  "_source": "https://github.com/advanced-rest-client/app-pouchdb-collate.git",
+  "_target": "^1.0.1",
+  "_originalSource": "advanced-rest-client/app-pouchdb-collate"
+}

@@ -1,0 +1,33 @@
+{
+  "name": "headers-sets-selector",
+  "version": "0.1.6",
+  "license": "Apache-2.0 OR CC-BY-4.0",
+  "description": "A headers sets listing and editor for the headers editor",
+  "devDependencies": {
+    "polymer-cli": "^0.16.0"
+  },
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "private": false,
+  "main": [
+    "headers-sets-selector.html"
+  ],
+  "author": "The Advanced REST client authors <arc@mulesoft.com>",
+  "scripts": {
+    "serve": "node_modules/.bin/polymer serve",
+    "lint": "node_modules/.bin/polymer lint headers-sets-selector.html headers-set-editor.html",
+    "test-sauce": "node_modules/.bin/polymer test --plugin sauce --job-name \"headers-sets-selector:local-test\"",
+    "test": "node_modules/.bin/polymer test",
+    "deps": "npm install --quiet && bower install --quiet",
+    "update-deps": "npm update --quiet && bower update --quiet"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/advanced-rest-client/headers-sets-selector.git"
+  },
+  "bugs": {
+    "url": "https://github.com/advanced-rest-client/headers-sets-selector/issues",
+    "email": "arc@mulesoft.com"
+  }
+}

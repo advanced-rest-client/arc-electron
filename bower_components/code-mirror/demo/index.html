@@ -1,0 +1,121 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <title>code-mirror demo</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+  <link rel="import" href="../../iron-icon/iron-icon.html">
+  <link rel="import" href="../../iron-icons/iron-icons.html">
+  <link rel="import" href="../../iron-input/iron-input.html">
+  <link rel="import" href="../../paper-icon-button/paper-icon-button.html">
+  <link rel="import" href="../../paper-styles/paper-styles.html">
+
+  <link rel="import" href="../code-mirror.html">
+  <style is="custom-style" include="demo-pages-shared-styles">
+    html,
+    body {
+      overflow: auto;
+    }
+    .styled {
+      --code-mirror-editor: {
+        max-height: 120px;
+        @apply(--paper-font-code1);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="vertical-section-container centered">
+    <h3>Default editor</h3>
+    <demo-snippet>
+      <template>
+<code-mirror>
+  {
+  "property": "value",
+  "integer": 1234,
+  "number": 123.4567,
+  "boolean": true,
+  "nullable": null,
+  "arrable": ["one", 2],
+  "objectable": {
+    "hello": "object"
+  }
+}
+</code-mirror>
+      </template>
+    </demo-snippet>
+
+    <h3>Regular editor</h3>
+    <demo-snippet>
+      <template>
+<code-mirror mode="javascript">
+  function myScript() {
+  return 100;
+}
+</code-mirror>
+      </template>
+    </demo-snippet>
+
+    <h3>Themed editor</h3>
+    <demo-snippet>
+      <template>
+<code-mirror mode="javascript" theme="ambiance">
+  function myScript() {
+    return 100;
+  }
+</code-mirror>
+      </template>
+    </demo-snippet>
+
+    <h3>Line numbers</h3>
+    <demo-snippet>
+      <template>
+<code-mirror mode="javascript" line-numbers>
+  function myScript() {
+    return 100;
+  }
+</code-mirror>
+      </template>
+    </demo-snippet>
+
+    <h3>Styled markdown</h3>
+    <demo-snippet>
+      <template>
+<code-mirror mode="markdown" class="styled">
+  # This is markdown
+  * list element #1
+  * list element #2
+  [This is link](http://codemirror.net)
+</code-mirror>
+
+<style>
+.styled {
+  --code-mirror-editor: {
+    max-height: 120px;
+    @apply(--paper-font-code1);
+  }
+}
+</style>
+      </template>
+    </demo-snippet>
+  </div>
+</body>
+</html>

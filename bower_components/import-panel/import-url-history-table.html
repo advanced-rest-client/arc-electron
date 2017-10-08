@@ -1,0 +1,68 @@
+<!--
+@license
+Copyright 2017 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-collapse/iron-collapse.html">
+<link rel="import" href="../arc-icons/arc-icons.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../paper-tooltip/paper-tooltip.html">
+<link rel="import" href="../paper-item/paper-icon-item.html">
+<link rel="import" href="../paper-item/paper-item-body.html">
+<link rel="import" href="import-table-common-styles.html">
+<link rel="import" href="import-table-behavior.html">
+
+<!--
+An element to display list of URLs hsitory to import.
+
+@element import-url-history-table
+@demo demo/index.html
+-->
+<dom-module id="import-url-history-table">
+  <template strip-whitespace>
+    <style include="import-table-common-styles"></style>
+    <div class="title" on-tap="toggleOpened">
+      <h3>URL history for autocomplete ([[selectedItems.length]])</h3>
+      <paper-icon-button icon="arc:keyboard-arrow-down" class$="toggle-icon [[_computeToggleClass(opened)]]"></paper-icon-button>
+    </div>
+    <iron-collapse opened="[[opened]]">
+      <section class$="table-options [[_computeTableClass(hasSelection)]]">
+        <span>
+          <paper-checkbox class="select-all" checked="{{allSelected}}"></paper-checkbox>
+          <paper-tooltip animation-delay="200" position="right" offset="0">Select / deselect all</paper-tooltip>
+        </span>
+        <span class="selected-counter hiddable">[[selectedItems.length]] item(s) selected</span>
+      </section>
+      <template is="dom-repeat" id="list" items="[[data]]">
+        <div class="list-item">
+          <paper-icon-item>
+            <paper-checkbox checked="[[item.selected]]" item-icon  aria-label$="Select/Deselect [[item.url]]"></paper-checkbox>
+            <paper-item-body>
+              <div>[[item._id]]</div>
+            </paper-item-body>
+          </paper-icon-item>
+        </div>
+      </template>
+    </iron-collapse>
+    <array-selector id="selector" items="{{data}}" selected="{{selectedItems}}" multi toggle></array-selector>
+  </template>
+  <script>
+    Polymer({
+      is: 'import-url-history-table',
+
+      behaviors: [
+        ArcBehaviors.ImportTableBehavior
+      ]
+    });
+  </script>
+</dom-module>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Advanced REST client - preview</title>
+  <style>
+  html,
+  body {
+    overflow: auto;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    margin: 16px;
+    min-height: 200px;
+  }
+
+  .actions {
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 52px;
+    background-color: #fff;
+  }
+
+  .button {
+    display: inline-block;
+    text-decoration: none;
+    box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
+    min-width: 5.14em;
+    margin: 0 0.29em;
+    outline-width: 0;
+    border-radius: 3px;
+    cursor: pointer;
+    z-index: 0;
+    padding: 0.7em 0.57em;
+    color: rgba(0, 0, 0, 0.74);
+  }
+
+  #preview {
+    margin-top: 60px;
+  }
+  </style>
+</head>
+
+<body>
+  <div class="actions">
+    <a class="button" id="closeButton" href="#">CLOSE PREVIEW</a>
+  </div>
+  <div id="preview"></div>
+  <script src="html-preview.js"></script>
+</body>
+</html>

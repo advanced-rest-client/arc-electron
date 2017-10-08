@@ -1,0 +1,30 @@
+{
+  "name": "response-raw-viewer",
+  "version": "0.1.5",
+  "license": "Apache-2.0 OR CC-BY-4.0",
+  "description": "An element to display the raw response data",
+  "devDependencies": {
+    "bower": "^1.8.0",
+    "polymer-cli": "^1.2.0"
+  },
+  "main": [
+    "response-raw-viewer.html"
+  ],
+  "author": "The Advanced REST client authors <arc@mulesoft.com>",
+  "scripts": {
+    "serve": "node_modules/.bin/polymer serve",
+    "lint": "node_modules/.bin/polymer lint response-raw-viewer.html",
+    "test-sauce": "node_modules/.bin/polymer test --plugin sauce --job-name \"response-raw-viewer:local-test\"",
+    "test": "node_modules/.bin/polymer test --plugin local",
+    "deps": "npm install --quiet && bower install --quiet",
+    "update-deps": "npm update --quiet && bower update --quiet"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/advanced-rest-client/response-raw-viewer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/advanced-rest-client/response-raw-viewer/issues",
+    "email": "arc@mulesoft.com"
+  }
+}

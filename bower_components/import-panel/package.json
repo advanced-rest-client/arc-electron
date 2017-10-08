@@ -1,0 +1,31 @@
+{
+  "name": "import-panel",
+  "version": "0.1.2",
+  "license": "Apache-2.0 OR CC-BY-4.0",
+  "description": "The import data view for ARC",
+  "devDependencies": {
+    "bower": "^1.8.0",
+    "polymer-cli": "^1.2.0"
+  },
+  "private": false,
+  "main": [
+    "import-panel.html"
+  ],
+  "author": "The Advanced REST client authors <arc@mulesoft.com>",
+  "scripts": {
+    "serve": "node_modules/.bin/polymer serve",
+    "lint": "node_modules/.bin/polymer lint import-panel.html import-data-inspector.html import-table-behavior.html import-auth-data-table.html import-cookies-table.html import-headers-sets-table.html import-history-table.html import-requests-table.html import-url-history-table.html import-variables-table.html import-websocket-url-history-table.html",
+    "test-sauce": "node_modules/.bin/polymer test --plugin sauce --job-name \"import-panel:local-test\"",
+    "test": "node_modules/.bin/polymer test --plugin local",
+    "deps": "npm install --quiet && bower install --quiet",
+    "update-deps": "npm update --quiet && bower update --quiet"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/advanced-rest-client/import-panel.git"
+  },
+  "bugs": {
+    "url": "https://github.com/advanced-rest-client/import-panel/issues",
+    "email": "arc@mulesoft.com"
+  }
+}

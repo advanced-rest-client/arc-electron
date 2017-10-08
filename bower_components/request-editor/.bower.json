@@ -1,0 +1,81 @@
+{
+  "name": "request-editor",
+  "description": "A request complete HTTP request editor",
+  "version": "0.2.5",
+  "license": "Apache-2.0 OR CC-BY-4.0",
+  "authors": [
+    "The Advanced REST client authors <arc@mulesoft.com>"
+  ],
+  "keywords": [
+    "web-components",
+    "polymer",
+    "advanced-rest-client",
+    "request",
+    "editor"
+  ],
+  "private": true,
+  "main": [
+    "request-editor.html"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:advanced-rest-client/request-editor.git"
+  },
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.9.2",
+    "iron-flex-layout": "PolymerElements/iron-flex-layout#^1.3.1",
+    "paper-tabs": "PolymerElements/paper-tabs#^1.7.0",
+    "iron-pages": "PolymerElements/iron-pages#^1.0.8",
+    "paper-styles": "PolymerElements/paper-styles#^1.1.5",
+    "iron-media-query": "PolymerElements/iron-media-query#^1.0.8",
+    "paper-button": "PolymerElements/paper-button#^1.0.14",
+    "authorization-panel": "advanced-rest-client/authorization-panel#^0.5.1",
+    "url-input-editor": "advanced-rest-client/url-input-editor#^0.2.1",
+    "variables-editor": "advanced-rest-client/variables-editor#^0.1.1",
+    "payload-editor": "advanced-rest-client/payload-editor#^0.2.2",
+    "headers-editor": "advanced-rest-client/headers-editor#^0.1.4",
+    "http-method-selector": "advanced-rest-client/http-method-selector#^0.1.1",
+    "paper-icon-button": "PolymerElements/paper-icon-button#<2",
+    "paper-tooltip": "PolymerElements/paper-tooltip#<2",
+    "iron-collapse": "PolymerElements/iron-collapse#<2",
+    "arc-icons": "advanced-rest-client/arc-icons#^1.0.22",
+    "events-target-behavior": "advanced-rest-client/events-target-behavior#^0.1.1",
+    "paper-menu-button": "PolymerElements/paper-menu-button#<2",
+    "paper-menu": "PolymerElements/paper-menu#<2",
+    "paper-item": "PolymerElements/paper-item#<2",
+    "iron-icon": "PolymerElements/iron-icon#<2",
+    "uuid-generator": "advanced-rest-client/uuid-generator#^1.0.4"
+  },
+  "devDependencies": {
+    "iron-component-page": "polymerelements/iron-component-page#1.0.0",
+    "web-component-tester": "^6.0.0",
+    "paper-styles": "polymerelements/paper-styles#^1.0.2",
+    "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^1.0.0",
+    "iron-test-helpers": "PolymerElements/iron-test-helpers#^1.4.0",
+    "test-fixture": "PolymerElements/test-fixture#^3.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0",
+    "oauth-authorization": "advanced-rest-client/oauth-authorization#^0.1.7",
+    "variables-manager": "advanced-rest-client/variables-manager#^0.1.6",
+    "variables-evaluator": "advanced-rest-client/variables-evaluator#^0.1.1",
+    "url-history-saver": "advanced-rest-client/url-history-saver#^0.1.1",
+    "paper-toast": "PolymerElements/paper-toast#<2"
+  },
+  "ignore": [
+    "**/.*",
+    "dependencyci.yml",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tasks"
+  ],
+  "homepage": "https://github.com/advanced-rest-client/request-editor",
+  "_release": "0.2.5",
+  "_resolution": {
+    "type": "version",
+    "tag": "0.2.5",
+    "commit": "55a0ef05420fc192fab835d0fb012914f06f0a8f"
+  },
+  "_source": "https://github.com/advanced-rest-client/request-editor.git",
+  "_target": "^0.2.0",
+  "_originalSource": "advanced-rest-client/request-editor"
+}

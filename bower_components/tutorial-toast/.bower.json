@@ -1,0 +1,57 @@
+{
+  "name": "tutorial-toast",
+  "description": "An on screen minimal tutorial",
+  "version": "0.1.1",
+  "license": "Apache-2.0 OR CC-BY-4.0",
+  "authors": [
+    "The Advanced REST client authors <arc@mulesoft.com>"
+  ],
+  "keywords": [
+    "web-components",
+    "polymer",
+    "tutorial"
+  ],
+  "private": true,
+  "main": [
+    "tutorial-toast.html"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:advanced-rest-client/tutorial-toast.git"
+  },
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.9.2",
+    "iron-a11y-announcer": "PolymerElements/iron-a11y-announcer#^1.0.0",
+    "iron-overlay-behavior": "PolymerElements/iron-overlay-behavior#^1.0.9",
+    "iron-fit-behavior": "PolymerElements/iron-fit-behavior#^1.1.0",
+    "paper-button": "PolymerElements/paper-button#<2",
+    "iron-flex-layout": "PolymerElements/iron-flex-layout#<2"
+  },
+  "devDependencies": {
+    "iron-component-page": "polymerelements/iron-component-page#1.0.0",
+    "web-component-tester": "^6.0.0",
+    "paper-styles": "polymerelements/paper-styles#^1.0.2",
+    "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^1.0.0",
+    "iron-test-helpers": "PolymerElements/iron-test-helpers#^1.4.0",
+    "test-fixture": "PolymerElements/test-fixture#^3.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0"
+  },
+  "ignore": [
+    "**/.*",
+    "dependencyci.yml",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tasks"
+  ],
+  "homepage": "https://github.com/advanced-rest-client/tutorial-toast",
+  "_release": "0.1.1",
+  "_resolution": {
+    "type": "version",
+    "tag": "0.1.1",
+    "commit": "caa1e8e4d1969a4f4fe7702cea0edf36800d8455"
+  },
+  "_source": "https://github.com/advanced-rest-client/tutorial-toast.git",
+  "_target": "^0.1.1",
+  "_originalSource": "advanced-rest-client/tutorial-toast"
+}

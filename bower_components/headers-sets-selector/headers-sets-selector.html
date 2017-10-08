@@ -1,0 +1,542 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../app-pouchdb/pouchdb.html">
+<link rel="import" href="../arc-icons/arc-icons.html">
+<link rel="import" href="../arc-polyfills/arc-polyfills.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../iron-collapse/iron-collapse.html">
+<link rel="import" href="../paper-styles/paper-styles.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../paper-card/paper-card.html">
+<link rel="import" href="../paper-toast/paper-toast.html">
+<link rel="import" href="../paper-tooltip/paper-tooltip.html">
+<link rel="import" href="headers-set-editor.html">
+<!--
+A headers sets listing and editor for the headers editor.
+
+It can be enbeded anywhere in the application. It provides a way to
+list, add, edit and delete user headers sets. Sorresponding event is fired
+when the user perform the action.
+
+Note: you should update `isPayload` property if the editor is used in context
+of HTTP request. This will alter default headers list adding `content-type`
+header. The `isPayload` property means that the request can carry the payload.
+
+### Example
+```
+<headers-sets-selector></headers-sets-selector>
+```
+
+### Styling
+`<headers-sets-selector>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--headers-sets-selector` | Mixin applied to the element | `{}`
+`--headers-sets-selector-card-body` | Mixin applied to the card text | `{}`
+`--headers-sets-selector-intro-text-coolor` | Text color of the intro message | `rgba(0, 0, 0, 0.54)`
+`--headers-sets-selector-intro-text-size` | Font color of the intro message | `15px`
+`--headers-sets-selector-card-action-button-font-size` | Font size of action buttons in cards. | `14px`
+
+@group UI Elements
+@element headers-sets-selector
+@demo demo/index.html
+-->
+<dom-module id="headers-sets-selector">
+  <template>
+    <style>
+     :host {
+      display: block;
+      max-height: 500px;
+      overflow: auto;
+
+      --paper-card-header-text: {
+        @apply(--arc-font-body2);
+        @apply(--headers-sets-selector-card-body)
+      }
+
+      --paper-card-content: {
+        padding-top: 0px;
+      }
+
+      --paper-card-actions: {
+        font-size: var(--headers-sets-selector-card-action-button-font-size, 14px);
+      }
+    }
+
+    .intro {
+      @apply(--layout-horizontal);
+      @apply(--layout-center);
+      @apply(--arc-font-body1);
+      color: var(--headers-sets-selector-intro-text-coolor, rgba(0, 0, 0, 0.54));
+      font-size: var(--headers-sets-selector-intro-text-size, 15px);
+    }
+
+    .intro>* {
+      margin-right: 8px;
+    }
+
+    .add-button {
+      color: var(--primary-color);
+    }
+
+    paper-card {
+      display: block;
+      width: 100%;
+      margin-bottom: 20px;
+      border: 1px var(--headers-sets-selector-item-border-color, rgba(0, 0, 0, 0.12)) solid;
+    }
+
+    .use-button {
+      color: var(--primary-color);
+    }
+
+    .left-buttons {
+      @apply(--layout-flex);
+    }
+
+    .card-actions {
+      @apply(--layout-horizontal);
+    }
+
+    .code {
+      @apply(--paper-font-code1);
+      font-weight: 400;
+    }
+
+    .header-line span {
+      margin-left: 8px;
+    }
+
+    .add-editor {
+      margin: 0 12px 24px 12px;
+      max-width: 700px;
+    }
+
+    .headers-content {
+      white-space: pre-line;
+    }
+    </style>
+    <div class="intro">
+      <iron-icon icon="arc:info-outline"></iron-icon>
+      <p>Use predefined sets below to insert headers into the editor</p>
+      <paper-icon-button on-tap="openAddEditor" class="add-button" id="addSetButton" icon="arc:add-circle-outline"></paper-icon-button>
+      <paper-tooltip for="addSetButton" animation-delay="200">Add new set</paper-tooltip>
+    </div>
+    <iron-collapse id="editor">
+      <div class="add-editor">
+        <headers-set-editor id="addEditor" data-source="add"></headers-set-editor>
+      </div>
+    </iron-collapse>
+    <template is="dom-repeat" items="[[availableSets]]" id="repeater">
+      <paper-card heading="[[item.name]]" elevation="0" data-id$="[[item._id]]">
+        <template is="dom-if" if="[[item.editorEnabled]]">
+          <div class="card-content">
+            <headers-set-editor id="addEditor" data-source$="[[item._id]]" set-name="[[item.name]]" value="[[item.headers]]"></headers-set-editor>
+          </div>
+        </template>
+        <template is="dom-if" if="[[!item.editorEnabled]]">
+          <div class="card-content code selectable-text headers-content">[[item.headers]]</div>
+          <div class="card-actions">
+            <div class="left-buttons">
+              <paper-button hidden$="[[!item.editable]]" class="use-button" on-tap="_editSet">Edit</paper-button>
+              <paper-button hidden$="[[!item.deletable]]" on-tap="_deleteSet">Delete</paper-button>
+            </div>
+            <paper-button class="use-button" on-tap="_useSet">Use this set</paper-button>
+          </div>
+        </template>
+      </paper-card>
+    </template>
+    <paper-toast text="" id="errorToast"></paper-toast>
+  </template>
+  <script>
+  (function() {
+    'use strict';
+    Polymer({
+      is: 'headers-sets-selector',
+
+      /**
+       * Fired when the headers set has been created
+       *
+       * @event custom-headers-set-created
+       * @param {String} id Database ID entry
+       * @param {String} rev Current PouchDB rev
+       * @param {String} name Name of the set
+       * @param {String} content Headers set value.
+       */
+      /**
+       * Fired when the headers set has been updated
+       *
+       * @event custom-headers-set-updated
+       * @param {String} id Database ID entry
+       * @param {String} rev Current PouchDB rev
+       * @param {String} name Name of the set
+       * @param {String} content Headers set value.
+       */
+      /**
+       * Fired when the headers set has been updated
+       *
+       * @event custom-headers-set-deleted
+       * @param {String} id Database ID entry
+       */
+      /**
+       * Fired when the user selects the headers set.
+       *
+       * @event headers-set-selected
+       * @param {String} id PouchDB database ID, if the set is stored in the
+       * database (can be one of the default ones)
+       * @param {String} set Headers associated with the set
+       */
+      properties: {
+        // Set to true when current request has payload
+        isPayload: {
+          type: Boolean,
+          value: false
+        },
+        // Compyted deafult set of headers.
+        headersDefaults: {
+          type: String,
+          value: '',
+          computed: '_computeHeadersDefaults(isPayload)'
+        },
+        // User defined sets.
+        customSets: Array,
+        // Computed list od sets (to be displayed)
+        availableSets: {
+          type: Array,
+          value: [],
+          readOnly: true
+        }
+      },
+
+      observers: [
+        '_computeSets(headersDefaults, customSets.*)'
+      ],
+
+      listeners: {
+        'headers-set-editor-update': '_setUpdated',
+        'headers-set-editor-cancel': '_setCanceled'
+      },
+
+      attached: function() {
+        this._restoreUserData();
+        this.listen(window, 'custom-headers-set-created', '_addedEventHandler');
+        this.listen(window, 'custom-headers-set-updated', '_updatedEventHandler');
+        this.listen(window, 'custom-headers-set-deleted', '_deleteddEventHandler');
+      },
+
+      detached: function() {
+        this.unlisten(window, 'custom-headers-set-created', '_addedEventHandler');
+        this.unlisten(window, 'custom-headers-set-updated', '_updatedEventHandler');
+        this.unlisten(window, 'custom-headers-set-deleted', '_deleteddEventHandler');
+      },
+
+      _getDb: function() {
+        return new PouchDB('headers-sets');
+      },
+
+      /* Compute default headers string. */
+      _computeHeadersDefaults: function(isPayload) {
+        var list = [{
+          name: 'accept',
+          value: 'application/json'
+        }, {
+          name: 'accept-encoding',
+          value: 'gzip, deflate'
+        }, {
+          name: 'accept-language',
+          value: 'en-US,en;q=0.8'
+        }];
+        if (isPayload) {
+          list[list.length] = {
+            name: 'content-type',
+            value: 'application/json'
+          };
+        }
+        list[list.length] = {
+          name: 'user-agent',
+          value: navigator.userAgent
+        };
+        return list.map(function(i) {
+          return i.name + ': ' + i.value;
+        }).join('\n');
+      },
+
+      _restoreUserData: function() {
+        var context = this;
+        var db = this._getDb();
+        return db.allDocs({
+          // jscs:disable
+          include_docs: true
+          // jscs:enable
+        })
+        .then(function(result) {
+          return result.rows.map(function(i) {
+            var doc = i.doc;
+            return context._createModel(doc);
+          });
+        })
+        .then(function(sets) {
+          context.set('customSets', sets);
+        });
+      },
+
+      // Creates a data model from database item or on memory created items.
+      _createModel: function(item) {
+        item.deletable = true;
+        item.editable = true;
+        return item;
+      },
+
+      _sortSet: function(set) {
+        set.sort(function(a, b) {
+          if (a.order > b.order) {
+            return 1;
+          }
+          if (a.order < b.order) {
+            return -1;
+          }
+          return 0;
+        });
+      },
+      // Compute list of sets to display, in order.
+      _computeSets: function(headersDefaults, record) {
+        var list = [];
+        list.push({
+          name: 'Default headers set',
+          headers: headersDefaults,
+          deletable: false,
+          editable: false
+        });
+        var sets = record && record.base;
+        if (sets) {
+          this._sortSet(sets);
+          list = list.concat(sets);
+        }
+        this._setAvailableSets(list);
+      },
+
+      _editSet: function(e) {
+        var model = this.$.repeater.modelForElement(Polymer.dom(e).rootTarget);
+        model.set('item.editorEnabled', true);
+      },
+      /**
+       * Opens add set editor.
+       */
+      openAddEditor: function() {
+        this.$.editor.opened = true;
+        this.$.addEditor.refresh();
+      },
+      // Handler for set delete button
+      _deleteSet: function(e) {
+        var model = this.$.repeater.modelForElement(Polymer.dom(e).rootTarget);
+        var id = model.get('item._id');
+        var rev = model.get('item._rev');
+        this.__deleteSet(id, rev);
+      },
+      // Deletes a set from the datastore.
+      __deleteSet: function(id, rev) {
+        var db = this._getDb();
+        db.remove(id, rev)
+        .then(function(resp) {
+          if (!resp.ok) {
+            this.$.errorToast.text = resp.message;
+            this.$.errorToast.opened = true;
+            console.error(resp);
+            throw new Error('Unable to delete the set.');
+          }
+          var index = this.customSets.findIndex(function(i) {
+            return i._id === id;
+          });
+          this.splice('customSets', index, 1);
+          this.fire('custom-headers-set-deleted', {
+            id: id
+          });
+        }.bind(this));
+      },
+      // Handler for set's use button.
+      _useSet: function(e) {
+        var i = this.$.repeater.indexForElement(Polymer.dom(e).rootTarget);
+        var set = this.availableSets[i];
+        this.fire('headers-set-selected', {
+          set: set.headers,
+          id: set._id
+        });
+      },
+
+      _addedEventHandler: function(e) {
+        this._handleUpdateSet(e)
+        .then(function(doc) {
+          if (!doc) {
+            return;
+          }
+          doc = this._createModel(doc);
+          this.push('customSets', doc);
+        }.bind(this));
+      },
+
+      _updatedEventHandler: function(e) {
+        this._handleUpdateSet(e)
+        .then(function(doc) {
+          if (!doc) {
+            return;
+          }
+          doc = this._createModel(doc);
+          var list = this.customSets;
+          if (!list) {
+            list = [];
+          }
+          for (var i = 0, len = list.length; i < len; i++) {
+            if (list[i]._id === doc._id) {
+              this.set(['customSets', i], doc);
+              return;
+            }
+          }
+          this.push('customSets', doc);
+        }.bind(this));
+      },
+
+      _deleteddEventHandler: function(e) {
+        if (Polymer.dom(e).rootTarget === this) {
+          return;
+        }
+        var id = e.detail.id;
+        if (!id) {
+          return;
+        }
+        var list = this.customSets;
+        if (!list) {
+          return;
+        }
+        for (var i = 0, len = list.length; i < len; i++) {
+          if (list[i]._id === id) {
+            this.splice('customSets', i, 1);
+            return;
+          }
+        }
+      },
+
+      _handleUpdateSet: function(e) {
+        if (Polymer.dom(e).rootTarget === this) {
+          return Promise.resolve();
+        }
+        var id = e.detail.id;
+        if (!id) {
+          return Promise.resolve();
+        }
+        var db = this._getDb();
+        return db.get(id);
+      },
+
+      _setCanceled: function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        var target = Polymer.dom(e).rootTarget;
+        if (target.dataset.source === 'add') {
+          this.$.editor.opened = false;
+        } else if (target.dataset.source) {
+          // target.dataset.source
+          var model = this.$.repeater.modelForElement(target);
+          model.set('item.editorEnabled', false);
+        }
+      },
+
+      _setUpdated: function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        var target = Polymer.dom(e).rootTarget;
+        if (target.dataset.source === 'add') {
+          this.$.editor.opened = false;
+          this._addNewSet(e.detail);
+        } else if (target.dataset.source) {
+          var model = this.$.repeater.modelForElement(target);
+          model.set('item.editorEnabled', false);
+          this._updateSet(e.detail, target.dataset.source);
+        }
+      },
+
+      _addNewSet: function(values) {
+        if (!values.name || !values.value) {
+          return;
+        }
+        var obj = {
+          name: values.name,
+          headers: values.value,
+          created: Date.now(),
+          order: 0
+        };
+        var db = this._getDb();
+        db.post(obj)
+        .then(function(insert) {
+          obj._id = insert.id;
+          obj._rev = insert.rev;
+          obj = this._createModel(obj);
+          this.push('customSets', obj);
+          this.fire('custom-headers-set-created', {
+            id: insert.id,
+            rev: insert.rev,
+            name: values.name,
+            content: values.value
+          });
+        }.bind(this))
+        .catch(function(cause) {
+          this.$.errorToast.text = 'Unable to save set in the data store. See console for errors';
+          this.$.errorToast.opened = true;
+          throw cause;
+        });
+      },
+
+      _updateSet: function(values, id) {
+        var db = this._getDb();
+        var doc;
+        db.get(id)
+        .then(function(_doc) {
+          doc = _doc;
+          doc.name = values.name;
+          doc.headers = values.value;
+          return db.put(doc);
+        })
+        .then(function(result) {
+          var index = this._getCustomIndex(id);
+          doc._rev = result.rev;
+          doc.editorEnabled = false;
+          doc = this._createModel(doc);
+          this.set(['customSets', index], doc);
+
+          this.fire('custom-headers-set-updated', {
+            id: result.id,
+            rev: result.rev,
+            name: values.name,
+            content: values.value
+          });
+        }.bind(this));
+      },
+
+      _getCustomIndex: function(id) {
+        var sets = this.customSets;
+        for (var i = 0, len = sets.length; i < len; i++) {
+          if (sets[i]._id === id) {
+            return i;
+          }
+        }
+      }
+    });
+  })();
+  </script>
+</dom-module>

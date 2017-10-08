@@ -1,0 +1,33 @@
+{
+  "name": "raml-type-form-input",
+  "version": "0.1.9",
+  "license": "Apache-2.0 OR CC-BY-4.0",
+  "description": "An element that renders an input element to edit type value",
+  "devDependencies": {
+    "polymer-cli": "^1.2.0"
+  },
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "private": false,
+  "main": [
+    "raml-type-form-input.html"
+  ],
+  "author": "The Advanced REST client authors <arc@mulesoft.com>",
+  "scripts": {
+    "serve": "node_modules/.bin/polymer serve",
+    "lint": "node_modules/.bin/polymer lint raml-type-form-input.html --rules polymer-1",
+    "test-sauce": "node_modules/.bin/polymer test --plugin sauce --job-name \"raml-type-form-input:local-test\"",
+    "test": "node_modules/.bin/polymer test --plugin local",
+    "deps": "npm install --quiet && bower install --quiet",
+    "update-deps": "npm update --quiet && bower update --quiet"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/advanced-rest-client/raml-type-form-input.git"
+  },
+  "bugs": {
+    "url": "https://github.com/advanced-rest-client/raml-type-form-input/issues",
+    "email": "arc@mulesoft.com"
+  }
+}

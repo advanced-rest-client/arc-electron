@@ -1,0 +1,359 @@
+<!--
+@license
+Copyright 2017 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../neon-animation/neon-animated-pages.html">
+<link rel="import" href="../neon-animation/animations/slide-from-right-animation.html">
+<link rel="import" href="../neon-animation/animations/slide-from-left-animation.html">
+<link rel="import" href="../neon-animation/animations/slide-left-animation.html">
+<link rel="import" href="../neon-animation/animations/slide-right-animation.html">
+<link rel="import" href="../paper-radio-group/paper-radio-group.html">
+<link rel="import" href="../paper-radio-button/paper-radio-button.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../iron-resizable-behavior/iron-resizable-behavior.html">
+<link rel="import" href="../iron-overlay-behavior/iron-overlay-behavior.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<!--
+An overlay that displays onboarding tutorial for ARC.
+
+### Styling
+`<arc-onboarding>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--onboarding-tutorial` | Mixin applied to the element | `{}`
+
+@element onboarding-tutorial
+@demo demo/index.html
+-->
+<dom-module id="onboarding-tutorial">
+  <template strip-whitespace>
+    <style>
+    :host {
+      display: block;
+      margin: 24px 40px;
+      -webkit-overflow-scrolling: touch;
+
+      background: var(--paper-dialog-background-color, --primary-background-color);
+      color: var(--paper-dialog-color, --primary-text-color);
+
+      @apply(--paper-font-body1);
+      @apply(--shadow-elevation-16dp);
+      @apply(--paper-dialog);
+      width: 800px;
+      height: 600px;
+      overflow: hidden;
+
+      @apply --onboarding-tutorial;
+    }
+
+    .actions {
+      position: relative;
+      padding: 8px 8px 8px 24px;
+      margin: 0;
+      color: var(--paper-dialog-button-color, --primary-color);
+      @apply --layout-horizontal;
+    }
+
+    neon-animated-pages {
+      height: calc(100% - 60px);
+    }
+
+    .flex {
+      @apply --layout-flex;
+    }
+
+    @media (max-width: 600px) {
+      :host .actions {
+        @apply(--layout-vertical);
+        @apply(--layout-center);
+      }
+
+      :host neon-animated-pages {
+        height: calc(100% - 108px);
+      }
+    }
+    </style>
+    <neon-animated-pages id="pages" selected="{{selectedPage}}" entry-animation="slide-from-right-animation" exit-animation="slide-left-animation">
+      <content id="content"></content>
+    </neon-animated-pages>
+    <div class="actions">
+      <div class="pages" hidden$="[[noPagination]]">
+        <paper-radio-group selected="{{selectedPage}}">
+        <template is="dom-repeat" items="[[pages]]">
+          <paper-radio-button name$="[[index]]"></paper-radio-button>
+        </template>
+        </paper-radio-group>
+      </div>
+      <div class="flex" hidden$="[[!noPagination]]"></div>
+      <div class="buttons">
+        <template is="dom-if" if="[[showSkip]]">
+          <paper-button on-tap="skip">Skip</paper-button>
+        </template>
+        <template is="dom-if" if="[[showPrev]]">
+          <paper-button on-tap="prev" disabled$="[[!previousEnabled]]">Previous</paper-button>
+        </template>
+        <paper-button on-tap="next" class="action-button" raised>[[nextLabel]]</paper-button>
+      </div>
+    </div>
+  </template>
+  <script>
+  Polymer({
+    is: 'onboarding-tutorial',
+    properties: {
+      /**
+       * Delay tutorial show after attaching this element to the DOM.
+       * Use with combination with `auto`. It will do nothing if auto is not set.
+       */
+      delay: {
+        type: Number,
+        value: 2000
+      },
+      /**
+       * If true the tutorial will open itself automatically.
+       * Use with combination with `delay`.
+       * @type {Boolean}
+       */
+      auto: Boolean,
+      // Number of pages to display
+      pages: {
+        type: Array,
+        value: []
+      },
+      // Currently selected tutorial page.
+      selectedPage: {
+        type: Number,
+        value: 0
+      },
+      // Computed value, true if the "previous" button is enabled
+      previousEnabled: {
+        type: Boolean,
+        computed: '_comnputeShowPrevious(selectedPage)'
+      },
+      // Compyted value, true if the tutorial displays last page.
+      lastPage: {
+        type: Boolean,
+        computed: '_comnputeLastPage(selectedPage, pages)'
+      },
+      // Label for the "next" button
+      nextLabel: {
+        type: String,
+        computed: '_comnputeNextLabel(lastPage)'
+      },
+      // Computed value, true if to show "skip" button
+      showSkip: {
+        type: Boolean,
+        computed: '_comnputeShowSkip(lastPage)'
+      },
+      /**
+       * True when hide the pagination for tutorial pages.
+       */
+      noPagination: Boolean,
+      /**
+       * True to render "previous" button
+       */
+      showPrev: {
+        type: Boolean,
+        value: true
+      },
+      // Computed value if local storage is available.
+      _hasLocalStoreage: {
+        type: Boolean,
+        value: function() {
+          try {
+            localStorage.setItem('__test', 'a');
+            localStorage.removeItem('__test');
+            return true;
+          } catch (e) {
+            return false;
+          }
+        }
+      }
+    },
+    behaviors: [
+      Polymer.IronOverlayBehavior,
+      Polymer.IronResizableBehavior
+    ],
+    hostAttributes: {
+      'role': 'dialog',
+      'tabindex': '-1'
+    },
+
+    attached: function() {
+      var boundHandler = this._childNodesChanged.bind(this);
+      this._observer = Polymer.dom(this.$.content).observeNodes(boundHandler);
+    },
+
+    detached: function() {
+      Polymer.dom(this.$.content).unobserveNodes(this._observer);
+    },
+
+    ready: function() {
+      if (!this.auto) {
+        return;
+      }
+      if (this.delay) {
+        this.async(() => {
+          this.openTutorial();
+        }, this.delay);
+      } else {
+        this.openTutorial();
+      }
+    },
+
+    _childNodesChanged: function() {
+      var children = Polymer.dom(this).getEffectiveChildNodes();
+      children = children.filter((node) => node.nodeType === Node.ELEMENT_NODE);
+      this.set('pages', children);
+      if (this.pages.length === 1) {
+        //hide controls
+        this.noPagination = true;
+        this.showPrev = false;
+      }
+    },
+
+    openTutorial: function() {
+      this._getTutorialState()
+      .then(state => {
+        if (state) {
+          return;
+        }
+        this.fire('tutorial-open');
+        this.open();
+      });
+    },
+
+    _comnputeShowPrevious: function(selectedPage) {
+      selectedPage = Number(selectedPage);
+      return selectedPage > 0;
+    },
+
+    next: function() {
+      if (this.lastPage) {
+        this.fire('send-analytics', {
+          type: 'event',
+          category: 'Onboarding',
+          action: 'Passed'
+        });
+        this.completeTutorial();
+        return;
+      }
+      this.$.pages.entryAnimation = 'slide-from-right-animation';
+      this.$.pages.exitAnimation = 'slide-left-animation';
+      this.$.pages.selectNext();
+    },
+
+    prev: function() {
+      this.$.pages.entryAnimation = 'slide-from-left-animation';
+      this.$.pages.exitAnimation = 'slide-right-animation';
+      this.$.pages.selectPrevious();
+    },
+
+    completeTutorial: function() {
+      if (!this.id) {
+        this.close();
+        return;
+      }
+      this._saveTutorialPassed();
+      this.close();
+      this.fire('tutorial-close');
+    },
+
+    skip: function() {
+      this.completeTutorial();
+      this.fire('send-analytics', {
+        type: 'event',
+        category: 'Onboarding',
+        action: 'Skipped'
+      });
+    },
+
+    _tutorialId: function() {
+      if (!this.id) {
+        return;
+      }
+      return 'tutorial_' + this.id;
+    },
+
+    _getTutorialState: function() {
+      var id = this._tutorialId();
+      if (!id) {
+        return Promise.resolve(false);
+      }
+
+      if (this._hasLocalStoreage) {
+        let value = localStorage.getItem(id);
+        return Promise.resolve(!!value);
+      }
+      return this.__getStateChrome(id);
+    },
+
+    _saveTutorialPassed: function() {
+      var id = this._tutorialId();
+      if (!id) {
+        return Promise.resolve();
+      }
+      if (this._hasLocalStoreage) {
+        localStorage.setItem(id, true);
+        return Promise.resolve();
+      }
+      return this.__setStateChrome(id);
+    },
+    /**
+     * Saves information about the tutorial in Chrome store.
+     * @param {String} key Tutorial key
+     * @return {Promise} Promise resolved to boolean value. True if the tutorial
+     * has been presented to the user already.
+     */
+    __getStateChrome: function(key) {
+      return new Promise(resolve => {
+        /* global chrome */
+        chrome.storage.sync.get(key, (data) => {
+          if (!data || !data[key]) {
+            resolve(false);
+          } else {
+            resolve(true);
+          }
+        });
+      });
+    },
+    // Saves information about the tutorial in Chrome store
+    __setStateChrome: function(key) {
+      return new Promise(resolve => {
+        var obj = {};
+        obj[key] = true;
+        chrome.storage.sync.set(obj, (data) => {
+          if (!data || !data[key]) {
+            resolve(false);
+          } else {
+            resolve(true);
+          }
+        });
+      });
+    },
+    // Computes a lable value for the `nextLabel` property
+    _comnputeNextLabel: function(lastPage) {
+      return lastPage ? 'Close' : 'Next';
+    },
+    // Computes value for the `lastPage` property
+    _comnputeLastPage: function(selectedPage, pages) {
+      selectedPage = Number(selectedPage);
+      return selectedPage === pages.length - 1;
+    },
+    // Computes value for `showSkip` value
+    _comnputeShowSkip: function(lastPage) {
+      return lastPage ? false : true;
+    }
+  });
+  </script>
+</dom-module>

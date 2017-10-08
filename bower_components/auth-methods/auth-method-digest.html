@@ -1,0 +1,461 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../paper-masked-input/paper-masked-input.html">
+<link rel="import" href="../paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../iron-collapse/iron-collapse.html">
+<link rel="import" href="../arc-icons/arc-icons.html">
+<link rel="import" href="../iron-form/iron-form.html">
+<link rel="import" href="../paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../paper-listbox/paper-listbox.html">
+<link rel="import" href="../paper-item/paper-item.html">
+<link rel="import" href="auth-methods-behavior.html">
+<link rel="import" href="auth-methods-styles.html">
+<link rel="import" href="cryptojs-import.html">
+
+<!--
+The `<auth-method-digest>` element displays a form for digest authentication.
+The user have to choose is he want to provide username and password only or
+all digest parameters to calculate final authorization header.
+
+In first case, the listeners and the transport method must perform handshake
+by it's own. Otherwise authorization header should be set with calculated value.
+
+### Example
+```
+<auth-method-digest username="john" password="doe"></auth-method-digest>
+```
+
+The `settings` property (of the element or even detail property) for full form
+has the following structure:
+
+```
+{
+  "username": String,
+  "realm": String,
+  "nonce": String,
+  "uri": String,
+  "response": String,
+  "opaque": String,
+  "qop": String - can be empty,
+  "nc": String,
+  "cnonce": String
+}
+```
+
+## Response calculation
+Depending on the algorithm and quality of protection (qop) properties the hasing
+algorithm may need following data:
+- request URL
+- request payload (body)
+- request HTTP method
+
+The element should be provided with this information by setting it's properties.
+However, the element will listen for `url-value-changed`, `http-method-changed`
+and `body-value-changed` events on the window object. Once the event is handled
+it will set up corresponding properties.
+All this events must have a `value` property set on event's detail object.
+
+### Styling
+`<auth-methods>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--auth-method-digest` | Mixin applied to the element. | `{}`
+`--auth-method-panel` | Mixin applied to all auth elements. | `{}`
+
+@group UI Elements
+@element auth-method-digest
+@demo demo/digest.html
+-->
+<dom-module id="auth-method-digest">
+  <template>
+    <style include="auth-methods-styles">
+     :host {
+      display: block;
+      @apply(--auth-method-panel);
+      @apply(--auth-method-digest);
+    }
+    </style>
+    <div class="row">
+      <div class="stepper">
+        <span class="step">[[_computeStep(stepStartIndex, 1)]]</span>
+        <span class="step-header">
+          <span class="step-title">Set authorization data</span>
+        </span>
+      </div>
+      <div class="step-content">
+        <div class="line"></div>
+        <form is="iron-form" id="form" autocomplete="on">
+          <paper-input label="User name" value="{{username}}" type="text" required auto-validate autocomplete="on">
+            <paper-icon-button suffix on-tap="clearUsername" icon="arc:clear" alt="Clear input icon" title="Clear input"></paper-icon-button>
+          </paper-input>
+          <paper-masked-input label="Password" value="{{password}}" required auto-validate autocomplete="on"></paper-masked-input>
+          <paper-checkbox class="adv-settings-input" checked="{{fullForm}}">Advanced settings</paper-checkbox>
+          <iron-collapse opened="[[fullForm]]">
+            <div class="extended-form">
+              <paper-input label="Server issued realm" value="{{realm}}" type="text" required="[[fullForm]]" auto-validate autocomplete="on"></paper-input>
+              <paper-input label="Server issued nonce" value="{{nonce}}" type="text" required="[[fullForm]]" auto-validate autocomplete="on"></paper-input>
+              <paper-dropdown-menu label="Quality of protection">
+                <paper-listbox class="dropdown-content" selected="{{qop}}" attr-for-selected="data-qop">
+                  <paper-item data-qop="auth">auth</paper-item>
+                  <paper-item data-qop="auth-int">auth-int</paper-item>
+                </paper-listbox>
+              </paper-dropdown-menu>
+              <paper-input label="Nounce count" value="{{nc}}" type="number" required="[[fullForm]]" auto-validate autocomplete="on"></paper-input>
+              <paper-dropdown-menu label="Hash algorithm">
+                <paper-listbox class="dropdown-content" selected="{{algorithm}}" attr-for-selected="data-algorithm">
+                  <paper-item data-algorithm="MD5">MD5</paper-item>
+                  <paper-item data-algorithm="MD5-sess">MD5-sess</paper-item>
+                </paper-listbox>
+              </paper-dropdown-menu>
+              <paper-input label="Server issued opaque string" value="{{opaque}}" type="string" autocomplete="on"></paper-input>
+              <paper-input label="Client nounce" value="{{cnonce}}" type="string" autocomplete="on"></paper-input>
+            </div>
+          </iron-collapse>
+        </form>
+      </div>
+    </div>
+  </template>
+  <script>
+  Polymer({
+    is: 'auth-method-digest',
+    behaviors: [ArcBehaviors.AuthMethodsBehavior],
+    /**
+     * Fired when error occured when decoding hash.
+     *
+     * @event error
+     * @param {Error} error The error object.
+     */
+    /**
+     * Fired when the any of the auth method settings has changed.
+     * This event will be fired quite frequently - each time anything in the text field changed.
+     * With one exception. This event will not be fired if the validation of the form didn't passed.
+     *
+     * @event auth-settings-changed
+     * @param {Object} settings Current settings containing hash, password
+     * and username.
+     * @param {String} type The authorization type - basic
+     * @param {Boolean} valid True if the form has been validated.
+     */
+    properties: {
+      // The password.
+      password: {
+        type: String,
+        notify: true,
+        value: ''
+      },
+      // The username.
+      username: {
+        type: String,
+        notify: true,
+        value: ''
+      },
+      // If set then it will display all form fields.
+      fullForm: {
+        type: Boolean,
+        value: false
+      },
+      // Server issued realm.
+      realm: {
+        type: String,
+        value: ''
+      },
+      // Server issued nonce.
+      nonce: {
+        type: String,
+        value: ''
+      },
+      // The realm value for the digest response.
+      algorithm: {
+        type: String,
+        value: ''
+      },
+      /**
+       * The quality of protection value for the digest response.
+       * Either '', 'auth' or 'auth-int'
+       */
+      qop: {
+        type: String,
+        value: ''
+      },
+      // Nonce count - increments with each request used with the same nonce
+      nc: {
+        type: Number,
+        value: 1
+      },
+      // Client nonce
+      cnonce: {
+        type: String,
+        value: ''
+      },
+      // A string of data specified by the server
+      opaque: {
+        type: String,
+        value: ''
+      },
+      // Hashed response to server challenge
+      response: {
+        type: String,
+        value: ''
+      },
+      // Request HTTP method
+      httpMethod: {
+        type: String,
+        value: ''
+      },
+      // Current request URL.
+      requestUrl: {
+        type: String,
+        value: ''
+      },
+      // Current request body.
+      requestBody: {
+        type: String,
+        value: ''
+      }
+    },
+
+    /**
+     * Gets a map of current settings (user provided data).
+     */
+    get settings() {
+      return this._getSettings();
+    },
+
+    attached: function() {
+      this.listen(window, 'url-value-changed', '_onUrlChanged');
+      this.listen(window, 'http-method-changed', '_onHttpMethodChanged');
+      this.listen(window, 'body-value-changed', '_onBodyChanged');
+      this.listen(window, 'auth-settings-changed', '_onAuthSettings');
+    },
+
+    detached: function() {
+      this.unlisten(window, 'url-value-changed', '_onUrlChanged');
+      this.unlisten(window, 'http-method-changed', '_onHttpMethodChanged');
+      this.unlisten(window, 'body-value-changed', '_onBodyChanged');
+      this.unlisten(window, 'auth-settings-changed', '_onAuthSettings');
+    },
+
+    /**
+     * Validate the form.
+     *
+     * @param {Boolean} passive If true then it will check validity of the form but will not
+     * highlight the fields when invalid. Default to false.
+     * @return {Boolean} `true` if valid, `false` otherwise.
+     */
+    validate: function(passive) {
+      return passive ? this.$.form.checkValidity() : this.$.form.validate();
+    },
+
+    observers: [
+      // jscs:disable maximumLineLength
+      '_userInputChanged(username, password, realm, nonce, qop, nc, algorithm, opaque, cnonce, httpMethod, requestUrl, fullForm)'
+      // jscs:enable maximumLineLength
+    ],
+
+    /**
+     * Returns current settings. Object's structure depends on `fullForm`
+     * property. If it's `false` then the object will contain username and
+     * password. Otherwise it will contain a list of parameters of the
+     * Authorization header.
+     */
+    _getSettings: function() {
+      if (!this.fullForm) {
+        return {
+          password: this.password,
+          username: this.username
+        };
+      }
+      this.response =  this.generateResponse();
+      var settings = {};
+      settings.username = this.username;
+      settings.realm = this.realm;
+      settings.nonce = this.nonce;
+      settings.uri = this.requestUrl;
+      settings.response = this.response;
+      settings.opaque = this.opaque;
+      settings.qop = this.qop;
+      settings.nc = ('00000000' + this.nc).slice(-8);
+      settings.cnonce = this.cnonce;
+      return settings;
+    },
+
+    _userInputChanged: function(username, password, realm, nonce, qop, nc,
+      algorithm, opaque, cnonce, httpMethod, requestUrl, fullForm) {
+      var detail;
+      if (!fullForm) {
+        if (!username || !password) {
+          detail = {
+            settings: undefined,
+            type: 'digest',
+            valid: false
+          };
+          this.fire('auth-settings-changed', detail);
+          return;
+        }
+        detail = {
+          settings: this._getSettings(),
+          type: 'digest',
+          valid: true
+        };
+        this.fire('auth-settings-changed', detail);
+        return;
+      }
+      if (!username || !password || !realm || !nonce || !httpMethod || !requestUrl) {
+        detail = {
+          settings: undefined,
+          type: 'digest',
+          valid: false
+        };
+        this.fire('auth-settings-changed', detail);
+        return;
+      }
+
+      if (!nc) {
+        return this.set('nc', 1);
+      }
+      if (!cnonce) {
+        return this.set('cnonce', this.generateCnonce());
+      }
+
+      var settings = this._getSettings();
+      detail = {
+        settings: settings,
+        type: 'digest',
+        valid: true
+      };
+      this.fire('auth-settings-changed', detail);
+    },
+
+    clearUsername: function() {
+      this.username = '';
+    },
+
+    /**
+     * Generates client nonce.
+     *
+     * @return Generated client nonce.
+     */
+    generateCnonce: function() {
+      var characters = 'abcdef0123456789';
+      var token = '';
+      for (var i = 0; i < 16; i++) {
+        var randNum = Math.round(Math.random() * characters.length);
+        token += characters.substr(randNum, 1);
+      }
+      return token;
+    },
+    /**
+     * Generates the response header based on the parameters provided in the
+     * form.
+     *
+     * See https://en.wikipedia.org/wiki/Digest_access_authentication#Overview
+     *
+     * @return {String} A response part of the authenticated digest request.
+     */
+    generateResponse: function() {
+      var HA1 = this._getHA1();
+      var HA2 = this._getHA2();
+      var ncString = ('00000000' + this.nc).slice(-8);
+      var responseStr = HA1 + ':' + this.nonce;
+      if (!this.qop) {
+        responseStr += ':' + HA2;
+      } else {
+        responseStr += ':' + ncString + ':' + this.cnonce + ':' + this.qop + ':' + HA2;
+      }
+      return CryptoJS.MD5(responseStr).toString();
+    },
+    // Generates HA1 as defined in Digest spec.
+    _getHA1: function() {
+      var HA1param = this.username + ':' + this.realm + ':' + this.password;
+      var HA1 = CryptoJS.MD5(HA1param).toString();
+
+      if (this.algorithm === 'MD5-sess') {
+        HA1param = HA1 + ':' + this.nonce + ':' + this.cnonce;
+        HA1 = CryptoJS.MD5(HA1param).toString();
+      }
+      return HA1;
+    },
+    // Generates HA2 as defined in Digest spec.
+    _getHA2: function() {
+      var HA2param = this.httpMethod + ':' + this.requestUrl;
+      if (this.qop === 'auth-int') {
+        HA2param += ':' + CryptoJS.MD5(this.requestBody).toString();
+      }
+      return CryptoJS.MD5(HA2param).toString();
+    },
+    /**
+     * Handler to the `url-value-changed` event. When the element handle this
+     * event it will update the `requestUrl` property.
+     */
+    _onUrlChanged: function(e) {
+      this.requestUrl = e.detail.value;
+    },
+    /**
+     * Handler to the `http-method-changed` event. When the element handle this
+     * event it will update the `httpMethod` property.
+     */
+    _onHttpMethodChanged: function(e) {
+      this.httpMethod = e.detail.value;
+    },
+    /**
+     * Handler to the `body-value-changed` event. When the element handle this
+     * event it will update the `requestBody` property.
+     */
+    _onBodyChanged: function(e) {
+      this.requestBody = e.detail.value;
+    },
+
+    /**
+     * Handler to the `auth-settings-changed` event (fired by all auth panels).
+     * If the event was fired by other element with the same method ttype
+     * then the form will be updated to incomming values.
+     * This helps to sync changes between elements in the same app.
+     */
+    _onAuthSettings: function(e) {
+      if (!this._initialized) {
+        return;
+      }
+      var event = Polymer.dom(e);
+      if (event.rootTarget === this) {
+        return;
+      }
+      if (e.detail.type !== 'basic') {
+        return;
+      }
+      var otherSettings = e.detail.settings;
+      for (var _key in otherSettings) {
+        var _localKey;
+        var _newValue;
+        if (_key === 'uri') {
+          _localKey = 'requestUrl';
+          _newValue = otherSettings[_key];
+        } else if (_key === 'nc') {
+          _newValue = Number(otherSettings[_key].replace(/0+/, ''));
+          _localKey = _key;
+        } else {
+          _localKey = _key;
+          _newValue = otherSettings[_key];
+        }
+        if (this[_localKey] !== _newValue) {
+          this[_localKey] = _newValue;
+        }
+      }
+    }
+  });
+  </script>
+</dom-module>

@@ -1,0 +1,629 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../paper-tabs/paper-tabs.html">
+<link rel="import" href="../paper-tabs/paper-tab.html">
+<link rel="import" href="../iron-pages/iron-pages.html">
+<link rel="import" href="../request-timings/request-timings-panel.html">
+<link rel="import" href="../headers-list-view/headers-list-view.html">
+<link rel="import" href="../iron-collapse/iron-collapse.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../arc-icons/arc-icons.html">
+<link rel="import" href="http-source-message-view.html">
+<link rel="import" href="status-message.html">
+
+<!--
+`<response-status-view>` HTTP response status view, including status, headers redirects and timings
+
+### Full example
+```
+<response-status-view
+  status-code="[[statusCode]]"
+  status-message="[[statusMessage]]"
+  request-headers="[[requestHeaders]]"
+  response-headers="[[responseHeaders]]"
+  loading-time="[[loadingTime]]"
+  http-message="[[_computeHttpMessage(requestHeaders)]]"
+  redirects="[[redirects]]"
+  redirect-timings="[[redirectTimings]]"
+  timings="[[timings]]"></response-status-view>
+```
+### Minimal example
+```
+<response-status-view
+  status-code="[[statusCode]]"
+  status-message="[[statusMessage]]"
+  response-headers="[[responseHeaders]]"
+  loading-time="[[loadingTime]]"></response-status-view>
+```
+
+## Data Structure
+
+### Redirects
+#### `redirects`
+Array of objects. Each objects need to have the `headers` property as a HTTP headers string, `status` as a HTTP status and optionally `statusText`.
+#### `redirectTimings`
+Array of objects. Each object represent a HAR 1.2 timings object. See the `request-timings` element documentation for more information.
+### `responseError`
+A JavaScript Error object.
+### `timings`
+Object that represent a HAR 1.2 timings object. See the `request-timings` element documentation for more information.
+
+## Status message
+The element will set a status message if, after 100 ms of setting the status code
+property, the `statusMessage` property is not set. This is to ensure that the
+user will always see any status message.
+
+## Styling
+`<response-status-view>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--response-status-view` | Mixin applied to the element | `{}`
+`--raml-docs-response-panel` | Mixin applied to the element | `{}`
+`--arc-status-code-color-200` | Color of the 200 status code (ARC theme option) | `rgba(56, 142, 60, 1)` |
+`--arc-status-code-color-300` | Color of the 300 status code (ARC theme option) | `rgba(48, 63, 159, 1)` |
+`--arc-status-code-color-400` | Color of the 400 status code (ARC theme option) | `rgba(245, 124, 0, 1)` |
+`--arc-status-code-color-500` | Color of the 500 status code (ARC theme option) | `rgba(211, 47, 47, 1)` |
+`--arc-font-subhead` | Mixin applied to sub headers (low implortance headers). It's a theme mixin. | `{}`
+`--no-info-message` | Mixin applied to the messages information that there's no information available. | `{}`
+`--arc-font-code1` | Mixin applied to the source message. It's a theme mixin. | `{}`
+`--response-status-view-badge-color` | Color of the badge with number of the headers / redirections in advanced view | `#fff`
+`--response-status-view-badge-background` | Background color of the badge with number of the headers / redirections in advanced view | `--accent-color`
+`--response-status-view-empty-badge-color` | Color of the badge with number of the headers / redirections in advanced view | `#fff`
+`--response-status-view-empty-badge-background` | Background color of the badge with number of the headers / redirections in advanced view | `#9e9e9e`
+`--response-status-view-status-info-border-color` | Border color separating status from the response headers | `#e5e5e5`
+`--response-status-view-status-container` | Mixin applied to the status row in the main view and in the redirects view (in advanced mode). | `{}`
+
+@group UI Elements
+@element response-status-view
+@demo demo/index.html
+-->
+<dom-module id="response-status-view">
+  <template>
+    <style>
+    :host {
+      @apply(--layout-vertical);
+      @apply(--response-status-view);
+    }
+
+    .status-row,
+    .timings-row {
+      @apply(--layout-horizontal);
+      @apply(--arc-font-subhead);
+      @apply(--layout-center);
+      min-height: 56px;
+    }
+
+    .status-row {
+      border-bottom: 1px var(--response-status-view-status-info-border-color, #e5e5e5) solid;
+    }
+
+    .timings-row {
+      padding-right: 0;
+    }
+
+    .status-label {
+      width: 40px;
+      @apply(--arc-font-subhead);
+    }
+
+    .status-value {
+      @apply(--layout-flex);
+      @apply(--layout-horizontal);
+      @apply(--layout-center);
+      @apply(--response-status-view-status-container);
+    }
+
+    .status-value > span {
+      display: block;
+    }
+
+    .redirect-value {
+      margin-top: 12px;
+      @apply(--layout-flex);
+    }
+
+    .no-redirects-container {
+      @apply(--layout-vertical);
+      @apply(--layout-center);
+    }
+
+    .no-redirects-info {
+      @apply --no-info-message;
+    }
+
+    headers-list-view {
+      margin-top: 12px;
+    }
+
+    .text {
+      @apply(--select-text);
+    }
+
+    .badge {
+      display: block;
+      background-color: var(--response-status-view-badge-background, --accent-color);
+      color: var(--response-status-view-badge-color, #fff);
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      font-size: 12px;
+      margin-left: 12px;
+      @apply(--layout-horizontal);
+      @apply(--layout-center-center);
+    }
+
+    .badge.empty {
+      background-color: var(--response-status-view-empty-badge-background, #9e9e9e);
+      color: var(--response-status-view-empty-badge-color, #fff);
+    }
+
+    .status-value.status.text > span:not(:first-child) {
+      margin-left: 8px;
+    }
+
+    .status-code-value {
+      padding: 4px 8px;
+      color: #fff;
+      border-radius: 2px;
+      display: block;
+      background-color: var(--arc-status-code-color-200, rgba(56, 142, 60, 1));
+    }
+
+    .info.status-code-value {
+      background-color: var(--arc-status-code-color-300, rgba(48, 63, 159, 1));
+    }
+
+    .warning.status-code-value {
+      background-color: var(--arc-status-code-color-400, rgba(245, 124, 0, 1));
+    }
+
+    .error.status-code-value {
+      background-color: var(--arc-status-code-color-500, rgba(211, 47, 47, 1));
+    }
+
+    .response-time {
+      color: var(--response-status-view-loading-time-color, rgba(0, 0, 0, 0.54));
+      margin-left: 8px;
+      display: block;
+      @apply(--response-status-view-time);
+    }
+
+    .status-info {
+      @apply --layout-horizontal;
+      @apply --layout-center;
+      @apply --layout-flex;
+    }
+
+    .toggle-button {
+      color: var(--response-status-view-toggle-icon-color, rgba(0, 0, 0, 0.54));
+      transition: color 0.25s linear;
+    }
+
+    .toggle-icon {
+      transform: rotateZ(0deg);
+      transition: transform 0.3s linear;
+    }
+
+    .toggle-icon.opened {
+      transform: rotateZ(-180deg);
+    }
+
+    .toggle-button:hover {
+      color: var(--response-status-view-toggle-icon-hover-color, rgba(0, 0, 0, 0.78));
+    }
+
+    .xhr-title {
+      @apply(--layout-horizontal);
+      @apply(--layout-center);
+      padding: 0px 16px;
+      @apply(--arc-font-subhead);
+    }
+
+    .redirect-location {
+      margin-left: 8px;
+    }
+
+    .response-error-label {
+      margin-left: 12px;
+      color: var(--arc-status-code-color-500, rgba(211, 47, 47, 1));
+    }
+
+    .status-url {
+      @apply(--arc-font-body1);
+      @apply(--layout-horizontal);
+      @apply(--layout-center);
+      padding-top: 12px;
+      padding-bottom: 12px;
+      font-size: 120%;
+      padding-left: 16px;
+      background: var(--response-status-view-request-url-background-color, #6B6C6D); /*--anypoint-steel1*/
+      color: var(--response-status-view-request-url-color, #fff);
+      @apply(--arc-font-code);
+      @apply(--response-status-view-request-url-info);
+    }
+
+    .http-method {
+      margin-right: 12px;
+    }
+
+    .request-url {
+      word-break: break-all;
+    }
+
+    .no-info {
+      padding-left: 16px;
+      @apply(--no-info-message);
+    }
+    </style>
+    <div class="status-row">
+      <div class="status-value status">
+        <template is="dom-if" if="[[!isError]]">
+          <div class="status-info text">
+            <span class$="[[_computeStatusClass(statusCode)]]">[[statusCode]] [[statusMessage]]</span>
+            <span class="response-time" hidden$="[[!loadingTime]]">[[_roundTime(loadingTime)]] ms</span>
+          </div>
+          <div class="status-details">
+            <paper-button on-tap="toggleCollapse" class="toggle-button" title="Toogle response headers">
+              Details
+              <iron-icon icon="arc:expand-more" class$="[[_computeToggleIconClass(opened)]]"></iron-icon>
+            </paper-button>
+          </div>
+        </template>
+        <template is="dom-if" if="[[isError]]">
+          <span class="error status-code-value">0</span>
+          <span class="response-time" hidden$="[[!loadingTime]]">[[_roundTime(loadingTime)]] ms</span>
+          <p class="response-error-label">Error in the response.</p>
+        </template>
+      </div>
+    </div>
+    <iron-collapse opened="[[opened]]">
+
+      <template is="dom-if" if="[[requestUrl]]">
+        <div class="status-url">
+          <span class="http-method" hidden$="[[!requestMethod]]">[[requestMethod]]</span>
+          <span class="request-url">[[requestUrl]]</span>
+        </div>
+      </template>
+
+      <paper-tabs selected="{{selectedTab}}">
+        <paper-tab>
+          <span>Response headers</span>
+          <span class$="[[_computeBageClass(responseHeaders)]]">[[_computeHeadersLength(responseHeaders)]]</span>
+        </paper-tab>
+        <paper-tab>
+          <span>Request headers</span>
+          <span class$="[[_computeBageClass(requestHeaders)]]">[[_computeHeadersLength(requestHeaders)]]</span>
+        </paper-tab>
+        <template is="dom-if" if="[[!isXhr]]">
+          <paper-tab>
+            <span>Redirects</span>
+            <span class$="[[_computeBageClass(redirects.length)]]">[[redirects.length]]</span>
+          </paper-tab>
+          <paper-tab>Timings</paper-tab>
+        </template>
+      </paper-tabs>
+      <iron-pages selected="[[selectedTab]]">
+        <headers-list-view on-tap="_handleLink" headers="[[responseHeaders]]"></headers-list-view>
+        <section class="request-header-panel">
+          <template is="dom-if" if="[[hasRequestHeaders]]">
+            <headers-list-view type="request" on-tap="_handleLink" headers="[[requestHeaders]]"></headers-list-view>
+          </template>
+          <template is="dom-if" if="[[!hasRequestHeaders]]">
+            <p class="no-info">Nothing to display here</p>
+          </template>
+          <template is="dom-if" if="[[hasHttpMessage]]">
+            <http-source-message-view message="[[httpMessage]]"></http-source-message-view>
+          </template>
+        </section>
+        <section class="redirects-panel">
+          <template is="dom-if" if="[[!redirects.length]]">
+            <div class="no-redirects-container">
+              <p class="no-redirects-info">There were no redirects during this request</p>
+            </div>
+          </template>
+          <template is="dom-repeat" items="[[redirects]]">
+            <div class="status-row">
+              <div class="status-label text">
+                #<span>[[_computeIndexName(index)]]</span>
+              </div>
+              <div class="redirect-value" on-tap="_handleLink">
+                <div class="status-value status text">
+                  <span class$="[[_computeStatusClass(item.status)]]">[[item.status]] [[item.statusText]]</span>
+                  <span class="redirect-location">to: <a href="[[_computeRedirectLocation(item.headers)]]" class="auto-link">[[_computeRedirectLocation(item.headers)]]</a></span>
+                </div>
+                <headers-list-view headers="[[item.headers]]"></headers-list-view>
+              </div>
+            </div>
+          </template>
+        </section>
+        <section class="timings-panel">
+          <request-timings-panel redirects="[[redirectTimings]]" timings="[[timings]]"></request-timings-panel>
+        </section>
+      </iron-pages>
+    </iron-collapse>
+  </template>
+  <script>
+  Polymer({
+    is: 'response-status-view',
+    properties: {
+      // Response status code.
+      statusCode: {
+        type: Number,
+        observer: '_statusCodeChanged'
+      },
+      // Status message (if any)
+      statusMessage: String,
+      // The request/response loading time.
+      loadingTime: {
+        type: Number,
+        value: 0
+      },
+      // The response headers as a HTTP headers string
+      responseHeaders: {
+        type: String
+      },
+      // The request headers as a HTTP headers string
+      requestHeaders: String,
+      // Computed value, true when request headers are set.
+      hasRequestHeaders: {
+        type: String,
+        value: false,
+        computed: '_computeHasRequestHeaders(requestHeaders)'
+      },
+      /**
+       * Raw HTTP message sent to the server.
+       * It will be displayed in the request headers tab.
+       * Optional for transports that do not expose this information.
+       */
+      httpMessage: {
+        type: String,
+        observer: '_httpMessageChanged'
+      },
+      // Computed value, true when source HTTP message is not set.
+      hasHttpMessage: {
+        type: Boolean,
+        value: false,
+        readOnly: true
+      },
+      /**
+       * An Error object representing the response error.
+       */
+      responseError: {
+        type: Object,
+        observer: '_computeError'
+      },
+      // Calculated to be true if responseError object is set.
+      isError: {
+        type: Boolean,
+        value: false,
+        readOnly: true
+      },
+      /**
+       * An array of redirect responses.
+       * Each of the response objects should be regular Response objects.
+       */
+      redirects: {
+        type: Array,
+        value: []
+      },
+      /**
+       * List of timings occured during the redirects.
+       * This list should be ordered by the time of redirection.
+       * See the `request-timings` element documentation for more
+       * information.
+       */
+      redirectTimings: {
+        type: Array,
+        value: function() {
+          return [];
+        }
+      },
+      // Currently selected tab.
+      selectedTab: {
+        type: Number,
+        value: 0
+      },
+      /**
+       * The timings object to display request/response timing information
+       * as defined in HAR 1.2 spec.
+       * See the `request-timings` element documentation for more
+       * information.
+       */
+      timings: {
+        type: Object,
+        notify: true
+      },
+      /**
+       * If true it means that the request has been made by the basic
+       * transport and advanced details of the request/response like
+       * redirects, timings, source message are not available.
+       * It this case it will hide unused tabs.
+       */
+      isXhr: {
+        type: Boolean,
+        observer: '_isXhrChanged'
+      },
+      // True if the collapsable element is opened
+      opened: {
+        type: Boolean,
+        value: false
+      },
+      // A request URL that has been used to make a request
+      requestUrl: String,
+      // A HTTP method used to make a request
+      requestMethod: String
+    },
+
+    attached: function() {
+      if (this.statusCode) {
+        this._statusCodeChanged();
+      }
+    },
+
+    _computeStatusClass: function(code) {
+      var cls = 'status-code-value';
+      if (code >= 500 || code === 0) {
+        cls += ' error';
+      }
+      if (code >= 400 && code < 500) {
+        cls += ' warning';
+      }
+      if (code >= 300 && code < 400) {
+        cls += ' info';
+      }
+      return cls;
+    },
+
+    _statusCodeChanged: function() {
+      if (!this.statusCode) {
+        this.statusCode = 0;
+      }
+      this.assignStatusMessage();
+    },
+
+    /** Compute index to 1-based index. */
+    _computeIndexName: function(index) {
+      return index + 1;
+    },
+    /** Catch headers link click and send proper event to the listeners. */
+    _handleLink: function(e) {
+      e.preventDefault();
+      e = Polymer.dom(e);
+      if (e.rootTarget.nodeName === 'A') {
+        this.fire('action-link-change', {
+          url: e.rootTarget.href
+        });
+      }
+    },
+    /**
+     * Extracts a location URL form the headers.
+     *
+     * @param {String} headers A HTTP headers string.
+     * @return {String} A value of the location header or `unknown` if not
+     * found.
+     */
+    _computeRedirectLocation: function(headers) {
+      var def = 'unknown';
+      if (!headers) {
+        return def;
+      }
+      if (typeof headers === 'string') {
+        var match = headers.match(/^location: (.*)$/im);
+        if (!match) {
+          return def;
+        }
+        return match[1];
+      }
+      var location = headers.get('location');
+      return location || def;
+    },
+    // Computes if this is a response error and sets isError flag.
+    _computeError: function(re) {
+      this._setIsError(!!re);
+    },
+    /**
+     * Computes CSS class for the badge in the tabs.
+     * If passed `input` is string it only check if string is not empty.
+     * Otherwise it checks if passed value is !== 0.
+     *
+     * @param {String|Number} input String or number to check.
+     * @return {String} Computed class name for this badge.
+     */
+    _computeBageClass: function(input) {
+      if (typeof input === 'string') {
+        return !!input ? 'badge' : 'badge empty';
+      }
+      return input === 0 ? 'badge empty' : 'badge';
+    },
+    /**
+     * Compute size of the HTTP headers.
+     * Note, it only checks for number of lines. It doeasn't check if each line
+     * contains string.
+     *
+     * @param {String} headers The headers strings to count.
+     * @return {Number} Size of the headers in passed string.
+     */
+    _computeHeadersLength: function(headers) {
+      if (!headers) {
+        return 0;
+      }
+      return headers.split('\n').length;
+    },
+    // Computes if `statusMessage` is set.
+    _httpMessageChanged: function(message) {
+      var status = !!message;
+      this._setHasHttpMessage(status);
+    },
+
+    _roundTime: function(num) {
+      num = Number(num);
+      if (num !== num) {
+        return '';
+      }
+      return num.toFixed(2);
+    },
+    // Toggles collapsable element.
+    toggleCollapse: function() {
+      this.opened = !this.opened;
+    },
+    // Computes class for the toggle's button icon.
+    _computeToggleIconClass: function(opened) {
+      var clazz = 'toggle-icon';
+      if (opened) {
+        clazz += ' opened';
+      }
+      return clazz;
+    },
+    /**
+     * This async function is executed after some thime of setting the status
+     * code. If after set period of time the `statusMessage` is still not set
+     * the it will use the `<status-message>` element to generate default
+     * status text message as defined in the spec.
+     */
+    assignStatusMessage: function() {
+      this.async(function() {
+        if (this.statusMessage) {
+          return;
+        }
+        var element = document.createElement('status-message');
+        element.code = this.statusCode;
+        this.statusMessage = element.message;
+      }, 100);
+    },
+    // Resets current tab when isXhr is true.
+    _isXhrChanged: function(value) {
+      if (value === undefined) {
+        return;
+      }
+      if (value && this.selectedTab > 1) {
+        this.selectedTab = 0;
+      }
+      var tabs = this.$$('paper-tabs');
+      if (!tabs) {
+        console.warn('Tabs panel not found in DOM');
+        return;
+      }
+      tabs.notifyResize();
+    },
+    // Computes if request headers has been set.
+    _computeHasRequestHeaders: function(requestHeaders) {
+      return !!requestHeaders;
+    }
+  });
+  </script>
+</dom-module>

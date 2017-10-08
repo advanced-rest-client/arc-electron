@@ -1,0 +1,687 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../app-pouchdb/app-pouchdb-conflict-resolution.html">
+<link rel="import" href="../app-pouchdb/app-pouchdb-index.html">
+<link rel="import" href="../app-pouchdb/app-pouchdb-query.html">
+<link rel="import" href="../app-pouchdb/app-pouchdb-document.html">
+<link rel="import" href="../uuid-generator/uuid-generator.html">
+<link rel="import" href="../connectivity-state/connectivity-state.html">
+<link rel="import" href="../arc-polyfills/arc-polyfills.html">
+<link rel="import" href="app-analytics-behavior.html">
+<!--
+`<app-analytics>` An element that support Google Analytics analysis
+
+### Example
+```
+<app-analytics
+  tracking-id="UA-XXXXXXX-Y"
+  app-name="my app"
+  app-version="1.0.0"
+  data-source="app-analytics element"></app-analytics>
+```
+
+The `app-name` and `tracking-id` are required parameters in order to run the element properly.
+
+This element initalize its own database where config data will be stored
+(cid parameter, information if analitics has been disabled).
+
+If `clientId` attribute is not set it will be generated automatically. There's no need to set
+it manually if there's no need.
+
+__Google Analytics do not allow sending any information that may lead to a user__
+
+Always give the user ability to disable tracking. In EU you have to have a permission from
+the user to store data on his computer. The `app-database`'s default config is to permit
+tracking. Disable it by calling a function on the element:
+```
+document.querySelector('app-analytics').setTrackingPermitted(false);
+```
+setting up attribute:
+```
+<app-analytics tracking-id="UA-XXXXXXX-Y" disable-tracking></app-analytics>
+```
+or fire custom event:
+```
+// inside Polymer element:
+this.fire('app-analytics-permitted', {
+  permitted: false
+});
+// or in JavaScript
+var event = new CustomEvent('app-analytics-permitted', {
+  detail: {
+    permitted: false,
+    bubbles: true
+  }
+});
+document.dispatchEvent(event);
+```
+
+### Using `<app-analytics>`
+
+You can directly call one of `send*()` functions. See API Reference below for more info.
+- <a href="#method-sendEvent">sendEvent</a>
+- <a href="#method-sendException">sendException</a>
+- <a href="#method-sendScreen">sendScreen</a>
+- <a href="#method-sendSocial">sendSocial</a>
+- <a href="#method-sendTimings">sendTimings</a>
+
+You can also use event system to send a hit. In this case fire a `send-analytics` event
+with required `type` property on the `detail` object which describes what king of hit
+should be send. Possible values are: `pageview`, `screenview`, `event`, `social`,
+`exception` or `timing`.
+
+Other parameters depends on the type.
+
+#### Sending `screenview` hit
+```
+// Inside Polymer element:
+this.fire('send-analytics', {
+  type: 'screenview',
+  name: 'Some scree name' //required.
+});
+// or in JavaScript:
+var event = new CustomEvent('send-analytics', {
+  detail: {
+    type: 'screenview',
+    name: 'Some scree name' //required.
+    bubbles: true
+  }
+});
+document.dispatchEvent(event);
+```
+
+#### Sending `event` hit
+```
+// Inside Polymer element:
+this.fire('send-analytics', {
+  type: 'event',
+  category: 'Some category', //required.
+  action: 'Some action', //required.
+  label: 'Some label',
+  value: 123
+});
+// or in JavaScript:
+var event = new CustomEvent('send-analytics', {
+  detail: {
+    type: 'event',
+    category: 'Some category', //required.
+    action: 'Some action', //required.
+    label: 'Some label',
+    value: 123,
+    bubbles: true
+  }
+});
+document.dispatchEvent(event);
+```
+#### Sending `exception` hit
+```
+// Inside Polymer element:
+this.fire('send-analytics', {
+  type: 'exception',
+  description: 'Exception description', // required.
+  fatal: true // default false
+});
+// or in JavaScript:
+var event = new CustomEvent('send-analytics', {
+  detail: {
+    type: 'exception',
+    description: 'Exception description', // required.
+    fatal: true, // default false
+    bubbles: true
+  }
+});
+document.dispatchEvent(event);
+```
+#### Sending `social` hit
+```
+// Inside Polymer element:
+this.fire('send-analytics', {
+  type: 'social',
+  network: 'Google +', // required.
+  action: 'Share', // required
+  target: 'https://www.shared.com/resource' // required
+});
+// or in JavaScript:
+var event = new CustomEvent('send-analytics', {
+  detail: {
+    type: 'social',
+    network: 'Google +', // required.
+    action: 'Share', // required
+    target: 'https://www.shared.com/resource', // required
+    bubbles: true
+  }
+});
+document.dispatchEvent(event);
+```
+#### Sending `timing` hit
+```
+// Inside Polymer element:
+this.fire('send-analytics', {
+  type: 'timing',
+  category: 'Bootstrap', // required.
+  variable: 'databaseInitTime', // required
+  value: 123, // required
+  label: 'Optional label'
+});
+// or in JavaScript:
+var event = new CustomEvent('send-analytics', {
+  detail: {
+    type: 'timing',
+    category: 'Bootstrap', // required.
+    variable: 'databaseInitTime', // required
+    value: 123, // required
+    label: 'Optional label',
+    bubbles: true
+  }
+});
+document.dispatchEvent(event);
+```
+
+## Browsers compatibility
+This element uses ES 6 features (arrow functions, fetch API).
+It will not work in IE, Safari, iOS safari, Opera mini.
+It will work for Edge 14.
+It should work in other browsers.
+
+
+## Custom metrics and dimensions
+Use `<app-analytics-custom>` element as a child of `<app-analytics>` to set custom properties.
+This metrics / dimensions will be used with every hit as long as this elements exists as a
+children of the `<app-analytics>` element.
+
+### Example
+```
+<app-analytics tracking-id="UA-XXXXXXX">
+  <app-analytics-custom type="metric" index="1" value="5"></app-analytics-custom>
+</app-analytics>
+```
+
+To send custom data with single hit only without creating `<app-analytics-custom>` children,
+add `customDimensions` or `customMetrics` to the event detail object. Both objects must be
+an array of custom definition objects that includs index and value.
+
+### Example
+```
+this.fire('send-analytics', {
+  'type': 'event',
+  'category': 'Engagement',
+  'action': 'Click',
+  'label': 'Movie start',
+  'customDimensions': [{
+    index: 1, // index of the custom dimension
+    value: 'Author name' // Value of the custom dimension
+  }]
+});
+```
+
+@group Logic Elements
+@element app-analytics
+@demo demo/index.html
+@hero hero.svg
+-->
+<dom-module id="app-analytics">
+  <template>
+    <style>
+     :host {
+      display: none;
+    }
+    </style>
+    <app-pouchdb-conflict-resolution strategy="lastWriteWins"></app-pouchdb-conflict-resolution>
+    <app-pouchdb-index id="index" db-name="analytics-offline-store" fields="[[_storeIndexFields]]"></app-pouchdb-index>
+    <app-pouchdb-document id="metaStore" db-name="analytics-meta" doc-id="metadata" data="{{_metaData}}"></app-pouchdb-document>
+    <uuid-generator id="uuid"></uuid-generator>
+    <connectivity-state online="{{isOnline}}"></connectivity-state>
+    <content id="content"></content>
+  </template>
+  <script>
+  Polymer({
+    is: 'app-analytics',
+    behaviors: [ArcBehaviors.AppAnalyticsBehavior],
+    /**
+     * An event fired when the Google Analytics configuration is set and ready to rock.
+     * It doesn't matter if tracking is permitted. The tracking object will be ready
+     * to enable tracking on user demand.
+     *
+     * @event app-analytics-ready
+     * @param {String} trackingId A tracking ID related to this configuration.
+     */
+    /**
+     * Firwed when Library `permitted` state changed.
+     *
+     * @event app-analytics-permitted-changed
+     * @param {Boolean} permitted Current state.
+     */
+    properties: {
+      // Oflline storage indexes
+      _storeIndexFields: {
+        type: Array,
+        value: function() {
+          return ['_id'];
+        }
+      },
+      // List of commands that should be executed.
+      _offlineResult: Array,
+      /**
+       * Internal metadata that keeps information about:
+       * - cid - client id used to recognize the user accross the sessions
+       * - disableTracking - information is this instance of analytics is enabled.
+       */
+      _metaData: Object,
+
+      _customDataQueue: {
+        type: Array,
+        value: function() {
+          return [];
+        }
+      },
+
+      _queue: {
+        type: Array,
+        value: function() {
+          return [];
+        }
+      },
+      // If true the app probably is online. See `<connectivity-state>`.
+      isOnline: Boolean
+    },
+
+    observers: [
+      '__uploadOffline(inited, isOnline, _offlineResult.*)',
+      '__checkOfflineUpload(isOnline)',
+      '_init(inited)',
+      '_disableTrackingChanged(disableTracking)',
+      '_clientIdChanged(clientId)'
+    ],
+
+    listeners: {
+      'app-analytics-custom-changed': '_customPropertyChanged',
+      'app-analytics-custom-removed': '_customPropertyRemoved'
+    },
+
+    attached: function() {
+      this.listen(window, 'app-analytics-permitted', '_permittedHandler');
+      this.listen(window, 'send-analytics', '_sendHandler');
+      this._observer = Polymer.dom(this.$.content).observeNodes(function(info) {
+        info.addedNodes = info.addedNodes.filter(function(node) {
+          return (node.nodeType === Node.ELEMENT_NODE);
+        });
+        info.removedNodes = info.removedNodes.filter(function(node) {
+          return (node.nodeType === Node.ELEMENT_NODE);
+        });
+        this._processAddedNodes(info.removedNodes);
+        this._processRemovedNodes(info.removedNodes);
+      }.bind(this));
+
+      this.$.metaStore.initializeStoredValue().then(function() {
+        this._setupMeta();
+      }.bind(this));
+    },
+
+    detached: function() {
+      this.unlisten(window, 'app-analytics-permitted', '_permittedHandler');
+      this.unlisten(window, 'send-analytics', '_sendHandler');
+      Polymer.dom(this.$.content).unobserveNodes(this._observer);
+    },
+
+    // Process queue of aqlready processed requests after the library has initialized.
+    _init: function(inited) {
+      if (!inited) {
+        return;
+      }
+      this._processQueue();
+    },
+    /**
+     * Adds custom metric / dimension from a child node observer.
+     */
+    _processAddedNodes: function(nodes) {
+      if (!nodes || !nodes.length) {
+        return;
+      }
+      nodes.forEach(function(i) {
+        if (i.nodeName !== 'APP-ANALYTICS-CUSTOM') {
+          return;
+        }
+        if (i.index && i.type) {
+          if (i.type === 'dimension') {
+            this.addCustomDimension(i.index, i.value);
+          } else if (i.type === 'metric') {
+            this.addCustomMetric(i.index, i.value);
+          }
+        }
+      }, this);
+    },
+    /**
+     * Remove custom dimensions.
+     * Child elements can't send event here when they are already detached from the document
+     * so the parent element must observe child and determine if custom dimenstion should
+     * be removed.
+     */
+    _processRemovedNodes: function(nodes) {
+      if (!nodes || !nodes.length) {
+        return;
+      }
+      nodes.forEach(function(i) {
+        if (i.nodeName !== 'APP-ANALYTICS-CUSTOM') {
+          return;
+        }
+        if (i.index && i.type) {
+          if (i.type === 'dimension') {
+            this.removeCustomDimension(i.index);
+          } else if (i.type === 'metric') {
+            this.removeCustomMetric(i.index);
+          }
+        }
+      }, this);
+    },
+
+    /**
+     * Sets metadata for the app and manages defaults.
+     * This function initialize library basic configuraion if it hasen't
+     * been already set.
+     * Finally it will set corresponding properties on the element.
+     */
+    _setupMeta: function() {
+      if (!this._metaData) {
+        return;
+      }
+      var meta = Object.assign({}, this._metaData);
+      if (typeof meta.disableTracking === 'undefined') {
+        if (typeof this.disableTracking !== 'undefined') {
+          meta.disableTracking = this.disableTracking;
+        } else {
+          meta.disableTracking = false;
+        }
+      }
+      if (!meta.cid) {
+        var uuid = this.clientId;
+        if (!uuid) {
+          uuid = this.$.uuid.generate();
+        }
+        meta.cid = uuid;
+      }
+
+      if (this.disableTracking === undefined) {
+        var trackingDisabled = false;
+        if (meta.disableTracking === true || meta.disableTracking === 'true') {
+          trackingDisabled = true;
+        }
+        this.set('disableTracking', trackingDisabled);
+      } else if (meta.disableTracking !== this.disableTracking) {
+        this.async(function() {
+          this._disableTrackingChanged(this.disableTracking);
+        }, 1);
+      }
+      if (this.clientId === undefined) {
+        this.set('clientId', meta.cid);
+      }
+    },
+
+    _disableTrackingChanged: function(disableTracking) {
+      if (disableTracking === true || disableTracking === false) {
+        if (this._metaData &&
+          this._metaData.disableTracking !== disableTracking &&
+          this._metaData._rev && this._metaData._id) {
+          this.set('_metaData.disableTracking', disableTracking);
+          this.$.metaStore.save();
+        }
+      }
+    },
+
+    _clientIdChanged: function(clientId) {
+      if (!clientId) {
+        return;
+      }
+      if (this._metaData.cid !== clientId) {
+        this.set('_metaData.cid', clientId);
+        this.$.metaStore.save();
+      }
+    },
+
+    // An event handler for `send-analytics`
+    _sendHandler: function(e) {
+      if (!e.detail) {
+        return;
+      }
+
+      if (this.disableTracking) {
+        e.detail.sent = false;
+        e.detail.message = 'Tracking is disabled.';
+        return;
+      }
+
+      if (!this.inited) {
+        if (!this._queue) {
+          this._queue = [];
+        }
+        this._queue.push(e);
+        return;
+      }
+
+      var d = e.detail;
+      var opts = {};
+      if (d.customDimensions) {
+        opts.customDimensions = d.customDimensions;
+      }
+      if (d.customMetrics) {
+        opts.customMetrics = d.customMetrics;
+      }
+      switch (d.type) {
+        case 'screenview':
+          this.sendScreen(d.name, opts);
+          e.detail.sent = true;
+          break;
+        case 'event':
+          this.sendEvent(d.category, d.action, d.label, d.value, opts);
+          e.detail.sent = true;
+          break;
+        case 'exception':
+          this.sendException(d.description, d.fatal, opts);
+          e.detail.sent = true;
+          break;
+        case 'social':
+          this.sendSocial(d.network, d.action, d.target, opts);
+          e.detail.sent = true;
+          break;
+        case 'timing':
+          try {
+            this.sendTimings(d.category, d.variable, d.value, d.label, opts);
+            e.detail.sent = true;
+          } catch (e) {
+            e.detail.sent = false;
+            e.detail.message = e.message;
+          }
+          break;
+        default:
+          e.detail.sent = false;
+          e.detail.message = 'Unknown type [' + d.type + ']';
+          break;
+      }
+    },
+
+    // Enable or disable GA.
+    _permittedHandler: function(e) {
+      if (typeof e.detail.permitted === 'undefined') {
+        e.detail.error = true;
+        e.detail.message = 'Set `permitted` detail property first.';
+        return;
+      }
+      this.setTrackingPermitted(e.detail.permitted);
+    },
+    /**
+     * Enables or disables tracking.
+     * Rquests to GA won't be send if tracking is disabled.
+     *
+     * @param {Boolean} state If true then tracking is enabled, false tracking is disabled.
+     */
+    setTrackingPermitted: function(state) {
+      state = Boolean(state);
+      this.set('disableTracking', !state);
+    },
+
+    /**
+     * Any request made to this element before it was initialized would be lost. But the element
+     * keeps it in the temp queue so after initialization they may be called again.
+     *
+     * TODO: it should send events in batch request
+     * TODO: What if the element won't initialize? Is it should be lost?
+     */
+    _processQueue: function() {
+      if (this.disableTracking) {
+        this._queue = [];
+        return;
+      }
+      var len = this._queue.length;
+      var i = 0;
+      if (len) {
+        for (; i < len; i++) {
+          this._sendHandler(this._queue[i]);
+        }
+      }
+      this._queue = [];
+      len = this._customDataQueue.length;
+      if (len) {
+        for (i = 0; i < len; i++) {
+          this._customPropertyChanged(this._customDataQueue[i]);
+        }
+      }
+      this._customDataQueue = [];
+    },
+
+    // Handler for app-analytics-custom-changed event. Registers a new custom property.
+    _customPropertyChanged: function(e) {
+      if (!this.inited) {
+        if (!this._customDataQueue) {
+          this._customDataQueue = [];
+        }
+        this._customDataQueue.push(e);
+        return;
+      }
+      var d = e.detail;
+      if (d.type === 'dimension') {
+        this.addCustomDimension(d.index, d.value);
+      } else if (d.type === 'metric') {
+        this.addCustomMetric(d.index, d.value);
+      } else {
+        return;
+      }
+    },
+    // Handler for app-analytics-custom-removed event. Unregisters a custom property.
+    _customPropertyRemoved: function(e) {
+      var d = e.detail;
+      if (d.type === 'dimension') {
+        this.removeCustomDimension(d.index);
+      } else if (d.type === 'metric') {
+        this.removeCustomMetric(d.index);
+      }
+    },
+    // Saves hit body data to the storage so it can be used next time, when online.
+    _storeOffline: function(data) {
+      this.$.index.db.post({
+        time: Date.now(),
+        body: data,
+        sent: false
+      })
+      .catch(function(e) {
+        this.__printError(e);
+      }.bind(this));
+    },
+
+    /**
+     * The function checks if the app is online, then checks is has some data
+     * to send to GA server and finally sends them.
+     */
+    __checkOfflineUpload: function(isOnline) {
+      if (!isOnline) {
+        return;
+      }
+      this.$.index.db.allDocs({
+        limit: 20,
+        // jscs:disable
+        include_docs: true
+        // jscs:enable
+      })
+      .then(function(result) {
+        if (!result.rows || !result.rows.length) {
+          return [];
+        }
+        return result.rows.filter(function(i) {
+          var id = i.doc._id;
+          if (id[0] === '_' || id === 'metadata') {
+            return false;
+          }
+          return true;
+        });
+      })
+      .then(function(result) {
+        result = result.map(function(i) { return i.doc; });
+        this.set('_offlineResult', result);
+      }.bind(this))
+      .catch(function(e) {
+        this.__printError(e);
+      }.bind(this));
+    },
+
+    /**
+     * Uploads Google Analytics offline data to GA server.
+     * Offline store stores full GA command ready to sent to GA server.
+     * When the app initializes or network state change to online it will
+     * check if any data exists in the send queue (in the database) and if
+     * they are it will upload data to the server.
+     *
+     * Note, that according to GA documentation a hist taht are more than 4
+     * hrs old may not be processed.
+     *
+     * Takes 20 first elements,
+     * Upload to the GA server,
+     * Update their status,
+     * query db (call refresh)
+     * end.
+     */
+    __uploadOffline: function(inited, isOnline) {
+      if (!inited || !isOnline) {
+        return;
+      }
+      if (!this._offlineResult || !this._offlineResult.length) {
+        return;
+      }
+      var list = Array.from(this._offlineResult);
+      list = list.splice(0, 20);
+      if (!list.length) {
+        return;
+      }
+      var self = this;
+      var promises = list.map(function(item) {
+        return self.$.index.db.get(item._id);
+      });
+
+      Promise.all(promises).then(function(list) {
+        return self._sendBulk(list);
+      })
+      .then(function(list) {
+        var promises = list.map(function(i) { return self.$.index.db.remove(i); });
+        return Promise.all(promises);
+        // TODO: This may produce infinite loop if the GA host is blocked
+        // on (for example) proxy level.
+        // .then(function() {
+        //   return self.__checkOfflineUpload(self.isOnline);
+        // });
+      })
+      .catch(function(e) {
+        self.__printError(e);
+      });
+    }
+  });
+  </script>
+</dom-module>

@@ -1,0 +1,14 @@
+{
+  "name": "zlib",
+  "homepage": "https://github.com/imaya/zlib.js",
+  "version": "0.2.0",
+  "_release": "0.2.0",
+  "_resolution": {
+    "type": "version",
+    "tag": "0.2.0",
+    "commit": "65c567af667ef5095277f28b219b565e131b496f"
+  },
+  "_source": "https://github.com/imaya/zlib.js.git",
+  "_target": "^0.2.0",
+  "_originalSource": "imaya/zlib.js"
+}

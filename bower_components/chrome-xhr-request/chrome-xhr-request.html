@@ -1,0 +1,455 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../headers-parser-behavior/headers-parser-behavior.html">
+<link rel="import" href="../chrome-connect/chrome-connect.html">
+
+<!--
+Element to send a request via Chrome extension as a proxy.
+
+It takes ARC's request object and sends it to ARC proxy extension. It reports back
+the response by sending `response-ready` event and `report-response`.
+
+Details of the request / response events flow is described in the `request-panel`
+documentation:
+https://elements.advancedrestclient.com/elements/request-panel
+
+### Example
+
+```
+<chrome-xhr-request></chrome-xhr-request>
+```
+
+@group Logic Elements
+@element chrome-xhr-request
+-->
+<dom-module id="chrome-xhr-request">
+  <template>
+    <style>
+    :host {
+      display: none;
+    }
+    </style>
+    <chrome-connect extension-id="[[extensionId]]" on-message="_onMessage" on-connected-changed="_connectedChanged"></chrome-connect>
+  </template>
+  <script>
+  Polymer({
+    is: 'chrome-xhr-request',
+    behaviors: [ArcBehaviors.HeadersParserBehavior],
+
+    /**
+     * Fired when the response is ready to be reported. This event can be
+     * canceled.
+     * See [response-panel](https://elements.advancedrestclient.com/elements/request-panel)
+     * documentation for details.
+     * @event response-ready
+     */
+    /**
+     * Fired when the response is no longer available for any alterations and can
+     * be displayed as a result.
+     * This event is only fired when `response-ready` is not canceled.
+     * See [response-panel](https://elements.advancedrestclient.com/elements/request-panel)
+     * documentation for details.
+     * @event report-response
+     */
+    properties: {
+      /**
+       * True if the latest run request has been aborted
+       */
+      aborted: Boolean,
+      /**
+       *
+       */
+      connected: {
+        type: Boolean,
+        notify: true,
+        readOnly: true
+      },
+      /**
+       * The ID of the proxy extension to connect to.
+       */
+      extensionId: String,
+      /**
+       * A `Request` object to report with the response.
+       */
+      latestRequest: {
+        type: Request,
+        readOnly: true
+      }
+    },
+
+    _connectedChanged: function(e) {
+      this._setConnected(!!e.detail.value);
+    },
+    /**
+     * Sends the request via Chrome proxy extension.
+     *
+     * @param {Object} request ARC request object.
+     * @return {Promise} Promise resolved when the message is sent.
+     */
+    send: function(request) {
+      this.aborted = false;
+      if (!this.connected) {
+        return Promise.reject(new Error('ARC extension is not installed.'));
+      }
+
+      this._updateLatestRequest(request);
+      return this._readTimeout()
+      .then(timeout => this._prepareRequest(request, timeout))
+      .then(request => {
+        this.$$('chrome-connect').postMessage({
+          'payload': 'proxy-xhr',
+          'request': request
+        });
+      });
+    },
+    /**
+     * Aborts current request task. No response will be reported.
+     */
+    abort: function() {
+      this.aborted = true;
+    },
+    /**
+     * Reads the request timeout set in user settings of the application.
+     * The timeout is set in Chrome's sync storage as a `requestDefaultTimeout`
+     * property.
+     * @return {Promise} Promise resolved to a number of miliseconds of the
+     * timeout.
+     */
+    _readTimeout: function() {
+      return new Promise((resolve) => {
+        chrome.storage.sync.get({'requestDefaultTimeout': 0}, (r) => {
+          let t = Number(r.requestDefaultTimeout);
+          if (t !== t) {
+            t = 0;
+          }
+          let result = t * 1000; //to miliseconds.
+          this.timeout = result;
+          resolve(result);
+        });
+      });
+    },
+    /**
+     * Prepares the request object to be send with `proxy-xhr` command to the
+     * proxy extension.
+     * If `payload` contains File data it will be replaced with Base64 string
+     * representation of the file.
+     * If `payload` property contains FormData then it will be replaced with list
+     * of files transformed to Base64.
+     *
+     * @param {Object} request Original ARC request object.
+     * @param {Number} timeout Request timeout. 0 means no timeout.
+     * @return {Promise} Promise resolved when the request object is prepared to
+     * be send.
+     */
+    _prepareRequest: function(request, timeout) {
+      var init = {
+        method: request.method,
+        url: request.url,
+        headers: this.headersToJSON(request.headers),
+        timeout: timeout,
+        version: 2
+      };
+
+      if (['get', 'head'].indexOf(request.method.toLowerCase()) !== -1) {
+        delete request.payload;
+      }
+      if (request.payload === undefined) {
+        return Promise.resolve(init);
+      }
+      init.payload = request.payload;
+      var serialize = !!request.payload &&
+        (request.payload instanceof Blob || request.payload instanceof FormData);
+      if (!serialize) {
+        return Promise.resolve(init);
+      }
+      return this._serializePayload(init);
+    },
+    /**
+     * Serializes payload to a string.
+     * It removed the `payload` property from the request object.
+     * It adds `type` property to the request object describing what was the
+     * original object. It can be either `file` or `formdata`.
+     *
+     * @param {Object} request The request object.
+     * @return {Promise} Request object with transformed payload
+     */
+    _serializePayload: function(request) {
+      var data = request.payload; // either File (Blob) or Multipart
+      var promise;
+      if (data instanceof Blob) {
+        promise = this._transformFile(data)
+        .then(result => {
+          request.payload = result;
+          request.type = 'file';
+          return request;
+        });
+      } else {
+        promise = this._transformFormData(data)
+        .then(list => {
+          request.payload = list;
+          request.type = 'formdata';
+          return request;
+        });
+      }
+      return promise;
+    },
+    /**
+     * Serializes File/Blob to the Base64 string.
+     * @param {File|Blob} file A file to transform
+     * @return {Promise} Promise resolved when file is transformed
+     */
+    _transformFile: function(file) {
+      return new Promise((resolve, reject) => {
+        var fileReader = new FileReader();
+        fileReader.onload = function() {
+          let result;
+          try {
+            result = btoa(this.result);
+          } catch (e) {
+            return reject(e);
+          }
+          resolve(result);
+        };
+        fileReader.readAsArrayBuffer(file);
+      });
+    },
+    /**
+     * Transforms a FormData instance into a list of Base64 representations of
+     * files that can be transferred between extensions.
+     * @param {FormData} formData A form data object to transform
+     * @return {Promise} A promise resolved to a list of objects.
+     * Each object represent a part of the message.
+     * - name {String} Name of the part
+     * - value {String} Base64 representation of the file or string value
+     * - isFile {Boolean} If true then this is a serialized file data.
+     */
+    _transformFormData: function(formData) {
+      var promises = [];
+      for (let part of formData) {
+        let promise = this._createFileObject(part[0], part[1]);
+        promises.push(promise);
+      }
+      return Promise.all(promises);
+    },
+    /**
+     * Creates a file object representation of prt of the message.
+     * @param {String} name Name of the message part
+     * @param {File|String} value Either
+     * @return {[type]} [description]
+     */
+    _createFileObject: function(name, value) {
+      let promise;
+      if (typeof value === 'string') {
+        promise = Promise.resolve({
+          isFile: false,
+          value: value,
+          name: name
+        });
+      } else {
+        promise = this._transformFile(value)
+        .then(result => {
+          return {
+            isFile: true,
+            value: result,
+            name: name
+          };
+        });
+      }
+      return promise;
+    },
+    /**
+     * Called when the proxt extension sends a response.
+     */
+    _onMessage: function(e) {
+      if (this.aborted) {
+        this._setLatestRequest(undefined);
+        return;
+      }
+      var msg = e.detail;
+      if (!msg || !msg.payload) {
+        return;
+      }
+      if (msg.payload === 'proxy-xhr') {
+        delete msg.payload;
+        this._processResponse(msg);
+      }
+    },
+    /**
+     * Processes response form the proxy extension.
+     * @param {Object} msg Message received from the extension.
+     */
+    _processResponse: function(msg) {
+      this._logResult(msg);
+      if (msg.error) {
+        return this._reportError(msg.error);
+      }
+
+      var receiveTime = msg.response.stats && msg.response.stats.receive;
+
+      var response = this._createResponse(msg.response);
+      var detail = this._createResponseDetail(response, receiveTime, undefined, msg.auth);
+      this._beforeResponse(detail);
+    },
+    /**
+     * Creates a `Response` object to be reported with the `response-ready`
+     * custom event.
+     *
+     * @param {object} data A response details received from the extension.
+     * @return {Response} The Response object required by the `response-ready`
+     * event.
+     */
+    _createResponse: function(data) {
+      var init = {
+        status: data.status,
+        statusText: data.statusText,
+        headers: this._createHeaders(data.headers),
+      };
+      var response = new Response(data.responseText, init);
+      return response;
+    },
+
+    /**
+     * Creates the `detail` object to be send with the `response-ready` custom event.
+     * @param {Response} response The response to report.
+     * @param {Number} loadingTime Request and resopnse execution time.
+     * @param {?Error} error Error object in case of errorred response.
+     * @param {?Object} auth The `auth` object returned by the transport.
+     */
+    _createResponseDetail: function(response, loadingTime, error, auth) {
+      var detail = {
+        isXhr: true,
+        response: response,
+        request: this.latestRequest,
+        loadingTime: loadingTime
+      };
+      if (error) {
+        detail.error = error;
+      }
+      if (auth) {
+        detail.auth = auth;
+      }
+      return detail;
+    },
+    /**
+     * Fires the `response-ready` custom event and if the event is not canceled
+     * then it calls `_reportResponse()` function.
+     * @param {Object} detail The `response-ready` detail object.
+     */
+    _beforeResponse: function(detail) {
+      var event = this.fire('response-ready', detail, {
+        cancelable: true,
+        composed: true
+      });
+      if (event.defaultPrevented) {
+        return;
+      }
+      this._reportResponse(event.detail);
+    },
+    /**
+     * Fires the `response-ready` custom event with immutable response data.
+     * @param {Object} detail The event detail object.
+     */
+    _reportResponse: function(detail) {
+      detail = this._prepareTransportObject(detail);
+      this.fire('report-response', detail, {
+        cancelable: false,
+        composed: true
+      });
+    },
+
+    /**
+     * Prints logs into the console if any logs avaioable.
+     */
+    _logResult: function(resopnse) {
+      if (resopnse.log && resopnse.log.length) {
+        resopnse.log.forEach((log) => {
+          this.fire('app-log', {
+            'message': [log],
+            'level': 'info'
+          });
+          console.info(log);
+        });
+      }
+    },
+    /**
+     * Fires an error event for the response.
+     *
+     * @param {String} err Error message to be reported.
+     */
+    _reportError: function(err) {
+      var response = Response.error();
+      var error = new Error(err || 'Unknown error in connection.');
+      var detail = this._createResponseDetail(response, 0, error);
+      this._beforeResponse(detail);
+    },
+    /**
+     * Creates a Request object and sets `latestRequest` property. The property
+     * will be reported with `response-ready` custom event.
+     *
+     * @param {Object} req ARC's request object.
+     */
+    _updateLatestRequest: function(req) {
+      if (['get', 'head'].indexOf(req.method.toLowerCase()) !== -1) {
+        delete req.payload;
+      }
+
+      var init = {
+        headers: this._createHeaders(req.headers),
+        method: req.method
+      };
+      if (req.payload) {
+        init.body = req.payload;
+      }
+      var request = new Request(req.url, init);
+      this._setLatestRequest(request);
+    },
+    /**
+     * Creates a Headers instance from headers string.
+     * Because Request/Response object's won't report some headers even if they
+     * are set on the list the implementation may mmust use custom implementation
+     * of the Request, Response and the Headers objects that removes this
+     * limitation.
+     *
+     * @param {string} str HTTP headers message
+     * @return {Headers} The headers object with hessage headers.
+     */
+    _createHeaders: function(str) {
+      var headers = new Headers();
+      if (str) {
+        let headersList = this.headersToJSON(str);
+        headersList.forEach(item => headers.append(item.name, item.value));
+      }
+      return headers;
+    },
+
+    /**
+     * Creates an immutable `detail` object for the `report-response` custom
+     * event.
+     * @return {Object} Immutable object.
+     */
+    _prepareTransportObject: function(detail) {
+      var configuration = {};
+      Object.keys(detail).forEach(key => {
+        configuration[key] = {
+          value: detail[key],
+          writable: false,
+          enumerable: true
+        };
+      });
+      return Object.create(Object.prototype, configuration);
+    }
+  });
+  </script>
+</dom-module>

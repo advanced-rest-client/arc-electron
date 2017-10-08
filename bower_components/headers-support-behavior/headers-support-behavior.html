@@ -1,0 +1,246 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-scroll-target-behavior/iron-scroll-target-behavior.html">
+<link rel="import" href="../paper-dialog-behavior/paper-dialog-behavior.html">
+
+<script>
+(function() {
+'use strict';
+
+window.ArcBehaviors = window.ArcBehaviors || {};
+/**
+ * A `ArcBehaviors.FillSupportBehavior` is a base behavior for headers fill support .
+ * The behavior exposes common methods that must be implemented by
+ * elements that implements this behavior.
+ *
+ * The element must set host attribute `header-support` with lower case name
+ * of the header that the element supports. If more than one header can be
+ * supported by this element their names should be separated by space.
+ *
+ * Elements must implement `hasSupport()` and `provideSupport()` functions.
+ * The `hasSupport()` function must return boolean value for either this
+ * element can provide the support for given header name or not.
+ * The `provideSupport()` opens the dialog where the user can provide the
+ * value.
+ *
+ * Another way to lookup for the support for a header is to fire the
+ * `headers-support-lookup` custom event with `header` property added to
+ * the `detail` object. If this value equals element's `header-support` then
+ * the event is canceled (and propagation of the event is stopped), and the
+ * `detail` property contains the `provider` property with reference to this
+ * element so the application can make direct calls to element's API.
+ * When assigning the `provider` value to any variable make sure it is cleared
+ * when the element is removed from the DOM or otherwise this will cause a
+ * memory leak in the app.
+ *
+ * ### Example
+ *
+ * ```javascript
+ * var event = new CustomEvent('headers-support-lookup', {
+ *   bubbles: true,
+ *   composed: true,
+ *   detail: {
+ *     header: 'Content-Type'
+ *   }
+ * });
+ * document.dispatchEvent(event);
+ * if (event.defaultPrevented) {
+ *   var provider = event.detail.provider;
+ *   provider.provideSupport()
+ * }
+ * ```
+ *
+ * If `headers-support-requested` is fired with `header` and `value` properties
+ * set on details object then it will call `provideSupport()` function with the
+ * value of the `detail`'s `value` property.
+ *
+ * ### Example
+ *
+ * ```javascript
+ * var event = new CustomEvent('headers-support-requested', {
+ *   bubbles: true,
+ *   composed: true,
+ *   cancelable: true,
+ *   detail: {
+ *     header: 'Content-Type',
+ *     value: 'application/json'
+ *   }
+ * });
+ * document.dispatchEvent(event);
+ * if (!event.defaultPrevented) {
+ *   // There were no element that can provide support for this element.
+ * }
+ * ```
+ *
+ * Note that this event must be initialized with `cancelable` flag or otherwise
+ * the event can't be canceled.
+ *
+ * The element should call `setValue()` function to finish support and update
+ * value of the header. the implementation should listen for
+ * `iron-overlay-closed` custom event and call `setValue()` function in this
+ * callback depending if the user canceled the overlay or not.
+ *
+ * ## Styling provider dialog
+ *
+ * This element contains `headers-support-styles.html` with a definition of
+ * styles for the dialog. Use it as follows:
+ *
+ * ```html
+ * <link rel="import" href="../headers-support-behavior/headers-support-styles.html">
+ * <style include="headers-support-styles"></style>
+ *
+ * <h2>Basic authorization</h2>
+ * <div>
+ *   <paper-input value="{{value}}" label="Content Type"></paper-input>
+ * </div>
+ * <div class="buttons">
+ *   <paper-button dialog-dismiss>Cancel</paper-button>
+ *   <paper-button dialog-confirm>Accept</paper-button>
+ * </div>
+ * ```
+ *
+ * @polymerBehavior ArcBehaviors.FillSupportBehavior
+ * @group Logic Elements
+ * @demo demo/index.html
+ */
+var FillSupportBehaviorImpl = {
+
+  hostAttributes: {
+    'header-support': 'unknown'
+  },
+
+  /**
+   * Fired when the value of the header has been provided.
+   *
+   * @event request-header-changed
+   * @param {string} name Header name
+   * @param {string} value New value of the header.
+   */
+
+  properties: {
+    /**
+     * Value of the user input.
+     * Also it will be updated when provider is be opened so the implementation
+     * should support change to this property or override `provideSupport()`
+     * function.
+     */
+    value: String
+  },
+
+  attached: function() {
+    this.listen(window, 'headers-support-lookup', '_supportLookupHandler');
+    this.listen(window, 'headers-support-requested', '_supportRequestesHandler');
+  },
+
+  detached: function() {
+    this.unlisten(window, 'headers-support-lookup', '_supportLookupHandler');
+    this.unlisten(window, 'headers-support-requested', '_supportRequestesHandler');
+  },
+  /**
+   * Handler for the `headers-support-lookup` custom event.
+   * If the `header` value of the `detail` property matches `header-support`
+   * attribute then the event is canceled and event's `detail` object
+   * contains `provider` property with reference to this element.
+   */
+  _supportLookupHandler: function(e) {
+    if (this.hasSupport(e.detail.header)) {
+      if (!e.cancelable) {
+        throw new Error('The event must "cancelable" but it isn\'t.');
+      }
+      this.__cancelEvent(e);
+      e.detail.provider = this;
+    }
+  },
+  /**
+   * Handler for the `headers-support-requested` custom event.
+   * If this provider can support the header described in detail's header
+   * property it opens the dialog with value set from the `detail.value`
+   * property.
+   */
+  _supportRequestesHandler: function(e) {
+    if (this.hasSupport(e.detail.header)) {
+      this.__cancelEvent(e);
+      this.provideSupport(e.detail.value);
+    }
+  },
+
+  __cancelEvent: function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+  },
+
+  /**
+   * Funtion to be implemented by elements.
+   * Called when the user requested fill support for supported header.
+   *
+   * Implementations shoud do something with the `value` and eventually set
+   * the `value` property and set `this.opened` to true to open the dialog.
+   *
+   * @param {String} value Current value of the header.
+   */
+  provideSupport: function(value) {
+    this.value = value;
+    this.opened = true;
+  },
+  /**
+   * Determines if the support for `headerName` can be provided by this
+   * element.
+   *
+   * @param {String} headerName Name of the header to test for support.
+   * @return {Boolean} True if this element can provide support for the header
+   * or false otherwise.
+   */
+  hasSupport: function(headerName) {
+    if (!headerName) {
+      return false;
+    }
+    headerName = String(headerName).toLowerCase();
+    var provider = this.getAttribute('header-support');
+    provider = String(provider).toLowerCase();
+    if (provider === headerName) {
+      return true;
+    }
+    return false;
+  },
+  /**
+   * Should be called by the implementation when the user input is ready.
+   * Fires `request-header-changed` custom event.
+   *
+   * @param {String} value The value to set.
+   */
+  setValue: function(value) {
+    this.fire('request-header-changed', {
+      name: this.getAttribute('header-support'),
+      value: value
+    });
+    if (this.opened) {
+      this.opened = false;
+    }
+    this.fire('send-analytics', {
+      type: 'event',
+      category: 'Headers editor',
+      action: 'Fill support',
+      label: 'Set value in support dialog'
+    });
+  }
+};
+window.ArcBehaviors.FillSupportBehavior = [
+  FillSupportBehaviorImpl,
+  Polymer.PaperDialogBehavior,
+  Polymer.IronScrollTargetBehavior
+];
+})();
+</script>

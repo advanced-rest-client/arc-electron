@@ -1,0 +1,275 @@
+<!--
+@license
+Copyright 2017 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../http-method-label/http-method-label.html">
+<link rel="import" href="../openable-panel-behavior/openable-panel-behavior.html">
+<link rel="import" href="../legacyproject-related-requests/legacyproject-related-requests.html">
+<link rel="import" href="../dom-reorderer/dom-reorderer.html">
+<link rel="import" href="../paper-toast/paper-toast.html">
+<!--
+A list of requests related to a project in the ARC main menu.
+
+The element requires the `arc-models/project-model` element to be present
+in the DOM to update items order.
+
+### Example
+```
+<projects-menu-requests project-id="some-id" selected-request="id-of-selected" attr-for-opened="opened" opened></projects-menu-requests>
+```
+
+### Styling
+`<projects-menu-requests>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--projects-menu-requests` | Mixin applied to the element | `{}`
+`--projects-menu-requests-background-color` | Background color of the menu | `#f7f7f7`
+`--projects-menu-requests-selected-method-label-background-color` | Background color of the POST method label when the item is focused | `#fff`
+`--projects-menu-requests-list-item` | Mixin applied to each list item | `{}`
+`--projects-menu-requests-selected-item-background-color` | Background color of the selected list item | `#FF9800`
+`--projects-menu-requests-selected-item-color` | Color of the selected list item | `#fff`
+`--projects-menu-requests-name-label` | Mixin applied to the name label | `{}`
+`--warning-primary-color` | Main color of the warning messages | `#FF7043`
+`--warning-contrast-color` | Contrast color for the warning color | `#fff`
+`--error-toast` | Mixin applied to the error toast | `{}`
+
+@group UI Elements
+@element projects-menu-requests
+@demo demo/index.html
+-->
+<dom-module id="projects-menu-requests">
+  <template>
+    <style>
+    :host {
+      display: block;
+      background-color: var(--projects-menu-requests-background-color, #f7f7f7);
+      position: relative;
+      @apply --layout-flex;
+      @apply --layout-vertical;
+      @apply --projects-menu-requests;
+    }
+
+    paper-item {
+      @apply --arc-font-menu;
+      font-weight: 400;
+      min-height: 36px;
+      cursor: pointer;
+      z-index: 0;
+      @apply --projects-menu-requests-list-item;
+    }
+
+    paper-item.dragging {
+      z-index: 1;
+      background-color: #fff;
+    }
+
+    paper-item.iron-selected {
+      background-color: var(--projects-menu-requests-selected-item-background-color, #FF9800);
+      color: var(--projects-menu-requests-selected-item-color, #fff);
+    }
+
+    http-method-label {
+      margin-right: 8px;
+      font-size: 14px;
+    }
+
+    .iron-selected http-method-label {
+      background-color: var(--projects-menu-requests-selected-method-label-background-color, #fff);
+    }
+
+    .name {
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      font-size: 14px;
+      @apply --projects-menu-requests-name-label;
+    }
+
+    paper-progress {
+      width: calc(100% - 32px);
+      margin: 0 16px;
+      position: absolute;
+    }
+
+    .empty-message {
+      text-align: center;
+    }
+
+    .empty-info {
+      @apply --arc-font-body1;
+      font-style: italic;
+      margin: 1em 16px;
+    }
+    </style>
+    <template is="dom-if" if="[[querying]]">
+      <paper-progress indeterminate></paper-progress>
+    </template>
+    <template is="dom-if" if="[[dataUnavailable]]">
+      <div class="empty-message">
+        <p class="empty-info">This collection is empty.</p>
+      </div>
+    </template>
+    <dom-reorderer on-dom-order-changed="_onReorder">
+      <template is="dom-repeat" items="[[items]]">
+        <paper-item on-tap="_openRequest" title$="[[item.url]]" class$="[[_computeItemClass(item._id, selectedRequest)]]">
+          <http-method-label method="[[item.method]]"></http-method-label>
+          <span class="name">[[item.name]]</span>
+        </paper-item>
+      </template>
+    </div>
+    <legacyproject-related-requests querying="{{querying}}" data="{{queryItems}}"></legacyproject-related-requests>
+    <paper-toast id="reorderError" class="error-toast" text="Unable to reorder items. Please, report an issue."></paper-toast>
+  </template>
+  <script>
+    Polymer({
+      is: 'projects-menu-requests',
+      behaviors: [
+        ArcBehaviors.OpenablePanelBehavior
+      ],
+
+      properties: {
+        /**
+         * ID of the project.
+         */
+        projectId: String,
+        // True if the element currently is querying the datastore for the data
+        querying: Boolean,
+        // List of requests
+        items: Array,
+        // List of data returned from the datastore. It is a list of IDs only
+        queryItems: Array,
+        // Computed value, true if the `items` property has values.
+        hasItems: {
+          type: Boolean,
+          value: false,
+          computed: '_computeHasItems(items.length)',
+          notify: true
+        },
+        /**
+         * Computed value. True if query ended and there's no results.
+         */
+        dataUnavailable: {
+          type: Boolean,
+          computed: '_computeDataUnavailable(hasItems, querying)',
+          notify: true
+        },
+        // Currently selected request ID
+        selectedRequest: String
+      },
+
+      observers: [
+        '_queryData(projectId, _isOpened)',
+        '_queryItemsChanged(queryItems.*)'
+      ],
+
+      // Queries for the data when opened state or `projectId` changes
+      _queryData: function(projectId, _isOpened) {
+        if (!projectId || !_isOpened) {
+          return;
+        }
+        var node = this.$$('legacyproject-related-requests');
+        if (node.projectId !== projectId) {
+          node.projectId = projectId;
+        }
+      },
+      /**
+       * Computes class name for the HTML element representing a saved item.
+       */
+      _computeItemClass: function(_id, selectedRequest) {
+        if (_id && _id === selectedRequest) {
+          return 'iron-selected';
+        }
+      },
+      // Computes value for the `hasItems` property.
+      _computeHasItems: function(length) {
+        return !!(length);
+      },
+      // Computes value for the `dataUnavailable` property.
+      _computeDataUnavailable: function(hasItems, querying) {
+        return !hasItems && !querying;
+      },
+      // Items from model query changed and can be processed.
+      _queryItemsChanged: function(record) {
+        if (!record || !record.base) {
+          return;
+        }
+        var items = record.base.map(item => this._idToModel(item));
+        this.set('items', items);
+      },
+      // Transforms the `id` into the basic request model.
+      _idToModel: function(item) {
+        var parts = item.id.split('/');
+        return {
+          name: item.name,
+          _id: item.id,
+          url: decodeURIComponent(parts[1]),
+          method: parts[2]
+        };
+      },
+      // Called when the user clisk on an item in the UI
+      _openRequest: function(e) {
+        var id = e.model.get('item._id');
+        this.fire('navigate', {
+          base: 'request',
+          type: 'saved',
+          id: id
+        });
+      },
+      // Handler for the list reorder event. Updates items order in the datastore.
+      _onReorder: function() {
+        var items = this.items;
+        var update = [];
+        items.forEach((item, index) => {
+          if (item.projectOrder !== index) {
+            item.projectOrder = index;
+            update.push(item);
+          }
+        });
+
+        this._updateBulk(update)
+        .catch(() => {
+          this.$.reorderError.opened = true;
+        });
+      },
+      // Updates requests in bulk opeartion.
+      _updateBulk: function(items) {
+        var promises = items.map(item => this._updateRequest(item));
+        return Promise.all(promises);
+      },
+      /**
+       * Sends the `request-object-changed` custom event for each request on the list.
+       * @param {Object} item Request object.
+       * @return {Promise} Promise resolved when the request object is updated.
+       */
+      _updateRequest: function(item) {
+        var event = this.fire('request-object-changed', {
+          type: 'saved-requests',
+          request: item
+        }, {
+          cancelable: true,
+          composed: true
+        });
+
+        if (!event.defaultPrevented) {
+          this.fire('app-log', {
+            level: 'error',
+            messages: ['request model not found for projects menu requests']
+          });
+          return Promise.reject(new Error('Model not found'));
+        }
+        return event.detail.result;
+      }
+    });
+  </script>
+</dom-module>

@@ -1,0 +1,31 @@
+{
+  "name": "clipboard-copy",
+  "version": "0.1.4",
+  "license": "Apache-2.0 OR CC-BY-4.0",
+  "description": "An element that copies a text to clipboard",
+  "devDependencies": {
+    "bower": "^1.8.0",
+    "polymer-cli": "^1.2.0"
+  },
+  "private": false,
+  "main": [
+    "clipboard-copy.html"
+  ],
+  "author": "The Advanced REST client authors <arc@mulesoft.com>",
+  "scripts": {
+    "serve": "node_modules/.bin/polymer serve",
+    "lint": "node_modules/.bin/polymer lint clipboard-copy.html --rules polymer-1",
+    "test-sauce": "node_modules/.bin/polymer test --plugin sauce --job-name \"clipboard-copy:local-test\"",
+    "test": "node_modules/.bin/polymer test --plugin local",
+    "deps": "npm install --quiet && bower install --quiet",
+    "update-deps": "npm update --quiet && bower update --quiet"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/advanced-rest-client/clipboard-copy.git"
+  },
+  "bugs": {
+    "url": "https://github.com/advanced-rest-client/clipboard-copy/issues",
+    "email": "arc@mulesoft.com"
+  }
+}

@@ -1,0 +1,67 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../paper-dialog/paper-dialog.html">
+<link rel="import" href="../paper-dialog-scrollable/paper-dialog-scrollable.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="arc-license-content.html">
+
+<!--
+`<arc-license-dialog>` A license information dialog for ARC
+
+### Example
+```
+<arc-license-dialog></arc-license-dialog>
+```
+
+### Styling
+`<arc-license-dialog>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--arc-license-dialog` | Mixin applied to the element | `{}`
+
+@group UI Elements
+@element arc-license-dialog
+@demo demo/index.html
+-->
+<dom-module id="arc-license-dialog">
+  <template>
+    <style>
+    :host {
+      display: block;
+      @apply --arc-license-dialog;
+    }
+    </style>
+    <paper-dialog opened="{{opened}}">
+      <h2>Licensing</h2>
+      <paper-dialog-scrollable>
+        <arc-license-content></arc-license-content>
+      </paper-dialog-scrollable>
+      <div class="buttons">
+        <paper-button dialog-dismiss>Close</paper-button>
+      </div>
+    </paper-dialog>
+  </template>
+
+  <script>
+  Polymer({
+    is: 'arc-license-dialog',
+    properties: {
+      // Set to open the dialog
+      opened: Boolean
+    }
+  });
+  </script>
+</dom-module>

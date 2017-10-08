@@ -1,0 +1,101 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <title>dom-reorderer demo</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+
+  <link rel="import" href="../dom-reorderer.html">
+
+  <style is="custom-style" include="demo-pages-shared-styles">
+
+    .vertical-section-container {
+      max-width: 600px;
+    }
+
+    output {
+      display: block;
+      margin-top: 8px;
+      color: rgba(0, 0, 0, 0.54);
+    }
+  </style>
+</head>
+<body unresolved>
+  <div class="vertical-section-container centered">
+    <h3>The `dom-reorderer`</h3>
+    <demo-snippet>
+      <template is="dom-bind" id="demo1">
+        <dom-reorderer id="list">
+          <template is="dom-repeat" items="[[items]]">
+            <div>[[item]]</div>
+          </template>
+        </dom-reorderer>
+        <output id="output1"></output>
+        <script>
+          var scope = document.getElementById('demo1');
+          scope.items = ['one', 'two', 'three', 'four', 'five'];
+          document.getElementById('list').addEventListener('dom-order-changed', function(e) {
+            var output = document.getElementById('output1');
+            var d = e.detail;
+            output.innerText = d.item + ' was moved from position ' + d.from + ' to position ' + d.to;
+            console.log(d);
+          });
+        </script>
+      </template>
+    </demo-snippet>
+
+    <h3>Styled list</h3>
+    <demo-snippet>
+      <template is="dom-bind" id="demo2">
+        <dom-reorderer on-dom-order-changed="_positionChanged">
+          <template is="dom-repeat" items="[[items]]">
+            <div class="item">[[item]]</div>
+          </template>
+        </dom-reorderer>
+        <output id="output2"></output>
+        <style>
+        .item {
+          background-color: #8BC34A;
+          padding: 12px;
+          cursor: pointer;
+          border-bottom: 1px #FAFAFA solid;
+        }
+        .item.moving {
+          background-color: yellow;
+        }
+        .item.dragging {
+          background-color: green;
+          color: white;
+        }
+        </style>
+        <script>
+          var scope = document.getElementById('demo2');
+          scope.items = ['one', 'two', 'three', 'four', 'five'];
+          scope._positionChanged = function(e) {
+            var output = document.getElementById('output2');
+            var d = e.detail;
+            output.innerText = d.item + ' was moved from position ' + d.from + ' to position ' + d.to;
+            console.log(d);
+          };
+        </script>
+      </template>
+    </demo-snippet>
+  </div>
+</body>
+</html>

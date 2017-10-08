@@ -1,0 +1,79 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../headers-support-behavior/headers-support-behavior.html">
+<link rel="import" href="../headers-support-behavior/headers-support-styles.html">
+<link rel="import" href="../content-type-selector/content-type-selector.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<!--
+`<headers-support-authorization>` is an element that provides headers fill
+support for authorization header.
+
+Currently it supports basic authorization only.
+
+### Example
+```
+<headers-support-authorization></headers-support-authorization>
+```
+
+### Styling
+Check `ArcBehaviors.FillSupportBehavior` for styling options.
+
+@group UI Elements
+@element headers-support-content-type
+@demo demo/index.html
+-->
+<dom-module id="headers-support-content-type">
+  <template>
+    <style include="headers-support-styles"></style>
+    <h2>Content type</h2>
+    <div>
+      <content-type-selector content-type="{{value}}"></content-type-selector>
+    </div>
+    <div class="buttons">
+      <paper-button dialog-dismiss>Cancel</paper-button>
+      <paper-button dialog-confirm>Accept</paper-button>
+    </div>
+  </template>
+  <script>
+  Polymer({
+    is: 'headers-support-content-type',
+
+    behaviors: [ArcBehaviors.FillSupportBehavior],
+
+    hostAttributes: {
+      'header-support': 'content-type'
+    },
+
+    listeners: {
+      'iron-overlay-closed': '_onClosed',
+      'content-type-changed': '_onContentTypeChanged'
+    },
+
+    _onClosed: function(e) {
+      if (e.detail.canceled || !e.detail.confirmed) {
+        return;
+      }
+      this.setValue(this.value);
+    },
+
+    _onContentTypeChanged: function(e) {
+      // Don't want to this event to get out from this element.
+      e.preventDefault();
+      e.stopPropagation();
+      this.value = e.detail.value;
+    }
+  });
+  </script>
+</dom-module>

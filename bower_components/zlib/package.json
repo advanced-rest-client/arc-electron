@@ -1,0 +1,30 @@
+{
+  "author": {
+    "name": "Yuta Imaya"
+  },
+  "contributors": {
+    "name": "Yuta Imaya",
+    "email": "imaya.devel@gmail.com"
+  },
+  "name": "zlibjs",
+  "description": "zlib, gzip and zip implementation in JavaScript",
+  "version": "0.2.0",
+  "main": "./bin/node-zlib.js",
+  "homepage": "https://github.com/imaya/zlib.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/imaya/zlib.js.git"
+  },
+  "dependencies" : {
+  },
+  "devDependencies": {
+    "buster" : ">=0.7.4"
+  },
+  "optionalDependencies": {},
+  "engines": {
+    "node": "*"
+  },
+  "scripts" : {
+    "test" : "node_modules/.bin/buster-test"
+  }
+}

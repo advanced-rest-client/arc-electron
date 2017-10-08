@@ -1,0 +1,393 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../../polymer/polymer.html">
+<!--
+The API Console main stylesheet.
+It is a Polymer's custom style element. It will propagate variables and mixins on all elements;
+-->
+<style is="custom-style">
+
+:root {
+  --primary-color: var(--arc-color-primary, #00a2df);
+  --secondary-color: var(--arc-color-secondary, #506773);
+  --primary-background-color: var(--arc-color-primary-background, #fff);
+  --accent-color: var(--arc-accent-color, #cc143c);
+
+  /* THEME */
+  --arc-font-common-base: {
+    font-family: var(--arc-font-family, 'Roboto', 'Noto', sans-serif);
+    -webkit-font-smoothing: antialiased;
+  };
+
+  --arc-font-common-code: {
+    font-family: var(--arc-font-family-code, 'Roboto Mono', 'Consolas', 'Menlo', monospace);
+    -webkit-font-smoothing: antialiased;
+  };
+
+  --arc-font-common-expensive-kerning: {
+    text-rendering: optimizeLegibility;
+  };
+
+  --arc-font-common-nowrap: {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  };
+
+  --arc-font-display1: {
+    @apply(--arc-font-common-base);
+
+    font-size: 34px;
+    font-weight: 400;
+    letter-spacing: -.01em;
+    line-height: 40px;
+  };
+
+  --arc-font-headline: {
+    @apply(--arc-font-common-base);
+
+    font-weight: 400;
+    letter-spacing: -.012em;
+    font-size: 24px;
+    line-height: 32px;
+  };
+
+  --arc-font-title: {
+    @apply(--arc-font-common-base);
+    @apply(--arc-font-common-nowrap);
+
+    font-weight: 500;
+    font-size: 20px;
+    line-height: 28px;
+  };
+
+  --arc-font-subhead: {
+    @apply(--arc-font-common-base);
+
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 24px;
+  };
+
+  --arc-font-body2: {
+    @apply(--arc-font-common-base);
+
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 24px;
+  };
+
+  --arc-font-body1: {
+    @apply(--arc-font-common-base);
+
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 20px;
+  };
+
+  --arc-font-caption: {
+    @apply(--arc-font-common-base);
+    @apply(--arc-font-common-nowrap);
+
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0.011em;
+    line-height: 20px;
+  };
+
+  --select-text: {
+    @apply(--arc-font-common-base);
+    -webkit-user-select: text;
+    cursor: text;
+  };
+
+  --arc-link: {
+    @apply(--arc-font-common-base);
+    color: var(--arc-link-color, #00A1DF);
+  };
+
+  --arc-font-code1: {
+    @apply(--arc-font-common-code);
+
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+  };
+
+  /* Mixin applied to all the "missing info" paragraphs. By deafult all elements this kind are the <p> elements. But it may vary. */
+  --no-info-message: {
+    @apply(--arc-font-body1);
+    font-style: italic;
+  };
+
+    /* Mixin applied to all labels that are form elements */
+  --form-label: {
+    font-weight: 500;
+  };
+
+  --input-line-color:  var(--primary-color);
+
+    /* Mixin applied to all code blocks that highlights schemas / types / etc. All code block uses the `prism-theme-default`. */
+  --code-block: {
+    @apply(--arc-font-common-code);
+  };
+
+  --arc-code-mirror-background-color: var(--code-mirror-background-color, #f5f2f0);
+
+  --code-mirror: {
+    background-color: var(--arc-code-mirror-background-color, #f5f2f0);
+  };
+
+  --code-mirror-editor: {
+    background-color: var(--arc-code-mirror-background-color, #f5f2f0);
+    z-index: 0;
+    display: block;
+  }
+
+  --code-mirror-wrapper: {
+    display: block;
+    height: 100%;
+  };
+
+  --paper-toolbar-background: var(--arc-toolbar-background, #121314);
+
+  --paper-toolbar-title: {
+    margin-left: 0px;
+  };
+
+    /* Paper tabs styling */
+  --paper-tabs-selection-bar-color: var(--arc-tabs-selection-bar-color, --primary-color);
+  --paper-tab-ink: var(--arc-tab-ink-color, --primary-color);
+  --tabs-selection-width: var(--arc-tabs-selection-width, 2px);
+
+  --paper-tabs-selection-bar: {
+    border-width: var(--tabs-selection-width);
+    border-color: var(--arc-tabs-selection-bar-border-color, --primary-color);
+  };
+
+  --paper-tabs-content: {
+    @apply(--arc-font-common-base);
+
+    height: calc(100% - var(--tabs-selection-width));
+    border-bottom: var(--tabs-selection-width) solid var(--arc-tabs-content-border-bottom-color, rgba(39,47,51,.1));
+    font-style: normal;
+    color: var(--arc-tabs-content-selected-color, rgba(0,0,0,0.87));
+  };
+
+  --paper-tab-content-unselected: {
+    color: var(--arc-tabs-content-color, rgba(0,0,0,0.78));
+  };
+
+    /* Documentaion */
+  --raml-docs-main-content: {
+    margin-bottom: var(--raml-docs-main-content-margin-bottom, 20px);
+  };
+
+    /* Inputs */
+  --paper-input-container-color: var(--arc-input-container-color, rgba(0, 0, 0, 0.24));
+    /* Inline docs */
+  --inline-docs-color: var(--arc-inline-docs-color, rgba(0, 0, 0, 0.32));
+  --raml-request-parameters-editor-docs-color: var(--inline-docs-color);
+  --raml-headers-form-docs-color: var(--inline-docs-color);
+
+  --raml-request-parameters-editor-subheader: {
+    @apply(--arc-font-subhead);
+    @apply(--arc-request-parameters-editor-subheader);
+  };
+
+  /*Table*/
+    /* PATH selector */
+  --raml-docs-tree-item-selected-background: var(--arc-navigation-selected-background-color, rgb(3, 169, 244));
+  --raml-docs-tree-item-selected-color: var(--arc-navigation-selected-color, #fff);
+
+    /* Request panel */
+  --raml-request-panel: {
+    margin-bottom: 20px;
+    max-width: 900px;
+    margin-left: 16px;
+    margin-right: 12px;
+    @apply(--arc-request-panel);
+  };
+
+  --response-view: {
+    margin-bottom: 20px;
+    max-width: 900px;
+    margin-left: 16px;
+    margin-right: 12px;
+    @apply(--arc-response-view);
+  };
+
+  --request-form-panels: {
+    margin: 0 0 12px 16px;
+    @apply(--arc-request-form-panels);
+  };
+
+  --raml-request-url-editor: {
+    @apply(--request-form-panels);
+    @apply(--arc-request-url-editor);
+  };
+
+  --raml-request-parameters-editor: {
+    @apply(--request-form-panels);
+    @apply(--arc-request-parameters-editor);
+  };
+
+  --raml-body-editor-panel: {
+    @apply(--request-form-panels);
+    @apply(--arc-body-editor-panel);
+  };
+
+  --raml-docs-response-panel: {
+    @apply(--arc-docs-response-panel);
+  };
+
+  --raml-docs-method-viewer: {
+    margin-right: 12px;
+    @apply(--arc-docs-method-viewer);
+  };
+
+  --raml-request-headers-editor: {
+    @apply(--request-form-panels);
+    @apply(--arc-request-headers-editor);
+  };
+
+  --authorization-panel: {
+    @apply(--request-form-panels);
+    @apply(--arc-authorization-panel);
+  };
+
+  --raml-documentation-panel: {
+    padding: 0;
+    @apply(--request-form-panels);
+    @apply(--arc-documentation-panel);
+  };
+
+  --raml-summary-view: {
+    @apply(--request-form-panels);
+    margin-right: var(--arc-summary-view-margin-right, 12px);
+    @apply(--arc-summary-view);
+  };
+
+  --raml-path-selector: {
+    overflow: auto;
+    background-color: transparent;
+    @apply(--layout-flex);
+    @apply(--arc-navigation);
+  };
+
+  --raml-docs-response-panel-docs-content: {
+    padding: 8px;
+    margin-left: 0px;
+    @apply(--arc-docs-response-panel-docs-content);
+  };
+
+  /* Documentation panels */
+  --params-table-header-background-color: var(--arc-params-table-header-background-color, #616161);
+  --params-table-subheader-background-color: var(--arc-params-table-subheader-background-color, #EEEEEE);
+  --params-table-row-border-color: var(--arc-params-table-row-border-color, #e0e0e0);
+  --params-table-row-subproperty-border-color: var(--arc-params-table-subproperty-border-color, #e0e0e0);
+  --params-table-header-color: var(--arc-params-table-header-color, #FAFAFA);
+
+  --inline-documentation-color: var(--arc-inline-documentation-color, #1a237e);
+  --raml-headers-form-docs-color: var(--arc-headers-form-docs-color, #1a237e);
+
+  --response-error-view: {
+    margin-top: var(--response-error-view-margin-top, 24px);
+    @apply(--arc-response-error-view);
+  };
+
+  --code-type-text-value-color: #0d47a1;
+  --code-type-number-value-color: #03a9f4;
+  --code-type-boolean-value-color: #0288d1;
+  --code-type-null-value-color: #0288d1;
+  --code-punctuation-value-color: #757575;
+  --code-type-link-color: #757575;
+  --code-array-index-color: rgba(1, 87, 155, 0.57);
+  --code-background-color: #F4F5F6;
+
+  /* max width of the documentation main panel */
+  --raml-docs-main-content-width: 1200px;
+
+  --paper-checkbox-label: {
+    @apply(--arc-font-body1);
+    @apply(--arc-checkbox-label);
+  };
+
+  /* Label of the Type name in the body parameters list view */
+  --docs-body-parameters-table-type-name: {
+    @apply(--arc-font-common-base);
+    font-size: 16px;
+    font-weight: 100;
+    margin: 0;
+    padding: 0;
+    @apply(--arc-parameters-type-name);
+  };
+
+  /* Applied to links in RAML docs */
+  --raml-docs-link: {
+    @apply(--arc-font-body1);
+    @apply(--arc-link);
+  };
+
+  /* buttons */
+  --paper-button: {
+    @apply(--arc-font-common-base);
+    font-size: var(--arc-button-font-size, 14px);
+    @apply(--arc-button);
+  };
+
+  --toggle-button: {
+    @apply(--arc-font-body1);
+    color: var(--arc-toggle-button-color, #6B8A99);
+    margin-right: 0;
+    font-weight: normal;
+    @apply(--arc-toggle-button);
+  };
+
+  --toggle-button-hover: {
+    @apply(--arc-toggle-button-hover);
+  };
+
+  --action-button: {
+    background-color: var(--arc-action-button-background-color, --primary-color);
+    color: var(--primary-action-color, #fff);
+  };
+
+  --action-button-hover: {
+    background-color: var(--arc-action-button-background-color, --primary-color);
+    color: var(--primary-action-color, #fff);
+  };
+
+  --auth-button: {
+    @apply(--arc-font-body1);
+    background-color: var(--arc-auth-button-background-color, #D1344E);
+    color: var(--arc-auth-button-color, #fff);
+    @apply(--arc-auth-button);
+  };
+
+  --raml-docs-resource-viewer-navigation-wide-layout: {
+    background-color: var(--arc-resource-viewer-navigation-wide-layout-background-color, #F4F5F6);
+    margin: 0;
+    border-left: 0;
+    @apply(--arc-resource-viewer-navigation-wide-layout);
+  };
+
+  --sidebar-list-link: {
+    @apply(--arc-font-body1);
+    padding: 10px 12px;
+    @apply(--arc-link);
+  };
+}
+
+</style>

@@ -1,0 +1,150 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="data-transformer-behavior.html">
+<!--
+An element to transform data expored in PouchDB system into ready import object.
+-->
+<script>
+  Polymer({
+    is: 'pouch-data-tranformer',
+
+    behaviors: [ArcBehaviors.ImportDataTransformerBehavior],
+
+    transform: function(data) {
+      if (data.projects && data.projects.length) {
+        data.projects = this._transformProjects(data.projects);
+      }
+      if (data.requests && data.requests.length) {
+        data.requests = this._transformRequests(data.requests, data.projects);
+      }
+      if (data.history && data.history.length) {
+        data.history = this._transformHistory(data.history);
+      }
+      var socketUrls = data['websocket-url-history'];
+      if (socketUrls && socketUrls.length) {
+        data['websocket-url-history'] = this._tranformSimpleObject(socketUrls);
+      }
+      var urls = data['url-history'];
+      if (urls && urls.length) {
+        data['url-history'] = this._tranformSimpleObject(urls);
+      }
+      if (data.variables && data.variables.length) {
+        data.variables = this._tranformSimpleObject(data.variables);
+      }
+      var headersSets = data['headers-sets'];
+      if (headersSets && headersSets.length) {
+        data['headers-sets'] = this._tranformHeadersSets(headersSets);
+      }
+      var authData = data['auth-data'];
+      if (authData && authData.length) {
+        data['auth-data'] = this._tranformSimpleObject(authData);
+      }
+      if (data.cookies && data.cookies.length) {
+        data.cookies = this._tranformSimpleObject(data.cookies);
+      }
+      data.kind = 'ARC#Import';
+      return Promise.resolve(data);
+    },
+
+    _updateItemTimings: function(item) {
+      if (!item.created) {
+        if (item.updated) {
+          item.created = item.updated;
+        } else {
+          item.created = Date.now();
+        }
+      }
+      item.updated = Date.now();
+      return item;
+    },
+
+    // Replaces `_referenceId` with `_id`
+    _transformProjects: function(projects) {
+      return projects.map(project => {
+        if (project._referenceId) {
+          project._id = project._referenceId;
+          delete project._referenceId;
+        }
+        project = this._updateItemTimings(project);
+        delete project.kind;
+        return project;
+      });
+    },
+
+    _transformRequests: function(requests, projects) {
+      projects = projects || [];
+      return requests.map(request => {
+        let refId = request._referenceLegacyProject;
+        if (refId) {
+          delete request._referenceLegacyProject;
+          let project = projects.find(item => item._id === refId);
+          if (project) {
+            request.legacyProject = refId;
+          }
+        }
+        delete request.kind;
+        request.name = request.name || 'unnamed';
+        request.url = request.url || 'http://';
+        request.method = request.method || 'GET';
+        request.headers = request.headers || '';
+        request.payload = request.payload || '';
+
+        if (!request._id) {
+          request._id = this.generateRequestId(request, request.legacyProject);
+        }
+        request = this._updateItemTimings(request);
+        return request;
+      });
+    },
+
+    _transformHistory: function(history) {
+      return history.map(item => {
+        item = this._updateItemTimings(item);
+        item.url = item.url || 'http://';
+        item.method = item.method || 'GET';
+        item.headers = item.headers || '';
+        item.payload = item.payload || '';
+        delete item.kind;
+        if (!item._id) {
+          item._id = this.generateHistoryId(item.created, item);
+        }
+        return item;
+      });
+    },
+
+    _tranformSimpleObject: function(items) {
+      return items.map(item => {
+        if (item.key && !item._id) {
+          item._id = item.key;
+          delete item.key;
+        } else if (!item._id) {
+          item._id = this.uuid();
+        }
+        delete item.kind;
+        return item;
+      });
+    },
+
+    _tranformHeadersSets: function(items) {
+      return items.map(item => {
+        item = this._updateItemTimings(item);
+        item._id = this.uuid();
+        delete item.kind;
+        return item;
+      });
+    },
+
+  });
+</script>

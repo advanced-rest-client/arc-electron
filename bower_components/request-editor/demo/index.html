@@ -1,0 +1,116 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <title>request-editor demo</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+  <link rel="import" href="../../variables-evaluator/variables-evaluator.html">
+  <link rel="import" href="../../variables-manager/variables-manager.html">
+  <!-- <link rel="import" href="../../oauth-authorization/oauth2-authorization.html"> -->
+  <link rel="import" href="../../url-history-saver/url-history-saver.html">
+  <link rel="import" href="../../paper-toast/paper-toast.html">
+  <link rel="import" href="../request-editor.html">
+  <link rel="import" href="api-console-styles.html">
+
+  <style is="custom-style" include="demo-pages-shared-styles">
+
+    .vertical-section-container {
+      max-width: 1100px;
+      background-color: #fff;
+      padding: 40px;
+      box-sizing: border-box;
+      margin-bottom: 40px;
+    }
+
+    output code {
+      white-space: pre-wrap;
+      display: block;
+      background-color: #FBE9E7;
+      padding: 4px 8px;
+    }
+
+  </style>
+</head>
+<body unresolved>
+  <template is="dom-bind">
+    <div class="vertical-section-container centered">
+      <request-editor url="{{url}}" method="{{method}}" headers="{{headers}}" payload="{{body}}" content-type="{{contentType}}" is-payload="{{isPayload}}" xhr-extension></request-editor>
+    </div>
+
+    <div class="vertical-section-container centered">
+      <h4>Result</h4>
+      <output>
+        <h5>URL</h5>
+        <code>[[url]]</code>
+        <h5>Method</h5>
+        <code>[[method]]</code>
+        <h5>Headers</h5>
+        <code>[[headers]]</code>
+        <template is="dom-if" if="[[isPayload]]">
+          <h5>Body</h5>
+          <code>[[body]]</code>
+        </template>
+        <template is="dom-if" if="[[contentType]]">
+          <h5>Used content type</h5>
+          <code>[[contentType]]</code>
+        </template>
+      </output>
+    </div>
+
+    <h4>Additional elements used with this demo page</h4>
+    <ul>
+      <li><a href="https://github.com/advanced-rest-client/variables-evaluator">variables-evaluator</a></li>
+      <li><a href="https://github.com/advanced-rest-client/variables-manager">variables-manager</a></li>
+      <li><a href="https://github.com/advanced-rest-client/url-history-saver">url-history-saver</a></li>
+      <!-- <li><a href="https://github.com/advanced-rest-client/oauth-authorization">oauth-authorization</a></li> -->
+    </ul>
+    <variables-evaluator></variables-evaluator>
+    <variables-manager></variables-manager>
+    <!-- <oauth2-authorization></oauth2-authorization> -->
+    <url-history-saver></url-history-saver>
+  </template>
+  <paper-toast id="requestSend" text="Request send event detected"></paper-toast>
+  <paper-toast id="requestAbort" text="Request abort event detected"></paper-toast>
+  <paper-toast id="clearToast" text="Clear request state detected"></paper-toast>
+  <paper-toast id="saveToast" text="Save request state detected"></paper-toast>
+  <paper-toast id="xhrToast" text="Toggle XHR request state changed"></paper-toast>
+  <script>
+  function openToast(id) {
+    document.getElementById(id).opened = true;
+  }
+  window.addEventListener('send-request', function() {
+    openToast('requestSend');
+    document.querySelector('request-editor').loadingRequest = true;
+  });
+  window.addEventListener('abort-request', function() {
+    openToast('requestAbort');
+    document.querySelector('request-editor').loadingRequest = false;
+  });
+  window.addEventListener('request-clear-state', function() {
+    openToast('clearToast');
+  });
+  window.addEventListener('request-save-state', function() {
+    openToast('saveToast');
+  });
+  window.addEventListener('request-use-xhr-changed', function() {
+    openToast('xhrToast');
+  });
+  </script>
+</body>
+</html>

@@ -1,0 +1,264 @@
+<!--
+@license
+Copyright 2017 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../paper-styles/shadow.html">
+<link rel="import" href="../arc-icons/arc-icons.html">
+<link rel="import" href="../paper-ripple/paper-ripple.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../paper-toast/paper-toast.html">
+<!--
+Data export method selector view for the export module.
+
+Provides the UI to select data export destination. It can be used to select
+export method for any kind of data.
+
+It uses event's API to communicate with export providers.
+Currently it supports file and Google Drive export. See events documentation
+section for more information.
+
+TODO: Create an event API that queries the elements for data export providers.
+This way it would create a dynamic list of providers without modifying the element
+each time a new provider is added to the application. It would allow to
+dynamically load export providers.
+
+### Example
+```
+<export-target-selector on-exported="_exportedData"></export-target-selector>
+```
+
+### Styling
+`<export-target-selector>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--export-target-selector` | Mixin applied to the element | `{}`
+`--export-target-selector-card` | Mixin applied to the material card element | `{}`
+`--export-target-selector-icon` | Mixin applied to the icon inside the card | `{}`
+`--export-target-selector-label` | Mixin applied to the card's label | `{}`
+`--error-toast` | Mixin applied to the error toast message | `{}`
+`--warning-primary-color` | Error toast background color | `#FF7043`
+`--warning-contrast-color` | Error toast color | `#fff`
+
+@group UI Elements
+@element export-target-selector
+@demo demo/index.html
+-->
+<dom-module id="export-target-selector">
+  <template>
+    <style>
+    :host {
+      display: block;
+      @apply --arc-font-body1;
+      @apply --layout-horizontal;
+      @apply --layout-center;
+      @apply --layout-wrap;
+      color: var(--export-target-selector-color, rgba(0, 0, 0, 0.74));
+      @apply --export-target-selector;
+    }
+
+    .card {
+      @apply --shadow-elevation-2dp;
+      @apply --layout-vertical;
+      @apply --layout-center;
+      position: relative;
+      padding: 16px;
+      width: 160px;
+      height: 160px;
+      margin: 20px;
+      cursor: pointer;
+
+      @apply --export-target-selector-card;
+    }
+
+    iron-icon {
+      width: 72px;
+      height: 72px;
+      margin-top: 32px;
+      color: rgba(0, 0, 0, 0.54);
+
+      @apply --export-target-selector-icon;
+    }
+
+    label {
+      @apply --arc-font-body1;
+      font-size: 15px;
+      color: var(--primary-color);
+      margin-top: 24px;
+      @apply --export-target-selector-label;
+    }
+
+    .error-toast {
+      background-color: var(--warning-primary-color, #FF7043);
+      color: var(--warning-contrast-color, #fff);
+      @apply --error-toast;
+    }
+    </style>
+    <template is="dom-repeat" items="[[_providers]]" id="list">
+      <div class="card">
+        <paper-ripple></paper-ripple>
+        <iron-icon icon="[[item.icon]]"></iron-icon>
+        <label>[[item.label]]</label>
+      </div>
+    </template>
+    <paper-toast class="error-toast" text="Unknown export method" id="unknownProvider"></paper-toast>
+    <paper-toast class="error-toast" text="File export provider not found in the application. Report an issue." id="noFile"></paper-toast>
+    <paper-toast class="error-toast" text="Google Drive export provider not found in the application. Report an issue." id="noDrive"></paper-toast>
+  </template>
+  <script>
+    Polymer({
+      is: 'export-target-selector',
+
+      properties: {
+        // Data to export
+        data: Object,
+
+        // Data content type
+        contentType: String,
+
+        // Suggested file name for the exported data.
+        fileName: String,
+
+        // List of available providers
+        _providers: {
+          type: Array,
+          readOnly: true,
+          value: function() {
+            return [{
+              label: 'Download file',
+              icon: 'arc:file-download',
+              provider: 'file-provider'
+            }, {
+              label: 'Save to Drive',
+              icon: 'arc:drive-color',
+              provider: 'google-drive-provider'
+            }];
+          }
+        }
+      },
+
+      listeners: {
+        tap: '_onTap'
+      },
+
+      _onTap: function(e) {
+        var model = this.$.list.modelForElement(Polymer.dom(e).path[0]);
+        if (!model) {
+          return;
+        }
+        var provider = model.get('item.provider');
+        this.exportTo(provider);
+      },
+      /**
+       * Exports the data to selected provider.
+       *
+       * @param {String} provider A provider name to use. See `_providers`.
+       */
+      exportTo: function(provider) {
+        switch (provider) {
+          case 'file-provider': this.exportFile(); break;
+          case 'google-drive-provider': this.exportDrive(); break;
+          default:
+            this.$.unknownProvider.opened = true;
+        }
+      },
+      // Fires the `export-data` event with the data
+      exportFile: function() {
+        var event = this.fire('export-data', {
+          data: this.data,
+          type: this.contentType,
+          file: this.fileName
+        }, {
+          cancelable: true
+        });
+        if (!event.defaultPrevented) {
+          this.$.noFile.opened = true;
+          this.fire('app-log', {
+            'message': ['export>provider: no file provider'],
+            'level': 'error'
+          });
+          this.fire('send-analytics', {
+            type: 'exception',
+            description: 'Export data: no file provider',
+            fatal: true
+          });
+          return;
+        }
+
+        event.detail.result.then(() => {
+          this._onEnd();
+        });
+      },
+      // Dispatches `google-drive-data-save` cutom event with the data
+      exportDrive: function() {
+        var event = this.fire('google-drive-data-save', {
+          content: this.data,
+          contentType: this.contentType,
+          file: this.fileName
+        }, {
+          cancelable: true
+        });
+        if (!event.defaultPrevented) {
+          this.$.noDrive.opened = true;
+          this.fire('app-log', {
+            'message': ['export>provider: no drive provider'],
+            'level': 'error'
+          });
+          this.fire('send-analytics', {
+            type: 'exception',
+            description: 'Export data: no drive provider',
+            fatal: true
+          });
+          return;
+        }
+
+        event.detail.result.then(() => {
+          this._onEnd();
+        });
+      },
+      // Fires the `exported` event when data were saved.
+      _onEnd: function() {
+        this.fire('exported', {}, {
+          bubbles: false
+        });
+      }
+
+      /**
+       * Fired when the data were saved
+       *
+       * The event is not bubbling.
+       *
+       * @event exported
+       */
+      /**
+       * Fired when Drive export was requested by the user.
+       * The event is cancellable and must be canceled to indicate that it has
+       * been handled by the provider.
+       *
+       * @event google-drive-data-save
+       * @param {Object} content Data to export. The `data` property
+       * @param {String} contentType Data's content type
+       * @param {String} file Drive file name to use.
+       */
+      /**
+       *
+       *
+       * @event export-data
+       * @param {Object} data Data to export. The `data` property
+       * @param {String} type Data's content type
+       * @param {String} file Suggested file name to use.
+       */
+    });
+  </script>
+</dom-module>

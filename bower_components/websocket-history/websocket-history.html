@@ -1,0 +1,91 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../paper-item/paper-item.html">
+<link rel="import" href="../paper-item/paper-item-body.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../date-time/date-time.html">
+<!--
+A web socket connections history view for ARC.
+
+### Example
+```
+<websocket-history items="[...]"></websocket-history>
+```
+
+### Styling
+`<websocket-history>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--websocket-history` | Mixin applied to the element | `{}`
+`--arc-font-subhead` | Mixin applied to the element's title | `{}`
+`--websocket-history-date-time` | Mixin applied to the `date-time` element | `{}`
+
+@group UI Elements
+@element websocket-history
+@demo demo/index.html
+-->
+<dom-module id="websocket-history">
+  <template>
+    <style>
+    :host {
+      display: block;
+      @apply --websocket-history;
+    }
+
+    h3 {
+      @apply --arc-font-subhead;
+    }
+
+    date-time {
+      font-size: 14px;
+      color: rgba(0, 0, 0, 0.54);
+      margin-right: 12px;
+      @apply --websocket-history-date-time;
+    }
+    </style>
+    <h3>Prevoius connections</h3>
+    <template is="dom-repeat" items="[[items]]">
+      <paper-item>
+        <paper-item-body>
+          <span><date-time date="[[item.time]]"></date-time>[[item._id]]</span>
+        </paper-item-body>
+        <paper-button on-tap="_openUrl">connect</paper-button>
+      </paper-item>
+    </template>
+  </template>
+  <script>
+  Polymer({
+    is: 'websocket-history',
+    /**
+     * Fired when the user requested to conenct to a socket.
+     *
+     * @event socket-url-changed
+     * @param {string} value The URL of the socket.
+     */
+    properties: {
+      // List of history items to render
+      items: Array,
+    },
+    // Called when the user click on the `connect` button
+    _openUrl: function(e) {
+      var url = e.model.get('item._id');
+      this.fire('socket-url-changed', {
+        value: url
+      });
+    }
+  });
+  </script>
+</dom-module>

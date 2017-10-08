@@ -1,0 +1,245 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="app-pouchdb-collate-import.html">
+
+<!--
+`<app-pouchdb-collate>` A component that support a pouchdb-collate plugin
+
+Basically it creates an primary indexd (the `id` property of the object)
+that can be queried.
+
+From plugin's documentation page (https://github.com/pouchdb/collate/):
+
+> if you want to sort your documents by many properties in an array, you can do e.g.:
+```javascript
+var myDoc = {
+  firstName: 'Scrooge',
+  lastName: 'McDuck',
+  age: 67,
+  male: true
+};
+// sort by age, then gender, then last name, then first name
+myDoc._id = pouchCollate.toIndexableString(
+  [myDoc.age, myDoc.male, mydoc.lastName, mydoc.firstName]);
+```
+> The doc ID will be:
+```
+'5323256.70000000000000017764\u000021\u00004McDuck\u00004Scrooge\u0000\u0000'
+```
+Then it will be possible to get sorted documents much faster.
+
+### Example
+Equivalent of the example above is following:
+```html
+<app-pouchdb-collate
+  sort='["age","male","lastName","firstName"]'
+  doc="{{doc}}">
+</app-pouchdb-collate>
+```
+When the `doc` changes (the whole object, not a subpropery) and the `_id` is
+not set then it will set the `_id` on the `doc` automatically.
+
+You can also call a `getId()` function to generate an `_id`:
+```javascript
+let _id = this.$.collate.getId(doc)
+```
+Or if the `doc` attribute is set you can call this function without argument:
+```javascript
+let _id = this.$.collate.getId();
+```
+
+The key can be decoded using the `fromKey(_id)` function. It will return
+an array of values encoded in the keys. Order of elements in the array is the
+same as an order in the `sort` array during encoding.
+
+Finally event based API allows to put a single element in the document and
+communicate with it using HTML events. `<app-pouchdb-collate>` will handle
+the `app-pouchdb-collate-index` event and in result set the `_id` propery to the
+event's details object. The event is required to contain a `sort` and `doc`
+properties on the event's detail object. If it's not present then the element
+will try to use values defined in the element's attributes. If they are not
+set then it will return `null` `_id`'s value.
+
+### Event based example
+Somewhere in the document:
+```javascript
+let event = this.$.fire('app-pouchdb-collate-index', {
+  'doc': this.doc,
+  'sort': ['age', 'male', 'lastName', 'firstName']
+});
+assert.isString(event.detail._id);
+```
+Note: The event based API won't change the `doc` object. You have to set the
+`_id` value on the doc. This is because of data binding system and changing
+the object in the event may not cause the change listeners to go off.
+
+Pure JavaScript example of above:
+```javascript
+var event = new CustomEvent('app-pouchdb-collate-index', {
+  detail: {
+    'doc': this.doc,
+    'sort': ['age', 'male', 'lastName', 'firstName']
+  }
+});
+document.dispatchEvent(event);
+assert.isString(event.detail._id);
+```
+
+To decode key fire an `app-pouchdb-collate-decode` event with the `_id`
+property in it's detail object. As a result the `detail` object will contain
+`result` property with the array of values.
+
+The event handled by the element will be canceled and prevented from bubbling.
+
+### Empty values
+If the key for `sort` array is not present in the `doc` object it will be
+transformed into `null` but never dropped. In this case PouchDB will treat it
+as an empty value. Query like `lastName $exists true` will omit the value
+if `lastName` was no set.
+
+@group Logic Elements
+@element app-pouchdb-collate
+@demo demo/index.html
+-->
+<script>
+Polymer({
+  is: 'app-pouchdb-collate',
+  properties: {
+    // The PouchDB document
+    doc: {
+      type: Object,
+      notify: true
+    },
+    // List of fields. Order determine sort order in the database.
+    sort: Array
+  },
+
+  observers: [
+    '_computeId(doc.*, sort.*)'
+  ],
+
+  attached: function() {
+    this._eventTarget = Polymer.dom(this).host || document;
+    this.listen(this._eventTarget, 'app-pouchdb-collate-index',
+      '_handleIndex');
+    this.listen(this._eventTarget, 'app-pouchdb-collate-decode',
+      '_handleDecode');
+  },
+
+  detached: function() {
+    this.unlisten(this._eventTarget, 'app-pouchdb-collate-index',
+      '_handleIndex');
+    this.unlisten(this._eventTarget, 'app-pouchdb-collate-decode',
+      '_handleDecode');
+  },
+  // Handler for the `app-pouchdb-collate-index` event
+  _handleIndex: function(e) {
+    e.stopImmediatePropagation();
+    e.stopPropagation();
+    e.detail._id = this.getId(e.detail.doc, e.detail.sort);
+  },
+  // Handler for the `app-pouchdb-collate-decode` event
+  _handleDecode: function(e) {
+    e.stopImmediatePropagation();
+    e.stopPropagation();
+    e.detail.result = this.fromKey(e.detail._id);
+  },
+  /**
+   * Generates a PouchDB index key based on input data.
+   * ### Example
+   * ```
+   * var myDoc = {
+   *   firstName: 'Scrooge',
+   *   lastName: 'McDuck',
+   *   age: 67,
+   *   male: true
+   * };
+   * var sort = ['age', 'male', 'lastName', 'firstName'];
+   * ```
+   * will be transformed into
+   * ```
+   * '5323256.70000000000000017764\u000021\u00004McDuck\u00004Scrooge\u0000\u0000'
+   * ```
+   *
+   * @param {Object?} doc A document that contains values defined in
+   *   `sort` parameter. If not set then `doc` from element's attribute will
+   *   be used. If none of it's set then it will return null.
+   * @param {Array?} sort A sort order array. Elements in the array should
+   *   have corresponding property in the `doc` object. If not `null` value
+   *   will be used in the key. If not set then `sort` from element's
+   *   attribute will be used. If none of it's set then it will return null.
+   * @return {String|null} A generated PouchDB `_id` or null if parameters
+   *   and attributes are not set.
+   */
+  getId: function(doc, sort) {
+    doc = doc || this.doc;
+    sort = sort || this.sort;
+    if (!doc || !sort) {
+      return null;
+    }
+    var data = [];
+    sort.forEach((field) => {
+      data.push(doc[field]);
+    });
+    return pouchCollate.toIndexableString(data);
+  },
+  /**
+   * Inverse of `getId()` function. It transforms the `_id` key to
+   * corresponding values.
+   * Values in the array will be ordered in the sort order defined in the
+   * `sort` array during encoding.
+   *
+   * ### Example
+   * String:
+   * ```
+   * '5323256.70000000000000017764\u000021\u00004McDuck\u00004Scrooge\u0000\u0000'
+   * ```
+   * fill be decoded back to:
+   * ```
+   * [67, true, 'McDuck', 'Scrooge']
+   * ```
+   *
+   * @param {String} id Previously encoded `_id`
+   * @return {Array} An array of properties used to encode the key. Order of
+   *   the elements in the array is kept from the `sort` property used during
+   *   the encription. It the key is not set or invalid then it will return
+   *   empty array.
+   */
+  fromKey: function(id) {
+    if (!id) {
+      return [];
+    }
+    var result = pouchCollate.parseIndexableString(id);
+    if (!result) {
+      result = [];
+    }
+    return result;
+  },
+  // Computes key when properies has changed.
+  _computeId: function(docRecord) {
+    if (!this.sort || !this.sort.length) {
+      return;
+    }
+    if (docRecord.path !== 'doc') {
+      return;
+    }
+    var doc = docRecord.base;
+    if (!doc || doc._id) {
+      return;
+    }
+    this.set('doc._id', this.getId());
+  }
+});
+</script>

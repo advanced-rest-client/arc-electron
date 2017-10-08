@@ -1,0 +1,96 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <title>arc-menu demo</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+  <link rel="import" href="../../paper-toast/paper-toast.html">
+  <script src="../test/data-generator.js"></script>
+  <script src="../../chance/dist/chance.min.js"></script>
+  <link rel="import" href="../arc-menu.html">
+
+  <style is="custom-style" include="demo-pages-shared-styles">
+  :root {
+    /*--arc-menu-selected-background-color: #00b9ff;*/
+  }
+
+  .vertical-section-container {
+    max-width: 600px;
+  }
+  </style>
+</head>
+<body unresolved>
+  <template is="dom-bind" id="app">
+    <div class="vertical-section-container centered">
+      <arc-menu></arc-menu>
+      <div class="controls">
+        <button on-tap="generate">Generate 100 requests items</button>
+        <button on-tap="delete">Clear data</button>
+      </div>
+    </div>
+    <paper-toast id="genToast" text="The request data has been generated"></paper-toast>
+    <paper-toast id="delToast" text="The request data has been removed"></paper-toast>
+    <paper-toast id="navToast" text="" duration="5000"></paper-toast>
+    <paper-toast id="logsToast" text="Logs viewer requested"></paper-toast>
+    <paper-toast id="newWindowToast" text="Application new window requested"></paper-toast>
+  </template>
+  <script>
+  /* global DataGenerator */
+  window.addEventListener('navigate', function(e) {
+    var toast = document.getElementById('navToast');
+    var d = e.detail;
+    toast.text = 'Navigation ocurred to: ' + d.base + ', and id: ' + d.id;
+    toast.opened = true;
+  });
+  window.addEventListener('logs-requested', function() {
+    var toast = document.getElementById('logsToast');
+    toast.opened = true;
+  });
+  window.addEventListener('app-new-window', function() {
+    var toast = document.getElementById('newWindowToast');
+    toast.opened = true;
+  });
+  (function(scope) {
+    scope.generate = function() {
+      DataGenerator.generateData(100)
+      .then(() => {
+        document.getElementById('genToast').opened = true;
+        var e = new CustomEvent('data-imported', {
+          bubbles: true
+        });
+        document.body.dispatchEvent(e);
+      });
+    };
+    scope.delete = function() {
+      DataGenerator.destroyData()
+      .then(() => {
+        document.getElementById('delToast').opened = true;
+        var e = new CustomEvent('datastore-destroyed', {
+          bubbles: true,
+          detail: {
+            datastore: 'legacy-projects'
+          }
+        });
+        document.body.dispatchEvent(e);
+      });
+    };
+  })(document.getElementById('app'));
+  </script>
+</body>
+</html>

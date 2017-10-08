@@ -1,0 +1,107 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <title>raml-type-form-input demo</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+  <link rel="import" href="../../arc-demo-helpers/arc-demo-snippet.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../raml-type-form-input.html">
+  <style is="custom-style" include="demo-pages-shared-styles">
+
+    .vertical-section-container {
+      max-width: 600px;
+    }
+
+  </style>
+</head>
+<body unresolved>
+  <div class="vertical-section-container centered">
+    <h3>Text editor</h3>
+    <arc-demo-snippet json='{"inputLabel": "Enter value"}'>
+      <template>
+        <raml-type-form-input model="[[json]]" value="{{value}}"></raml-type-form-input>
+        <code>[[value]]</code>
+      </template>
+    </arc-demo-snippet>
+
+    <h3>Text editor with pattern</h3>
+    <p>Pattern: <code>[a-zA-Z0-9_]*</code></p>
+    <arc-demo-snippet json='{"inputLabel": "Enter value", "pattern": "[a-zA-Z0-9_]*"}'>
+      <template>
+        <raml-type-form-input model="[[json]]" value="{{value}}"></raml-type-form-input>
+        <code>[[value]]</code>
+      </template>
+    </arc-demo-snippet>
+
+    <h3>Required input</h3>
+    <arc-demo-snippet json='{"inputLabel": "Enter value", "required": true}'>
+      <template>
+        <raml-type-form-input model="[[json]]" value="{{value}}"></raml-type-form-input>
+        <code>[[value]]</code>
+      </template>
+    </arc-demo-snippet>
+
+    <h3>With placeholder</h3>
+    <arc-demo-snippet json='{"inputLabel": "Enter value", "inputPlaceholder": "This is the placeholder", "inputFloatLabel": true}'>
+      <template>
+        <raml-type-form-input model="[[json]]" value="{{value}}"></raml-type-form-input>
+        <code>[[value]]</code>
+      </template>
+    </arc-demo-snippet>
+
+    <h3>Number editor</h3>
+    <arc-demo-snippet json='{"inputLabel": "Enter number value", "inputType": "number", "minimum": 1, "maximum": 100}'>
+      <template>
+        <raml-type-form-input model="[[json]]" value="{{value}}"></raml-type-form-input>
+        <code>[[value]]</code>
+      </template>
+    </arc-demo-snippet>
+
+    <h3>Date editor</h3>
+    <arc-demo-snippet json='{"inputLabel": "Select date", "inputType": "date"}'>
+      <template>
+        <raml-type-form-input model="[[json]]" value="{{value}}"></raml-type-form-input>
+        <code>[[value]]</code>
+      </template>
+    </arc-demo-snippet>
+
+    <h3>Enum values</h3>
+    <arc-demo-snippet json='{"inputLabel": "Select fruit", "isEnum": true, "enum": ["apple", "banana", "cherries", "grapes", "lemon", "orange", "pear", "watermelon"]}'>
+      <template>
+        <raml-type-form-input model="[[json]]" value="{{value}}"></raml-type-form-input>
+        <code>[[value]]</code>
+      </template>
+    </arc-demo-snippet>
+
+    <h3>Boolean value</h3>
+    <arc-demo-snippet json='{"inputLabel": "Select boolean value", "isBoolean": true}'>
+      <template>
+        <raml-type-form-input model="[[json]]" value="{{value}}"></raml-type-form-input>
+        <code>[[value]]</code>
+      </template>
+    </arc-demo-snippet>
+
+    <h3>Array value</h3>
+    <arc-demo-snippet json='{"inputLabel": "Enter values", "isArray": true, "inputType": "text", "minLength": 2, "maxLength": 20}'>
+      <template>
+        <raml-type-form-input model="[[json]]" value="{{value}}"></raml-type-form-input>
+        <code>[[value]]</code>
+      </template>
+    </arc-demo-snippet>
+  </div>
+</body>
+</html>

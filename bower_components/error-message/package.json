@@ -1,0 +1,32 @@
+{
+  "name": "error-message",
+  "version": "0.1.1",
+  "license": "Apache-2.0 OR CC-BY-4.0",
+  "description": "A standarized error information",
+  "devDependencies": {
+    "polymer-cli": "^0.16.0"
+  },
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "private": false,
+  "main": [
+    "error-message.html"
+  ],
+  "author": "The Advanced REST client authors <arc@mulesoft.com>",
+  "scripts": {
+    "serve": "node_modules/.bin/polymer serve",
+    "lint": "node_modules/.bin/polymer lint error-message.html",
+    "test": "exit 0",
+    "deps": "npm install --quiet && bower install --quiet",
+    "update-deps": "npm update --quiet && bower update --quiet"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/advanced-rest-client/error-message.git"
+  },
+  "bugs": {
+    "url": "https://github.com/advanced-rest-client/error-message/issues",
+    "email": "arc@mulesoft.com"
+  }
+}

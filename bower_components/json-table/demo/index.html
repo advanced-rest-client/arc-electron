@@ -1,0 +1,139 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+  <title>json-table demo</title>
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+  <link rel="import" href="../../arc-demo-helpers/arc-demo-snippet.html">
+  <link rel="import" href="../../promise-polyfill/promise-polyfill.html">
+  <link rel="import" href="../../fetch-polyfill/fetch-polyfill.html">
+  <link rel="import" href="../../paper-toast/paper-toast.html">
+  <link rel="import" href="../../paper-styles/typography.html">
+  <link rel="import" href="../../paper-input/paper-textarea.html">
+  <link rel="import" href="../../paper-item/paper-item.html">
+  <link rel="import" href="../../paper-dialog/paper-dialog.html">
+  <link rel="import" href="../../paper-listbox/paper-listbox.html">
+  <link rel="import" href="../../paper-dropdown-menu/paper-dropdown-menu.html">
+  <link rel="import" href="../../paper-button/paper-button.html">
+  <link rel="import" href="../json-table.html">
+  <style is="custom-style" include="demo-pages-shared-styles">
+  html {
+    font-size: 65%;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    @apply(--paper-font-body);
+  }
+
+  .vertical-section-container {
+    max-width: 900px;
+  }
+
+  :host {
+    --arc-font-body: {
+      @apply(--paper-font-body);
+    }
+  }
+
+  json-table {
+    margin-top: 40px;
+  }
+  </style>
+</head>
+
+<body unresolved>
+  <div class="vertical-section-container centered">
+    <h3>The `json-table`</h3>
+    <arc-demo-snippet>
+      <template is="dom-bind" id="json1">
+        <paper-dropdown-menu label="Select JSON example">
+          <paper-listbox class="dropdown-content" on-iron-select="fileSelected">
+            <paper-item data-example="./drive.json">Google Drive files list</paper-item>
+            <paper-item data-example="./example.json">Complex structure example</paper-item>
+            <paper-item data-example="./social-data-list.json">Social data list</paper-item>
+            <paper-item data-example="./enrichment-candidates.json">enrichment candidates</paper-item>
+            <paper-item data-example="./git-candidate-list.json">git candidate list</paper-item>
+            <paper-item data-example="./linkedin-people.json">linkedin people</paper-item>
+            <paper-item data-example="./trainedmodels.json">trainedmodels</paper-item>
+            <paper-item data-example="./trainedmodels-model.json">trainedmodels > model</paper-item>
+            <paper-item data-example="./trainedmodels-model-analyze.json">trainedmodels > model > analyze</paper-item>
+            <paper-item data-example="">Add JSON</paper-item>
+          </paper-listbox>
+        </paper-dropdown-menu>
+        <json-table json="[[json]]" paginate page="0" items-per-page="20"></json-table>
+        <paper-dialog id="inputDialog" on-iron-overlay-closed="_dialogClosed">
+          <h2>Paste JSON value</h2>
+          <div>
+            <paper-textarea max-rows="5" value="{{customJson}}"></paper-textarea>
+          </div>
+          <div class="buttons">
+            <paper-button dialog-dismiss>Cancel</paper-button>
+            <paper-button dialog-confirm autofocus>Accept</paper-button>
+          </div>
+        </paper-dialog>
+        <script>
+        (function(app) {
+          app.customJson = '';
+          app.fileSelected = function(e) {
+            var file = e.detail.item.dataset.example;
+            if (file) {
+              app.getJson(file);
+            } else {
+              app.$.inputDialog.opened = true;
+            }
+          };
+          app.addToast = function(text) {
+            var toast = document.createElement('paper-toast');
+            toast.text = text;
+            toast.opened = true;
+            document.body.appendChild(toast);
+          };
+          app.getJson = function(url) {
+            fetch(url)
+            .then(function(response) {
+              if (response.ok) {
+                return response.json();
+              } else {
+                app.addToast('Unable to download JSON data.');
+                return Promise.resolve();
+              }
+            })
+            .then(function(json) {
+              app.json = json; //can be undefined.
+            })
+            .catch(function(cause) {
+              app.addToast(cause.message);
+            });
+          };
+          app._dialogClosed = function(e) {
+            if (e.detail.confirmed) {
+              app.json = app.customJson;
+            }
+
+            document.querySelector('paper-listbox').selected = -1;
+          };
+          // app.async(function() {
+          //   app.getJson('./drive.json');
+          // }, 300);
+        })(document.querySelector('#json1'));
+        </script>
+      </template>
+    </arc-demo-snippet>
+  </div>
+</body>
+
+</html>

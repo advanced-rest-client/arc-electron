@@ -1,0 +1,603 @@
+{
+  "SocialDataList": [{
+      "GitHubData": {
+        "firstName": "Alice",
+        "lastName": "Wang",
+        "num-git-repos": 2,
+        "num-git-forks": 5,
+        "git-score": 42.22524
+      },
+      "MeetupData": {
+        "firstName": "Alice",
+        "lastName": "Wang",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "1"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Emeric",
+        "lastName": "Colombe",
+        "num-git-repos": 0,
+        "num-git-forks": 0,
+        "git-score": 16.855373
+      },
+      "MeetupData": {
+        "firstName": "Emeric",
+        "lastName": "Colombe",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Adam",
+        "lastName": "Williams",
+        "num-git-repos": 0,
+        "num-git-forks": 0,
+        "git-score": 16.909258
+      },
+      "MeetupData": {
+        "firstName": "Adam",
+        "lastName": "Williams",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "1"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "John",
+        "lastName": "Tobias",
+        "num-git-repos": 1,
+        "num-git-forks": 0,
+        "git-score": 16.855394
+      },
+      "MeetupData": {
+        "firstName": "John",
+        "lastName": "Tobias",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Michael",
+        "lastName": "Ryan",
+        "num-git-repos": 0,
+        "num-git-forks": 0,
+        "git-score": 31.035082
+      },
+      "MeetupData": {
+        "firstName": "Michael",
+        "lastName": "Ryan",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "6"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Fan",
+        "lastName": "Bai",
+        "num-git-repos": 2,
+        "num-git-forks": 0,
+        "git-score": 20.807331
+      },
+      "MeetupData": {
+        "firstName": "Fan",
+        "lastName": "Bai",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Gabriel",
+        "lastName": "Hernandez",
+        "num-git-repos": 0,
+        "num-git-forks": 0,
+        "git-score": 16.78672
+      },
+      "MeetupData": {
+        "firstName": "Gabriel",
+        "lastName": "Hernandez",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Steven",
+        "lastName": "Butt",
+        "num-git-repos": 1,
+        "num-git-forks": 1,
+        "git-score": 15.64209
+      },
+      "MeetupData": {
+        "firstName": "Steven",
+        "lastName": "Butt",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Min",
+        "lastName": "Ren",
+        "num-git-repos": 30,
+        "num-git-forks": 1,
+        "git-score": 28.850058
+      },
+      "MeetupData": {
+        "firstName": "Min",
+        "lastName": "Ren",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Firat",
+        "lastName": "Kart",
+        "num-git-repos": 0,
+        "num-git-forks": 0,
+        "git-score": 0
+      },
+      "MeetupData": {
+        "firstName": "Firat",
+        "lastName": "Kart",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Sai",
+        "lastName": "Siripurapu",
+        "num-git-repos": 0,
+        "num-git-forks": 0,
+        "git-score": 0
+      },
+      "MeetupData": {
+        "firstName": "Sai",
+        "lastName": "Siripurapu",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Steven",
+        "lastName": "Barnes",
+        "num-git-repos": 0,
+        "num-git-forks": 0,
+        "git-score": 8.219318
+      },
+      "MeetupData": {
+        "firstName": "Steven",
+        "lastName": "Barnes",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Diepvu",
+        "lastName": "Le",
+        "num-git-repos": 0,
+        "num-git-forks": 0,
+        "git-score": 0
+      },
+      "MeetupData": {
+        "firstName": "Diepvu",
+        "lastName": "Le",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Alex",
+        "lastName": "Kazantsev",
+        "num-git-repos": 2,
+        "num-git-forks": 0,
+        "git-score": 30.31663
+      },
+      "MeetupData": {
+        "firstName": "Alex",
+        "lastName": "Kazantsev",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "1"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Anuradha",
+        "lastName": "Sastri",
+        "num-git-repos": 0,
+        "num-git-forks": 0,
+        "git-score": 0
+      },
+      "MeetupData": {
+        "firstName": "Anuradha",
+        "lastName": "Sastri",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Shallin",
+        "lastName": "Singh",
+        "num-git-repos": 0,
+        "num-git-forks": 0,
+        "git-score": 0
+      },
+      "MeetupData": {
+        "firstName": "Shallin",
+        "lastName": "Singh",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Howard",
+        "lastName": "Weingram",
+        "num-git-repos": 0,
+        "num-git-forks": 0,
+        "git-score": 0
+      },
+      "MeetupData": {
+        "firstName": "Howard",
+        "lastName": " Weingram",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Jose",
+        "lastName": "Rodriguez",
+        "num-git-repos": 15,
+        "num-git-forks": 0,
+        "git-score": 17.958986
+      },
+      "MeetupData": {
+        "firstName": "Jose",
+        "lastName": "Rodriguez",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Prajwal",
+        "lastName": "KeshavaReddy",
+        "num-git-repos": 0,
+        "num-git-forks": 0,
+        "git-score": 0
+      },
+      "MeetupData": {
+        "firstName": "Prajwal",
+        "lastName": "KeshavaReddy",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Yiang",
+        "lastName": "Hu",
+        "num-git-repos": 0,
+        "num-git-forks": 0,
+        "git-score": 0
+      },
+      "MeetupData": {
+        "firstName": "Yiang",
+        "lastName": "Hu",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Chris",
+        "lastName": "Rees",
+        "num-git-repos": 0,
+        "num-git-forks": 0,
+        "git-score": 16.504845
+      },
+      "MeetupData": {
+        "firstName": "Chris",
+        "lastName": "Rees",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Marty",
+        "lastName": "Grogan",
+        "num-git-repos": 0,
+        "num-git-forks": 0,
+        "git-score": 0
+      },
+      "MeetupData": {
+        "firstName": "Marty",
+        "lastName": "Grogan",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Billy",
+        "lastName": "Pricer",
+        "num-git-repos": 0,
+        "num-git-forks": 0,
+        "git-score": 0
+      },
+      "MeetupData": {
+        "firstName": "Billy",
+        "lastName": "Pricer",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Dáran",
+        "lastName": "Zhang",
+        "num-git-repos": 0,
+        "num-git-forks": 0,
+        "git-score": 0
+      },
+      "MeetupData": {
+        "firstName": "Dáran",
+        "lastName": "Zhang",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Qing",
+        "lastName": "Ji",
+        "num-git-repos": 6,
+        "num-git-forks": 0,
+        "git-score": 29.980371
+      },
+      "MeetupData": {
+        "firstName": "Qing",
+        "lastName": "Ji",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Derek",
+        "lastName": "White",
+        "num-git-repos": 2,
+        "num-git-forks": 1,
+        "git-score": 21.84195
+      },
+      "MeetupData": {
+        "firstName": "Derek",
+        "lastName": "White",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Richa",
+        "lastName": "Sahu",
+        "num-git-repos": 0,
+        "num-git-forks": 0,
+        "git-score": 16.910332
+      },
+      "MeetupData": {
+        "firstName": "Richa",
+        "lastName": "Sahu",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Shivani",
+        "lastName": "Gowrishankar",
+        "num-git-repos": 0,
+        "num-git-forks": 0,
+        "git-score": 0
+      },
+      "MeetupData": {
+        "firstName": "Shivani",
+        "lastName": "Gowrishankar",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Suhas",
+        "lastName": "Jog",
+        "num-git-repos": 3,
+        "num-git-forks": 0,
+        "git-score": 24.379694
+      },
+      "MeetupData": {
+        "firstName": "Suhas",
+        "lastName": "Jog",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Sumanth",
+        "lastName": "Mudiyam",
+        "num-git-repos": 0,
+        "num-git-forks": 0,
+        "git-score": 0
+      },
+      "MeetupData": {
+        "firstName": "Sumanth",
+        "lastName": "Mudiyam",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Giannis",
+        "lastName": "Neokleous",
+        "num-git-repos": 0,
+        "num-git-forks": 0,
+        "git-score": 0
+      },
+      "MeetupData": {
+        "firstName": "Giannis",
+        "lastName": "Neokleous",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Yulia",
+        "lastName": "Savinkova",
+        "num-git-repos": 4,
+        "num-git-forks": 0,
+        "git-score": 35.60419
+      },
+      "MeetupData": {
+        "firstName": "Yulia",
+        "lastName": "Savinkova",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Derek",
+        "lastName": "Passen",
+        "num-git-repos": 0,
+        "num-git-forks": 0,
+        "git-score": 0
+      },
+      "MeetupData": {
+        "firstName": "Derek",
+        "lastName": "Passen",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Michael",
+        "lastName": "Kong",
+        "num-git-repos": 3,
+        "num-git-forks": 0,
+        "git-score": 23.881079
+      },
+      "MeetupData": {
+        "firstName": "Michael",
+        "lastName": "Kong",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Prashant",
+        "lastName": "Pandey",
+        "num-git-repos": 7,
+        "num-git-forks": 1,
+        "git-score": 44.43099
+      },
+      "MeetupData": {
+        "firstName": "Prashant",
+        "lastName": "Pandey",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Christopher",
+        "lastName": "Marth",
+        "num-git-repos": 0,
+        "num-git-forks": 0,
+        "git-score": 0
+      },
+      "MeetupData": {
+        "firstName": "Christopher",
+        "lastName": "Marth",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Jake",
+        "lastName": "Morgan",
+        "num-git-repos": 0,
+        "num-git-forks": 0,
+        "git-score": 0
+      },
+      "MeetupData": {
+        "firstName": "Jake",
+        "lastName": "Morgan",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Paul",
+        "lastName": "Anderson",
+        "num-git-repos": 13,
+        "num-git-forks": 0,
+        "git-score": 35.48945
+      },
+      "MeetupData": {
+        "firstName": "Paul",
+        "lastName": "Anderson",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "Jesus",
+        "lastName": "DeOliveira",
+        "num-git-repos": 0,
+        "num-git-forks": 0,
+        "git-score": 0
+      },
+      "MeetupData": {
+        "firstName": "Jesus",
+        "lastName": "DeOliveira",
+        "num-meetups-organizer": 0,
+        "num-meetup-member": 0
+      }
+    },
+    {
+      "GitHubData": {
+        "firstName": "David",
+        "lastName": "Berlind",
+        "num-git-repos": 0,
+        "num-git-forks": 0,
+        "git-score": 0
+      },
+      "MeetupData": {
+        "firstName": "David",
+        "lastName": "Berlind",
+        "num-meetups-organizer": "0",
+        "num-meetup-member": "0"
+      }
+    }
+  ]
+}

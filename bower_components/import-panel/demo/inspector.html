@@ -1,0 +1,113 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+  <title>import-panel demo</title>
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+  <link rel="import" href="../../arc-demo-helpers/data-generator.html">
+  <link rel="import" href="../../paper-toast/paper-toast.html">
+  <link rel="import" href="../import-data-inspector.html">
+  <style is="custom-style">
+  html,
+  body {
+    background-color: #EEEEEE;
+  }
+
+  .vertical-section-container {
+    max-width: 1200px;
+    margin: 24px auto;
+  }
+
+   :root {
+    --primary-color: #00A2DF;
+    --accent-color: #FF8A65;
+    --action-button: {
+      background-color: var(--primary-color);
+      color: #fff;
+    };
+    --empty-info: {
+      color: rgba(0, 0, 0, 0.74);
+      font-size: 16px;
+    };
+    --arc-font-headline: {
+      @apply --paper-font-headline;
+    };
+    --arc-font-subhead: {
+      @apply --paper-font-subhead;
+    };
+    --arc-font-body1: {
+      @apply --paper-font-body1;
+    };
+    --arc-font-title: {
+      @apply --paper-font-title;
+    }
+    --paper-progress-active-color: var(--primary-color);
+  }
+
+  section[card] {
+    padding: 20px;
+    background: white;
+  }
+  </style>
+</head>
+
+<body unresolved>
+  <template is="dom-bind" id="demo">
+    <div class="vertical-section-container centered">
+      <section card>
+        <import-data-inspector data="[[data]]" on-cancel="cancelled" on-import="imported"></import-data-inspector>
+      </section>
+    </div>
+    <paper-toast text="Cancel has been pressed" id="cancelToast"></paper-toast>
+    <paper-toast text="Import data has been pressed" id="importToast"></paper-toast>
+  </template>
+  <script>
+  /* global DataGenerator */
+  (function(scope) {
+    scope.cancelled = function() {
+      scope.$.cancelToast.opened = true;
+    };
+    scope.imported = function() {
+      scope.$.importToast.opened = true;
+    };
+    scope.generate = function() {
+      var saved = DataGenerator.generateSavedRequestData({
+        requestsSize: 50,
+        projectsSize: 3
+      });
+      var history = DataGenerator.generateHistoryRequestsData({
+        requestsSize: 120
+      });
+      scope.data = {
+        kind: 'ARC#import',
+        createdAt: '2017-09-28T19:43:09.491',
+        version: '9.14.64.305',
+        requests: saved.requests,
+        projects: saved.projects,
+        history: history,
+        variables: DataGenerator.generateVariablesData(),
+        'headers-sets': DataGenerator.generateHeadersSetsData(),
+        cookies: DataGenerator.generateCookiesData(),
+        'url-history': DataGenerator.generateUrlsData(),
+        'websocket-url-history': DataGenerator.generateUrlsData()
+      };
+    };
+    window.addEventListener('WebComponentsReady', function() {
+      scope.generate();
+    });
+  })(document.getElementById('demo'));
+  </script>
+</body>
+</html>

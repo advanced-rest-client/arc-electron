@@ -1,0 +1,142 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <title>google-drive-browser demo</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+  <link rel="import" href="../../google-signin/google-signin-aware.html">
+
+  <link rel="import" href="../google-drive-browser.html">
+
+  <style is="custom-style">
+  html,
+  body {
+    background-color: #EEEEEE;
+  }
+
+  .vertical-section-container {
+    max-width: 1200px;
+    margin: 24px auto;
+  }
+
+  :root {
+    --primary-color: #00A2DF;
+    --action-button: {
+      background-color: var(--primary-color);
+      color: #fff;
+    };
+    --empty-info: {
+      color: rgba(0, 0, 0, 0.74);
+      font-size: 16px;
+    };
+    --arc-font-headline: {
+      @apply --paper-font-headline;
+    };
+    --arc-font-subhead: {
+      @apply --paper-font-subhead;
+    }
+    --arc-font-body1: {
+      @apply --paper-font-body1;
+    };
+    --paper-progress-active-color: var(--primary-color);
+  }
+
+  section[card] {
+    @apply(--shadow-elevation-4dp);
+    padding: 20px;
+    background: white;
+    margin-bottom: 40px;
+  }
+
+  google-drive-browser {
+    height: calc(100vh - 120px);
+  }
+  </style>
+</head>
+<body unresolved>
+  <template is="dom-bind" id="demo">
+    <div class="vertical-section-container">
+      <!-- mime-type="application/restclient+data" -->
+      <section card>
+        <google-drive-browser
+          api-key="10525470235-anf4fj0c73c0of7g2vt62f0lj93bnrtp.apps.googleusercontent.com"
+          mime-type="application/restclient+data"
+          on-google-autorize="_onAuth"></google-drive-browser>
+      </section>
+      <google-signin-aware
+        client-id="10525470235-anf4fj0c73c0of7g2vt62f0lj93bnrtp.apps.googleusercontent.com"
+        scopes="{{authScope}}"
+        signed-in="{{signedIn}}"
+        is-authorized="{{isAuthorized}}"
+        need-additional-auth="{{needAdditionalAuth}}"
+        on-google-signin-aware-error="handleSignInError"
+        on-google-signin-aware-success="_userAuthorized"
+        on-google-signin-offline-success="handleOffline"
+        on-google-signin-aware-signed-out="handleSignOut"
+        on-signed-in-changed="handleStateChange"
+        on-initialized-changed="handleStateChange"></google-signin-aware>
+    </div>
+  </template>
+  <script>
+  (function(scope) {
+    scope._onAuth = function(e) {
+      scope.authScope = e.detail.scope;
+      if (scope.needAdditionalAuth) {
+        document.querySelector('google-signin-aware').signIn();
+      } else {
+        let user = gapi.auth2.getAuthInstance().currentUser.get();
+        let session = user.getAuthResponse();
+        scope.fire('google-signin-success', {
+          scope: session.scope,
+          token: session.access_token
+        });
+      }
+    };
+    scope.handleStateChange = function(e) {
+      var signedIn = e.target.signedIn;
+      var initialized = e.target.initialized;
+      if (initialized && !signedIn) {
+        console.log('Not signed in');
+      } else {
+        console.log('Signed in');
+      }
+    };
+
+    scope.handleSignOut = function() {
+      scope.fire('google-signout', {
+        scope: scope.authScope
+      });
+      document.querySelector('google-drive-browser').accessToken = undefined;
+    };
+
+    scope.handleSignInError = function(event) {
+      console.log(event.detail);
+    };
+
+    scope._userAuthorized = function(e) {
+      var token = e.detail.access_token;
+      scope.fire('google-signin-success', {
+        scope: scope.authScope,
+        token: token
+      });
+      document.querySelector('google-drive-browser').accessToken = token;
+    };
+  })(document.getElementById('demo'));
+  </script>
+</body>
+</html>

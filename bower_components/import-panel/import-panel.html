@@ -1,0 +1,440 @@
+<!--
+@license
+Copyright 2017 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../google-drive-browser/google-drive-browser.html">
+<link rel="import" href="../file-reader/file-reader.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../iron-pages/iron-pages.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../arc-icons/arc-icons.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../paper-styles/shadow.html">
+<link rel="import" href="../paper-input/paper-textarea.html">
+<link rel="import" href="../form-action-bar/form-action-bar.html">
+<link rel="import" href="../paper-toast/paper-toast.html">
+<link rel="import" href="import-data-inspector.html">
+<!--
+The data import view for ARC.
+
+Generates the UI and support logic for importing data from a file, Google Drive,
+and copy / paste action.
+
+It requires the `arc-data-import` element to be present in the DOM to handle
+`import-data` and `import-normalize` events.
+
+### Example
+```
+<import-panel></import-panel>
+```
+
+### Styling
+`<import-panel>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--import-panel` | Mixin applied to the element | `{}`
+`--action-button` | MIxin applied to main action buttons | `{}`
+`--error-toast` | Mixin applied to a toast with error message | `{}`
+`--warning-primary-color` | Background color of error toast | `#FF7043`
+`--warning-contrast-color`| Color of error toast | `#fff`
+`--import-panel-card` | Mixin applied to a paper card like element | `{}`
+`--import-data-inspector` | Mixin applied to the element | `{}`
+`--action-button` | Mixin applied to the primary acction button | `{}`
+`--import-data-inspector-meta-color` | Color of the meta data property | `{}`
+`--import-table` | Mixin applied to a table with data import | `{}`
+`--import-table-opened` | Mixin applied to a table with data import when opened | `{}`
+`--import-table-title` | Mixin applied to the title of the import table | `{}`
+`--import-table-header` | Mixin applied to data table header with selecyion options | `{}`
+`--import-table-method-label` | Mixin applied to the HTTP method label container | `{}`
+`--import-table-selection-counter` | Mixin applied to a table selection counter label | `{}`
+`--import-table-list-item` | Mixin applied to data table's items | `{}`
+
+@group UI Elements
+@element import-panel
+@demo demo/index.html Main demo
+-->
+<dom-module id="import-panel">
+  <template>
+    <style>
+    :host {
+      display: block;
+      height: inherit;
+      @apply --import-panel;
+      --google-drive-browser-title: {
+        font-size: 20px;
+      };
+    }
+
+    h2 {
+      @apply --arc-font-headline;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    paper-button {
+      color: var(--primary-color);
+    }
+
+    .primary-action {
+      @apply --action-button;
+    }
+
+    .import-actions paper-button {
+      margin-right: 24px;
+    }
+
+    paper-button iron-icon {
+      margin-left: 12px;
+      color: var(--accent-color);
+    }
+
+    .title-action {
+      @apply --layout-horizontal;
+      @apply --layout-center;
+    }
+
+    .card {
+      @apply --shadow-elevation-2dp;
+      padding: 24px;
+      @apply --import-panel-card;
+    }
+
+    iron-pages,
+    iron-pages > * {
+      height: inherit;
+    }
+
+    .drive-browser {
+      @apply --layout-vertical;
+    }
+
+    .drive-browser .card {
+      @apply --layout-flex;
+    }
+
+    google-drive-browser {
+      height: 100%;
+    }
+
+    .text-import {
+      padding-bottom: 20px;
+      max-height: calc(100% - 64px);
+    }
+
+    .error-toast {
+      background-color: var(--warning-primary-color, #FF7043);
+      color: var(--warning-contrast-color, #fff);
+      @apply --error-toast;
+    }
+    </style>
+    <template is="dom-if" if="[[_computeLoader(readingFile, importing)]]">
+      <paper-spinner alt="Preparing data"></paper-spinner>
+    </template>
+
+    <iron-pages selected="[[selectedPage]]">
+      <section class="import-actions">
+        <h2>Import data</h2>
+        <paper-button on-tap="_selectFile" raised data-action="opend-file-picker">
+          Open from file
+          <iron-icon icon="arc:insert-drive-file"></iron-icon>
+        </paper-button>
+        <paper-button on-tap="_importDrive" raised data-action="open-drive-picker">
+          Open from Drive
+          <iron-icon icon="arc:drive"></iron-icon>
+        </paper-button>
+        <paper-button on-tap="_pasteData" raised data-action="open-text-entry">
+          Paste text data
+          <iron-icon icon="arc:short-text"></iron-icon>
+        </paper-button>
+      </section>
+      <section class="drive-browser">
+        <div class="title-action">
+          <paper-icon-button icon="arc:arrow-back" on-tap="screenBack"></paper-icon-button>
+          <h2>Import file from Google Drive</h2>
+        </div>
+        <div class="card">
+          <google-drive-browser
+            attr-for-opened="opened"
+            opened$="[[withDriveList]]"
+            api-key="[[apiKey]]"
+            mime-type="application/restclient+data"
+            on-drive-file-picker-data="_driveContentReady"></google-drive-browser>
+        </div>
+      </section>
+      <section class="text-import">
+        <div class="title-action">
+          <paper-icon-button icon="arc:arrow-back" on-tap="screenBack"></paper-icon-button>
+          <h2>Paste data</h2>
+        </div>
+        <paper-textarea label="Import data" id="manualInput"></paper-textarea>
+        <form-action-bar>
+          <paper-button on-tap="screenBack" data-action="cancel-text">Cancel</paper-button>
+          <paper-button class="primary-action" on-tap="_importText" data-action="import-text">Next</paper-button>
+        </form-action-bar>
+      </section>
+      <section>
+        <div class="title-action">
+          <paper-icon-button icon="arc:arrow-back" on-tap="screenBack"></paper-icon-button>
+          <h2>Inspect data</h2>
+        </div>
+        <import-data-inspector data="[[data]]" on-cancel="screenBack" on-import="_importData"></import-data-inspector>
+      </section>
+    </iron-pages>
+    <input type="file" on-change="_onImportFile" hidden>
+    <file-reader id="fileReader" loading="{{readingFile}}" readas="text" on-file-read="_importFileReady" on-file-error="_importFileError" auto></file-reader>
+    <paper-toast id="error" class="error-toast" duration="7000"></paper-toast>
+    <paper-toast id="imported" text="Data are now saved in the data store."></paper-toast>
+  </template>
+  <script>
+  Polymer({
+    is: 'import-panel',
+    properties: {
+      // Loadded and normalized import data
+      data: {
+        type: Object,
+        notify: true
+      },
+      // Computed value, true if import data are present.
+      hasData: {
+        type: Boolean,
+        computed: '_computeHasData(data)'
+      },
+      // Treue when file is being loaded.
+      readingFile: Boolean,
+      /**
+       * Currently selected import page.
+       *
+       * -   0 is import options selector
+       * -   1 is Google Drive file picker
+       * -   2 is paste data
+       * -   3 is import table preview
+       */
+      selectedPage: {
+        type: Number,
+        value: 0,
+        notify: true
+      },
+      // True when file is being imported.
+      importing: {
+        type: Boolean,
+        value: false,
+        readOnly: true
+      },
+      // True if user selected Drive import
+      withDriveList: {
+        type: Boolean,
+        reflectToAttribute: true
+      },
+      /**
+       * Drive API api key value to be passed to the Drive picker.
+       * @type {[type]}
+       */
+      apiKey: String
+    },
+
+    _computeLoader: function(readingFile, importing) {
+      return !!(readingFile || importing);
+    },
+
+    // Computes if data preview table should be hidden.
+    _computeTable: function(hasData, importing) {
+      return !!(hasData && !importing);
+    },
+
+    _computeFileSelector: function(hasData, withDriveList) {
+      return !hasData && !withDriveList;
+    },
+
+    _computeHasData: function(data) {
+      return !!data;
+    },
+    // Opens the file selector. It must be done in user related action.
+    _selectFile: function() {
+      this.$$('input[type="file"]').click();
+    },
+
+    /**
+     * Handler called when file has been added by the user.
+     */
+    _onImportFile: function(e) {
+      var file = e.target.files[0];
+      if (!file) {
+        return;
+      }
+      this.readingFile = true;
+      this.$.fileReader.blob = file;
+    },
+
+    _resetFileDrop: function() {
+      this.$$('input[type="file"]').value = null;
+    },
+    /**
+     * Notifies the user about error.
+     *
+     * @param {String} message Message to display
+     */
+    _notifyError: function(message) {
+      this.$.error.text = message;
+      this.$.error.opened = true;
+    },
+
+    /**
+     * A handler called when the file can't be read.
+     */
+    _importFileError: function(e) {
+      var message = e.message || e.detail.message;
+      this.readingFile = false;
+      this._notifyError('The application was unable to read the file. ' + message);
+      console.error(e);
+      this._resetFileDrop();
+      this.fire('app-log', {'message': ['import:file-read', message], 'level': 'error'});
+      this.fire('send-analytics', {
+        type: 'exception',
+        description: message,
+        fatal: true
+      });
+    },
+    // Moves the view to previous screen.
+    screenBack: function() {
+      var page = this.selectedPage;
+      if (page === 0) {
+        return;
+      }
+      this.selectedPage = 0;
+      if (this.withDriveList) {
+        this.withDriveList = false;
+      }
+    },
+    // Opend import from Google Drive view
+    _importDrive: function() {
+      this.selectedPage = 1;
+      this.withDriveList = true;
+    },
+    // Opens paste from clipboard view
+    _pasteData: function() {
+      this.selectedPage = 2;
+    },
+    // Handler for the `drive-file-picker-data` event with drive file data
+    _driveContentReady: function(e) {
+      e.stopPropagation();
+      e.preventDefault();
+      this._processContent(e.detail.content);
+    },
+
+    /**
+     * Handler called when the files has been read.
+     */
+    _importFileReady: function(e) {
+      this._resetFileDrop();
+      this.readingFile = false;
+      this._processContent(e.detail.result);
+    },
+    // Handles import from text action.
+    _importText: function() {
+      var value = this.$$('#manualInput').value;
+      if (!value) {
+        return;
+      }
+      return this._processContent(value);
+    },
+    /**
+     * Processes import file content by sending `import-normalize` custom
+     * event that should be handled by `arc-data-import` element.
+     *
+     * When data are normalized it switches to data table view.
+     *
+     * @param {String} content Read data content
+     * @return {Promise} A promise resolved when data were processed.
+     */
+    _processContent: function(content) {
+      var event = this.fire('import-normalize', {
+        content: content,
+      }, {
+        cancelable: true
+      });
+
+      if (!event.detail.result) {
+        let err = 'Data importer not in the DOM.';
+        this._notifyError(err);
+        return Promise.reject(new Error(err));
+      }
+
+      return event.detail.result.then(result => {
+        this.data = result;
+        this.selectedPage = 3;
+      })
+      .catch(cause => {
+        this.data = undefined;
+        this._notifyError(cause.message);
+        console.error(cause);
+        this.fire('app-log', {
+          'message': ['import:content-process', cause.message],
+          'level': 'error'
+        });
+        this.fire('send-analytics', {
+          type: 'exception',
+          description: cause.message,
+          fatal: true
+        });
+        throw cause;
+      });
+    },
+    // Sends the `import-data` custom event to the import element to save the data
+    _importData: function(e) {
+      var data = e.detail;
+      this._setImporting(true);
+      var event = this.fire('import-data', {
+        content: data,
+      }, {
+        cancelable: true
+      });
+
+      if (!event.detail.result) {
+        let err = 'Data importer not in the DOM.';
+        this._notifyError(err);
+        throw new Error(err);
+      }
+
+      // Returns value for tests.
+      return event.detail.result.then(errors => {
+        this.data = undefined;
+        this.selectedPage = 0;
+        this.$.imported.opened = true;
+        this._setImporting(false);
+        if (errors) {
+          console.error(errors);
+        }
+      })
+      .catch(cause => {
+        this._notifyError(cause.message);
+        console.error(cause);
+        this._setImporting(false);
+        this.fire('app-log', {
+          'message': ['import:data-save', cause.message],
+          'level': 'error'
+        });
+        this.fire('send-analytics', {
+          type: 'exception',
+          description: cause.message,
+          fatal: true
+        });
+        throw cause;
+      });
+    }
+  });
+  </script>
+</dom-module>

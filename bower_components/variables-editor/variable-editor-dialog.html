@@ -1,0 +1,441 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../paper-dialog/paper-dialog.html">
+<link rel="import" href="../paper-dialog-scrollable/paper-dialog-scrollable.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../paper-toast/paper-toast.html">
+<link rel="import" href="../paper-tooltip/paper-tooltip.html">
+<link rel="import" href="../vertical-tabs/vertical-tabs.html">
+<link rel="import" href="../paper-tabs/paper-tab.html">
+<link rel="import" href="../iron-pages/iron-pages.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<!--
+# `variable-editor-dialog`
+
+A dialog to edit a variable.
+
+### Styling
+`<variable-item>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+
+@group UI Elements
+@element variable-editor-dialog
+@demo demo/index.html
+-->
+<dom-module id="variable-editor-dialog">
+  <template>
+    <style>
+     :host {
+      display: block;
+    }
+
+    .input {
+      @apply(--layout-horizontal);
+      @apply(--layout-center);
+    }
+
+    .input paper-input {
+      @apply(--layout-flex);
+    }
+
+    .listing {
+      width: 600px;
+      @apply(--paper-font-body1);
+    }
+
+    .docs-list {
+      margin-left: 12px;
+    }
+
+    .di {
+      @apply(--layout-horizontal);
+      @apply(--layout-center);
+      margin: 8px 0;
+    }
+
+    .dc {
+      @apply(--layout-flex);
+    }
+
+    dt {
+      font-weight: 500;
+    }
+
+    code {
+      background-color: #FFECB3;
+      display: block;
+      padding: 8px 12px;
+      margin: 12px 0;
+    }
+    </style>
+    <paper-dialog opened="{{opened}}" on-iron-overlay-closed="_onClosed">
+      <h2>Variable editor</h2>
+      <paper-dialog-scrollable>
+        <div class="input">
+          <paper-input label="Variable value" value="{{value}}"></paper-input>
+          <span>
+            <paper-icon-button icon="arc:visibility" on-tap="_evaluate"></paper-icon-button>
+            <paper-tooltip animation-delay="200" fit-to-visible-bounds>Evaluate current value</paper-tooltip>
+          </span>
+        </div>
+        <template is="dom-if" if="[[evaluated]]">
+          <code>[[evaluated]]</code>
+        </template>
+        <div class="listing">
+          <vertical-tabs align-left selected="{{selectedDoc}}">
+            <paper-tab>String</paper-tab>
+            <paper-tab>Math</paper-tab>
+            <paper-tab>Miscellaneous</paper-tab>
+            <section content class="docs-list">
+              <dl>
+              <template is="dom-repeat" items="[[docs]]">
+                <div class="di">
+                  <div class="dc">
+                    <dt>[[item.name]]</dt>
+                    <dd>[[item.doc]]</dd>
+                  </div>
+                  <paper-button raised on-tap="_insertFunction">Use</paper-button>
+                </div>
+              </template>
+              </dl>
+            </section>
+          </vertical-tabs>
+        </div>
+      </paper-dialog-scrollable>
+      <div class="buttons">
+        <paper-button dialog-dismiss>Cancel</paper-button>
+        <paper-button dialog-confirm autofocus>Accept</paper-button>
+      </div>
+    </paper-dialog>
+    <paper-toast text="" id="errorToast" duration="5000"></paper-toast>
+  </template>
+  <script>
+  (function() {
+    var FnList = {
+      'Math': [{
+        'name': 'Math.abs',
+        'doc': 'Returns the absolute value of a number.',
+        'args': 1
+        }, {
+        'name': 'Math.acos',
+        'doc': 'Returns the arccosine of a number.',
+        'args': 1
+        }, {
+        'name': 'Math.acosh',
+        'doc': 'Returns the hyperbolic arccosine of a number.',
+        'args': 1
+        }, {
+        'name': 'Math.asin',
+        'doc': 'Returns the arcsine of a number.',
+        'args': 1
+        }, {
+        'name': 'Math.asinh',
+        'doc': 'Returns the hyperbolic arcsine of a number.',
+        'args': 1
+        }, {
+        'name': 'Math.atan',
+        'doc': 'Returns the arctangent of a number.',
+        'args': 1
+        }, {
+        'name': 'Math.atanh',
+        'doc': 'Returns the hyperbolic arctangent of a number.',
+        'args': 1
+        }, {
+        'name': 'Math.atan2',
+        'doc': 'Returns the arctangent of the quotient of its arguments.',
+        'args': 2
+        }, {
+        'name': 'Math.cbrt',
+        'doc': 'Returns the cube root of a number.',
+        'args': 1
+        }, {
+        'name': 'Math.ceil',
+        'doc': 'Returns the smallest integer greater than or equal to a number.',
+        'args': 1
+        }, {
+        'name': 'Math.clz32',
+        'doc': 'Returns the number of leading zeroes of a 32-bit integer.',
+        'args': 1
+        }, {
+        'name': 'Math.cos',
+        'doc': 'Returns the cosine of a number.',
+        'args': 1
+        }, {
+        'name': 'Math.cosh',
+        'doc': 'Returns the hyperbolic cosine of a number.',
+        'args': 1
+        }, {
+        'name': 'Math.exp',
+        'doc': 'Returns Ex, where x is the argument, and E is Euler\'s constant (2.718…), the base of the natural logarithm.',
+        'args': 1
+        }, {
+        'name': 'Math.expm1',
+        'doc': 'Returns subtracting 1 from exp(x).',
+        'args': 1
+        }, {
+        'name': 'Math.floor',
+        'doc': 'Returns the largest integer less than or equal to a number.',
+        'args': 1
+        }, {
+        'name': 'Math.fround',
+        'doc': 'Returns the nearest single precision float representation of a number.',
+        'args': 1
+        }, {
+        'name': 'Math.hypot',
+        'doc': 'Returns the square root of the sum of squares of its arguments.',
+        'args': 1
+        }, {
+        'name': 'Math.imul',
+        'doc': 'Returns the result of a 32-bit integer multiplication.',
+        'args': 2
+        }, {
+        'name': 'Math.log',
+        'doc': 'Returns the natural logarithm (loge, also ln) of a number.',
+        'args': 1
+        }, {
+        'name': 'Math.log1p',
+        'doc': 'Returns the natural logarithm (loge, also ln) of 1 + x for a number x.',
+        'args': 1
+        }, {
+        'name': 'Math.log10',
+        'doc': 'Returns the base 10 logarithm of a number.',
+        'args': 1
+        }, {
+        'name': 'Math.log2',
+        'doc': 'Returns the base 2 logarithm of a number.',
+        'args': 1
+        }, {
+        'name': 'Math.max',
+        'doc': 'Returns the largest of zero or more numbers.',
+        'args': 1
+        }, {
+        'name': 'Math.min',
+        'doc': 'Returns the smallest of zero or more numbers.',
+        'args': 1
+        }, {
+        'name': 'Math.pow',
+        'doc': 'Returns base to the exponent power, that is, baseexponent.',
+        'args': 2
+        }, {
+        'name': 'Math.random',
+        'doc': 'Returns a pseudo-random number between 0 and 1.',
+        'args': 1
+        }, {
+        'name': 'Math.round',
+        'doc': 'Returns the value of a number rounded to the nearest integer.',
+        'args': 1
+        }, {
+        'name': 'Math.sign',
+        'doc': 'Returns the sign of the x, indicating whether x is positive, negative or zero.',
+        'args': 1
+        }, {
+        'name': 'Math.sin',
+        'doc': 'Returns the sine of a number.',
+        'args': 1
+        }, {
+        'name': 'Math.sinh',
+        'doc': 'Returns the hyperbolic sine of a number.',
+        'args': 1
+        }, {
+        'name': 'Math.sqrt',
+        'doc': 'Returns the positive square root of a number.',
+        'args': 1
+        }, {
+        'name': 'Math.tan',
+        'doc': 'Returns the tangent of a number.',
+        'args': 1
+        }, {
+        'name': 'Math.tanh',
+        'doc': 'Returns the hyperbolic tangent of a number.',
+        'args': 1
+        }, {
+        'name': 'Math.trunc',
+        'doc': 'Returns the integral part of the number x, removing any fractional digits.',
+        'args': 1
+      }],
+      'String': [{
+        'name': 'String.charAt',
+        'doc': 'Returns the character at the specified index.',
+        'args': 2
+        }, {
+        'name': 'String.charCodeAt',
+        'doc': 'Returns a number indicating the Unicode value of the character at the given index.',
+        'args': 2
+        }, {
+        'name': 'String.codePointAt',
+        'doc': 'Returns a non-negative integer that is the UTF-16 encoded code point value at the given position.',
+        'args': 2
+        }, {
+        'name': 'String.concat',
+        'doc': 'Combines the text of two strings and returns a new string.',
+        'args': 2
+        }, {
+        'name': 'String.includes',
+        'doc': 'Determines whether one string may be found within another string.',
+        'args': 2
+        }, {
+        'name': 'String.endsWith',
+        'doc': 'Determines whether a string ends with the characters of another string.',
+        'args': 2
+        }, {
+        'name': 'String.indexOf',
+        'doc': 'Returns the index within the calling String object of the first occurrence of the specified value, or -1 if not found.',
+        'args': 2
+        }, {
+        'name': 'String.lastIndexOf',
+        'doc': 'Returns the index within the calling String object of the last occurrence of the specified value, or -1 if not found.',
+        'args': 2
+        }, {
+        'name': 'String.padEnd',
+        'doc': 'Pads the current string from the end with a given string to create a new string from a given length.',
+        'args': 1
+        }, {
+        'name': 'String.padStart',
+        'doc': 'Pads the current string from the start with a given string to create a new string from a given length.',
+        'args': 1
+        }, {
+        'name': 'String.slice',
+        'doc': 'Extracts a section of a string and returns a new string.',
+        'args': 2
+        }, {
+        'name': 'String.substr',
+        'doc': 'Returns the characters in a string beginning at the specified location through the specified number of characters.',
+        'args': 2
+        }, {
+        'name': 'String.toLocaleLowerCase',
+        'doc': 'The characters within a string are converted to lower case while respecting the current locale. For most languages, this will return the same as toLowerCase().',
+        'args': 1
+        }, {
+        'name': 'String.toLocaleUpperCase',
+        'doc': 'The characters within a string are converted to upper case while respecting the current locale. For most languages, this will return the same as toUpperCase().',
+        'args': 1
+        }, {
+        'name': 'String.toLowerCase',
+        'doc': 'Returns the calling string value converted to lower case.',
+        'args': 1
+        }, {
+        'name': 'String.toUpperCase',
+        'doc': 'Returns the calling string value converted to uppercase.',
+        'args': 1
+        }, {
+        'name': 'String.trim',
+        'doc': 'Trims whitespace from the beginning and end of the string. Part of the ECMAScript 5 standard.',
+        'args': 1
+      }],
+      'Miscellaneous': [{
+          'name': 'now',
+          'doc': 'Returns current timestamp. Add an argument to save this value in memory. Each call with the same argument will produce the same value.',
+          'args': 0
+        }, {
+          'name': 'random',
+          'doc': 'Generates random positive integer. Add an argument to save this value in memory. Each call with the same argument will produce the same value.',
+          'args': 0
+        }, {
+          'name': 'encodeURIComponent',
+          'doc': 'Encodes argument with encodeURIComponent() function.',
+          'args': 1
+        }, {
+          'name': 'decodeURIComponent',
+          'doc': 'Decodes argument with decodeURIComponent() function.',
+          'args': 1
+        }]
+    };
+    Polymer({
+      is: 'variable-editor-dialog',
+      properties: {
+        /**
+         * Value of the variable.
+         */
+        value: String,
+        // True if the dialog should be opened.
+        opened: Boolean,
+        // Selected documentation page
+        selectedDoc: {
+          type: Number,
+          value: 0
+        },
+        docs: Array,
+
+        evaluated: String
+      },
+
+      observers: ['_selectedDocChanged(selectedDoc)'],
+
+      _selectedDocChanged: function(selectedDoc) {
+        var docs;
+        switch (selectedDoc) {
+          case 0: docs = FnList.String; break;
+          case 1: docs = FnList.Math; break;
+          case 2: docs = FnList.Miscellaneous; break;
+        }
+        this.set('docs', docs);
+      },
+
+      _evaluate: function() {
+        var expr = this.value;
+        var event = this.fire('evaluate-variable', {
+          value: expr
+        }, {
+          cancelable: true
+        });
+        if (!event.defaultPrevented) {
+          this.$.errorToast.text = 'Unable to find evaluator';
+          this.$.errorToast.opened = true;
+          return;
+        }
+        event.detail.result.then(function(value) {
+          this.set('evaluated', value);
+        }.bind(this))
+        .catch(function(cause) {
+          this.$.errorToast.text = cause.message;
+          this.$.errorToast.opened = true;
+          console.log(cause.message);
+        }.bind(this));
+      },
+
+      _insertFunction: function(e) {
+        var item = e.model.get('item');
+        var fn = item.name + '(';
+        var letters;
+        if (this.selectedDoc === 1) {
+          letters = ['x', 'y', 'z'];
+        } else {
+          letters = ['a', 'b', 'c'];
+        }
+        letters.splice(item.args);
+        fn += letters.join(', ');
+        fn += ')';
+
+        var expr = this.value + ' ' + fn;
+        this.set('value', expr);
+      },
+
+      _onClosed: function(e) {
+        e.stopPropagation();
+        if (e.detail.canceled || !e.detail.confirmed) {
+          return;
+        }
+        this.fire('variable-editor-closed', {
+          value: this.value
+        });
+      }
+    });
+  })();
+  </script>
+</dom-module>

@@ -1,0 +1,50 @@
+{
+  "kind": "prediction#analyze",
+  "id": "string",
+  "selfLink": "string",
+  "errors": [{
+    "(key)": "string"
+  }],
+  "dataDescription": {
+    "outputFeature": {
+      "numeric": {
+        "count": "long",
+        "mean": "string",
+        "variance": "string"
+      },
+      "text": [{
+        "value": "string",
+        "count": "long"
+      }]
+    },
+    "features": [{
+      "index": "long",
+      "numeric": {
+        "count": "long",
+        "mean": "string",
+        "variance": "string"
+      },
+      "categorical": {
+        "count": "long",
+        "values": [{
+          "value": "string",
+          "count": "long"
+        }]
+      },
+      "text": {
+        "count": "long"
+      }
+    }]
+  },
+  "modelDescription": {
+    "modelinfo": "trainedmodels Resource",
+    "confusionMatrix": {
+      "(key)": {
+        "(key)": "string"
+      }
+    },
+    "confusionMatrixRowTotals": {
+      "(key)": "string"
+    }
+  }
+}

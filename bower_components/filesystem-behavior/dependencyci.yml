@@ -1,0 +1,4 @@
+type:
+  development:
+    tests:
+      unlicensed: skip

@@ -1,0 +1,264 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../file-reader/file-reader.html">
+<link rel="import" href="../error-message/error-message.html">
+<link rel="import" href="../paper-progress/paper-progress.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../arc-icons/arc-icons.html">
+<link rel="import" href="../iron-overlay-behavior/iron-overlay-behavior.html">
+<link rel="import" href="../events-target-behavior/events-target-behavior.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+
+<!--
+An element that reads data from file drop.
+
+When the file is read it dispatches `process-incoming-data` custom event
+so the application can decide what to do with the data.
+
+### Example
+```
+<drop-file-importer on-process-incoming-data="_dataReady"></drop-file-importer>
+```
+
+### Styling
+`<drop-file-importer>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--drop-file-importer` | Mixin applied to the element | `{}`
+`--drop-file-importer-background-color` | Background color of the element | `#fff`
+`--drop-file-importer-header-background-color` | Bacground color of the header and border of the element | `--primary-color`
+`--drop-file-importer-header-color` | Font color of the header | `#fff`
+`--drop-file-importer-info-color` | Color of the info message when reading file | `rgba(0, 0, 0, 0.54)`
+
+@group UI Elements
+@element drop-file-importer
+@demo demo/index.html
+-->
+<dom-module id="drop-file-importer">
+  <template>
+    <style>
+    :host {
+      display: block;
+      top: 24px;
+      bottom: 24px;
+      left: 24px;
+      right: 24px;
+      position: fixed;
+      background-color: var(--drop-file-importer-background-color, #fff);
+      @apply --layout-vertical;
+      @apply --drop-file-importer;
+    }
+
+    .header {
+      height: 48px;
+      @apply --layout-horizontal;
+      @apply --layout-center;
+      background-color: var(--drop-file-importer-header-background-color, --primary-color);
+      color: var(--drop-file-importer-header-color, #fff);
+    }
+
+    h2 {
+      @apply --layout-flex;
+      @apply --arc-font-headline;
+      padding: 0;
+      margin: 0;
+      color: inherit;
+      padding-left: 24px;
+    }
+
+    .close-button {
+      color: inherit;
+    }
+
+    .content {
+      border: 4px var(--drop-file-importer-header-background-color, --primary-color) solid;
+      height: 100%;
+      @apply --layout-flex;
+      @apply --layout-vertical;
+    }
+
+    .dragging,
+    .loader,
+    .error {
+      @apply --layout-vertical;
+      @apply --layout-center-center;
+      @apply --layout-flex;
+    }
+
+    .headline {
+      @apply --arc-font-headline;
+    }
+
+    .info {
+      color: var(--drop-file-importer-info-color, rgba(0, 0, 0, 0.54));
+      @apply --arc-font-body1;
+    }
+    </style>
+    <div class="header">
+      <h2>
+        Import file
+      </h2>
+      <paper-button class="close-button" on-tap="close">
+        <iron-icon icon="arc:close"></iron-icon>
+        close
+      </paper-button>
+    </div>
+
+    <div class="content">
+      <div class="dragging" hidden$="[[!dragging]]">
+        <p class="headline">Drop the file here</p>
+      </div>
+      <div class="loader" hidden$="[[!readingFile]]">
+        <paper-progress indeterminate></paper-progress>
+        <p class="info">It may take up to a minute.</p>
+      </div>
+
+      <template is="dom-if" if="[[importError]]">
+        <div class="error">
+          <error-message>
+            <p>[[importError]]</p>
+          </error-message>
+        </div>
+      </template>
+    </div>
+    <file-reader id="fileReader" loading="{{readingFile}}" readas="text" on-file-read="_importFileReady" on-file-error="_importFileError" auto></file-reader>
+  </template>
+  <script>
+  Polymer({
+    is: 'drop-file-importer',
+    behaviors: [
+      Polymer.IronOverlayBehavior,
+      ArcBehaviors.EventsTargetBehavior
+    ],
+    properties: {
+      // True when file is dragged over the element.
+      dragging: {
+        type: Boolean,
+        value: true,
+        readOnly: true,
+        notify: true
+      },
+      // True when file read reads the file.
+      readingFile: {
+        type: Boolean,
+        value: false
+      },
+      // Error from the file reader.
+      importError: String
+    },
+
+    listeners: {
+      'dragenter': '_onDragEnter',
+      'dragleave': '_onDragLeave',
+      'dragover': '_onDragOver',
+      'drop': '_onDrop'
+    },
+
+    _attachListeners: function(node) {
+      this.listen(node, 'dragenter', '_enterHandler');
+    },
+
+    _detachListeners: function(node) {
+      this.unlisten(node, 'dragenter', '_enterHandler');
+    },
+    /**
+     * Opens the element when `dragenter` event has been dispatched
+     * by `eventsTarget`.
+     */
+    _enterHandler: function() {
+      if (!this.opened) {
+        this.opened = true;
+      }
+    },
+
+    // Handler for dragenter event.
+    _onDragEnter: function(e) {
+      e.stopPropagation();
+      e.preventDefault();
+      this._setDragging(true);
+      this.importError = '';
+    },
+
+    // Handler for dragenter event.
+    _onDragOver: function(e) {
+      e.stopPropagation();
+      e.preventDefault();
+    },
+
+    _onDragLeave: function(e) {
+      e.stopPropagation();
+      e.preventDefault();
+      // main.js closes the overlay if drag is out.
+    },
+
+    // Handler for drop event.
+    _onDrop: function(e) {
+      this._setDragging(false);
+      e.stopPropagation();
+      e.preventDefault();
+      var files = e.dataTransfer.files;
+      this._processEntries(files);
+    },
+
+    _processEntries: function(entries) {
+      this.set('readingFile', true);
+      this.$.fileReader.blob = entries[0];
+    },
+
+    /**
+     * Handler called when the files has been read.
+     */
+    _importFileReady: function(e) {
+      this.set('readingFile', false);
+      this.processImportData(e.detail.result);
+    },
+
+    _importFileError: function(e) {
+      var message = e.detail.error && e.detail.error.message || 'Unable to read the file';
+      this.importError = message;
+    },
+
+    // Computes if the loader should be hidden.
+    _computeHideLoader: function(readingFile, importing) {
+      return !readingFile && !importing;
+    },
+    /**
+     * Fires `process-incoming-data` event with the data.
+     * ARC  handles this event to normalize data.
+     *
+     * @param {String} data Incoming data
+     */
+    processImportData: function(data) {
+      this.fire('process-incoming-data', {
+        data: data
+      }, {
+        cancelable: true
+      });
+      this.opened = false;
+    }
+
+    /**
+     * Fired when data were read and ready to be processed.
+     *
+     * Note, the event can be canceled.
+     *
+     * @event process-incoming-data
+     * @param {String} data Read data
+     */
+  });
+  </script>
+</dom-module>

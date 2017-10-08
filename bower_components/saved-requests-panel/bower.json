@@ -1,0 +1,66 @@
+{
+  "name": "saved-requests-panel",
+  "description": "A saved requests panel for ARC",
+  "version": "0.1.5",
+  "license": "Apache-2.0 OR CC-BY-4.0",
+  "authors": [
+    "The Advanced REST client authors <arc@mulesoft.com>"
+  ],
+  "keywords": [
+    "web-components",
+    "polymer"
+  ],
+  "private": true,
+  "main": [
+    "saved-requests-panel.html"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:advanced-rest-client/saved-requests-panel.git"
+  },
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.9.2",
+    "saved-list-items": "advanced-rest-client/saved-list-items#^0.1.0",
+    "iron-flex-layout": "PolymerElements/iron-flex-layout#<2",
+    "paper-button": "PolymerElements/paper-button#<2",
+    "iron-icon": "PolymerElements/iron-icon#<2",
+    "arc-icons": "advanced-rest-client/arc-icons#^1.0.22",
+    "paper-menu-button": "PolymerElements/paper-menu-button#<2",
+    "paper-icon-button": "PolymerElements/paper-icon-button#<2",
+    "paper-listbox": "PolymerElements/paper-listbox#<2",
+    "paper-item": "PolymerElements/paper-item#<2",
+    "openable-panel-behavior": "advanced-rest-client/openable-panel-behavior#^0.1.2",
+    "app-pouchdb": "advanced-rest-client/app-pouchdb#^1.0.0",
+    "paper-progress": "PolymerElements/paper-progress#<2",
+    "paper-toast": "PolymerElements/paper-toast#<2",
+    "arc-models": "advanced-rest-client/arc-models#^0.1.9",
+    "arc-data-export": "advanced-rest-client/arc-data-export#^0.1.5",
+    "app-pouchdb-quick-search": "advanced-rest-client/app-pouchdb-quick-search#^1.0.5",
+    "paper-dialog": "PolymerElements/paper-dialog#<2",
+    "tutorial-toast": "advanced-rest-client/tutorial-toast#^0.1.1",
+    "bottom-sheet": "advanced-rest-client/bottom-sheet#^1.0.4",
+    "paper-fab": "PolymerElements/paper-fab#<2",
+    "saved-request-editor": "advanced-rest-client/saved-request-editor#^0.1.1",
+    "saved-request-detail": "advanced-rest-client/saved-request-detail#^0.1.1"
+  },
+  "devDependencies": {
+    "iron-component-page": "polymerelements/iron-component-page#1.0.0",
+    "web-component-tester": "^6.0.0",
+    "paper-styles": "polymerelements/paper-styles#^1.0.2",
+    "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^1.0.0",
+    "iron-test-helpers": "PolymerElements/iron-test-helpers#^1.4.0",
+    "test-fixture": "PolymerElements/test-fixture#^3.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0",
+    "chance": "^1.0.11",
+    "arc-demo-helpers": "advanced-rest-client/arc-demo-helpers#^1.0.18",
+    "request-saver": "advanced-rest-client/request-saver#^0.1.0"
+  },
+  "ignore": [
+    "**/.*",
+    "dependencyci.yml",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tasks"
+  ]
+}

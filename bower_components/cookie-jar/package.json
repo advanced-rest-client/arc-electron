@@ -1,0 +1,34 @@
+{
+  "name": "cookie-jar",
+  "version": "0.1.4",
+  "license": "Apache-2.0 OR CC-BY-4.0",
+  "description": "A cookies storage and request / response manipulation for other that XHR transport methods",
+  "devDependencies": {
+    "bower": "^1.8.0",
+    "polymer-cli": "^1.2.0"
+  },
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "private": false,
+  "main": [
+    "cookie-jar.html"
+  ],
+  "author": "The Advanced REST client authors <arc@mulesoft.com>",
+  "scripts": {
+    "serve": "node_modules/.bin/polymer serve",
+    "lint": "node_modules/.bin/polymer lint cookie-jar.html --rules polymer-1",
+    "test-sauce": "node_modules/.bin/polymer test --plugin sauce --job-name \"cookie-jar:local-test\"",
+    "test": "node_modules/.bin/polymer test --plugin local",
+    "deps": "npm install --quiet && bower install --quiet",
+    "update-deps": "npm update --quiet && bower update --quiet"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/advanced-rest-client/cookie-jar.git"
+  },
+  "bugs": {
+    "url": "https://github.com/advanced-rest-client/cookie-jar/issues",
+    "email": "arc@mulesoft.com"
+  }
+}

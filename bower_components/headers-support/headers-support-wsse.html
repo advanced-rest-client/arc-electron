@@ -1,0 +1,242 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../headers-support-behavior/headers-support-behavior.html">
+<link rel="import" href="../headers-support-behavior/headers-support-styles.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../paper-masked-input/paper-masked-input.html">
+<script src="../cryptojslib/rollups/sha1.js"></script>
+<script src="../cryptojslib/components/enc-base64-min.js"></script>
+<!--
+`<headers-support-authorization>` is an element that provides headers fill
+support for authorization header.
+
+Currently it supports basic authorization only.
+
+### Example
+```
+<headers-support-authorization></headers-support-authorization>
+```
+
+### Styling
+Check `ArcBehaviors.FillSupportBehavior` for styling options.
+
+@group UI Elements
+@element headers-support-wsse
+@demo demo/index.html
+-->
+<dom-module id="headers-support-wsse">
+  <template>
+    <style include="headers-support-styles"></style>
+    <style>
+    .row {
+      margin: 16px 0;
+    }
+
+    paper-input {
+      min-width: 360px;
+    }
+    </style>
+    <h2>WSSE authorization</h2>
+    <div class="form">
+      <paper-input label="User name" value="{{login}}" type="text"></paper-input>
+      <paper-masked-input label="Password" value="{{password}}" type="text"></paper-masked-input>
+      <div class="row">
+        <paper-checkbox checked="{{autogenNonce}}">Generate nonce automatically</paper-checkbox>
+        <paper-input label="Nonce (e.g. 79de86f9d641629f)" value="{{nonce}}" type="text" hidden$="[[autogenNonce]]"></paper-input>
+      </div>
+      <paper-checkbox checked="{{nonceAsBase64}}">Encode nonce to base 64</paper-checkbox>
+      <div class="row">
+        <paper-checkbox checked="{{autogenTimestamp}}">Generate timestamp automatically</paper-checkbox>
+        <paper-input label="Timestamp (e.g. 2016-07-20T17:07:42.673Z)" value="{{date}}" type="text" hidden$="[[autogenTimestamp]]"></paper-input>
+      </div>
+    </div>
+    <div class="buttons">
+      <paper-button dialog-dismiss>Cancel</paper-button>
+      <paper-button dialog-confirm>Accept</paper-button>
+    </div>
+  </template>
+  <script>
+  Polymer({
+    is: 'headers-support-wsse',
+
+    behaviors: [ArcBehaviors.FillSupportBehavior],
+
+    hostAttributes: {
+      'header-support': 'x-wsse'
+    },
+
+    listeners: {
+      'iron-overlay-closed': '_onClosed'
+    },
+
+    properties: {
+      // User login
+      login: String,
+      // User password
+      password: String,
+      /**
+       * A unique binary string generated for use in the WSSE hashing algorithm
+       * and useful to help prevent against reply attacks. This value
+       * essentially represents a "request ID".
+       */
+      nonce: String,
+      /**
+       * Indicates to the authorization server the time when the request was
+       * created or signed and can thus help prevent stale requests from
+       * being used at a later time.
+       */
+      date: String,
+      // Nonce in Base64
+      nonceAsBase64: {
+        type: Boolean,
+        value: true
+      },
+      /**
+       * Default value is used to be able to apply auto generation when user
+       * come from saved form
+       */
+      lastGeneratedNonce: {
+        type: String,
+        value: 'init'
+      },
+      /**
+       * Default value is used to be able to apply auto generation when user
+       * come from saved form
+       */
+      lastGeneratedDate: {
+        type: String,
+        value: 'init'
+      },
+      // True to generate nonce automatically
+      autogenNonce: {
+        type: Boolean,
+        value: true
+      },
+      // True to generate timestamp automatically
+      autogenTimestamp: {
+        type: Boolean,
+        value: true
+      }
+    },
+
+    observers: [
+      '_setValueIfNeeded(opened, value)'
+    ],
+
+    _setValueIfNeeded: function(opened, value) {
+      if (opened) {
+        this._setCurrentValues(value);
+      }
+    },
+
+    _setCurrentValues: function(currentValue) {
+      this.set('login', '');
+      this.set('nonce', '');
+      this.set('date', '');
+      this.set('password', '');
+
+      if (!currentValue) {
+        return;
+      }
+      var regex = /Username="(.*)", PasswordDigest="(.*)", Nonce="(.*)", Created="(.*)"/i;
+      var matches = currentValue.match(regex);
+      if (!matches || matches.length !== 5) {
+        return;
+      }
+      // Login
+      this.set('login', matches[1]);
+      // Nonce
+      var nonce = matches[3];
+      // Try to define is nonce is base64 or not
+      try {
+        nonce = atob(nonce);
+        this.set('nonceAsBase64', true);
+      } catch (e) {
+        this.set('nonceAsBase64', false);
+      }
+      // Apply on form only if nonce is not last autogenerated one
+      if (!this.lastGeneratedNonce || (this.lastGeneratedNonce !== 'init' &&
+          this.lastGeneratedNonce !== nonce)) {
+        this.set('nonce', nonce);
+      }
+      // Date
+      // Apply on form only if date is not last autogenerated one
+      if (!this.lastGeneratedDate || this.lastGeneratedDate !== 'init' &&
+        this.lastGeneratedDate !== matches[4]) {
+        this.set('date', matches[4]);
+      }
+    },
+
+    _generateDate: function() {
+      var date = new Date();
+      return date.toISOString();
+    },
+
+    _generateNonce: function() {
+      var nonceChars = '0123456789abcdef';
+      var result = '';
+      for (var i = 0; i < 16; i++) {
+        result += nonceChars.charAt(Math.floor(Math.random() * nonceChars.length));
+      }
+      return result;
+    },
+
+    _onClosed: function(e) {
+      if (e.detail.canceled || !e.detail.confirmed) {
+        return;
+      }
+      var nonce;
+      var date;
+      if (this.autogenNonce) {
+        this.nonce = '';
+      }
+      if (this.autogenTimestamp) {
+        this.date = '';
+      }
+
+      if (this.nonce) {
+        nonce = this.nonce;
+        this.lastGeneratedNonce = '';
+      } else {
+        nonce = this._generateNonce();
+        this.lastGeneratedNonce = nonce;
+      }
+      if (this.date) {
+        date = this.date;
+        this.lastGeneratedDate = '';
+      } else {
+        date = this._generateDate();
+        this.lastGeneratedDate = date;
+      }
+      var toEncode = nonce + date + this.password;
+      var sha1 = CryptoJS.SHA1(toEncode);
+      var digest = sha1.toString(CryptoJS.enc.Base64);
+      var nonce64 = nonce;
+      if (this.nonceAsBase64) {
+        nonce64 = btoa(nonce64);
+      }
+      this.setValue('UsernameToken Username="' + this.login + '", PasswordDigest="' + digest +
+        '", Nonce="' + nonce64 + '", Created="' + date + '"');
+    },
+
+    _refreshValue: function() {
+      this._setCurrentValues(this._getCurrentValue());
+      this._select();
+    }
+  });
+  </script>
+</dom-module>

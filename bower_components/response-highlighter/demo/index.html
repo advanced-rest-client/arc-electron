@@ -1,0 +1,95 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <title>response-highlighter demo</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+  <link rel="import" href="../../iron-flex-layout/iron-flex-layout.html">
+  <link rel="import" href="../../paper-input/paper-input.html">
+  <link rel="import" href="../../paper-button/paper-button.html">
+  <link rel="import" href="../../paper-icon-button/paper-icon-button.html">
+  <link rel="import" href="../../paper-toast/paper-toast.html">
+
+  <link rel="import" href="../response-highlighter.html">
+
+  <style is="custom-style" include="demo-pages-shared-styles">
+
+    .vertical-section-container {
+      max-width: 600px;
+    }
+
+    .url-input {
+      @apply(--layout-horizontal);
+    }
+
+    .url-input paper-input {
+      @apply(--layout-flex);
+    }
+
+  </style>
+</head>
+<body unresolved>
+  <div class="vertical-section-container centered">
+    <h3>The `response-highlighter`</h3>
+    <demo-snippet>
+      <template is="dom-bind">
+        <div class="url-input">
+          <paper-input label="URL" value="{{url}}"></paper-input>
+          <paper-button raised on-tap="download">go</paper-button>
+        </div>
+        <response-highlighter response-text="[[response]]" content-type="[[contentType]]" query="[[query]]">
+          <paper-icon-button title="Additional action" icon="arc:cached" on-tap="_additionalAction"></paper-icon-button>
+          <paper-icon-button title="Clear the code" icon="arc:clear" on-tap="_clearCode"></paper-icon-button>
+          <paper-input label="Search" value="{{query}}"></paper-input>
+        </response-highlighter>
+      </template>
+    </demo-snippet>
+    <paper-toast text="Additional action clicked"></paper-toast>
+    <script>
+      var scope = document.querySelector('template[is="dom-bind"]');
+      scope.url = 'https://cdn.rawgit.com/jarrodek/ChromeRestClient/develop/tasks/test-data/xml1.xml';
+      scope.response = '';
+      scope.contentType = '';
+      scope.download = function() {
+        var opts = {
+          method: 'GET',
+          mode: 'cors'
+        };
+        var ct;
+        fetch(scope.url, opts)
+        .then(function(response) {
+          ct = response.headers.get('content-type');
+          return response.text();
+        })
+        .then(function(text) {
+          scope.response = text;
+          scope.contentType = ct;
+        });
+      };
+      scope._clearCode = function() {
+        scope.response = undefined;
+        scope.contentType = undefined;
+      };
+      scope._additionalAction = function() {
+        document.querySelector('paper-toast').opened = true;
+      };
+    </script>
+  </div>
+</body>
+</html>

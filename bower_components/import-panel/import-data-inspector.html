@@ -1,0 +1,236 @@
+<!--
+@license
+Copyright 2017 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../form-action-bar/form-action-bar.html">
+<link rel="import" href="../date-time/date-time.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="import-requests-table.html">
+<link rel="import" href="import-history-table.html">
+<link rel="import" href="import-variables-table.html">
+<link rel="import" href="import-headers-sets-table.html">
+<link rel="import" href="import-cookies-table.html">
+<link rel="import" href="import-auth-data-table.html">
+<link rel="import" href="import-url-history-table.html">
+<link rel="import" href="import-websocket-url-history-table.html">
+
+<!--
+An element to display tables of import data.
+
+It accept normalized ARC import object received from `arc-data-import` element.
+
+### Example
+
+```html
+<import-data-inspector data="[[arcImport]]" on-cancel="cancel" on-import="importData"></import-data-inspector>
+```
+
+### Styling
+`<import-panel>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--import-data-inspector` | Mixin applied to the element | `{}`
+`--action-button` | Mixin applied to the primary acction button | `{}`
+`--import-data-inspector-meta-color` | Color of the meta data property | `{}`
+`--import-table` | Mixin applied to a table with data import | `{}`
+`--import-table-opened` | Mixin applied to a table with data import when opened | `{}`
+`--import-table-title` | Mixin applied to the title of the import table | `{}`
+`--import-table-header` | Mixin applied to data table header with selecyion options | `{}`
+`--import-table-method-label` | Mixin applied to the HTTP method label container | `{}`
+`--import-table-selection-counter` | Mixin applied to a table selection counter label | `{}`
+`--import-table-list-item` | Mixin applied to data table's items | `{}`
+
+@element import-panel
+@demo demo/inspector.html Table demo
+-->
+<dom-module id="import-data-inspector">
+  <template>
+    <style>
+    :host {
+      display: block;
+      height: inherit;
+      padding-bottom: 64px;
+      @apply --arc-font-body1;
+      @apply --import-data-inspector;
+    }
+
+    paper-button {
+      color: var(--primary-color);
+    }
+
+    .primary-action {
+      @apply --action-button;
+    }
+
+    .meta {
+      color: var(--import-data-inspector-meta-color, rgba(0, 0, 0, 0.74));
+      margin-bottom: 24px;
+    }
+    </style>
+    <template is="dom-if" if="[[data.createdAt]]">
+      <p class="meta">Exported at: <date-time year="numeric" month="long" day="numeric" hour="2-digit" minute="2-digit" second="2-digit" date="[[data.createdAt]]"></date-time> from ARC version: [[data.version]]</p>
+    </template>
+
+    <template is="dom-if" if="[[data.requests.length]]">
+      <import-requests-table data="[[data.requests]]" projects="[[data.projects]]"></import-requests-table>
+    </template>
+
+    <template is="dom-if" if="[[data.history.length]]">
+      <import-history-table data="[[data.history]]"></import-history-table>
+    </template>
+
+    <template is="dom-if" if="[[data.variables.length]]">
+      <import-variables-table data="[[data.variables]]"></import-variables-table>
+    </template>
+
+    <template is="dom-if" if="[[headersSets.length]]">
+      <import-headers-sets-table data="[[headersSets]]"></import-headers-sets-table>
+    </template>
+
+    <template is="dom-if" if="[[data.cookies.length]]">
+      <import-cookies-table data="[[data.cookies]]"></import-cookies-table>
+    </template>
+
+    <template is="dom-if" if="[[authData.length]]">
+      <import-auth-data-table data="[[authData]]"></import-auth-data-table>
+    </template>
+
+    <template is="dom-if" if="[[urls.length]]">
+      <import-url-history-table data="[[urls]]"></import-url-history-table>
+    </template>
+
+    <template is="dom-if" if="[[socketUrls.length]]">
+      <import-websocket-url-history-table data="[[socketUrls]]"></import-websocket-url-history-table>
+    </template>
+
+    <form-action-bar>
+      <paper-button on-tap="_cancel" data-action="cancel-import">Cancel</paper-button>
+      <paper-button class="primary-action" on-tap="_import" data-action="import-data">Import data</paper-button>
+    </form-action-bar>
+  </template>
+  <script>
+    Polymer({
+      is: 'import-data-inspector',
+      /**
+       * Fired when the user accepts the import
+       * Event's detail object is ARC import data object.
+       *
+       * The event does not bubbles.
+       *
+       * @event import
+       */
+
+      /**
+       * Fired when the user cancels the import action.
+       *
+       * The event does not bubbles.
+       *
+       * @event cancel
+       */
+      properties: {
+        // Imported data.
+        data: Object,
+        // Computed headers-sets value
+        headersSets: Array,
+        // Computed auth-data value
+        authData: Array,
+        // Computed url-history value
+        urls: Array,
+        // Computed websocket-url-history value
+        socketUrls: Array
+      },
+
+      observers: [
+        '_dataUpdated(data)'
+      ],
+      // Handles the cancel action.
+      _cancel: function() {
+        this.fire('cancel', {}, {
+          bubbles: false,
+          cancelable: true
+        });
+      },
+      // Updates local variables that can't be read in the template.
+      _dataUpdated: function(data) {
+        data = data || {};
+        var value = data['headers-sets'];
+        this.headersSets = (value && value.length) ? value : undefined;
+
+        value = data['auth-data'];
+        this.authData = (value && value.length) ? value : undefined;
+
+        value = data['url-history'];
+        this.urls = (value && value.length) ? value : undefined;
+
+        value = data['websocket-url-history'];
+        this.socketUrls = (value && value.length) ? value : undefined;
+      },
+      // Handles "import" action.
+      _import: function() {
+        var data = this.collectData();
+        this.fire('import', data, {
+          bubbles: false,
+          cancelable: true
+        });
+      },
+
+      /**
+       * Collects information about selected data in the data table.
+       *
+       * @param {String} name Data table element name to check data for.
+       * @return {Array|undefined} List of items or undefined if the table is
+       * not in the DOM, the table is hidden or selection is empty.
+       */
+      _getTableData: function(name) {
+        var table = this.$$(name);
+        if (!table) {
+          return;
+        }
+        if (table.style.display === 'none') {
+          return;
+        }
+        var selected = table.selectedItems;
+        if (!selected || !selected.length) {
+          return;
+        }
+        selected.forEach(item => {
+          delete item.selected;
+        });
+        return selected;
+      },
+      /**
+       * Collects import data from the tables.
+       * Only selected items are in the final object.
+       *
+       * @return {Object} ARC import object with updated arrays.
+       * Note, the object is a shallow copy of the original data object.
+       */
+      collectData: function() {
+        var result = Object.assign({}, this.data);
+        result.requests = this._getTableData('import-requests-table');
+        if (!result.requests && result.projects) {
+          delete result.projects;
+        }
+        result.history = this._getTableData('import-history-table');
+        result.variables = this._getTableData('import-variables-table');
+        result.cookies = this._getTableData('import-cookies-table');
+        result['headers-sets'] = this._getTableData('import-headers-sets-table');
+        result['auth-data'] = this._getTableData('import-auth-data-table');
+        result['url-history'] = this._getTableData('import-url-history-table');
+        result['websocket-url-history'] = this._getTableData('import-websocket-url-history-table');
+        return result;
+      }
+    });
+  </script>
+</dom-module>

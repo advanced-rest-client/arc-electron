@@ -1,0 +1,15 @@
+{
+  "id": "string",
+  "sourceModel": "string",
+  "storageDataLocation": "string",
+  "storagePMMLLocation": "string",
+  "storagePMMLModelLocation": "string",
+  "modelType": "string",
+  "trainingInstances": [{
+    "output": "string",
+    "csvInstance": ["(value)"]
+  }],
+  "utility": [{
+    "(key)": "double"
+  }]
+}

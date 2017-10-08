@@ -1,0 +1,83 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <title>raw-payload-editor demo</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+  <link rel="import" href="../../content-type-selector/content-type-selector.html">
+  <link rel="import" href="../raw-payload-editor.html">
+
+  <style is="custom-style" include="demo-pages-shared-styles">
+
+    :root {
+      --arc-code-mirror-background-color: #f5f2f0;
+
+      --code-mirror-editor: {
+        background-color: #f5f2f0;
+        z-index: 0;
+        display: block;
+        height: 100px; /*auto;*/
+      }
+      --code-mirror-wrapper: {
+        display: block;
+      };
+    }
+
+    .vertical-section-container {
+      max-width: 600px;
+    }
+
+    output {
+      display: block;
+      white-space: pre-wrap;
+      margin-top: 40px;
+      @apply(--layout-horizontal);
+    }
+
+    output:before {
+      content: 'Editor output: ';
+      margin-right: 8px;
+      color: rgba(0,0,0,0.74);
+    }
+  </style>
+</head>
+<body unresolved>
+  <div class="vertical-section-container centered">
+    <h3>The `raw-payload-editor`</h3>
+    <demo-snippet>
+      <template is="dom-bind">
+        <content-type-selector content-type="{{ct}}"></content-type-selector>
+        <raw-payload-editor content-type="[[ct]]" value="{{payload}}"></raw-payload-editor>
+        <output>[[payload]]</output>
+      </template>
+    </demo-snippet>
+  </div>
+  <script>
+  window.addEventListener('WebComponentsReady', function() {
+    var ev = Polymer.Base.fire('content-type-changed', {
+      value: 'application/json'
+    }, {
+      node: document.body,
+      bubbles: true,
+      cancelable: true
+    });
+  });
+  </script>
+</body>
+</html>

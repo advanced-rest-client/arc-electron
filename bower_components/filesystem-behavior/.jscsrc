@@ -1,0 +1,15 @@
+{
+  "preset": "google",
+  "disallowSpacesInAnonymousFunctionExpression": null,
+  "disallowTrailingWhitespace": null,
+  "maximumLineLength": 100,
+  "excludeFiles": ["node_modules/**"],
+  "jsDoc": {
+    "checkAnnotations": {
+        "preset": "jsdoc3",
+        "extra": {
+            "polymerBehavior": true
+        }
+    }
+  }
+}

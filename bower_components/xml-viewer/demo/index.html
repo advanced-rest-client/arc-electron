@@ -1,0 +1,77 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <title>xml-viewer demo</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+  <link rel="import" href="../../paper-input/paper-input.html">
+  <link rel="import" href="../../paper-toast/paper-toast.html">
+
+  <link rel="import" href="../xml-viewer.html">
+
+  <style is="custom-style" include="demo-pages-shared-styles">
+
+    .vertical-section-container {
+      max-width: 600px;
+    }
+
+  </style>
+</head>
+<body unresolved>
+  <div class="vertical-section-container centered">
+    <h3>The `xml-viewer`</h3>
+    <demo-snippet>
+      <template is="dom-bind">
+        <xml-viewer xml="[[xml]]" query="[[query]]" whole-match on-action-link-change="_onLinkChange">
+          <paper-icon-button content-action title="Additional action" icon="arc:cached" on-tap="_additionalAction"></paper-icon-button>
+          <paper-icon-button content-action title="Clear the code" icon="arc:clear" on-tap="_additionalAction"></paper-icon-button>
+          <paper-input content-action class="query" label="Search in XML" value="{{query}}"></paper-input>
+        </xml-viewer>
+      </template>
+    </demo-snippet>
+    <paper-toast></paper-toast>
+    <paper-toast id="additionalAction" text="Additional action clicked"></paper-toast>
+    <script>
+    var scope = document.querySelector('template[is="dom-bind"]');
+    var xml = '';
+    scope.xml = xml;
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', 'https://raw.githubusercontent.com/jarrodek/ChromeRestClient/develop/tasks/test-data/xml1.xml');
+    xhr.withCredentials = false;
+    xhr.send();
+    xhr.addEventListener('load', function(e) {
+      scope.xml = e.target.response;
+    });
+    xhr.addEventListener('error', function() {
+      var toast = document.querySelector('paper-toast');
+      toast.text = 'Unable to load the XML file.';
+      toast.opened = true;
+    });
+    scope._onLinkChange = function(e) {
+      var toast = document.querySelector('paper-toast');
+      toast.text = 'Selected URL: ' + e.detail.url;
+      toast.opened = true;
+    };
+    scope._additionalAction = function() {
+      document.querySelector('#additionalAction').opened = true;
+    };
+    </script>
+  </div>
+</body>
+</html>

@@ -1,0 +1,579 @@
+<!--
+@license
+Copyright 2016 jarrod
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../app-pouchdb/pouchdb.html">
+<link rel="import" href="../auth-dialogs/auth-dialogs.html">
+<link rel="import" href="../headers-parser-behavior/headers-parser-behavior.html">
+<link rel="import" href="../arc-polyfills/arc-polyfills.html">
+<link rel="import" href="../fetch-polyfill/fetch-polyfill.html">
+<script src="../url/url.js"></script>
+<!--
+
+An element responsible for applying authorization data to the request before sending it to a server
+and requesting credentials data from the user.
+It contains UI dialogs to request data from the user for Basic and NTLM authorization. It listens
+for `before-request` and `response-ready` events as defined
+[in this issue](https://github.com/jarrodek/ChromeRestClient/issues/1010).
+
+The element's API is based on custom events fired by the request editor (controller). There's no
+need to directly call any function or set a property. It adds event listeners to the `window`
+object. It should be placed as close to the `<body>` as possible.
+
+The `before-request` event is handled synchronously.
+
+### Example
+```
+<authorization-data-saver></authorization-data-saver>
+```
+
+### Styling
+
+See [auth-dialogs](https://github.com/advanced-rest-client/auth-dialogs) for styling options.
+
+### Demo
+
+See [auth-dialogs](https://github.com/advanced-rest-client/auth-dialogs) for dialogs demos.
+
+@group Logic Elements
+@element authorization-data-saver
+-->
+<dom-module id="authorization-data-saver">
+  <template>
+    <style>
+     :host {
+      margin: 0;
+      padding: 0;
+      width: 0;
+      height: 0;
+      /* If display none then the dialogs won't be displayed */
+    }
+    </style>
+    <auth-dialog-basic></auth-dialog-basic>
+    <auth-dialog-ntlm></auth-dialog-ntlm>
+  </template>
+  <script>
+  Polymer({
+    is: 'authorization-data-saver',
+
+    behaviors: [ArcBehaviors.HeadersParserBehavior],
+
+    /**
+     * Fired when the request headers changed because of applied authorization.
+     *
+     * @event request-headers-changed
+     * @param {String} value New headers value.
+     */
+    /**
+     * Fired when the user accepted authorization dialog, the request object has been altered and
+     * the request is ready to be called again.
+     *
+     * @event resend-auth-request
+     */
+    /**
+     * Fires when the NTLM authorization data are received from user input.
+     * The request builder element should intercept this event and attach it to the next request.
+     *
+     * @event ntlm-data-changed
+     * @property {Object} Map of auth properties: `username`, `password` and `domain`.
+     */
+    /**
+     * Fired when the header value has changed.
+     *
+     * @event request-header-changed
+     * @param {String} name Name of the header
+     * @param {String} value Value of the header
+     */
+    properties: {
+      /**
+       * URL of the request related to current operation.
+       */
+      url: String,
+      /**
+       * Cashed list of authorization data for current session.
+       * It is here so the element won't ask data store for data that already has been received.
+       */
+      _cache: Array,
+      /**
+       * Currently opened dialog name.
+       */
+      _openedDialog: String
+    },
+    /**
+     * Reference to currently opened dialog
+     *
+     * @return {HTMLElement|null} Returns dialog or `null`
+     */
+    get dialog() {
+      return this.$$('auth-dialog-' + this._openedDialog);
+    },
+    // Returns handler to the Pouch DB.
+    get _db() {
+      return new PouchDB('auth-data');
+    },
+
+    observers: ['_restoreDialogData(url, _openedDialog)'],
+
+    listeners: {
+      'auth-dialog-closed': '_onAuthDialogResult'
+    },
+
+    attached: function() {
+      this.listen(window, 'before-request', '_beforeRequestHandler');
+      this.listen(window, 'response-ready', '_afterRequestHandler');
+    },
+
+    detached: function() {
+      this.unlisten(window, 'before-request', '_beforeRequestHandler');
+      this.unlisten(window, 'response-ready', '_afterRequestHandler');
+    },
+
+    /* BEFORE REQUEST */
+
+    /**
+     * Handler for the ARC's event `before-request`.
+     * The event will be handled synchronously.
+     */
+    _beforeRequestHandler: function(e) {
+      this._processRequest(e.detail);
+    },
+
+    /**
+     * Processes request before it's send to the transport library.
+     * It sets
+     * To mimic browser behavior the authorization data won't be set unless at least once in the
+     * session the user has set authorization data for current URL.
+     */
+    _processRequest: function(request) {
+      var headers = request.headers;
+      if (!headers) {
+        headers = '';
+      }
+      if (/^authorization:\s?.+$/gim.test(headers)) {
+        // Already has authorization.
+        return;
+      }
+      if (!request.url) {
+        return;
+      }
+      // Try to find an auth data for the URL. If has a match, apply it to the request
+      var url = this._computeUrlPath(request.url);
+      var authData = this._findCachedAuthData('basic', url);
+      if (authData) {
+        this._applyRequestBasicAuthData(request, authData);
+        return;
+      }
+      // Try NTLM
+      authData = this._findCachedAuthData('ntlm', url);
+      if (authData) {
+        this._applyRequestNtlmAuthData(request, authData);
+        return;
+      }
+    },
+    /**
+     * Applies the basic authorization data to the request.
+     *
+     * If the header value have changed then it fires `request-headers-changed` custom event.
+     * It sets computed value of the readers to the event's detail object.
+     *
+     * @param {Object} request The event's detail object. Changes made here will be propagated to
+     * the event.
+     * @param {Object} data The authorization data to apply.
+     */
+    _applyRequestBasicAuthData: function(request, data) {
+      var value = 'Basic ' + data.hash;
+      var headers = request.headers;
+      var newHeaders = this.replaceHeaderValue(headers, 'authorization', value);
+      if (headers !== newHeaders) {
+        this.fire('request-headers-changed', {
+          value: newHeaders
+        }, {
+          composed: true
+        });
+        request.headers = newHeaders;
+      }
+    },
+    /**
+     * Applies the NTLM authorization data to the request.
+     *
+     * Because NTLM requires certain operations on a socket it's bot just about setting a headers
+     * but whole NTLM configuration object.
+     *
+     * Applied the `auth` object to the event's `detail.auth` object.
+     *
+     * @param {Object} request The event's detail object. Changes made here will be propagated to
+     * the event.
+     * @param {Object} values The authorization data to apply.
+     */
+    _applyRequestNtlmAuthData: function(request, values) {
+      var auth = {};
+      auth.username = values.username;
+      auth.password = values.password;
+      auth.domain = values.domain;
+      auth.method = 'ntlm';
+      request.auth = auth;
+    },
+
+    /* AFTER RESPONSE */
+
+    /**
+     * Handler to the `response-ready` event
+     */
+    _afterRequestHandler: function(e) {
+      var method = this.authorizationMethodFromResponse(e.detail.response);
+      if (!method) {
+        return;
+      }
+      // Async so the response can be rendered to the user.
+      this.async(function() {
+        this._processAuthResponse(method, e.detail.request, e.detail.id);
+      }, 1);
+    },
+    /**
+     * Checks if the response require authorization and if so it returns the authorization
+     * method name for the endpoint.
+     *
+     * @param {Response} response The response object associated with the request
+     * @return {String|undefined} Authorization method or undefined if not found or not supported.
+     */
+    authorizationMethodFromResponse: function(response) {
+      if (!response || response.status !== 401) {
+        return;
+      }
+      var auth = response.headers.has('www-authenticate') ?
+        response.headers.get('www-authenticate') : undefined;
+      if (!auth) {
+        return;
+      }
+      auth = auth.toLowerCase();
+      if (auth.indexOf('ntlm') !== -1) {
+        return 'ntlm';
+      } else if (auth.indexOf('basic') !== -1) {
+        return 'basic';
+      }
+    },
+
+    /**
+     * Checks response object for any auth request.
+     * If authorization is required for the endpoint it will display corresponding dialog if
+     * supported.
+     *
+     * This function shouldn't interrupt normal response flow. Id will display authorization
+     * dialog if required and when the user accept the dialog it fires the `resend-auth-request`
+     * custom event.
+     *
+     * This function exists quietly if any of the arguments are not set.
+     *
+     * @param {String} method Authorization method
+     * @param {Request} request The request object.
+     * @param {String} id Request ID
+     */
+    _processAuthResponse: function(method, request, id) {
+      if (!method || !request || !request.url) {
+        return;
+      }
+
+      this.__dialogResultId = id;
+      switch (method) {
+        case 'basic':
+          this._openBasicAuthDialog(request.url);
+          break;
+        case 'ntlm':
+          this._openNtlmAuthDialog(request.url);
+          break;
+      }
+    },
+
+    /**
+     * Opens a basic authorization dialog when response status is 401 and basic or digest
+     * authorization is required.
+     */
+    _openBasicAuthDialog: function(url) {
+      if (this.url !== url) {
+        this.set('url', url);
+      }
+      this._openedDialog = 'basic';
+      this.dialog.opened = true;
+    },
+    /**
+     * Opens the NTLM authorization dialog when response status is 401 and NTLM authorization
+     * is required.
+     */
+    _openNtlmAuthDialog: function(url) {
+      if (this.url !== url) {
+        this.set('url', url);
+      }
+      this._openedDialog = 'ntlm';
+      this.dialog.opened = true;
+    },
+
+    /**
+     * Restores the database object entry or cached object if any.
+     *
+     * @param {String} url The URL of the request
+     * @param {String} authMethod The Authorization method to restore data for.
+     */
+    _restoreDialogData: function(url, authMethod) {
+      if (!url || !authMethod) {
+        return;
+      }
+      url = this._computeUrlPath(url);
+      var authData = this._findCachedAuthData(authMethod, url);
+      if (authData) {
+        this._setRestoredAuthData(authMethod, authData);
+        return;
+      }
+      var key = this._computeCredentialsPath(url, authMethod);
+      var context = this;
+      this._db.get(key)
+      .then(function(doc) {
+        context._setRestoredAuthData(authMethod, doc);
+      })
+      .catch(function(error) {
+        if (error && error.status === 404) {
+          return;
+        } else {
+          context.fire('app-log', {
+            message: error.message,
+            stack: new Error().stack,
+            level: 'error'
+          });
+          throw error;
+        }
+      });
+    },
+
+    /**
+     * Finds an auth data for given `url`.
+     *
+     * @param {String} type Authorization type.
+     * @param {String} url The URL of the request.
+     * @return {Object|undefined} Auth data if exists in the cache.
+     */
+    _findCachedAuthData: function(type, url) {
+      var cache = this._cache;
+      if (!cache || !type || !url || !cache[type]) {
+        return;
+      }
+      return cache[type][url];
+    },
+    /**
+     * Sends authorization data to the cache.
+     *
+     * @param {String} type Authorization type.
+     * @param {String} url current request URL
+     * @param {Object} data Authorization data to store.
+     */
+    _cacheAuthData: function(type, url, data) {
+      if (!this._cache) {
+        this._cache = {};
+      }
+      if (!(type in this._cache)) {
+        this._cache[type] = {};
+      }
+      this._cache[type][url] = data;
+    },
+    /**
+     * Called when stored authorization data has been found in database or cache.
+     * It updates the data in opened dialog.
+     */
+    _setRestoredAuthData: function(authMethod, doc) {
+      switch (authMethod) {
+        case 'basic':
+          this._restoreBasicData(doc);
+          break;
+        case 'ntlm':
+          this._restoreNtlmData(doc);
+          break;
+      }
+    },
+    /**
+     * Restore stored data to basic auth dialog.
+     *
+     * @param {Object} doc Stored authorization data.
+     */
+    _restoreBasicData: function(doc) {
+      if (!doc) {
+        return;
+      }
+      var dialog = this.dialog;
+      dialog.username = doc.username;
+      dialog.password = doc.password;
+    },
+    /**
+     * Restore stored data to NTLM auth dialog.
+     *
+     * @param {Object} doc Stored authorization data.
+     */
+    _restoreNtlmData: function(doc) {
+      if (!doc) {
+        return;
+      }
+      var dialog = this.dialog;
+      dialog.username = doc.username;
+      dialog.password = doc.password;
+      dialog.domain = doc.domain;
+    },
+    /**
+     * Computes the database key for an entry for current request.
+     */
+    _computeCredentialsPath: function(url, authMethod) {
+      var path = authMethod + '/';
+      if (url) {
+        path += encodeURIComponent(url);
+      }
+      return path;
+    },
+    // Returns url without query parameters and the fragment part.
+    _computeUrlPath: function(url) {
+      if (!url) {
+        return '';
+      }
+      try {
+        var u = new URL(url);
+        u.hash = '';
+        u.search = '';
+        var result = u.toString();
+        // polyfill library has some error and leaves '?#' if was set
+        result = result.replace('?', '');
+        result = result.replace('#', '');
+        return result;
+      } catch (e) {
+        return url;
+      }
+    },
+
+    // Called when the authorization dialog has been closed.
+    _onAuthDialogResult: function(e) {
+      this._openedDialog = undefined;
+      var requestId = this.__dialogResultId;
+      delete this.__dialogResultId;
+      if (e.detail.cancelled) {
+        return;
+      }
+      var store = false;
+      switch (e.detail.type) {
+        case 'ntlm':
+          store = true;
+          this._setNtlmAuthData(e.detail.value, requestId);
+          break;
+        case 'basic':
+          store = true;
+          this._setBasicAuthData(e.detail.value, requestId);
+          break;
+      }
+      if (store) {
+        this.async(function() {
+          this._storeAuthData(e.detail.type, e.detail.value);
+        }, 1);
+      }
+    },
+
+    /**
+     * Sets the NTLM authorization data and sends the `ntlm-data-changed` event so the request
+     * editor can attach it to the next request.
+     *
+     * @param {Object} values Map with values from dialog event.
+     * @param {String} id Request ID
+     */
+    _setNtlmAuthData: function(values, id) {
+      if (!values) {
+        return;
+      }
+      var url = this._computeUrlPath(this.url);
+      this._cacheAuthData('ntlm', url, values);
+
+      var auth = {};
+      auth.username = values.username;
+      auth.password = values.password;
+      auth.domain = values.domain;
+      auth.method = 'ntlm';
+      this.fire('ntlm-data-changed', {
+        value: auth,
+        id: id
+      });
+      this._resendRequest(id);
+    },
+    /**
+     * Sets the basic authorization data in the `headers` property or in headers in the `request`
+     * object if provided.
+     *
+     * @param {Object} values Map with values from dialog event.
+     * @param {String} id Request ID
+     */
+    _setBasicAuthData: function(values, id) {
+      if (!values) {
+        return;
+      }
+      var url = this._computeUrlPath(this.url);
+      this._cacheAuthData('basic', url, values);
+
+      var value = 'Basic ' + values.hash;
+      this.fire('request-header-changed', {
+        name: 'authorization',
+        value: value
+      }, {
+        composed: true
+      });
+      this._resendRequest(id);
+    },
+    /**
+     * Sends an event about sending request with auth data.
+     * @param {String} id Request ID
+     */
+    _resendRequest: function(id) {
+      this.fire('resend-auth-request', {
+        id: id
+      }, {
+        composed: true
+      });
+    },
+    /**
+     * Stores the data in the datastore.
+     */
+    _storeAuthData: function(method, data) {
+      var url = this._computeUrlPath(this.url);
+      var key = this._computeCredentialsPath(url, method);
+      var context = this;
+      var db = this._db;
+      return db.get(key)
+      .catch(function(error) {
+        if (error && error.status === 404) {
+          return {
+            _id: key
+          };
+        } else {
+          context.fire('app-log', {
+            message: error.message,
+            stack: new Error().stack,
+            level: 'error'
+          });
+          throw error;
+        }
+      })
+      .then(function(doc) {
+        doc = Object.assign(doc, data);
+        return db.put(doc);
+      })
+      .catch(function(error) {
+        context.fire('app-log', {
+          message: error.message,
+          stack: new Error().stack,
+          level: 'error'
+        });
+        throw error;
+      });
+    }
+  });
+  </script>
+</dom-module>

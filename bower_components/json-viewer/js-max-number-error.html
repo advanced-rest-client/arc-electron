@@ -1,0 +1,102 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../iron-collapse/iron-collapse.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../arc-icons/arc-icons.html">
+<!--
+
+-->
+<dom-module id="js-max-number-error">
+  <template>
+    <style>
+      :host {
+        display: inline-block;
+        vertical-align: text-bottom;
+      }
+      .parsed-value ::content > * {
+        color: #D32F2F;
+        font-weight: 500;
+      }
+      .content {
+        @apply(--layout-horizontal);
+        @apply(--layout-center);
+        color: #D32F2F;
+        font-weight: 500;
+        cursor: pointer;
+      }
+
+      iron-icon {
+        height: 18px;
+        width: 18px;
+        margin-right: 8px;
+      }
+
+      #collapse {
+        white-space: initial;
+        @apply(--paper-font-body2);
+        color: rgba(0, 0, 0, 0.74);
+      }
+
+      p {
+        margin: 0;
+      }
+
+      .message {
+        padding: 12px;
+        background-color: #FFECB3;
+        margin: 12px 24px;
+      }
+
+      .expected {
+        font-weight: 700;
+      }
+    </style>
+    <div class="content" on-tap="toggle">
+      <iron-icon icon="arc:info"></iron-icon>
+      <div class="parsed-value">
+        <content></content>
+      </div>
+    </div>
+    <iron-collapse id="collapse">
+      <div class="message">
+        <p>The number used in the response is unsafe in JavaScript environment and therefore as a JSON value.</p>
+        <p>Original value for the number (represented as string) is <span class="expected">"[[expectedNumber]]"</span></p>
+        <p>This number will not work in web environment and should be passed as a string, not a number.</p>
+        <p><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER" target="_blank">Read more about numbers in JavaScript</a>.</p>
+      </div>
+    </iron-collapse>
+  </template>
+  <script>
+  (function() {
+    'use strict';
+
+    Polymer({
+      is: 'js-max-number-error',
+      properties: {
+        // A number that is expected to be true.
+        expectedNumber: {
+          type: String,
+          value: '[unknown]'
+        }
+      },
+      // Toggles the collapse element.
+      toggle: function() {
+        this.$.collapse.toggle();
+      }
+    });
+  })();
+  </script>
+</dom-module>

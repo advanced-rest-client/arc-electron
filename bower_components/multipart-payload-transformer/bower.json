@@ -1,0 +1,43 @@
+{
+  "name": "multipart-payload-transformer",
+  "description": "An element that contains methods to transform FormData object into Multipart message and ArrayBuffer",
+  "version": "0.1.1",
+  "license": "Apache-2.0 OR CC-BY-4.0",
+  "authors": [
+    "The Advanced REST client authors <arc@mulesoft.com>"
+  ],
+  "keywords": [
+    "web-components",
+    "polymer"
+  ],
+  "private": true,
+  "main": [
+    "multipart-payload-transformer.html"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:advanced-rest-client/multipart-payload-transformer.git"
+  },
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.0.0",
+    "fetch-polyfill": "advanced-rest-client/fetch-polyfill#^0.1.1",
+    "arc-polyfills": "advanced-rest-client/arc-polyfills#^0.1.8"
+  },
+  "devDependencies": {
+    "iron-component-page": "polymerelements/iron-component-page#1.0.0",
+    "web-component-tester": "^4.0.0",
+    "paper-styles": "polymerelements/paper-styles#^1.0.2",
+    "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^1.0.0",
+    "iron-test-helpers": "PolymerElements/iron-test-helpers#^1.0.0",
+    "test-fixture": "PolymerElements/test-fixture#^1.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0"
+  },
+  "ignore": [
+    "**/.*",
+    "dependencyci.yml",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tasks"
+  ]
+}

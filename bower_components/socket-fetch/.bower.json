@@ -1,0 +1,58 @@
+{
+  "name": "socket-fetch",
+  "version": "2.0.0-rc1",
+  "license": "LICENSE.txt",
+  "description": "A HTTP transport based on chrome.socket.tcp API.",
+  "authors": [
+    "Pawel Psztyc"
+  ],
+  "homepage": "https://github.com/advanced-rest-client/socket-fetch",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/advanced-rest-client/socket-fetch.git"
+  },
+  "keywords": [
+    "chrome",
+    "socket",
+    "tcp",
+    "HTTP",
+    "chrome-apps",
+    "chrome"
+  ],
+  "private": false,
+  "dependencies": {
+    "zlib": "imaya/zlib.js#^0.2.0",
+    "cookie-parser": "advanced-rest-client/cookie-parser#^1.0.2",
+    "crypto-js": "^3.1.6"
+  },
+  "devDependencies": {
+    "iron-component-page": "PolymerElements/iron-component-page#^1.0.5",
+    "web-component-tester": "Polymer/web-component-tester#^3.3.6",
+    "paper-styles": "PolymerElements/paper-styles#^1.0.2",
+    "paper-checkbox": "PolymerElements/paper-checkbox#^1.0.1",
+    "paper-input": "PolymerElements/paper-input#^1.1.5",
+    "iron-list": "PolymerElements/iron-list#^1.2.2",
+    "chrome-app-livereload": "bestander/chrome-app-livereload#~0.0.5",
+    "test-fixture": "PolymerElements/test-fixture#^1.0.0",
+    "paper-radio-group": "PolymerElements/paper-radio-group#^1.0.9",
+    "paper-radio-button": "PolymerElements/paper-radio-button#^1.1.0"
+  },
+  "ignore": [
+    "/.*",
+    "package.json",
+    "gulpfile.js",
+    "/test/",
+    "/chrome-app/",
+    ".gitignore"
+  ],
+  "main": "socket-fetch.html",
+  "_release": "2.0.0-rc1",
+  "_resolution": {
+    "type": "version",
+    "tag": "v2.0.0-rc1",
+    "commit": "c8510e8a29b8670cfbe477b76edff264bc254c2c"
+  },
+  "_source": "https://github.com/advanced-rest-client/socket-fetch.git",
+  "_target": "2.0.0-rc1",
+  "_originalSource": "advanced-rest-client/socket-fetch"
+}

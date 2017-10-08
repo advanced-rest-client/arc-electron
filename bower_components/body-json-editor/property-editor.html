@@ -1,0 +1,394 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../arc-icons/arc-icons.html">
+<link rel="import" href="../paper-tooltip/paper-tooltip.html">
+<link rel="import" href="../paper-autocomplete/paper-autocomplete.html">
+<link rel="import" href="primitive-value.html">
+<link rel="import" href="body-json-editor-behavior.html">
+<link rel="import" href="property-type-selector.html">
+<!--
+`<object-editor>` Is a part of the `body-json-editor`. This element is used to recursively
+display a JSON object editor.
+
+### Styling
+`<object-editor>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--property-editor` | Mixin applied to the element. | `{}`,
+`--property-editor-dropdown-menu-input-color` | Color of the the paper dropdown menu input. | `#673AB7`
+`--property-editor-dropdown-menu-button-color` | Color of the paper dropdown menu button. | `#673AB7`
+`--primary-color` | Color of the action button | ``
+`--body-json-editor-action-button` | Mixin applied to the action buttons | ``
+`--inline-form-action-icon-color` | Color of the inline form action buttons | `rgba(0, 0, 0, 0.74)`
+`--inline-form-action-icon-color-hover` | Color of the inline form action buttons when hovered | `--accent-color` or `rgba(0, 0, 0, 0.74)`
+`--property-editor-array-label-color` | Color of the "array" item label. | `rgba(0, 0, 0, 0.74)`
+`--property-editor-array-label` | Mixin applied to the "array" item label. | ``
+`--property-editor-narrow-margin-bottom` | Margin bottom of each editor property when in narrow view | `12px`
+
+@group UI Elements
+@element property-editor
+@demo demo/index.html Regular use of the element
+@demo demo/raml.html Use of the element with RAML type
+-->
+<dom-module id="property-editor">
+  <template>
+    <style>
+     :host {
+      display: block;
+
+      @apply --arc-font-body1;
+      @apply --property-editor;
+      --paper-input-container-color: rgba(0, 0, 0, 0.54);
+      --paper-dropdown-menu-input: {
+        color: var(--property-editor-dropdown-menu-input-color, #673AB7);
+      };
+
+      --paper-dropdown-menu-button: {
+        color: var(--property-editor-dropdown-menu-button-color, #673AB7);
+      };
+    }
+
+    .indent {
+      padding-left: 12px;
+      border-left: 1px #FFCA28 solid;
+    }
+
+    .action-button {
+      color: var(--primary-color);
+      @apply --body-json-editor-action-button;
+    }
+
+    paper-icon-button {
+      color: var(--inline-form-action-icon-color, rgba(0, 0, 0, 0.74));
+      transition: color 0.2s linear;
+    }
+
+    paper-icon-button:hover {
+      color: var(--inline-form-action-icon-color-hover, var(--accent-color, rgba(0, 0, 0, 0.74)));
+    }
+
+    .property-input,
+    .value-area {
+      @apply --layout-horizontal;
+      @apply --layout-center;
+    }
+
+    :host:not([narrow]) .value-area {
+      @apply --layout-flex;
+    }
+
+    primitive-value,
+    property-type-selector,
+    .key-input,
+    .key-name-container {
+      @apply --layout-flex;
+    }
+
+    .key-name-container {
+      margin-right: 8px;
+      display: inline-block;
+      position: relative;
+    }
+
+    .array-items-label {
+      color: var(--property-editor-array-label-color, rgba(0, 0, 0, 0.74));
+      @apply --property-editor-array-label;
+    }
+
+    paper-autocomplete {
+      top: var(--body-json-editor-autocomplete-top, 34px);
+    }
+
+    :host([narrow]) .property-input {
+      @apply --layout-vertical;
+      @apply --layout-start;
+      @apply --layout-flex;
+    }
+
+    :host([narrow]) .key-input,
+    :host([narrow]) .key-name-container {
+      width: 100%;
+    }
+
+    :host([narrow]) .key-input,
+    :host([narrow]) .value-area {
+      width: 100%;
+      margin-right: 0;
+    }
+
+    :host([narrow]) {
+      margin-bottom: var(--property-editor-narrow-margin-bottom, 12px);
+    }
+    </style>
+
+    <div class="property-input">
+      <template is="dom-if" if="[[!noKey]]">
+        <span class="key-name-container">
+          <paper-input id="keyInput" label="property name" class="key-input" no-label-float="[[!narrow]]" value="{{name}}"></paper-input>
+          <paper-autocomplete id="keyAutocomplete" source="[[typeModel.keys]]" open-on-focus></paper-autocomplete>
+        </span>
+      </template>
+
+      <div class="value-area">
+        <template is="dom-if" if="[[model.isPrimitive]]" restamp>
+          <primitive-value narrow="[[narrow]]" value="{{value}}" model="{{model}}" value-suggestions="[[_computeValuesSuggestions(name, typeModel.valuesMapping)]]"></primitive-value>
+        </template>
+        <template is="dom-if" if="[[!model.hasType]]">
+          <property-type-selector on-selected-changed="_updateType"></property-type-selector>
+          <template is="dom-if" if="[[_previousType]]">
+            <span>
+              <paper-icon-button icon="arc:clear" on-tap="_cancelTypeChange"></paper-icon-button>
+              <paper-tooltip animation-delay="200">Cancel type change</paper-tooltip>
+            </span>
+          </template>
+        </template>
+        <template is="dom-if" if="[[model.hasType]]">
+          <template is="dom-if" if="[[model.isArray]]" restamp>
+            <span class="array-items-label">Array items ([[model.items.length]])</span>
+          </template>
+          <template is="dom-if" if="[[noKey]]">
+            <template is="dom-if" if="[[model.isObject]]" restamp>
+              <span class="array-item-object-label">Object</span>
+            </template>
+          </template>
+          <span>
+            <paper-icon-button icon="arc:edit" on-tap="_changeType"></paper-icon-button>
+            <paper-tooltip animation-delay="200">Change data type</paper-tooltip>
+          </span>
+          <span>
+            <paper-icon-button icon="arc:remove-circle-outline" on-tap="_removeProperty"></paper-icon-button>
+            <paper-tooltip animation-delay="200">Remove property</paper-tooltip>
+          </span>
+        </template>
+      </div>
+    </div>
+
+    <template is="dom-if" if="[[model.isComplex]]" restamp>
+      <section class="indent">
+        <template is="dom-if" if="[[model.isObject]]" restamp>
+          <template is="dom-repeat" items="{{model.properties}}">
+            <property-editor data-object-property narrow="[[narrow]]" value="{{item.value}}" name="{{item.name}}" model="{{item}}" type-model="[[_computeProperyTypeModel(name, typeModel.properties)]]" on-remove-property="_removeSubProperty" on-duplicate-property="_onDuplicateObject"></property-editor>
+          </template>
+          <div class="add-action">
+            <span>
+              <paper-button class="action-button" on-tap="addProperty">Add property</paper-button>
+              <paper-tooltip animation-delay="200">Add new object property</paper-tooltip>
+            </span>
+            <template is="dom-if" if="[[noKey]]">
+              <span>
+                <paper-button class="action-button" on-tap="_duplicateProperty">Duplicate</paper-button>
+                <paper-tooltip animation-delay="200">Copy this object and append to array</paper-tooltip>
+              </span>
+            </template>
+          </div>
+        </template>
+        <template is="dom-if" if="[[model.isArray]]" restamp>
+          <template is="dom-repeat" items="{{model.items}}">
+            <property-editor data-array-property narrow="[[narrow]]" no-key value="{{item.value}}" model="{{item}}" type-model="[[_computeProperyTypeModel(name, typeModel.properties)]]" on-remove-property="_removeSubProperty" on-duplicate-property="_onDuplicateObject"></property-editor>
+          </template>
+          <div class="add-action">
+            <paper-button class="action-button" on-tap="addProperty">Add item</paper-button>
+          </div>
+        </template>
+      </section>
+    </template>
+  </template>
+  <script>
+  Polymer({
+    is: 'property-editor',
+    behaviors: [ArcBehaviors.BodyJsonEditorBehavior],
+    properties: {
+      // If set then the property name input is not rendered
+      noKey: {
+        type: Boolean,
+        value: false,
+        observer: '_noKeyChanged'
+      },
+      /**
+       * When changing a type of this model it holds previous type name.
+       */
+      _previousType: String,
+      /**
+       * Computed value, true if the element can display autocomplete support
+       * for the name fiels.
+       */
+      hasNameAutofill: {
+        type: Boolean,
+        value: false,
+        computed: '_computeHasNameAutofill(typeModel.isObject, typeModel.keys)'
+      },
+      /**
+       * A type of last added item.
+       */
+      _lastAddedType: String
+    },
+
+    observers: [
+      '_nameChanged(hasNameAutofill, name, typeModel)'
+    ],
+
+    _noKeyChanged: function(noKey) {
+      if (noKey) {
+        return;
+      }
+      Polymer.RenderStatus.afterNextRender(this, function() {
+        var input = this.$$('#keyInput');
+        var autocomplete = this.$$('#keyAutocomplete');
+        autocomplete.target = input;
+      });
+    },
+    /**
+     * Updates the type when value of the sype selector change.
+     */
+    _updateType: function(e) {
+      this._updateModelType(e.detail.value);
+    },
+    // Handler for the "change type" button click
+    _changeType: function() {
+      this._previousType = this.model.type;
+      this._updateModelType(undefined);
+    },
+    // Handler for the "cancel type change" button click.
+    _cancelTypeChange: function() {
+      this._updateModelType(this._previousType);
+      this._previousType = undefined;
+    },
+    // Updates the model after the type change.
+    _updateModelType: function(type) {
+      var m = this.model;
+      m.type = type;
+      var model = this._computeModelItem(m);
+      this.set('model', model);
+      this._lastAddedType = type;
+      this.fire('last-used-type', {
+        value: type
+      }, {
+        bubbles: false
+      });
+    },
+    /**
+     * Handler for the remove property button click.
+     * It sends non-bubbling `remove-property` custom event so the parent should
+     * remove this model property.
+     */
+    _removeProperty: function() {
+      this.fire('remove-property', {}, {
+        bubbles: false
+      });
+    },
+
+    /**
+     * Adds new child property to the model
+     */
+    addProperty: function() {
+      var hostModel = this.model;
+      var base = {};
+      if (this._lastAddedType) {
+        base.type = this._lastAddedType;
+      }
+      var childModel = this._computeModelItem(base);
+
+      var property;
+      if (hostModel.isObject) {
+        property = 'properties';
+      } else {
+        property = 'items';
+      }
+
+      this.push(['model', property], childModel);
+    },
+    /**
+     * Handler for the "duplicate" button click.
+     * It can only happen when the model is an array model and the event
+     * comes from an item that is an object.
+     */
+    _duplicateProperty: function() {
+      this.fire('duplicate-property', {}, {
+        bubbles: false
+      });
+    },
+    /**
+     * Handler for the `duplicate-property` custom event.
+     * Clones event source model and inserts it as new model property.
+     */
+    _onDuplicateObject: function(e) {
+      if (e.target === this) {
+        return;
+      }
+      var index = e.model.get('index');
+      var base = this.model.items[index];
+      base = this._clone(base);
+      this.push(['model', 'items'], base);
+    },
+    /**
+     * Deletes child property model.
+     */
+    _removeSubProperty: function(e) {
+      var index = e.model.get('index');
+      var property;
+      if (this.model.isObject) {
+        property = 'properties';
+      } else {
+        property = 'items';
+      }
+      this.splice(['model', property], index, 1);
+    },
+    /**
+     * Computes if with current data model configuration the view can display
+     * names autocomplete.
+     */
+    _computeHasNameAutofill: function(isObject, keys) {
+      return !!(isObject && keys && keys.length);
+    },
+    /**
+     * Called when name of the property change.
+     * It sets property type and default value from data model, is available.
+     */
+    _nameChanged: function(hasNameAutofill, name, typeModel) {
+      if (!hasNameAutofill || !name || !typeModel) {
+        return;
+      }
+      if (typeModel.typesMapping && typeModel.typesMapping[name]) {
+        var type = typeModel.typesMapping[name];
+        this._updateModelType(type);
+      }
+      if (typeModel.defaultsMapping && typeModel.defaultsMapping[name]) {
+        var defaultValue = typeModel.defaultsMapping[name];
+        this.set('value', defaultValue);
+      }
+    },
+    /**
+     * Computes suggestions list for a value editor.
+     */
+    _computeValuesSuggestions: function(name, valuesMapping) {
+      if (!valuesMapping || !valuesMapping[name]) {
+        return;
+      }
+      return valuesMapping[name];
+    },
+
+    _computeProperyTypeModel: function(name, list) {
+      if (name === undefined || !list || !list[name]) {
+        return;
+      }
+      return list[name];
+    }
+  });
+  </script>
+</dom-module>

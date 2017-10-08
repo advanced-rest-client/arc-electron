@@ -1,0 +1,421 @@
+<!--
+@license
+Copyright 2016 The Advanced REST Client authors
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-progress/paper-progress.html">
+<link rel="import" href="../paper-styles/paper-styles.html">
+<link rel="import" href="../error-message/error-message.html">
+<link rel="import" href="../text-search-behavior/text-search-behavior.html">
+<link rel="import" href="prism-import.html">
+<link rel="import" href="prism-styles.html">
+<!--
+`<prism-highlight>` Syntax highlighting via Prism
+
+### Example
+```
+<prism-highlight id="c1" lang="markdown"></prism-highlight>
+<script>
+  document.querySelector('#c1').code = '# Test highlight';
+</script>
+```
+
+The `lang` attribute is required and the component will not start parsing data without it.
+
+Changing the `lang` and `code` properties together, do it in less than 10 ms.
+The element is set to commit changes after this persiod. Otherwise it may display
+old and new code due to the asynchronius nature of the code highligter.
+
+**Note** This element uses web workers with dependencies. It expect to find
+workers files in current directory in the `workers` folder.
+Your build process has to ensure that this files will be avaiable.
+
+Also this element expects the prism scripts to be available in the same
+root folder as this element is (like bower_components).
+
+### Required scripts
+- ../prism/prism.js
+- ../prism/plugins/autolinker/prism-autolinker.min.js
+- ../prism/components/*
+
+### Styling
+`<prism-highlight>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--prism-highlight` | Mixin applied to the element | `{}`
+`--prism-highlight-code` | Mixin applied to the `<pre>` element | `{}`
+`--prism-highlight-mark-selected` | Background color for the `<mark>` element when using custom search | `#ff9632`
+
+@group UI Elements
+@element prism-highlight
+@demo demo/index.html
+-->
+<dom-module id="prism-highlight">
+  <template>
+    <style include="prism-styles">
+     :host {
+      display: block;
+      @apply(--prism-highlight);
+    }
+
+    pre {
+      -webkit-user-select: text;
+      margin: 8px;
+      @apply(--prism-highlight-code);
+    }
+
+    paper-progress {
+      width: 100%;
+    }
+
+    .arc-search-mark.selected {
+      background-color: var(--prism-highlight-mark-selected, #ff9632);
+    }
+    </style>
+    <pre class="parsed-content"><code id="output" class="language-" on-tap="_handleLinks"></code></pre>
+    <div hidden$="[[!hasMore]]">
+      <paper-button raised on-tap="_loadNext">Show next [[maxRead]] lines</paper-button>
+      <paper-button raised on-tap="_loadAll">Display all</paper-button>
+    </div>
+    <paper-progress indeterminate hidden$="[[!working]]"></paper-progress>
+  </template>
+  <script>
+  (function() {
+    'use strict';
+
+    var importLocation = '';
+    (function() {
+      var url;
+      if (window.currentImport && window.currentImport.URL) {
+        url = window.currentImport.URL;
+        if (window.currentImport._URL) {
+          url = window.currentImport._URL;
+        }
+      } else if (window.currentImport._URL) {
+        url = window.currentImport._URL;
+      } else {
+        url = window.location.href;
+      }
+      if (url === 'about:blank') {
+        importLocation = '../';
+        // in test cases for edge this will fail because it should be set to ../../
+        // but right now I can't waste time to check how to check if this is the particular case.
+      } else {
+        var path = url;
+        if (path.substr(0, 4) === 'http') {
+          path = path.substr(url.indexOf('/', 8));
+        }
+        path = path.substr(0, path.lastIndexOf('/') + 1);
+        if (path.indexOf('/test') !== -1 || path.indexOf('/demo') !== -1) {
+          path = path.substr(0, path.length - 1);
+          path = path.substr(0, path.lastIndexOf('/') + 1);
+        }
+        importLocation = path;
+      }
+    })();
+    Polymer({
+      is: 'prism-highlight',
+      behaviors: [
+        ArcBehaviors.TextSearchBehavior
+      ],
+      /**
+       * An event fired when the user clicked on any link in the response
+       * panels or the headers
+       *
+       * @event url-change-action
+       * @param {String} url An url value
+       */
+      /**
+       * Fired when the tokenize task timeout.
+       * The event is cancelable.
+       *
+       * @event prism-highlight-timeout
+       * @param {String} message A message to display to the user.
+       */
+      /**
+       * Fired when highlighting is applied to the code view.
+       *
+       * @event prism-highlight-parsed
+       */
+      properties: {
+        /**
+         * A data to be highlighted and dispayed.
+         */
+        code: String,
+        /**
+         * Prism supported language.
+         */
+        lang: String,
+        /**
+         * A list of tokenized code.
+         * It's a result of calling `Prism.tokenize` function.
+         */
+        tokenized: {
+          type: Array,
+          readOnly: true
+        },
+        /**
+         * True if not all data has been displayed in the display.
+         */
+        hasMore: {
+          type: Boolean,
+          readOnly: true,
+          computed: '_computeHasMore(tokenized)'
+        },
+        /**
+         * A number of lined to display at once.
+         * After the limit is reached the display will show "load next
+         * [maxRead] items" and "load all" buttons.
+         */
+        maxRead: {
+          type: Number,
+          value: 500
+        },
+        // True when parsing code or tokens to HTML code.
+        working: {
+          type: Boolean,
+          value: false,
+          readOnly: true
+        },
+
+        // An element which should be searched for text.
+        _textSearch: {
+          type: HTMLElement,
+          value: function() {
+            return this.$.output;
+          }
+        },
+        // Path to element's assets (workers folder). Default to current location
+        importLocation: {
+          type: String,
+          value: function() {
+            return importLocation;
+          }
+        },
+        // A web worker instance that parses the syntax
+        worker: {
+          type: Object,
+          readOnly: true
+        },
+        /**
+         * Number of miliseconds after which the tokenize task fail sending
+         * `prism-highlight-timeout` event.
+         * Set to "falsy" value to remove timeout.
+         */
+        tokenizeTimeout: {
+          type: Number,
+          value: 5000
+        }
+      },
+
+      observers: [
+        '_highlight(code, lang)'
+      ],
+
+      detached: function() {
+        this._unregisterWorker();
+      },
+      // Resets the state of the display to initial state.
+      reset: function() {
+        this._setTokenized(undefined);
+        this._setWorking(false);
+        this.$.output.innerHTML = '';
+      },
+      /**
+       * Hightligt the code.
+       * @param {String} data The code to be highlighted
+       * @param {String} mime Mime type to be used to recognize the language.
+       */
+      _highlight: function() {
+        this.reset();
+        this.debounce('_highlight', function() {
+          var message = {
+            'language': this.lang,
+            'code': this.code,
+            'payload': 'tokenize'
+          };
+          this._runWorker(message);
+        }, 10);
+      },
+      /**
+       * Sends message to the hightligt worker if its already created.
+       * If not, this will create worker and then post message.
+       * @param {Objects} message An object to pass to the worker.
+       */
+      _runWorker: function(message) {
+        this._setWorking(true);
+        if (!this.worker) {
+          this._registerWorker();
+        }
+        this.worker.postMessage(message);
+        var timeout = this.tokenizeTimeout;
+        if (timeout) {
+          this._tokenizeTimeout =
+            window.setTimeout(this._onTokenizeTimeout.bind(this), timeout);
+        }
+      },
+      /**
+       * Clears the tokenize timeout if set.
+       */
+      _clearTokenizeTimeout: function() {
+        if (!this._tokenizeTimeout) {
+          return;
+        }
+        window.clearTimeout(this._tokenizeTimeout);
+        this._tokenizeTimeout = undefined;
+      },
+      /**
+       * Creates an instance of a web worker.
+       * It does nothing if the worker is already created.
+       */
+      _registerWorker: function() {
+        if (this.worker) {
+          return;
+        }
+        var worker = new Worker(this.importLocation + 'workers/prism-worker.js');
+        this.__workerDataHandler = this.__workerDataHandler ?
+          this.__workerDataHandler : this._onWorkerData.bind(this);
+        this.__workerErrorHandler = this.__workerErrorHandler ?
+          this.__workerErrorHandler : this._onWorkerError.bind(this);
+        worker.addEventListener('message', this.__workerDataHandler);
+        worker.addEventListener('error', this.__workerErrorHandler);
+        this._setWorker(worker);
+      },
+      /**
+       * Terminates the worker (if exists) and removes event listeners
+       */
+      _unregisterWorker: function() {
+        if (!this.worker) {
+          return;
+        }
+        this._clearTokenizeTimeout();
+        this.worker.removeEventListener('message', this.__workerDataHandler);
+        this.worker.removeEventListener('error', this.__workerErrorHandler);
+        this.worker.terminate();
+        this._setWorker(undefined);
+      },
+
+      _onWorkerData: function(e) {
+        this._setWorking(false);
+        this._clearTokenizeTimeout();
+        switch (e.data.payload) {
+          case 'tokenize':
+            this._onTokenized(e.data.tokens);
+            break;
+          case 'stringify':
+            this._display(e.data.html);
+            this.fire('prism-highlight-parsed');
+            break;
+        }
+      },
+
+      _onWorkerError: function(e) {
+        this._setWorking(false);
+        this._clearTokenizeTimeout();
+        var html = '<error-message><p>' + e.message + '</p></error-message>';
+        this._display(html);
+
+        this.fire('app-log', {
+          message: e,
+          level: 'error'
+        });
+
+        this.fire('error', {
+          message: e.message
+        });
+        console.error('Highlight worker error', e);
+      },
+      /**
+       * Handler for worker function after code tokenization.
+       *
+       * @param {Array} tokens An array of tokens returnet by Prism.
+       */
+      _onTokenized: function(tokens) {
+        this._setTokenized(tokens);
+        this._loadNext();
+      },
+
+      /**
+       * Display next tokens from `this.tokenized` list - up to `this.maxRead`
+       * elements. If after running this function the `this.tokenized`
+       * array is empty it will be set to undefined.
+       */
+      _loadNext: function() {
+        if (!this.tokenized || this.tokenized.length === 0) {
+          return;
+        }
+        var tokens = this.splice('tokenized', 0, this.maxRead);
+        var message = {
+          'tokens': tokens,
+          'payload': 'stringify'
+        };
+        this._runWorker(message);
+        if (this.tokenized.length === 0) {
+          this._setTokenized(undefined);
+        }
+      },
+
+      _loadAll: function() {
+        var tokens = this.tokenized;
+        this._setTokenized(undefined);
+        var message = {
+          'tokens': tokens,
+          'payload': 'stringify'
+        };
+        this._runWorker(message);
+      },
+      /**
+       * Display a HTML code generated by Prism.
+       * @param {String} html HTML code to be displayed.
+       */
+      _display: function(html) {
+        this.$.output.innerHTML += html;
+      },
+      // Computes if the element has more data to display.
+      _computeHasMore: function(tokenized) {
+        if (!tokenized || tokenized.length === 0) {
+          return false;
+        }
+        return true;
+      },
+      // Handler for links click.
+      _handleLinks: function(e) {
+        var el = e.target;
+        if (el.nodeName !== 'A') {
+          return;
+        }
+        e.preventDefault();
+        var url = el.href;
+        this.fire('url-change-action', {
+          url: url
+        });
+      },
+      /**
+       * Called when the tokenize task exceeds timeout set in the `tokenizeTimeout`
+       * property
+       */
+      _onTokenizeTimeout: function() {
+        this._setWorking(false);
+        this._unregisterWorker();
+        var message = 'Highlighter is unable to highlight the syntax.';
+        this.fire('prism-highlight-timeout', {
+          message: message
+        }, {
+          cancelable: true
+        });
+      }
+    });
+  })();
+  </script>
+</dom-module>

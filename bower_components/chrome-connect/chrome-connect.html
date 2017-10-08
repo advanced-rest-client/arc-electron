@@ -1,0 +1,167 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<!--
+An element to be used in Chrome extension to connect to another extension
+
+### Example
+```html
+<chrome-connect extension-id="apcedakaoficjlofohhcmkkljehnmebp" on-message="_onExternalMessage" connected="{{connected}}"></chrome-connect>
+<script>
+document.querySelector('chrome-connect')
+.postMessage({
+  hello: 'world'
+});
+</script>
+```
+
+The element connects automatically to external extension if the extension conect
+to this extension, this extension is not connected yet and the external extension
+is whitelisted in the `allowedClients` property.
+
+@group Logic Elements
+@element chrome-connect
+-->
+<script>
+Polymer({
+  is: 'chrome-connect',
+  /**
+   * Fires when error ocurred.
+   *
+   * @event error
+   * @param {Object} An error object.
+   */
+  /**
+   * Fires when message has been received.
+   *
+   * @event message
+   * @param {Any} Message received from externall extension / app.
+   */
+  properties: {
+    // An ID of the extension to connect to.
+    extensionId: String,
+    /**
+     * True if the app is connected to the external extension.
+     * Connection is tested asynchrously so this property changes with a delay.
+     */
+    connected: {
+      type: Boolean,
+      value: false,
+      notify: true
+    },
+    /**
+     * Opened port to another extension.
+     */
+    port: {
+      type: Object,
+      readOnly: true
+    },
+    /**
+     * The latest message received from the external extension / app.
+     */
+    lastMessage: {
+      type: Object,
+      notify: true,
+      readOnly: true
+    },
+    // External message handler function.
+    _messageListener: Function,
+    /**
+     * List of allowed clients to connect to this application / extension.
+     * It must be an array of client IDs (extensions IDs).
+     */
+    allowedClients: Array
+  },
+
+  created: function() {
+    this._messageListener = this._processMessage.bind(this);
+    this._extListener = this._processExternalMessage.bind(this);
+    this._disconnectListener = this._disconnectedHandler.bind(this);
+  },
+
+  observers: [
+    'connect(extensionId)'
+  ],
+
+  attached: function() {
+    chrome.runtime.onMessageExternal.addListener(this._extListener);
+  },
+
+  detached: function() {
+    chrome.runtime.onMessageExternal.removeListener(this._extListener);
+  },
+
+  // Attempt to connect to external extension.
+  connect: function(extensionId) {
+    var port = chrome.runtime.connect(extensionId);
+    this._setPort(port);
+
+    this._connectionTest = true;
+    port.onDisconnect.addListener(this._disconnectListener);
+    port.onMessage.addListener(this._messageListener);
+    this.async(function() {
+      // If connected the extension is installed.
+      if (this._connectionTest) {
+        this.set('connected', true);
+      }
+    }, 50);
+  },
+  // Handler foir the disconnected event.
+  _disconnectedHandler: function() {
+    this._connectionTest = false;
+    if (this.connected) {
+      this.set('connected', false);
+    }
+    var port = this.port;
+    if (port) {
+      port.onMessage.removeListener(this._messageListener);
+      port.onDisconnect.removeListener(this._disconnectListener);
+      this._setPort(undefined);
+    }
+  },
+
+  /**
+   * Sends message to external extension.
+   * An error event will fire if trying to send a message on non existing port.``
+   * Port is not created if the extension / app that is trying to connect is not
+   * installed or do not accept externall connections.
+   *
+   * @param {Any} msg Message to send. A message can contain any valid JSON object
+   * (null, boolean, number, string, array, or object).
+   */
+  postMessage: function(msg) {
+    var p = this.port;
+    if (!p) {
+      let err = new Error('Port is closed.');
+      this.fire('error', err);
+      throw err;
+    }
+    p.postMessage(msg);
+  },
+
+  _processMessage: function(msg) {
+    this._setLastMessage(msg);
+    this.fire('message', msg);
+  },
+
+  _processExternalMessage: function(message, sender) {
+    if (!this.allowedClients || this.allowedClients.indexOf(sender.id) === -1) {
+      return;
+    }
+    if (sender.id === this.extensionId && !this.connected) {
+      this.connect(this.extensionId);
+    }
+  }
+});
+</script>

@@ -1,0 +1,558 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../text-search-behavior/text-search-behavior.html">
+<link rel="import" href="../paper-spinner/paper-spinner.html">
+<!-- Icons are set in the web worker. Must be included here. -->
+<link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../arc-icons/arc-icons.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../error-message/error-message.html">
+<!--
+`<xml-viewer>` An XML payload viewer for the XML response
+
+### Example
+```
+<xml-viewer xml="&lt;tag&gt;&lt;/tag&gt;"></xml-viewer>
+```
+
+ **Note** This element uses web workers with dependencies. It expect to find
+workers files in current directory in the `workers` folder.
+Your build process has to ensure that this files will be avaiable.
+
+## Content actions
+By default the user can copy content of the code to clipboard. This action is
+always visible.
+You can add more actions in the actions bar by putting elements as a children
+of this element.
+### Example
+```
+<xml-viewer>
+  <paper-icon-button title="Additional action" icon="arc:cached"></paper-icon-button>
+  <paper-icon-button title="Clear the code" icon="arc:clear"></paper-icon-button>
+</xml-viewer>
+```
+
+### Styling
+`<xml-viewer>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--xml-viewer` | Mixin applied to the element | `{}`
+`--xml-viewer-comment-color` | Color of the comment section. | `#236E25`
+`--xml-viewer-punctuation-color` | Color of the punctuation signs | `black`
+`--xml-viewer-tag-name-color` | Color of the XML tag name | `#881280`
+`--xml-viewer-attribute-name-color` | Color of the XML attribute. | `#994500`
+`--xml-viewer-attribute-value-color` | Color of the attribute's value. | `#1A1AA6`
+`--xml-viewer-cdata-color` | CDATA section color. | `#48A`
+`--xml-viewer-document-declaration-color` | XML document declaration (header) color. | `#999`
+`--xml-viewer-constant-color` | Constant (boolean, null, number) color. | `#283593`
+
+@group UI Elements
+@element xml-viewer
+@demo demo/index.html
+-->
+<dom-module id="xml-viewer">
+  <template>
+    <style>
+     :host {
+      display: block;
+      color: black;
+      cursor: text;
+      -webkit-user-select: text;
+      user-select: text;
+      overflow: auto;
+      word-wrap: break-word;
+      @apply(--xml-viewer);
+    }
+
+    .material-icons {
+      font-family: 'Material Icons';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 24px;
+      /* Preferred icon size */
+      display: inline-block;
+      line-height: 1;
+      text-transform: none;
+      letter-spacing: normal;
+      word-wrap: normal;
+      white-space: nowrap;
+      direction: ltr;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .prettyPrint {
+      font-family: monospace;
+      font-size: 15px;
+    }
+
+    .arrowEmpty {}
+
+    .node {
+      margin: 1px 0px;
+    }
+
+    .opened {}
+
+    .comment {
+      color: var(--xml-viewer-comment-color, #236E25);
+    }
+
+    .punctuation {
+      color: var(--xml-viewer-punctuation-color, black);
+    }
+
+    .tagname {
+      color: var(--xml-viewer-tag-name-color, #881280);
+    }
+
+    .attname {
+      color: var(--xml-viewer-attribute-name-color, #994500);
+    }
+
+    .attribute {
+      color: var(--xml-viewer-attribute-value-color, #1A1AA6);
+    }
+
+    .cdata {
+      color: var(--xml-viewer-cdata-color, #48A);
+    }
+
+    .cdata *[collapsible] {
+      white-space: pre;
+    }
+
+    .arrowExpanded,
+    .arrowEmpty {
+      display: inline-block;
+      width: 24px;
+      height: 18px;
+    }
+
+    .processing {
+      color: var(--xml-viewer-document-declaration-color, #999);
+    }
+
+    .inline,
+    .inline > div {
+      display: inline-block;
+      text-indent: 0px;
+    }
+
+    .node.opened >. arrowEmpty {
+      text-indent: 0;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      width: 21px;
+      margin-left: 3px;
+      margin-right: 3px;
+    }
+
+    .nodeMargin {
+      margin-left: 44px;
+    }
+
+    .collapseIndicator {
+      display: none;
+      margin: 0px 1px;
+      text-indent: 0px;
+    }
+
+    *[colapse-marker] {
+      -webkit-user-select: none;
+      cursor: pointer;
+    }
+
+    *[less] {
+      display: inline-block;
+    }
+
+    *[more] {
+      display: none;
+    }
+
+    *[data-expanded="false"] .arrowEmpty {
+      display: none;
+    }
+
+    *[data-expanded="false"] *[less] {
+      display: none;
+    }
+
+    *[data-expanded="false"] *[more] {
+      display: inline-block;
+    }
+
+    *[data-expanded="false"] *[collapsible] {
+      display: none !important;
+    }
+
+    *[data-expanded="false"] *[collapse-indicator] {
+      display: inline-block !important;
+    }
+
+    .value.number,
+    .value.null,
+    .value.boolean {
+      color: var(--xml-viewer-constant-color, #283593);
+    }
+
+    .arc-search-mark.selected {
+      background-color: #ff9632;
+    }
+
+    .actions-panel {
+      @apply(--layout-horizontal);
+      @apply(--layout-center);
+      @apply(--response-highlighter-action-bar);
+    }
+
+    .actions-panel.hidden {
+      display: none;
+    }
+    </style>
+    <script id="worker" type="javascript/worker">
+// Minified version of the web workers using: http://closure-compiler.appspot.com/home
+var whitespace="\n\r\t ";XMLP=function(a){a=SAXStrings.replace(a,null,null,"\r\n","\n");this.m_xml=a=SAXStrings.replace(a,null,null,"\r","\n");this.m_iP=0;this.m_iState=XMLP._STATE_PROLOG;this.m_stack=new Stack;this._clearAttributes()};XMLP._NONE=0;XMLP._ELM_B=1;XMLP._ELM_E=2;XMLP._ELM_EMP=3;XMLP._ATT=4;XMLP._TEXT=5;XMLP._ENTITY=6;XMLP._PI=7;XMLP._CDATA=8;XMLP._COMMENT=9;XMLP._DTD=10;XMLP._ERROR=11;XMLP._CONT_XML=0;XMLP._CONT_ALT=1;XMLP._ATT_NAME=0;XMLP._ATT_VAL=1;XMLP._STATE_PROLOG=1;
+XMLP._STATE_DOCUMENT=2;XMLP._STATE_MISC=3;XMLP._errs=[];XMLP._errs[XMLP.ERR_CLOSE_PI=0]="PI: missing closing sequence";XMLP._errs[XMLP.ERR_CLOSE_DTD=1]="DTD: missing closing sequence";XMLP._errs[XMLP.ERR_CLOSE_COMMENT=2]="Comment: missing closing sequence";XMLP._errs[XMLP.ERR_CLOSE_CDATA=3]="CDATA: missing closing sequence";XMLP._errs[XMLP.ERR_CLOSE_ELM=4]="Element: missing closing sequence";XMLP._errs[XMLP.ERR_CLOSE_ENTITY=5]="Entity: missing closing sequence";XMLP._errs[XMLP.ERR_PI_TARGET=6]="PI: target is required";
+XMLP._errs[XMLP.ERR_ELM_EMPTY=7]="Element: cannot be both empty and closing";XMLP._errs[XMLP.ERR_ELM_NAME=8]='Element: name must immediatly follow "<"';XMLP._errs[XMLP.ERR_ELM_LT_NAME=9]='Element: "<" not allowed in element names';XMLP._errs[XMLP.ERR_ATT_VALUES=10]="Attribute: values are required and must be in quotes";XMLP._errs[XMLP.ERR_ATT_LT_NAME=11]='Element: "<" not allowed in attribute names';XMLP._errs[XMLP.ERR_ATT_LT_VALUE=12]='Attribute: "<" not allowed in attribute values';
+XMLP._errs[XMLP.ERR_ATT_DUP=13]="Attribute: duplicate attributes not allowed";XMLP._errs[XMLP.ERR_ENTITY_UNKNOWN=14]="Entity: unknown entity";XMLP._errs[XMLP.ERR_INFINITELOOP=15]="Infininte loop";XMLP._errs[XMLP.ERR_DOC_STRUCTURE=16]="Document: only comments, processing instructions, or whitespace allowed outside of document element";XMLP._errs[XMLP.ERR_ELM_NESTING=17]="Element: must be nested correctly";XMLP.prototype._addAttribute=function(a,b){this.m_atts[this.m_atts.length]=[a,b]};
+XMLP.prototype._checkStructure=function(a){if(XMLP._STATE_PROLOG==this.m_iState){if((XMLP._TEXT==a||XMLP._ENTITY==a)&&-1!=SAXStrings.indexOfNonWhitespace(this.getContent(),this.getContentBegin(),this.getContentEnd()))return this._setErr(XMLP.ERR_DOC_STRUCTURE);if(XMLP._ELM_B==a||XMLP._ELM_EMP==a)this.m_iState=XMLP._STATE_DOCUMENT}if(XMLP._STATE_DOCUMENT==this.m_iState){XMLP._ELM_B!=a&&XMLP._ELM_EMP!=a||this.m_stack.push(this.getName());if(XMLP._ELM_E==a||XMLP._ELM_EMP==a){var b=this.m_stack.pop();
+if(null==b||b!=this.getName())return this._setErr(XMLP.ERR_ELM_NESTING)}if(0==this.m_stack.count())return this.m_iState=XMLP._STATE_MISC,a}return XMLP._STATE_MISC!=this.m_iState||XMLP._ELM_B!=a&&XMLP._ELM_E!=a&&XMLP._ELM_EMP!=a&&XMLP.EVT_DTD!=a&&(XMLP._TEXT!=a&&XMLP._ENTITY!=a||-1==SAXStrings.indexOfNonWhitespace(this.getContent(),this.getContentBegin(),this.getContentEnd()))?a:this._setErr(XMLP.ERR_DOC_STRUCTURE)};XMLP.prototype._clearAttributes=function(){this.m_atts=[]};
+XMLP.prototype._findAttributeIndex=function(a){for(var b=0;b<this.m_atts.length;b++)if(this.m_atts[b][XMLP._ATT_NAME]==a)return b;return-1};XMLP.prototype.getAttributeCount=function(){return this.m_atts?this.m_atts.length:0};XMLP.prototype.getAttributeName=function(a){return 0>a||a>=this.m_atts.length?null:this.m_atts[a][XMLP._ATT_NAME]};XMLP.prototype.getAttributeValue=function(a){return 0>a||a>=this.m_atts.length?null:__unescapeString(this.m_atts[a][XMLP._ATT_VAL])};
+XMLP.prototype.getAttributeValueByName=function(a){return this.getAttributeValue(this._findAttributeIndex(a))};XMLP.prototype.getColumnNumber=function(){return SAXStrings.getColumnNumber(this.m_xml,this.m_iP)};XMLP.prototype.getContent=function(){return this.m_cSrc==XMLP._CONT_XML?this.m_xml:this.m_cAlt};XMLP.prototype.getContentBegin=function(){return this.m_cB};XMLP.prototype.getContentEnd=function(){return this.m_cE};
+XMLP.prototype.getLineNumber=function(){return SAXStrings.getLineNumber(this.m_xml,this.m_iP)};XMLP.prototype.getName=function(){return this.m_name};XMLP.prototype.next=function(){return this._checkStructure(this._parse())};
+XMLP.prototype._parse=function(){return this.m_iP==this.m_xml.length?XMLP._NONE:this.m_iP==this.m_xml.indexOf("<?",this.m_iP)?this._parsePI(this.m_iP+2):this.m_iP==this.m_xml.indexOf("<!DOCTYPE",this.m_iP)?this._parseDTD(this.m_iP+9):this.m_iP==this.m_xml.indexOf("\x3c!--",this.m_iP)?this._parseComment(this.m_iP+4):this.m_iP==this.m_xml.indexOf("<![CDATA[",this.m_iP)?this._parseCDATA(this.m_iP+9):this.m_iP==this.m_xml.indexOf("<",this.m_iP)?this._parseElement(this.m_iP+1):this.m_iP==this.m_xml.indexOf("&",
+this.m_iP)?this._parseEntity(this.m_iP+1):this._parseText(this.m_iP)};
+XMLP.prototype._parseAttribute=function(a,b){this.m_cAlt="";var c=SAXStrings.indexOfNonWhitespace(this.m_xml,a,b);if(-1==c||c>=b)return c;var d=this.m_xml.indexOf("=",c);if(-1==d||d>b)return this._setErr(XMLP.ERR_ATT_VALUES);var f=SAXStrings.lastIndexOfNonWhitespace(this.m_xml,c,d);d=SAXStrings.indexOfNonWhitespace(this.m_xml,d+1,b);if(-1==d||d>b)return this._setErr(XMLP.ERR_ATT_VALUES);var g=this.m_xml.charAt(d);if(-1==SAXStrings.QUOTES.indexOf(g))return this._setErr(XMLP.ERR_ATT_VALUES);g=this.m_xml.indexOf(g,
+d+1);if(-1==g||g>b)return this._setErr(XMLP.ERR_ATT_VALUES);c=this.m_xml.substring(c,f+1);f=this.m_xml.substring(d+1,g);if(-1!=c.indexOf("<"))return this._setErr(XMLP.ERR_ATT_LT_NAME);if(-1!=f.indexOf("<"))return this._setErr(XMLP.ERR_ATT_LT_VALUE);f=SAXStrings.replace(f,null,null,"\n"," ");f=SAXStrings.replace(f,null,null,"\t"," ");iRet=this._replaceEntities(f);if(iRet==XMLP._ERROR)return iRet;f=this.m_cAlt;if(-1==this._findAttributeIndex(c))this._addAttribute(c,f);else return this._setErr(XMLP.ERR_ATT_DUP);
+this.m_iP=g+2;return XMLP._ATT};XMLP.prototype._parseCDATA=function(a){var b=this.m_xml.indexOf("]]\x3e",a);if(-1==b)return this._setErr(XMLP.ERR_CLOSE_CDATA);this._setContent(XMLP._CONT_XML,a,b);this.m_iP=b+3;return XMLP._CDATA};XMLP.prototype._parseComment=function(a){var b=this.m_xml.indexOf("--\x3e",a);if(-1==b)return this._setErr(XMLP.ERR_CLOSE_COMMENT);this._setContent(XMLP._CONT_XML,a,b);this.m_iP=b+3;return XMLP._COMMENT};
+XMLP.prototype._parseDTD=function(a){var b=this.m_xml.indexOf(">",a);if(-1==b)return this._setErr(XMLP.ERR_CLOSE_DTD);var c=this.m_xml.indexOf("[",a);for(c=-1!=c&&c<b?"]>":">";;){if(b==d)return this._setErr(XMLP.ERR_INFINITELOOP);var d=b;b=this.m_xml.indexOf(c,a);if(-1==b)return this._setErr(XMLP.ERR_CLOSE_DTD);if("]]\x3e"!=this.m_xml.substring(b-1,b+2))break}this.m_iP=b+c.length;return XMLP._DTD};
+XMLP.prototype._parseElement=function(a){var b;var c=b=this.m_xml.indexOf(">",a);if(-1==b)return this._setErr(XMLP.ERR_CLOSE_ELM);if("/"==this.m_xml.charAt(a)){var d=XMLP._ELM_E;a++}else d=XMLP._ELM_B;if("/"==this.m_xml.charAt(b-1)){if(d==XMLP._ELM_E)return this._setErr(XMLP.ERR_ELM_EMPTY);d=XMLP._ELM_EMP;c--}c=SAXStrings.lastIndexOfNonWhitespace(this.m_xml,a,c);if(1!=b-a&&SAXStrings.indexOfNonWhitespace(this.m_xml,a,c)!=a)return this._setErr(XMLP.ERR_ELM_NAME);this._clearAttributes();var f=SAXStrings.indexOfWhitespace(this.m_xml,
+a,c);if(-1==f)f=c+1;else for(this.m_iP=f;this.m_iP<c;){if(this.m_iP==g)return this._setErr(XMLP.ERR_INFINITELOOP);var g=this.m_iP;var e=this._parseAttribute(this.m_iP,c);if(e==XMLP._ERROR)return e}a=this.m_xml.substring(a,f);if(-1!=a.indexOf("<"))return this._setErr(XMLP.ERR_ELM_LT_NAME);this.m_name=a;this.m_iP=b+1;return d};
+XMLP.prototype._parseEntity=function(a){var b=this.m_xml.indexOf(";",a);if(-1==b)return this._setErr(XMLP.ERR_CLOSE_ENTITY);this.m_iP=b+1;return this._replaceEntity(this.m_xml,a,b)};
+XMLP.prototype._parsePI=function(a){var b=this.m_xml.indexOf("?>",a);if(-1==b)return this._setErr(XMLP.ERR_CLOSE_PI);a=SAXStrings.indexOfNonWhitespace(this.m_xml,a,b);if(-1==a)return this._setErr(XMLP.ERR_PI_TARGET);var c=SAXStrings.indexOfWhitespace(this.m_xml,a,b);-1==c&&(c=b);var d=SAXStrings.indexOfNonWhitespace(this.m_xml,c,b);-1==d&&(d=b);var f=SAXStrings.lastIndexOfNonWhitespace(this.m_xml,d,b);-1==f&&(f=b-1);this.m_name=this.m_xml.substring(a,c);this._setContent(XMLP._CONT_XML,d,f+1);this.m_iP=
+b+2;return XMLP._PI};XMLP.prototype._parseText=function(a){var b=this.m_xml.indexOf("<",a);-1==b&&(b=this.m_xml.length);var c=this.m_xml.indexOf("&",a);-1!=c&&c<=b&&(b=c);this._setContent(XMLP._CONT_XML,a,b);this.m_iP=b;return XMLP._TEXT};
+XMLP.prototype._replaceEntities=function(a,b,c){if(SAXStrings.isEmpty(a))return"";b=b||0;c=c||a.length;var d,f="";for(d=a.indexOf("&",b);0<d&&d<c;){f+=a.substring(b,d);b=a.indexOf(";",d)+1;if(0==b||b>c)return this._setErr(XMLP.ERR_CLOSE_ENTITY);iRet=this._replaceEntity(a,d+1,b-1);if(iRet==XMLP._ERROR)return iRet;f+=this.m_cAlt;d=a.indexOf("&",b)}b!=c&&(f+=a.substring(b,c));this._setContent(XMLP._CONT_ALT,f);return XMLP._ENTITY};
+XMLP.prototype._replaceEntity=function(a,b,c){if(SAXStrings.isEmpty(a))return-1;b=b||0;c=c||a.length;switch(a.substring(b,c)){case "amp":strEnt="&";break;case "lt":strEnt="<";break;case "gt":strEnt=">";break;case "apos":strEnt="'";break;case "quot":strEnt='"';break;default:if("#"==a.charAt(b))strEnt=String.fromCharCode(parseInt(a.substring(b+1,c)));else return this._setErr(XMLP.ERR_ENTITY_UNKNOWN)}this._setContent(XMLP._CONT_ALT,strEnt);return XMLP._ENTITY};
+XMLP.prototype._setContent=function(a){var b=arguments;XMLP._CONT_XML==a?(this.m_cAlt=null,this.m_cB=b[1],this.m_cE=b[2]):(this.m_cAlt=b[1],this.m_cB=0,this.m_cE=b[1].length);this.m_cSrc=a};XMLP.prototype._setErr=function(a){this.m_cAlt=a=XMLP._errs[a];this.m_cB=0;this.m_cE=a.length;this.m_cSrc=XMLP._CONT_ALT;return XMLP._ERROR};SAXDriver=function(){this.m_hndLex=this.m_hndErr=this.m_hndDoc=null};SAXDriver.DOC_B=1;SAXDriver.DOC_E=2;SAXDriver.ELM_B=3;SAXDriver.ELM_E=4;SAXDriver.CHARS=5;
+SAXDriver.PI=6;SAXDriver.CD_B=7;SAXDriver.CD_E=8;SAXDriver.CMNT=9;SAXDriver.DTD_B=10;SAXDriver.DTD_E=11;SAXDriver.prototype.parse=function(a){a=new XMLP(a);this.m_hndDoc&&this.m_hndDoc.setDocumentLocator&&this.m_hndDoc.setDocumentLocator(this);this.m_parser=a;this.m_bErr=!1,this._fireEvent(SAXDriver.DOC_B);this._parseLoop();this.m_bErr||this._fireEvent(SAXDriver.DOC_E);this.m_xml=null;this.m_iP=0};SAXDriver.prototype.setDocumentHandler=function(a){this.m_hndDoc=a};
+SAXDriver.prototype.setErrorHandler=function(a){this.m_hndErr=a};SAXDriver.prototype.setLexicalHandler=function(a){this.m_hndLex=a};SAXDriver.prototype.getColumnNumber=function(){return this.m_parser.getColumnNumber()};SAXDriver.prototype.getLineNumber=function(){return this.m_parser.getLineNumber()};SAXDriver.prototype.getMessage=function(){return this.m_strErrMsg};SAXDriver.prototype.getPublicId=function(){return null};SAXDriver.prototype.getSystemId=function(){return null};
+SAXDriver.prototype.getLength=function(){return this.m_parser.getAttributeCount()};SAXDriver.prototype.getName=function(a){return this.m_parser.getAttributeName(a)};SAXDriver.prototype.getValue=function(a){return this.m_parser.getAttributeValue(a)};SAXDriver.prototype.getValueByName=function(a){return this.m_parser.getAttributeValueByName(a)};SAXDriver.prototype._fireError=function(a){this.m_strErrMsg=a;this.m_bErr=!0;this.m_hndErr&&this.m_hndErr.fatalError&&this.m_hndErr.fatalError(this)};
+SAXDriver.prototype._fireEvent=function(a){var b=arguments,c=b.length-1;if(!this.m_bErr){if(SAXDriver.DOC_B==a){var d="startDocument";var f=this.m_hndDoc}else SAXDriver.DOC_E==a?(d="endDocument",f=this.m_hndDoc):SAXDriver.ELM_B==a?(d="startElement",f=this.m_hndDoc):SAXDriver.ELM_E==a?(d="endElement",f=this.m_hndDoc):SAXDriver.CHARS==a?(d="characters",f=this.m_hndDoc):SAXDriver.PI==a?(d="processingInstruction",f=this.m_hndDoc):SAXDriver.CD_B==a?(d="startCDATA",f=this.m_hndLex):SAXDriver.CD_E==a?(d=
+"endCDATA",f=this.m_hndLex):SAXDriver.CMNT==a&&(d="comment",f=this.m_hndLex);if(f&&f[d])if(0==c)f[d]();else if(1==c)f[d](b[1]);else if(2==c)f[d](b[1],b[2]);else if(3==c)f[d](b[1],b[2],b[3])}};
+SAXDriver.prototype._parseLoop=function(a){for(a=this.m_parser;!this.m_bErr;){var b=a.next();if(b==XMLP._ELM_B)this._fireEvent(SAXDriver.ELM_B,a.getName(),this);else if(b==XMLP._ELM_E)this._fireEvent(SAXDriver.ELM_E,a.getName());else if(b==XMLP._ELM_EMP)this._fireEvent(SAXDriver.ELM_B,a.getName(),this),this._fireEvent(SAXDriver.ELM_E,a.getName());else if(b==XMLP._TEXT)this._fireEvent(SAXDriver.CHARS,a.getContent(),a.getContentBegin(),a.getContentEnd()-a.getContentBegin());else if(b==XMLP._ENTITY)this._fireEvent(SAXDriver.CHARS,
+a.getContent(),a.getContentBegin(),a.getContentEnd()-a.getContentBegin());else if(b==XMLP._PI)this._fireEvent(SAXDriver.PI,a.getName(),a.getContent().substring(a.getContentBegin(),a.getContentEnd()));else if(b==XMLP._CDATA)this._fireEvent(SAXDriver.CD_B),this._fireEvent(SAXDriver.CHARS,a.getContent(),a.getContentBegin(),a.getContentEnd()-a.getContentBegin()),this._fireEvent(SAXDriver.CD_E);else if(b==XMLP._COMMENT)this._fireEvent(SAXDriver.CMNT,a.getContent(),a.getContentBegin(),a.getContentEnd()-
+a.getContentBegin());else if(b!=XMLP._DTD)if(b==XMLP._ERROR)this._fireError(a.getContent());else if(b==XMLP._NONE)break}};SAXStrings=function(){};SAXStrings.WHITESPACE=" \t\n\r";SAXStrings.QUOTES="\"'";SAXStrings.getColumnNumber=function(a,b){if(SAXStrings.isEmpty(a))return-1;b=b||a.length;var c=a.substring(0,b).split("\n");c.length--;c=c.join("\n").length;return b-c};SAXStrings.getLineNumber=function(a,b){if(SAXStrings.isEmpty(a))return-1;b=b||a.length;return a.substring(0,b).split("\n").length};
+SAXStrings.indexOfNonWhitespace=function(a,b,c){if(SAXStrings.isEmpty(a))return-1;c=c||a.length;for(b=b||0;b<c;b++)if(-1==SAXStrings.WHITESPACE.indexOf(a.charAt(b)))return b;return-1};SAXStrings.indexOfWhitespace=function(a,b,c){if(SAXStrings.isEmpty(a))return-1;c=c||a.length;for(b=b||0;b<c;b++)if(-1!=SAXStrings.WHITESPACE.indexOf(a.charAt(b)))return b;return-1};SAXStrings.isEmpty=function(a){return null==a||0==a.length};
+SAXStrings.lastIndexOfNonWhitespace=function(a,b,c){if(SAXStrings.isEmpty(a))return-1;b=b||0;c=c||a.length;for(--c;c>=b;c--)if(-1==SAXStrings.WHITESPACE.indexOf(a.charAt(c)))return c;return-1};SAXStrings.replace=function(a,b,c,d,f){if(SAXStrings.isEmpty(a))return"";c=c||a.length;return a.substring(b||0,c).split(d).join(f)};Stack=function(){this.m_arr=[]};Stack.prototype.clear=function(){this.m_arr=[]};Stack.prototype.count=function(){return this.m_arr.length};
+Stack.prototype.destroy=function(){this.m_arr=null};Stack.prototype.peek=function(){return 0==this.m_arr.length?null:this.m_arr[this.m_arr.length-1]};Stack.prototype.pop=function(){if(0==this.m_arr.length)return null;var a=this.m_arr[this.m_arr.length-1];this.m_arr.length--;return a};Stack.prototype.push=function(a){this.m_arr[this.m_arr.length]=a};function isEmpty(a){return null==a||0==a.length}
+function trim(a,b,c){if(isEmpty(a))return"";null==b&&(b=!0);null==c&&(c=!0);var d=0,f=0,g=0;if(1==b)for(;g<a.length&&-1!=whitespace.indexOf(a.charAt(g++));)d++;if(1==c)for(b=a.length-1;b>=d&&-1!=whitespace.indexOf(a.charAt(b--));)f++;return a.substring(d,a.length-f)}function __escapeString(a){a=a.replace(/&/g,"&amp;");a=a.replace(/</g,"&lt;");a=a.replace(/>/g,"&gt;");a=a.replace(/"/g,"&quot;");return a=a.replace(/'/g,"&apos;")}
+function __unescapeString(a){a=a.replace(/&amp;/g,"&");a=a.replace(/&lt;/g,"<");a=a.replace(/&gt;/g,">");a=a.replace(/&quot;/g,'"');return a=a.replace(/&apos;/g,"'")}function addClass(a,b){a?0>a.indexOf("|"+b+"|")&&(a+=b+"|"):a="|"+b+"|";return a}DOMException=function(a){this._class=addClass(this._class,"DOMException");this.code=a};DOMException.INDEX_SIZE_ERR=1;DOMException.DOMSTRING_SIZE_ERR=2;DOMException.HIERARCHY_REQUEST_ERR=3;DOMException.WRONG_DOCUMENT_ERR=4;
+DOMException.INVALID_CHARACTER_ERR=5;DOMException.NO_DATA_ALLOWED_ERR=6;DOMException.NO_MODIFICATION_ALLOWED_ERR=7;DOMException.NOT_FOUND_ERR=8;DOMException.NOT_SUPPORTED_ERR=9;DOMException.INUSE_ATTRIBUTE_ERR=10;DOMException.INVALID_STATE_ERR=11;DOMException.SYNTAX_ERR=12;DOMException.INVALID_MODIFICATION_ERR=13;DOMException.NAMESPACE_ERR=14;DOMException.INVALID_ACCESS_ERR=15;
+DOMImplementation=function(){this._class=addClass(this._class,"DOMImplementation");this._p=null;this.preserveWhiteSpace=!1;this.errorChecking=this.namespaceAware=!0};DOMImplementation.prototype.escapeString=function(a){return __escapeString(a)};DOMImplementation.prototype.unescapeString=function(a){return __unescapeString(a)};DOMImplementation.prototype.hasFeature=function(a,b){var c=!1;"xml"==a.toLowerCase()?c=!b||"1.0"==b||"2.0"==b:"core"==a.toLowerCase()&&(c=!b||"2.0"==b);return c};
+DOMImplementation.prototype.loadXML=function(a){try{var b=new XMLP(a)}catch(c){alert("Error Creating the SAX Parser. Did you include xmlsax.js or tinyxmlsax.js in your web page?\nThe SAX parser is needed to populate XML for <SCRIPT>'s W3C DOM Parser with data.")}a=new DOMDocument(this);this._parseLoop(a,b);a._parseComplete=!0;return a};
+DOMImplementation.prototype.translateErrCode=function(a){switch(a){case DOMException.INDEX_SIZE_ERR:a="INDEX_SIZE_ERR: Index out of bounds";break;case DOMException.DOMSTRING_SIZE_ERR:a="DOMSTRING_SIZE_ERR: The resulting string is too long to fit in a DOMString";break;case DOMException.HIERARCHY_REQUEST_ERR:a="HIERARCHY_REQUEST_ERR: The Node can not be inserted at this location";break;case DOMException.WRONG_DOCUMENT_ERR:a="WRONG_DOCUMENT_ERR: The source and the destination Documents are not the same";
+break;case DOMException.INVALID_CHARACTER_ERR:a="INVALID_CHARACTER_ERR: The string contains an invalid character";break;case DOMException.NO_DATA_ALLOWED_ERR:a="NO_DATA_ALLOWED_ERR: This Node / NodeList does not support data";break;case DOMException.NO_MODIFICATION_ALLOWED_ERR:a="NO_MODIFICATION_ALLOWED_ERR: This object cannot be modified";break;case DOMException.NOT_FOUND_ERR:a="NOT_FOUND_ERR: The item cannot be found";break;case DOMException.NOT_SUPPORTED_ERR:a="NOT_SUPPORTED_ERR: This implementation does not support function";
+break;case DOMException.INUSE_ATTRIBUTE_ERR:a="INUSE_ATTRIBUTE_ERR: The Attribute has already been assigned to another Element";break;case DOMException.INVALID_STATE_ERR:a="INVALID_STATE_ERR: The object is no longer usable";break;case DOMException.SYNTAX_ERR:a="SYNTAX_ERR: Syntax error";break;case DOMException.INVALID_MODIFICATION_ERR:a="INVALID_MODIFICATION_ERR: Cannot change the type of the object";break;case DOMException.NAMESPACE_ERR:a="NAMESPACE_ERR: The namespace declaration is incorrect";break;
+case DOMException.INVALID_ACCESS_ERR:a="INVALID_ACCESS_ERR: The object does not support this function";break;default:a="UNKNOWN: Unknown Exception Code ("+a+")"}return a};
+DOMImplementation.prototype._parseLoop=function(a,b){var c;iNodeParent=a;var d=[],f=[];if(this.namespaceAware){var g=a.createNamespace("");g.setValue("http://www.w3.org/2000/xmlns/");a._namespaces.setNamedItem(g)}for(;;){var e=b.next();if(e==XMLP._ELM_B){e=b.getName();trim(e,!0,!0);if(this.namespaceAware){e=a.createElementNS("",b.getName());e._namespaces=iNodeParent._namespaces._cloneNodes(e);for(c=0;c<b.getAttributeCount();c++){var h=b.getAttributeName(c);this._isNamespaceDeclaration(h)?(this._parseNSName(h),
+g="xmlns"!=h?a.createNamespace(h):a.createNamespace(""),g.setValue(b.getAttributeValue(c)),e._namespaces.setNamedItem(g)):((g=e.getAttributeNode(h))||(g=a.createAttributeNS("",h)),g.setValue(b.getAttributeValue(c)),e.setAttributeNodeNS(g),this._isIdDeclaration(h)&&(e.id=b.getAttributeValue(c)))}e._namespaces.getNamedItem(e.prefix)&&(e.namespaceURI=e._namespaces.getNamedItem(e.prefix).value);for(c=0;c<e.attributes.length;c++)""!=e.attributes.item(c).prefix&&e._namespaces.getNamedItem(e.attributes.item(c).prefix)&&
+(e.attributes.item(c).namespaceURI=e._namespaces.getNamedItem(e.attributes.item(c).prefix).value)}else for(e=a.createElement(b.getName()),c=0;c<b.getAttributeCount();c++)h=b.getAttributeName(c),(g=e.getAttributeNode(h))||(g=a.createAttribute(h)),g.setValue(b.getAttributeValue(c)),e.setAttributeNode(g);iNodeParent.nodeType==DOMNode.DOCUMENT_NODE&&(iNodeParent.documentElement=e);iNodeParent.appendChild(e);iNodeParent=e}else if(e==XMLP._ELM_E)iNodeParent=iNodeParent.parentNode;else if(e==XMLP._ELM_EMP){e=
+b.getName();e=trim(e,!0,!0);if(this.namespaceAware){e=a.createElementNS("",b.getName());e._namespaces=iNodeParent._namespaces._cloneNodes(e);for(c=0;c<b.getAttributeCount();c++)h=b.getAttributeName(c),this._isNamespaceDeclaration(h)?(this._parseNSName(h),g="xmlns"!=h?a.createNamespace(h):a.createNamespace(""),g.setValue(b.getAttributeValue(c)),e._namespaces.setNamedItem(g)):((g=e.getAttributeNode(h))||(g=a.createAttributeNS("",h)),g.setValue(b.getAttributeValue(c)),e.setAttributeNodeNS(g),this._isIdDeclaration(h)&&
+(e.id=b.getAttributeValue(c)));e._namespaces.getNamedItem(e.prefix)&&(e.namespaceURI=e._namespaces.getNamedItem(e.prefix).value);for(c=0;c<e.attributes.length;c++)""!=e.attributes.item(c).prefix&&e._namespaces.getNamedItem(e.attributes.item(c).prefix)&&(e.attributes.item(c).namespaceURI=e._namespaces.getNamedItem(e.attributes.item(c).prefix).value)}else for(e=a.createElement(e),c=0;c<b.getAttributeCount();c++)h=b.getAttributeName(c),(g=e.getAttributeNode(h))||(g=a.createAttribute(h)),g.setValue(b.getAttributeValue(c)),
+e.setAttributeNode(g);iNodeParent.nodeType==DOMNode.DOCUMENT_NODE&&(iNodeParent.documentElement=e);iNodeParent.appendChild(e)}else if(e==XMLP._TEXT||e==XMLP._ENTITY)c=b.getContent().substring(b.getContentBegin(),b.getContentEnd()),this.preserveWhiteSpace||""==trim(c,!0,!0)&&(c=""),0<c.length&&(c=a.createTextNode(c),iNodeParent.appendChild(c),e==XMLP._ENTITY?d[d.length]=c:f[f.length]=c);else if(e==XMLP._PI)iNodeParent.appendChild(a.createProcessingInstruction(b.getName(),b.getContent().substring(b.getContentBegin(),
+b.getContentEnd())));else if(e==XMLP._CDATA)c=b.getContent().substring(b.getContentBegin(),b.getContentEnd()),this.preserveWhiteSpace||(c=trim(c,!0,!0),c.replace(/ +/g," ")),0<c.length&&iNodeParent.appendChild(a.createCDATASection(c));else if(e==XMLP._COMMENT)c=b.getContent().substring(b.getContentBegin(),b.getContentEnd()),this.preserveWhiteSpace||(c=trim(c,!0,!0),c.replace(/ +/g," ")),0<c.length&&iNodeParent.appendChild(a.createComment(c));else if(e!=XMLP._DTD){if(e==XMLP._ERROR)throw new DOMException(DOMException.SYNTAX_ERR);
+if(e==XMLP._NONE)if(iNodeParent==a)break;else throw new DOMException(DOMException.SYNTAX_ERR);}}e=d.length;for(intLoop=0;intLoop<e;intLoop++)if(c=d[intLoop].getParentNode())if(c.normalize(),!this.preserveWhiteSpace)for(c=c.getChildNodes(),g=c.getLength(),intLoop2=0;intLoop2<g;intLoop2++)if(h=c.item(intLoop2),h.getNodeType()==DOMNode.TEXT_NODE){var k=h.getData(),k=trim(k,!0,!0);k.replace(/ +/g," ");h.setData(k)}if(!this.preserveWhiteSpace)for(e=f.length,intLoop=0;intLoop<e;intLoop++)d=f[intLoop],null!=
+d.getParentNode()&&(c=d.getData(),c=trim(c,!0,!0),c.replace(/ +/g," "),d.setData(c))};DOMImplementation.prototype._isNamespaceDeclaration=function(a){return-1<a.indexOf("xmlns")};DOMImplementation.prototype._isIdDeclaration=function(a){return"id"==a.toLowerCase()};DOMImplementation.prototype._isValidName=function(a){return a.match(re_validName)};re_validName=/^[a-zA-Z_:][a-zA-Z0-9\.\-_:]*$/;DOMImplementation.prototype._isValidString=function(a){return 0>a.search(re_invalidStringChars)};
+re_invalidStringChars=/\x01|\x02|\x03|\x04|\x05|\x06|\x07|\x08|\x0B|\x0C|\x0E|\x0F|\x10|\x11|\x12|\x13|\x14|\x15|\x16|\x17|\x18|\x19|\x1A|\x1B|\x1C|\x1D|\x1E|\x1F|\x7F/;DOMImplementation.prototype._parseNSName=function(a){var b={};b.prefix=a;b.namespaceName="";delimPos=a.indexOf(":");-1<delimPos&&(b.prefix=a.substring(0,delimPos),b.namespaceName=a.substring(delimPos+1,a.length));return b};
+DOMImplementation.prototype._parseQName=function(a){var b={};b.localName=a;b.prefix="";delimPos=a.indexOf(":");-1<delimPos&&(b.prefix=a.substring(0,delimPos),b.localName=a.substring(delimPos+1,a.length));return b};DOMNodeList=function(a,b){this._class=addClass(this._class,"DOMNodeList");this._nodes=[];this.length=0;this.parentNode=b;this.ownerDocument=a;this._readonly=!1};DOMNodeList.prototype.getLength=function(){return this.length};
+DOMNodeList.prototype.item=function(a){var b=null;0<=a&&a<this._nodes.length&&(b=this._nodes[a]);return b};DOMNodeList.prototype._findItemIndex=function(a){var b=-1;if(-1<a)for(var c=0;c<this._nodes.length;c++)if(this._nodes[c]._id==a){b=c;break}return b};
+DOMNodeList.prototype._insertBefore=function(a,b){if(0<=b&&b<this._nodes.length){var c=this._nodes.slice(0,b);a.nodeType==DOMNode.DOCUMENT_FRAGMENT_NODE?c=c.concat(a.childNodes._nodes):c[c.length]=a;this._nodes=c.concat(this._nodes.slice(b));this.length=this._nodes.length}};
+DOMNodeList.prototype._replaceChild=function(a,b){var c=null;if(0<=b&&b<this._nodes.length)if(c=this._nodes[b],a.nodeType==DOMNode.DOCUMENT_FRAGMENT_NODE){var d=this._nodes.slice(0,b);d=d.concat(a.childNodes._nodes);this._nodes=d.concat(this._nodes.slice(b+1))}else this._nodes[b]=a;return c};DOMNodeList.prototype._removeChild=function(a){var b=null;-1<a&&(b=this._nodes[a],this._nodes=this._nodes.slice(0,a).concat(this._nodes.slice(a+1)),this.length=this._nodes.length);return b};
+DOMNodeList.prototype._appendChild=function(a){a.nodeType==DOMNode.DOCUMENT_FRAGMENT_NODE?this._nodes=this._nodes.concat(a.childNodes._nodes):this._nodes[this._nodes.length]=a;this.length=this._nodes.length};DOMNodeList.prototype._cloneNodes=function(a,b){for(var c=new DOMNodeList(this.ownerDocument,b),d=0;d<this._nodes.length;d++)c._appendChild(this._nodes[d].cloneNode(a));return c};DOMNodeList.prototype.toString=function(){for(var a="",b=0;b<this.length;b++)a+=this._nodes[b].toString();return a};
+DOMNamedNodeMap=function(a,b){this._class=addClass(this._class,"DOMNamedNodeMap");this.DOMNodeList=DOMNodeList;this.DOMNodeList(a,b)};DOMNamedNodeMap.prototype=new DOMNodeList;DOMNamedNodeMap.prototype.getNamedItem=function(a){var b=null;a=this._findNamedItemIndex(a);-1<a&&(b=this._nodes[a]);return b};
+DOMNamedNodeMap.prototype.setNamedItem=function(a){if(this.ownerDocument.implementation.errorChecking){if(this.ownerDocument!=a.ownerDocument)throw new DOMException(DOMException.WRONG_DOCUMENT_ERR);if(this._readonly||this.parentNode&&this.parentNode._readonly)throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR);if(a.ownerElement&&a.ownerElement!=this.parentNode)throw new DOMException(DOMException.INUSE_ATTRIBUTE_ERR);}var b=this._findNamedItemIndex(a.name),c=null;if(-1<b){c=this._nodes[b];
+if(this.ownerDocument.implementation.errorChecking&&c._readonly)throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR);this._nodes[b]=a}else this._nodes[this.length]=a;this.length=this._nodes.length;a.ownerElement=this.parentNode;return c};
+DOMNamedNodeMap.prototype.removeNamedItem=function(a){if(this.ownerDocument.implementation.errorChecking&&(this._readonly||this.parentNode&&this.parentNode._readonly))throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR);a=this._findNamedItemIndex(a);if(this.ownerDocument.implementation.errorChecking&&0>a)throw new DOMException(DOMException.NOT_FOUND_ERR);var b=this._nodes[a];if(this.ownerDocument.implementation.errorChecking&&b._readonly)throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR);
+return this._removeChild(a)};DOMNamedNodeMap.prototype.getNamedItemNS=function(a,b){var c=null,d=this._findNamedItemNSIndex(a,b);-1<d&&(c=this._nodes[d]);return c};
+DOMNamedNodeMap.prototype.setNamedItemNS=function(a){if(this.ownerDocument.implementation.errorChecking){if(this._readonly||this.parentNode&&this.parentNode._readonly)throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR);if(this.ownerDocument!=a.ownerDocument)throw new DOMException(DOMException.WRONG_DOCUMENT_ERR);if(a.ownerElement&&a.ownerElement!=this.parentNode)throw new DOMException(DOMException.INUSE_ATTRIBUTE_ERR);}var b=this._findNamedItemNSIndex(a.namespaceURI,a.localName),c=null;
+if(-1<b){c=this._nodes[b];if(this.ownerDocument.implementation.errorChecking&&c._readonly)throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR);this._nodes[b]=a}else this._nodes[this.length]=a;this.length=this._nodes.length;a.ownerElement=this.parentNode;return c};
+DOMNamedNodeMap.prototype.removeNamedItemNS=function(a,b){if(this.ownerDocument.implementation.errorChecking&&(this._readonly||this.parentNode&&this.parentNode._readonly))throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR);var c=this._findNamedItemNSIndex(a,b);if(this.ownerDocument.implementation.errorChecking&&0>c)throw new DOMException(DOMException.NOT_FOUND_ERR);var d=this._nodes[c];if(this.ownerDocument.implementation.errorChecking&&d._readonly)throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR);
+return this._removeChild(c)};DOMNamedNodeMap.prototype._findNamedItemIndex=function(a){for(var b=-1,c=0;c<this._nodes.length;c++)if(this._nodes[c].name==a){b=c;break}return b};DOMNamedNodeMap.prototype._findNamedItemNSIndex=function(a,b){var c=-1;if(b)for(var d=0;d<this._nodes.length;d++)if(this._nodes[d].namespaceURI==a&&this._nodes[d].localName==b){c=d;break}return c};DOMNamedNodeMap.prototype._hasAttribute=function(a){var b=!1;-1<this._findNamedItemIndex(a)&&(b=!0);return b};
+DOMNamedNodeMap.prototype._hasAttributeNS=function(a,b){var c=!1;-1<this._findNamedItemNSIndex(a,b)&&(c=!0);return c};DOMNamedNodeMap.prototype._cloneNodes=function(a){a=new DOMNamedNodeMap(this.ownerDocument,a);for(var b=0;b<this._nodes.length;b++)a._appendChild(this._nodes[b].cloneNode(!1));return a};DOMNamedNodeMap.prototype.toString=function(){for(var a="",b=0;b<this.length-1;b++)a+=this._nodes[b].toString()+" ";0<this.length&&(a+=this._nodes[this.length-1].toString());return a};
+DOMNamespaceNodeMap=function(a,b){this._class=addClass(this._class,"DOMNamespaceNodeMap");this.DOMNamedNodeMap=DOMNamedNodeMap;this.DOMNamedNodeMap(a,b)};DOMNamespaceNodeMap.prototype=new DOMNamedNodeMap;DOMNamespaceNodeMap.prototype._findNamedItemIndex=function(a){for(var b=-1,c=0;c<this._nodes.length;c++)if(this._nodes[c].localName==a){b=c;break}return b};
+DOMNamespaceNodeMap.prototype._cloneNodes=function(a){a=new DOMNamespaceNodeMap(this.ownerDocument,a);for(var b=0;b<this._nodes.length;b++)a._appendChild(this._nodes[b].cloneNode(!1));return a};DOMNamespaceNodeMap.prototype.toString=function(){for(var a,b="",c=0;c<this._nodes.length;c++){a=null;try{a=this.parentNode.parentNode._namespaces.getNamedItem(this._nodes[c].localName)}catch(d){break}a&&""+a.nodeValue==""+this._nodes[c].nodeValue||(b+=this._nodes[c].toString()+" ")}return b};
+DOMNode=function(a){this._class=addClass(this._class,"DOMNode");a&&(this._id=a._genId());this.nodeValue=this.nodeName=this.localName=this.prefix=this.namespaceURI="";this.nodeType=0;this.parentNode=null;this.childNodes=new DOMNodeList(a,this);this.nextSibling=this.previousSibling=this.lastChild=this.firstChild=null;this.attributes=new DOMNamedNodeMap(a,this);this.ownerDocument=a;this._namespaces=new DOMNamespaceNodeMap(a,this);this._readonly=!1};DOMNode.ELEMENT_NODE=1;DOMNode.ATTRIBUTE_NODE=2;
+DOMNode.TEXT_NODE=3;DOMNode.CDATA_SECTION_NODE=4;DOMNode.ENTITY_REFERENCE_NODE=5;DOMNode.ENTITY_NODE=6;DOMNode.PROCESSING_INSTRUCTION_NODE=7;DOMNode.COMMENT_NODE=8;DOMNode.DOCUMENT_NODE=9;DOMNode.DOCUMENT_TYPE_NODE=10;DOMNode.DOCUMENT_FRAGMENT_NODE=11;DOMNode.NOTATION_NODE=12;DOMNode.NAMESPACE_NODE=13;DOMNode.prototype.hasAttributes=function(){return 0==this.attributes.length?!1:!0};DOMNode.prototype.getNodeName=function(){return this.nodeName};DOMNode.prototype.getNodeValue=function(){return this.nodeValue};
+DOMNode.prototype.setNodeValue=function(a){if(this.ownerDocument.implementation.errorChecking&&this._readonly)throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR);this.nodeValue=a};DOMNode.prototype.getNodeType=function(){return this.nodeType};DOMNode.prototype.getParentNode=function(){return this.parentNode};DOMNode.prototype.getChildNodes=function(){return this.childNodes};DOMNode.prototype.getFirstChild=function(){return this.firstChild};DOMNode.prototype.getLastChild=function(){return this.lastChild};
+DOMNode.prototype.getPreviousSibling=function(){return this.previousSibling};DOMNode.prototype.getNextSibling=function(){return this.nextSibling};DOMNode.prototype.getAttributes=function(){return this.attributes};DOMNode.prototype.getOwnerDocument=function(){return this.ownerDocument};DOMNode.prototype.getNamespaceURI=function(){return this.namespaceURI};DOMNode.prototype.getPrefix=function(){return this.prefix};
+DOMNode.prototype.setPrefix=function(a){if(this.ownerDocument.implementation.errorChecking){if(this._readonly)throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR);if(!this.ownerDocument.implementation._isValidName(a))throw new DOMException(DOMException.INVALID_CHARACTER_ERR);if(!this.ownerDocument._isValidNamespace(this.namespaceURI,a+":"+this.localName))throw new DOMException(DOMException.NAMESPACE_ERR);if("xmlns"==a&&"http://www.w3.org/2000/xmlns/"!=this.namespaceURI)throw new DOMException(DOMException.NAMESPACE_ERR);
+if(""==a&&"xmlns"==this.localName)throw new DOMException(DOMException.NAMESPACE_ERR);}this.prefix=a;this.nodeName=""!=this.prefix?this.prefix+":"+this.localName:this.localName};DOMNode.prototype.getLocalName=function(){return this.localName};
+DOMNode.prototype.insertBefore=function(a,b){if(this.ownerDocument.implementation.errorChecking){if(this._readonly)throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR);if(this.ownerDocument!=a.ownerDocument)throw new DOMException(DOMException.WRONG_DOCUMENT_ERR);if(this._isAncestor(a))throw new DOMException(DOMException.HIERARCHY_REQUEST_ERR);}if(b){var c=this.childNodes._findItemIndex(b._id);if(this.ownerDocument.implementation.errorChecking&&0>c)throw new DOMException(DOMException.NOT_FOUND_ERR);
+(c=a.parentNode)&&c.removeChild(a);this.childNodes._insertBefore(a,this.childNodes._findItemIndex(b._id));c=b.previousSibling;if(a.nodeType==DOMNode.DOCUMENT_FRAGMENT_NODE){if(0<a.childNodes._nodes.length){for(var d=0;d<a.childNodes._nodes.length;d++)a.childNodes._nodes[d].parentNode=this;b.previousSibling=a.childNodes._nodes[a.childNodes._nodes.length-1]}}else a.parentNode=this,b.previousSibling=a}else c=this.lastChild,this.appendChild(a);a.nodeType==DOMNode.DOCUMENT_FRAGMENT_NODE?0<a.childNodes._nodes.length&&
+(c?c.nextSibling=a.childNodes._nodes[0]:this.firstChild=a.childNodes._nodes[0],a.childNodes._nodes[0].previousSibling=c,a.childNodes._nodes[a.childNodes._nodes.length-1].nextSibling=b):(c?c.nextSibling=a:this.firstChild=a,a.previousSibling=c,a.nextSibling=b);return a};
+DOMNode.prototype.replaceChild=function(a,b){if(this.ownerDocument.implementation.errorChecking){if(this._readonly)throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR);if(this.ownerDocument!=a.ownerDocument)throw new DOMException(DOMException.WRONG_DOCUMENT_ERR);if(this._isAncestor(a))throw new DOMException(DOMException.HIERARCHY_REQUEST_ERR);}var c=this.childNodes._findItemIndex(b._id);if(this.ownerDocument.implementation.errorChecking&&0>c)throw new DOMException(DOMException.NOT_FOUND_ERR);
+var d=a.parentNode;d&&d.removeChild(a);c=this.childNodes._replaceChild(a,c);if(a.nodeType==DOMNode.DOCUMENT_FRAGMENT_NODE){if(0<a.childNodes._nodes.length){for(d=0;d<a.childNodes._nodes.length;d++)a.childNodes._nodes[d].parentNode=this;b.previousSibling?b.previousSibling.nextSibling=a.childNodes._nodes[0]:this.firstChild=a.childNodes._nodes[0];b.nextSibling?b.nextSibling.previousSibling=a:this.lastChild=a.childNodes._nodes[a.childNodes._nodes.length-1];a.childNodes._nodes[0].previousSibling=b.previousSibling;
+a.childNodes._nodes[a.childNodes._nodes.length-1].nextSibling=b.nextSibling}}else a.parentNode=this,b.previousSibling?b.previousSibling.nextSibling=a:this.firstChild=a,b.nextSibling?b.nextSibling.previousSibling=a:this.lastChild=a,a.previousSibling=b.previousSibling,a.nextSibling=b.nextSibling;return c};
+DOMNode.prototype.removeChild=function(a){if(this.ownerDocument.implementation.errorChecking&&(this._readonly||a._readonly))throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR);var b=this.childNodes._findItemIndex(a._id);if(this.ownerDocument.implementation.errorChecking&&0>b)throw new DOMException(DOMException.NOT_FOUND_ERR);this.childNodes._removeChild(b);a.parentNode=null;a.previousSibling?a.previousSibling.nextSibling=a.nextSibling:this.firstChild=a.nextSibling;a.nextSibling?a.nextSibling.previousSibling=
+a.previousSibling:this.lastChild=a.previousSibling;a.previousSibling=null;a.nextSibling=null;return a};
+DOMNode.prototype.appendChild=function(a){if(this.ownerDocument.implementation.errorChecking){if(this._readonly)throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR);if(this.ownerDocument!=a.ownerDocument)throw new DOMException(DOMException.WRONG_DOCUMENT_ERR);if(this._isAncestor(a))throw new DOMException(DOMException.HIERARCHY_REQUEST_ERR);}var b=a.parentNode;b&&b.removeChild(a);this.childNodes._appendChild(a);if(a.nodeType==DOMNode.DOCUMENT_FRAGMENT_NODE){if(0<a.childNodes._nodes.length){for(b=
+0;b<a.childNodes._nodes.length;b++)a.childNodes._nodes[b].parentNode=this;this.lastChild?(this.lastChild.nextSibling=a.childNodes._nodes[0],a.childNodes._nodes[0].previousSibling=this.lastChild,this.lastChild=a.childNodes._nodes[a.childNodes._nodes.length-1]):(this.lastChild=a.childNodes._nodes[a.childNodes._nodes.length-1],this.firstChild=a.childNodes._nodes[0])}}else a.parentNode=this,this.lastChild?(this.lastChild.nextSibling=a,a.previousSibling=this.lastChild,this.lastChild=a):this.firstChild=
+this.lastChild=a;return a};DOMNode.prototype.hasChildNodes=function(){return 0<this.childNodes.length};DOMNode.prototype.cloneNode=function(a){try{return this.ownerDocument.importNode(this,a)}catch(b){return null}};
+DOMNode.prototype.normalize=function(){var a=new DOMNodeList;if(this.nodeType==DOMNode.ELEMENT_NODE||this.nodeType==DOMNode.DOCUMENT_NODE){for(var b=null,c=0;c<this.childNodes.length;c++){var d=this.childNodes.item(c);d.nodeType==DOMNode.TEXT_NODE?1>d.length?a._appendChild(d):b?(b.appendData(d.data),a._appendChild(d)):b=d:(b=null,d.normalize())}for(c=0;c<a.length;c++)d=a.item(c),d.parentNode.removeChild(d)}};
+DOMNode.prototype.isSupported=function(a,b){return this.ownerDocument.implementation.hasFeature(a,b)};DOMNode.prototype.getElementsByTagName=function(a){return this._getElementsByTagNameRecursive(a,new DOMNodeList(this.ownerDocument))};
+DOMNode.prototype._getElementsByTagNameRecursive=function(a,b){if(this.nodeType==DOMNode.ELEMENT_NODE||this.nodeType==DOMNode.DOCUMENT_NODE){this.nodeName!=a&&"*"!=a||b._appendChild(this);for(var c=0;c<this.childNodes.length;c++)b=this.childNodes.item(c)._getElementsByTagNameRecursive(a,b)}return b};DOMNode.prototype.getXML=function(){return this.toString()};DOMNode.prototype.getElementsByTagNameNS=function(a,b){return this._getElementsByTagNameNSRecursive(a,b,new DOMNodeList(this.ownerDocument))};
+DOMNode.prototype._getElementsByTagNameNSRecursive=function(a,b,c){if(this.nodeType==DOMNode.ELEMENT_NODE||this.nodeType==DOMNode.DOCUMENT_NODE){this.namespaceURI!=a&&"*"!=a||this.localName!=b&&"*"!=b||c._appendChild(this);for(var d=0;d<this.childNodes.length;d++)c=this.childNodes.item(d)._getElementsByTagNameNSRecursive(a,b,c)}return c};DOMNode.prototype._isAncestor=function(a){return this==a||this.parentNode&&this.parentNode._isAncestor(a)};
+DOMNode.prototype.importNode=function(a,b){this.getOwnerDocument()._performingImportNodeOperation=!0;try{if(a.nodeType==DOMNode.ELEMENT_NODE)if(this.ownerDocument.implementation.namespaceAware){var c=this.ownerDocument.createElementNS(a.namespaceURI,a.nodeName);for(d=0;d<a.attributes.length;d++)c.setAttributeNS(a.attributes.item(d).namespaceURI,a.attributes.item(d).name,a.attributes.item(d).value);for(d=0;d<a._namespaces.length;d++)c._namespaces._nodes[d]=this.ownerDocument.createNamespace(a._namespaces.item(d).localName),
+c._namespaces._nodes[d].setValue(a._namespaces.item(d).value)}else{c=this.ownerDocument.createElement(a.tagName);for(var d=0;d<a.attributes.length;d++)c.setAttribute(a.attributes.item(d).name,a.attributes.item(d).value)}else if(a.nodeType==DOMNode.ATTRIBUTE_NODE){if(this.ownerDocument.implementation.namespaceAware)for(c=this.ownerDocument.createAttributeNS(a.namespaceURI,a.nodeName),d=0;d<a._namespaces.length;d++)c._namespaces._nodes[d]=this.ownerDocument.createNamespace(a._namespaces.item(d).localName),
+c._namespaces._nodes[d].setValue(a._namespaces.item(d).value);else c=this.ownerDocument.createAttribute(a.name);c.setValue(a.value)}else if(a.nodeType==DOMNode.DOCUMENT_FRAGMENT)c=this.ownerDocument.createDocumentFragment();else if(a.nodeType==DOMNode.NAMESPACE_NODE)c=this.ownerDocument.createNamespace(a.nodeName),c.setValue(a.value);else if(a.nodeType==DOMNode.TEXT_NODE)c=this.ownerDocument.createTextNode(a.data);else if(a.nodeType==DOMNode.CDATA_SECTION_NODE)c=this.ownerDocument.createCDATASection(a.data);
+else if(a.nodeType==DOMNode.PROCESSING_INSTRUCTION_NODE)c=this.ownerDocument.createProcessingInstruction(a.target,a.data);else if(a.nodeType==DOMNode.COMMENT_NODE)c=this.ownerDocument.createComment(a.data);else throw new DOMException(DOMException.NOT_SUPPORTED_ERR);if(b)for(d=0;d<a.childNodes.length;d++)c.appendChild(this.ownerDocument.importNode(a.childNodes.item(d),!0));this.getOwnerDocument()._performingImportNodeOperation=!1;return c}catch(f){throw this.getOwnerDocument()._performingImportNodeOperation=
+!1,f;}};DOMNode.prototype.__escapeString=function(a){return __escapeString(a)};DOMNode.prototype.__unescapeString=function(a){return __unescapeString(a)};
+DOMDocument=function(a){this._class=addClass(this._class,"DOMDocument");this.DOMNode=DOMNode;this.DOMNode(this);this.doctype=null;this.implementation=a;this.documentElement=null;this.all=[];this.nodeName="#document";this.nodeType=DOMNode.DOCUMENT_NODE;this._lastId=this._id=0;this._parseComplete=!1;this.ownerDocument=this;this._performingImportNodeOperation=!1};DOMDocument.prototype=new DOMNode;DOMDocument.prototype.getDoctype=function(){return this.doctype};
+DOMDocument.prototype.getImplementation=function(){return this.implementation};DOMDocument.prototype.getDocumentElement=function(){return this.documentElement};DOMDocument.prototype.createElement=function(a){if(this.ownerDocument.implementation.errorChecking&&!this.ownerDocument.implementation._isValidName(a))throw new DOMException(DOMException.INVALID_CHARACTER_ERR);var b=new DOMElement(this);b.tagName=a;b.nodeName=a;return this.all[this.all.length]=b};
+DOMDocument.prototype.createDocumentFragment=function(){return new DOMDocumentFragment(this)};DOMDocument.prototype.createTextNode=function(a){var b=new DOMText(this);b.data=a;b.nodeValue=a;b.length=a.length;return b};DOMDocument.prototype.createComment=function(a){var b=new DOMComment(this);b.data=a;b.nodeValue=a;b.length=a.length;return b};DOMDocument.prototype.createCDATASection=function(a){var b=new DOMCDATASection(this);b.data=a;b.nodeValue=a;b.length=a.length;return b};
+DOMDocument.prototype.createProcessingInstruction=function(a,b){if(this.ownerDocument.implementation.errorChecking&&!this.implementation._isValidName(a))throw new DOMException(DOMException.INVALID_CHARACTER_ERR);var c=new DOMProcessingInstruction(this);c.target=a;c.nodeName=a;c.data=b;c.nodeValue=b;c.length=b.length;return c};
+DOMDocument.prototype.createAttribute=function(a){if(this.ownerDocument.implementation.errorChecking&&!this.ownerDocument.implementation._isValidName(a))throw new DOMException(DOMException.INVALID_CHARACTER_ERR);var b=new DOMAttr(this);b.name=a;b.nodeName=a;return b};
+DOMDocument.prototype.createElementNS=function(a,b){if(this.ownerDocument.implementation.errorChecking){if(!this.ownerDocument._isValidNamespace(a,b))throw new DOMException(DOMException.NAMESPACE_ERR);if(!this.ownerDocument.implementation._isValidName(b))throw new DOMException(DOMException.INVALID_CHARACTER_ERR);}var c=new DOMElement(this),d=this.implementation._parseQName(b);c.nodeName=b;c.namespaceURI=a;c.prefix=d.prefix;c.localName=d.localName;c.tagName=b;return this.all[this.all.length]=c};
+DOMDocument.prototype.createAttributeNS=function(a,b){if(this.ownerDocument.implementation.errorChecking){if(!this.ownerDocument._isValidNamespace(a,b,!0))throw new DOMException(DOMException.NAMESPACE_ERR);if(!this.ownerDocument.implementation._isValidName(b))throw new DOMException(DOMException.INVALID_CHARACTER_ERR);}var c=new DOMAttr(this),d=this.implementation._parseQName(b);c.nodeName=b;c.namespaceURI=a;c.prefix=d.prefix;c.localName=d.localName;c.name=b;c.nodeValue="";return c};
+DOMDocument.prototype.createNamespace=function(a){var b=new DOMNamespace(this),c=this.implementation._parseQName(a);b.nodeName=a;b.prefix=c.prefix;b.localName=c.localName;b.name=a;b.nodeValue="";return b};DOMDocument.prototype.getElementById=function(a){retNode=null;for(var b=0;b<this.all.length;b++){var c=this.all[b];if(c.id==a&&c._isAncestor(c.ownerDocument.documentElement)){retNode=c;break}}return retNode};DOMDocument.prototype._genId=function(){return this._lastId+=1};
+DOMDocument.prototype._isValidNamespace=function(a,b,c){if(1==this._performingImportNodeOperation)return!0;var d=!0;b=this.implementation._parseQName(b);1==this._parseComplete&&(-1<b.localName.indexOf(":")&&(d=!1),d&&!c&&(a||(d=!1)),d&&""==b.prefix&&(d=!1));d&&"xml"===b.prefix&&"http://www.w3.org/XML/1998/namespace"!==a&&"base"!==b.localName&&(d=!1);return d};DOMDocument.prototype.toString=function(){return""+this.childNodes};
+DOMElement=function(a){this._class=addClass(this._class,"DOMElement");this.DOMNode=DOMNode;this.DOMNode(a);this.id=this.tagName="";this.nodeType=DOMNode.ELEMENT_NODE};DOMElement.prototype=new DOMNode;DOMElement.prototype.getTagName=function(){return this.tagName};DOMElement.prototype.getAttribute=function(a){var b="";if(a=this.attributes.getNamedItem(a))b=a.value;return b};
+DOMElement.prototype.setAttribute=function(a,b){var c=this.attributes.getNamedItem(a);c||(c=this.ownerDocument.createAttribute(a));b=new String(b);if(this.ownerDocument.implementation.errorChecking){if(c._readonly)throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR);if(!this.ownerDocument.implementation._isValidString(b))throw new DOMException(DOMException.INVALID_CHARACTER_ERR);}this.ownerDocument.implementation._isIdDeclaration(a)&&(this.id=b);c.value=b;c.nodeValue=b;c.specified=0<b.length?
+!0:!1;this.attributes.setNamedItem(c)};DOMElement.prototype.removeAttribute=function(a){return this.attributes.removeNamedItem(a)};DOMElement.prototype.getAttributeNode=function(a){return this.attributes.getNamedItem(a)};DOMElement.prototype.setAttributeNode=function(a){this.ownerDocument.implementation._isIdDeclaration(a.name)&&(this.id=a.value);return this.attributes.setNamedItem(a)};
+DOMElement.prototype.removeAttributeNode=function(a){if(this.ownerDocument.implementation.errorChecking&&a._readonly)throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR);a=this.attributes._findItemIndex(a._id);if(this.ownerDocument.implementation.errorChecking&&0>a)throw new DOMException(DOMException.NOT_FOUND_ERR);return this.attributes._removeChild(a)};DOMElement.prototype.getAttributeNS=function(a,b){var c="",d=this.attributes.getNamedItemNS(a,b);d&&(c=d.value);return c};
+DOMElement.prototype.setAttributeNS=function(a,b,c){var d=this.attributes.getNamedItem(a,b);d||(d=this.ownerDocument.createAttributeNS(a,b));c=new String(c);if(this.ownerDocument.implementation.errorChecking){if(d._readonly)throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR);if(!this.ownerDocument._isValidNamespace(a,b))throw new DOMException(DOMException.NAMESPACE_ERR);if(!this.ownerDocument.implementation._isValidString(c))throw new DOMException(DOMException.INVALID_CHARACTER_ERR);
+}this.ownerDocument.implementation._isIdDeclaration(name)&&(this.id=c);d.value=c;d.nodeValue=c;d.specified=0<c.length?!0:!1;this.attributes.setNamedItemNS(d)};DOMElement.prototype.removeAttributeNS=function(a,b){return this.attributes.removeNamedItemNS(a,b)};DOMElement.prototype.getAttributeNodeNS=function(a,b){return this.attributes.getNamedItemNS(a,b)};
+DOMElement.prototype.setAttributeNodeNS=function(a){""==a.prefix&&this.ownerDocument.implementation._isIdDeclaration(a.name)&&(this.id=a.value);return this.attributes.setNamedItemNS(a)};DOMElement.prototype.hasAttribute=function(a){return this.attributes._hasAttribute(a)};DOMElement.prototype.hasAttributeNS=function(a,b){return this.attributes._hasAttributeNS(a,b)};
+DOMElement.prototype.toString=function(){var a=this._namespaces.toString();0<a.length&&(a=" "+a);var b=this.attributes.toString();0<b.length&&(b=" "+b);a=""+("<"+this.nodeName+a+b+">");a+=this.childNodes.toString();return a+="</"+this.nodeName+">"};DOMAttr=function(a){this._class=addClass(this._class,"DOMAttr");this.DOMNode=DOMNode;this.DOMNode(a);this.name="";this.specified=!1;this.value="";this.nodeType=DOMNode.ATTRIBUTE_NODE;this.attributes=this.childNodes=this.ownerElement=null};
+DOMAttr.prototype=new DOMNode;DOMAttr.prototype.getName=function(){return this.nodeName};DOMAttr.prototype.getSpecified=function(){return this.specified};DOMAttr.prototype.getValue=function(){return this.nodeValue};DOMAttr.prototype.setValue=function(a){if(this.ownerDocument.implementation.errorChecking&&this._readonly)throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR);this.setNodeValue(a)};
+DOMAttr.prototype.setNodeValue=function(a){this.value=this.nodeValue=new String(a);this.specified=0<this.value.length};DOMAttr.prototype.toString=function(){return""+(this.nodeName+'="'+this.__escapeString(this.nodeValue)+'"')};DOMAttr.prototype.getOwnerElement=function(){return this.ownerElement};DOMNamespace=function(a){this._class=addClass(this._class,"DOMNamespace");this.DOMNode=DOMNode;this.DOMNode(a);this.name="";this.specified=!1;this.value="";this.nodeType=DOMNode.NAMESPACE_NODE};
+DOMNamespace.prototype=new DOMNode;DOMNamespace.prototype.getValue=function(){return this.nodeValue};DOMNamespace.prototype.setValue=function(a){this.value=this.nodeValue=new String(a)};DOMNamespace.prototype.toString=function(){var a="";return a=""!=this.nodeName?a+(this.nodeName+'="'+this.__escapeString(this.nodeValue)+'"'):a+('xmlns="'+this.__escapeString(this.nodeValue)+'"')};
+DOMCharacterData=function(a){this._class=addClass(this._class,"DOMCharacterData");this.DOMNode=DOMNode;this.DOMNode(a);this.data="";this.length=0};DOMCharacterData.prototype=new DOMNode;DOMCharacterData.prototype.getData=function(){return this.nodeValue};DOMCharacterData.prototype.setData=function(a){this.setNodeValue(a)};
+DOMCharacterData.prototype.setNodeValue=function(a){if(this.ownerDocument.implementation.errorChecking&&this._readonly)throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR);this.data=this.nodeValue=new String(a);this.length=this.nodeValue.length};DOMCharacterData.prototype.getLength=function(){return this.nodeValue.length};
+DOMCharacterData.prototype.substringData=function(a,b){var c=null;if(this.data){if(this.ownerDocument.implementation.errorChecking&&(0>a||a>this.data.length||0>b))throw new DOMException(DOMException.INDEX_SIZE_ERR);c=b?this.data.substring(a,a+b):this.data.substring(a)}return c};DOMCharacterData.prototype.appendData=function(a){if(this.ownerDocument.implementation.errorChecking&&this._readonly)throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR);this.setData(""+this.data+a)};
+DOMCharacterData.prototype.insertData=function(a,b){if(this.ownerDocument.implementation.errorChecking&&this._readonly)throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR);if(this.data){if(this.ownerDocument.implementation.errorChecking&&(0>a||a>this.data.length))throw new DOMException(DOMException.INDEX_SIZE_ERR);this.setData(this.data.substring(0,a).concat(b,this.data.substring(a)))}else{if(this.ownerDocument.implementation.errorChecking&&0!=a)throw new DOMException(DOMException.INDEX_SIZE_ERR);
+this.setData(b)}};DOMCharacterData.prototype.deleteData=function(a,b){if(this.ownerDocument.implementation.errorChecking&&this._readonly)throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR);if(this.data){if(this.ownerDocument.implementation.errorChecking&&(0>a||a>this.data.length||0>b))throw new DOMException(DOMException.INDEX_SIZE_ERR);!b||a+b>this.data.length?this.setData(this.data.substring(0,a)):this.setData(this.data.substring(0,a).concat(this.data.substring(a+b)))}};
+DOMCharacterData.prototype.replaceData=function(a,b,c){if(this.ownerDocument.implementation.errorChecking&&this._readonly)throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR);if(this.data){if(this.ownerDocument.implementation.errorChecking&&(0>a||a>this.data.length||0>b))throw new DOMException(DOMException.INDEX_SIZE_ERR);this.setData(this.data.substring(0,a).concat(c,this.data.substring(a+b)))}else this.setData(c)};
+DOMText=function(a){this._class=addClass(this._class,"DOMText");this.DOMCharacterData=DOMCharacterData;this.DOMCharacterData(a);this.nodeName="#text";this.nodeType=DOMNode.TEXT_NODE};DOMText.prototype=new DOMCharacterData;
+DOMText.prototype.splitText=function(a){if(this.ownerDocument.implementation.errorChecking){if(this._readonly)throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR);if(0>a||a>this.data.length)throw new DOMException(DOMException.INDEX_SIZE_ERR);}if(this.parentNode){var b=this.substringData(a);b=this.ownerDocument.createTextNode(b);this.nextSibling?this.parentNode.insertBefore(b,this.nextSibling):this.parentNode.appendChild(b);this.deleteData(a)}return b};
+DOMText.prototype.toString=function(){return this.__escapeString(""+this.nodeValue)};DOMCDATASection=function(a){this._class=addClass(this._class,"DOMCDATASection");this.DOMCharacterData=DOMCharacterData;this.DOMCharacterData(a);this.nodeName="#cdata-section";this.nodeType=DOMNode.CDATA_SECTION_NODE};DOMCDATASection.prototype=new DOMCharacterData;
+DOMCDATASection.prototype.splitText=function(a){if(this.ownerDocument.implementation.errorChecking){if(this._readonly)throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR);if(0>a||a>this.data.length)throw new DOMException(DOMException.INDEX_SIZE_ERR);}if(this.parentNode){var b=this.substringData(a);b=this.ownerDocument.createCDATASection(b);this.nextSibling?this.parentNode.insertBefore(b,this.nextSibling):this.parentNode.appendChild(b);this.deleteData(a)}return b};
+DOMCDATASection.prototype.toString=function(){return""+("<![CDATA["+this.nodeValue+"]]\x3e")};DOMComment=function(a){this._class=addClass(this._class,"DOMComment");this.DOMCharacterData=DOMCharacterData;this.DOMCharacterData(a);this.nodeName="#comment";this.nodeType=DOMNode.COMMENT_NODE};DOMComment.prototype=new DOMCharacterData;DOMComment.prototype.toString=function(){return""+("\x3c!--"+this.nodeValue+"--\x3e")};
+DOMProcessingInstruction=function(a){this._class=addClass(this._class,"DOMProcessingInstruction");this.DOMNode=DOMNode;this.DOMNode(a);this.data=this.target="";this.nodeType=DOMNode.PROCESSING_INSTRUCTION_NODE};DOMProcessingInstruction.prototype=new DOMNode;DOMProcessingInstruction.prototype.getTarget=function(){return this.nodeName};DOMProcessingInstruction.prototype.getData=function(){return this.nodeValue};DOMProcessingInstruction.prototype.setData=function(a){this.setNodeValue(a)};
+DOMProcessingInstruction.prototype.setNodeValue=function(a){if(this.ownerDocument.implementation.errorChecking&&this._readonly)throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR);this.data=this.nodeValue=new String(a)};DOMProcessingInstruction.prototype.toString=function(){return""+("<?"+this.nodeName+" "+this.nodeValue+" ?>")};
+DOMDocumentFragment=function(a){this._class=addClass(this._class,"DOMDocumentFragment");this.DOMNode=DOMNode;this.DOMNode(a);this.nodeName="#document-fragment";this.nodeType=DOMNode.DOCUMENT_FRAGMENT_NODE};DOMDocumentFragment.prototype=new DOMNode;DOMDocumentFragment.prototype.toString=function(){var a="",b=this.getChildNodes().getLength();for(intLoop=0;intLoop<b;intLoop++)a+=this.getChildNodes().item(intLoop).toString();return a};DOMDocumentType=function(){alert("DOMDocumentType.constructor(): Not Implemented")};
+DOMEntity=function(){alert("DOMEntity.constructor(): Not Implemented")};DOMEntityReference=function(){alert("DOMEntityReference.constructor(): Not Implemented")};DOMNotation=function(){alert("DOMNotation.constructor(): Not Implemented")};
+Strings={WHITESPACE:" \t\n\r",QUOTES:"\"'",isEmpty:function(a){return null==a||0==a.length},indexOfNonWhitespace:function(a,b,c){if(Strings.isEmpty(a))return-1;c=c||a.length;for(b=b||0;b<c;b++)if(-1==Strings.WHITESPACE.indexOf(a.charAt(b)))return b;return-1},lastIndexOfNonWhitespace:function(a,b,c){if(Strings.isEmpty(a))return-1;b=b||0;c=c||a.length;for(--c;c>=b;c--)if(-1==Strings.WHITESPACE.indexOf(a.charAt(c)))return c;return-1},indexOfWhitespace:function(a,b,c){if(Strings.isEmpty(a))return-1;c=
+c||a.length;for(b=b||0;b<c;b++)if(-1!=Strings.WHITESPACE.indexOf(a.charAt(b)))return b;return-1},replace:function(a,b,c,d,f){if(Strings.isEmpty(a))return"";c=c||a.length;return a.substring(b||0,c).split(d).join(f)},getLineNumber:function(a,b){if(Strings.isEmpty(a))return-1;b=b||a.length;return a.substring(0,b).split("\n").length},getColumnNumber:function(a,b){if(Strings.isEmpty(a))return-1;b=b||a.length;var c=a.substring(0,b).split("\n");c.length--;c=c.join("\n").length;return b-c}};
+StringBuffer=function(){this._a=[]};StringBuffer.prototype.append=function(a){this._a[this._a.length]=a};StringBuffer.prototype.toString=function(){return this._a.join("")};
+var SafeHtmlUtils={AMP_RE:new RegExp(/&/g),GT_RE:new RegExp(/>/g),LT_RE:new RegExp(/</g),SQUOT_RE:new RegExp(/'/g),QUOT_RE:new RegExp(/"/g),htmlEscape:function(a){-1!==a.indexOf("&")&&(a=a.replace(SafeHtmlUtils.AMP_RE,"&amp;"));-1!==a.indexOf("<")&&(a=a.replace(SafeHtmlUtils.LT_RE,"&lt;"));-1!==a.indexOf(">")&&(a=a.replace(SafeHtmlUtils.GT_RE,"&gt;"));-1!==a.indexOf('"')&&(a=a.replace(SafeHtmlUtils.QUOT_RE,"&quot;"));-1!==a.indexOf("'")&&(a=a.replace(SafeHtmlUtils.SQUOT_RE,"&#39;"));return a}};
+function XMLViewer(a){this.latestError=this.xml=null;this.cssPrefix=a.cssPrefix||"";var b=new DOMImplementation;b.errorChecking=!1;try{this.xml=b.loadXML(a.xml)}catch(c){throw Error(b.translateErrCode(c.code));}}
+XMLViewer.prototype={getHTML:function(){var a=this.xml.childNodes,b=a.length;if(0===b)return"no xml";for(var c='<div class="'+this.cssPrefix+'prettyPrint" data-expanded="true">',d=0;d<b;d++)c+=this.parse(a.item(d));return c+"</div>"},parse:function(a){var b="";switch(a.nodeType){case 1:b+=this._parseElement(a);break;case 3:a=a.nodeValue;a=SafeHtmlUtils.htmlEscape(a);if(""===a)return"";b+=this._parseValue(a);break;case 4:b+='<span colapse-marker="true" class="'+this.cssPrefix+'"><iron-icon more icon="arc:expand-more" class="'+
+this.cssPrefix+'"></iron-icon><iron-icon less icon="arc:expand-less" class="'+this.cssPrefix+'"></iron-icon></span>';b+='<span class="'+this.cssPrefix+'cdata">&lt;![CDATA[</span>';b+='<div collapsible class="'+this.cssPrefix+'">';b+=SafeHtmlUtils.htmlEscape(a.nodeValue);b+='</div><span class="'+this.cssPrefix+'cdata">]]&gt;</span>';break;case 7:b+='<div class="'+this.cssPrefix+'processing">&lt;?xml '+a.nodeValue+" ?&gt;</div>";break;case 8:b+='<div class="'+this.cssPrefix+'comment">&lt;--',b+=a.nodeValue,
+b+="--&gt</div>"}return b='<div class="'+this.cssPrefix+'node">'+b+"</div>"},_parseValue:function(a){a=a.trim();var b="value";isNaN(a)?"true"===a||"false"===a?b+=" boolean":"null"===a&&(b+=" null"):b+=" number";return a='<span class="'+this.cssPrefix+b+'">'+a+"</span>"},_parseElement:function(a){var b=a.childNodes.length,c="",d=!1;if(1<b||this._childIsCDATA(a))c+='<span colapse-marker="true" class="'+this.cssPrefix+'"><iron-icon more icon="arc:expand-more" class="'+this.cssPrefix+'"></iron-icon><iron-icon less icon="arc:expand-less" class="'+
+this.cssPrefix+'"></iron-icon></span>',d=!0;c+='<span class="'+this.cssPrefix+'punctuation">&lt;</span>';c+='<span class="'+this.cssPrefix+'tagname">'+a.nodeName+"</span>";c+=this.parseAttributes(a);if(0<b){var f=a.childNodes,c=c+('<span class="'+this.cssPrefix+'punctuation">&gt;</span>'),e=!1;1===b&&3===f.item(0).getNodeType()&&(e=!0);e?c+='<div class="'+this.cssPrefix+'inline">':(c+='<div collapse-indicator colapse-marker="true" class="'+this.cssPrefix+'collapseIndicator">...</div>',c+='<div collapsible class="'+
+this.cssPrefix+'nodeMargin">');for(e=0;e<b;e++)c+=this.parse(f.item(e));c+="</div>";d&&(c+='<span arrowEmpty class="'+this.cssPrefix+'arrowEmpty">&nbsp;</span>');c+='<span class="'+this.cssPrefix+'punctuation end">&lt;/</span>';c+='<span class="'+this.cssPrefix+'tagname end">'+a.nodeName+"</span>";c+='<span class="'+this.cssPrefix+'punctuation">&gt;</span>'}else c+='<span class="'+this.cssPrefix+'punctuation"> /&gt;</span>';return c},_childIsCDATA:function(a){return a.firstChild instanceof DOMCDATASection?
+!0:!1},parseAttributes:function(a){var b="";a=a.attributes;if(null!==a&&0<a.length)for(var c=0;c<a.length;c++)b+=" "+this.getAttributesString(a.item(c));return b},getAttributesString:function(a){var b='<span class="'+this.cssPrefix+'attname">',c=a.getName(),c=SafeHtmlUtils.htmlEscape(c),b=b+c+"</span>"+('<span class="'+this.cssPrefix+'punctuation">=</span>'),b=b+('<span class="'+this.cssPrefix+'attribute">&quot;');a=a.getValue();a=SafeHtmlUtils.htmlEscape(a);b+=a;return b+="&quot;</span>"},urlify:function(a){return a.replace(/([^"\s&;]*:\/\/[^"\s]*)(&quot;)?/gim,
+'<a class="'+this.cssPrefix+'" response-anchor href="$1">$1</a>')}};self.onmessage=function(a){a=a.data;var b="";try{b=(new XMLViewer(a)).getHTML()}catch(c){throw Error(c.message);}self.postMessage(b)};
+    </script>
+    <div class$="[[_computeActionsPanelClass(showOutput)]]">
+      <content select="[content-action]"></content>
+    </div>
+    <paper-spinner active="[[working]]"></paper-spinner>
+    <error-message hidden$="[[!isError]]">
+      <p>There was an error parsing XML data</p>
+      <p>[[errorMessage]]</p>
+    </error-message>
+    <output id="output" hidden$="[[!showOutput]]" on-tap="_handleDisplayClick"></output>
+  </template>
+  <script>
+  (function() {
+    'use strict';
+    Polymer({
+      is: 'xml-viewer',
+      properties: {
+        /**
+         * XML data to parse and display
+         */
+        xml: {
+          type: Object,
+          observer: '_changed'
+        },
+        /**
+         * True if error ocurred when parsing data
+         */
+        isError: {
+          type: Boolean,
+          readOnly: true,
+          value: false,
+          notify: true
+        },
+        /**
+         * True when XML is parsing
+         */
+        working: {
+          type: Boolean,
+          readOnly: true,
+          value: false,
+          notify: true
+        },
+        /**
+         * True when output should be shown.
+         */
+        showOutput: {
+          type: Boolean,
+          readOnly: true,
+          value: false,
+          computed: '_computeShowOutput(working, isError, xml)'
+        },
+        /**
+         * An error message to display.
+         */
+        errorMessage: {
+          type: String,
+          readOnly: true
+        },
+        // A reference to the web worker object.
+        _worker: Object,
+        // function to be called when worker data are received
+        _workerDataHandler: {
+          type: Function,
+          value: function() {
+            return this._workerData.bind(this);
+          }
+        },
+        // function to be called when worker error data are received
+        _workerErrorHandler: {
+          type: Function,
+          value: function() {
+            return this._workerError.bind(this);
+          }
+        },
+
+        // An element that should be searched for text.
+        _textSearch: {
+          type: HTMLElement,
+          value: function() {
+            return this.$.output;
+          }
+        },
+        /**
+         * If set it will highlight each occurance of the query in the
+         * XML viewer.
+         */
+        query: {
+          type: String,
+          observer: '_queryChanged'
+        }
+      },
+
+      behaviors: [
+        ArcBehaviors.TextSearchBehavior
+      ],
+
+      detached: function() {
+        if (this._worker) {
+          this._worker.removeEventListener('message', this._workerDataHandler);
+          this._worker.removeEventListener('error', this._workerErrorHandler);
+          this._worker = undefined;
+          // Created URL via URL.createObjectURL will be cleaned by the browser.
+        }
+      },
+
+      _changed: function() {
+        if (!this.xml) {
+          return;
+        }
+        this._setWorking(true);
+        this._setIsError(false);
+        this._setErrorMessage(null);
+        this.$.output.innerText = '';
+
+        if (!this._worker) {
+          var blob = new Blob([this.$.worker.textContent]);
+          var workerUrl = window.URL.createObjectURL(blob);
+          var worker = new Worker(workerUrl);
+          worker.addEventListener('message', this._workerDataHandler);
+          worker.addEventListener('error', this._workerErrorHandler);
+          this._worker = worker;
+        }
+        this._worker.postMessage({
+          xml: this.xml,
+          cssPrefix: this.nodeName.toLowerCase() + ' style-scope '
+        });
+      },
+
+      _workerData: function(e) {
+        this._setWorking(false);
+        this.$.output.innerHTML = e.data;
+      },
+
+      _workerError: function(e) {
+        this._setIsError(true);
+        this._setWorking(false);
+        var err = e.message.replace('Uncaught Error: ', '');
+        if (err) {
+          this._setErrorMessage(err);
+        }
+      },
+
+      _computeShowOutput: function(working, isError, xml) {
+        return !working && !isError && !!xml;
+      },
+
+      _handleDisplayClick: function(e) {
+        if (!e.target) {
+          return;
+        }
+        var target = e.target;
+        if (!target.getAttribute('colapse-marker')) {
+          target = target.parentNode;
+          if (!target || !target.getAttribute('colapse-marker')) {
+            return;
+          }
+        }
+        target = target.parentNode;
+        var expanded = target.dataset.expanded;
+        if (!expanded || expanded === 'true') {
+          target.dataset.expanded = 'false';
+        } else {
+          target.dataset.expanded = 'true';
+        }
+      },
+
+      _queryChanged: function(query) {
+        if (!query) {
+          this.cleanMarked();
+          return;
+        }
+        this.mark(query);
+      },
+
+      // Computes CSS class for the content actions pane.
+      _computeActionsPanelClass: function(showOutput) {
+        var clazz = 'actions-panel';
+        if (!showOutput) {
+          clazz += ' hidden';
+        }
+        return clazz;
+      }
+    });
+  })();
+  </script>
+</dom-module>

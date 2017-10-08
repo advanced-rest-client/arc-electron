@@ -1,0 +1,83 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <title>headers-support-behavior demo</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+  <link rel="import" href="../../paper-button/paper-button.html">
+  <link rel="import" href="../../paper-toast/paper-toast.html">
+  <link rel="import" href="../test/test-provider.html">
+
+  <style is="custom-style" include="demo-pages-shared-styles">
+
+    .vertical-section-container {
+      max-width: 600px;
+    }
+
+  </style>
+</head>
+<body unresolved>
+  <div class="vertical-section-container centered">
+    <h3>Event based API</h3>
+    <paper-button id="lookup">Lookup support</paper-button>
+    <paper-button id="provide" disabled>Open support</paper-button>
+    <test-provider></test-provider>
+    <paper-toast id="toast" duration="5000"></paper-toast>
+  </div>
+  <script>
+  var lookup = document.getElementById('lookup');
+  var provide = document.getElementById('provide');
+  function fireEvent(type, detail) {
+    var event = new CustomEvent(type, {
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+      detail: detail
+    });
+    document.dispatchEvent(event);
+    return event;
+  }
+  lookup.addEventListener('tap', function() {
+    var event = fireEvent('headers-support-lookup', {
+      header: 'Content-Type'
+    });
+    if (event.defaultPrevented) {
+      provide.removeAttribute('disabled');
+    }
+  });
+
+  provide.addEventListener('tap', function() {
+    var event = fireEvent('headers-support-requested', {
+      header: 'Content-Type',
+      value: 'application/demo'
+    });
+    if (!event.defaultPrevented) {
+      window.alert('Provider not found.');
+    }
+  });
+
+  window.addEventListener('request-header-changed', function(e) {
+    var toast = document.getElementById('toast');
+    var message = 'New value for header ' + e.detail.name + ': ' + e.detail.value;
+    toast.text = message;
+    toast.opened = true;
+  });
+  </script>
+</body>
+</html>

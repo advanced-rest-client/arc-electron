@@ -1,0 +1,542 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-resizable-behavior/iron-resizable-behavior.html">
+<link rel="import" href="../app-pouchdb/pouchdb.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-input/paper-textarea.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-combobox/paper-combobox.html">
+<link rel="import" href="../iron-form/iron-form.html">
+<link rel="import" href="../iron-collapse/iron-collapse.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../arc-icons/arc-icons.html">
+<!--
+`<saved-request-editor>` An applet to edit saved request data
+
+Required elements to be present in the DOM:
+
+-   `request-saver` - an element to save request data in the datastore.
+
+The element knows nothing about the request content so it has to be used in a
+context of a request. It accepts `name`, `isSaved` and `projectId` properties
+for requests that are already stored in the datastore.
+This values must be set by the application that hosts the element. It also can be
+done by assigning a request object to the `request` property. But the request object
+itself is not used in the dialog.
+
+The element fires `save-request` custom event when the user use "save" or
+"override" option in the UI. To react on a cancel event listen for
+`cancel-request-edit` event. Note that the event does not bubble.
+
+To edit a history item to save it in the saved request data store set the
+`is-history` attribute. It will always treat the request as a non saved object.
+Note that the `request` object set on `save-request` event won't be altered
+by this property. It may still contain the `_id` and `_rev` properties.
+
+### Example
+```
+<saved-request-editor></saved-request-editor>
+```
+
+### Styling
+`<saved-request-editor>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--saved-request-editor` | Mixin applied to the element | `{}`
+
+@group UI Elements
+@element saved-request-editor
+@demo demo/index.html
+-->
+<dom-module id="saved-request-editor">
+  <template>
+    <style>
+    :host {
+      display: block;
+      outline: none;
+      @apply --arc-font-body1;
+      @apply --saved-request-editor;
+    }
+
+    form {
+      outline: none;
+    }
+
+    .additional-options {
+      color: rgba(0, 0, 0, 0.74);
+    }
+
+    .caption {
+      @apply --layout-horizontal;
+      @apply --layout-center;
+    }
+
+    .options {
+      margin-top: 16px;
+    }
+
+    .actions {
+      @apply --layout-horizontal;
+      @apply --layout-end-justified;
+      margin-top: 20px;
+      @apply --saved-request-editor-actions-container;
+    }
+
+    .actions paper-button {
+      color: var(--primary-color);
+      padding-left: 12px;
+      padding-right: 12px;
+      @apply --saved-request-editor-action-buttons;
+    }
+
+    .actions paper-button.action-button {
+      @apply --action-button;
+    }
+    </style>
+    <form is="iron-form" id="form" method="post" on-iron-form-presubmit="_formSubmit">
+      <paper-input label="Request name (required)" required auto-validate error-message="Name is required" value="{{name}}"></paper-input>
+      <paper-textarea id="autogrow" label="Description (optional)" value="{{description}}" on-bind-value-changed="_autogrowCheckResize"></paper-textarea>
+      <paper-combobox label="Save in a project" value="{{projectName}}" source="[[_computeAutocomplete(projects)]]"></paper-combobox>
+
+      <section class="additional-options">
+        <div class="caption">
+          Additional options
+          <paper-icon-button icon="arc:arrow-drop-down" on-tap="_toggleOptions"></paper-icon-button>
+        </div>
+        <iron-collapse opened="[[additionalOptionsOpened]]">
+          <div class="options">
+            <paper-checkbox checked="{{isDrive}}">Save to Google Drive</paper-checkbox>
+          </div>
+        </iron-collapse>
+      </section>
+    </form>
+
+    <div class="actions">
+      <paper-button on-tap="_cancel" data-action="delete-request">cancel</paper-button>
+      <template is="dom-if" if="[[isSaved]]">
+        <paper-button on-tap="_save" data-action="save-as-new">Save as new</paper-button>
+        <paper-button class="action-button" on-tap="_override" data-action="override">Save</paper-button>
+      </template>
+      <paper-button class="action-button" on-tap="_save" data-action="save-request" hidden$="[[isSaved]]">Save</paper-button>
+    </div>
+  </template>
+  <script>
+  Polymer({
+    is: 'saved-request-editor',
+
+    behaviors: [
+      Polymer.IronResizableBehavior
+    ],
+
+    hostAttributes: {
+      'role': 'dialog',
+      'tabindex': '-1'
+    },
+
+    /**
+     * Fired when the user cancels the editor.
+     * @event cancel-request-edit
+     */
+
+    /**
+     * Fire when the user saves the request.
+     *
+     * @event save-request
+     * @param {String} name Required, request name
+     * @param {String} description Optional, request description
+     * @param {Boolean} override Required, `true` if already saved object and
+     * user accepted to override the data.
+     * @param {Boolean} isDrive Required,
+     * @param {Boolean} isProject Required,
+     * @param {Boolean} projectIsNew Required if `isProject` is true. True if
+     * the project do not exists in the datastore. In this case `projectName` is set.
+     * Otherwise `projectId` is set.
+     * @param {String} projectName Optional, only if `projectIsNew` is `true`.
+     * Name of the project to create.
+     * @param {String} projectId Optional, only if `projectIsNew` is `false`.
+     * The ID of existing project that should be associated with the request.
+     * @param {Object} request Optional, the `request` property if it was set
+     * with the editor.
+     */
+
+    properties: {
+      /**
+       * The request object to be saved / updated in the datastore.
+       * It's not required for the editor to work.
+       * This object will be attached to `save-request` object as a reference.
+       * When this object change it computes values for `name`, `isSaved`,
+       * `isDrive`, `projectName` and `projectId` properties.
+       */
+      request: Object,
+      /**
+       * Name of the request.
+       */
+      name: String,
+      /**
+       * Request description.
+       */
+      description: String,
+      /**
+       * Should be set if the request has been already saved in the datastore.
+       * Adds UI controls to override or save as new.
+       */
+      isSaved: {
+        type: Boolean,
+        value: false
+      },
+      /**
+       * True when saving request to Google Drive.
+       */
+      isDrive: Boolean,
+      /**
+       * List of available projects
+       */
+      projects: Array,
+      /**
+       * Name of the project entered into the combo box selector.
+       */
+      projectName: String,
+      /**
+       * Computed value, true if the project already exists so entered value
+       * represents a name of already saved project.
+       * Use `this.projectId` to get project `_id` property for selected name
+       */
+      projectIsNew: {
+        type: Boolean,
+        computed: '_computeProjectIsNew(projects.*, projectName)'
+      },
+      /**
+       * Selected project ID. Should be set if the request has been already
+       * associated with a project.
+       */
+      projectId: String,
+      /**
+       * Set if the user chooses to override current request.
+       */
+      override: {
+        type: Boolean,
+        readOnly: true
+      },
+      // True when additional options are opened.
+      additionalOptionsOpened: Boolean,
+      // If set meaning it's editing a history item (to be saved)
+      isHistory: Boolean
+    },
+
+    // PouchDB's handler to the projects database.
+    get _projectDb() {
+      return new PouchDB('legacy-projects');
+    },
+    /**
+     * Selected project database info
+     */
+    get projectInfo() {
+      var projects = this.projects;
+      if (!projects || !projects.length) {
+        return;
+      }
+      var projectName = this.projectName;
+      if (!projectName) {
+        return;
+      }
+      projectName = projectName.toLowerCase();
+      return projects.find(item => item.name.toLowerCase() === projectName);
+    },
+
+    observers: [
+      '_computeProjectName(projectId, projects.*)',
+      '_projectIsNewChanged(projectIsNew, projectName)',
+      '_ensureComboClosed(projects)',
+      '_requestChanged(request)'
+    ],
+
+    ready: function() {
+      Polymer.RenderStatus.afterNextRender(this, function() {
+        this._updateProjectsList();
+      });
+    },
+
+    attached: function() {
+      Polymer.RenderStatus.afterNextRender(this, function() {
+        this.listen(window, 'project-object-changed', '_projectDataChanged');
+        this.listen(window, 'project-object-deleted', '_projectDataChanged');
+        this.listen(window, 'datastore-destroyed', '_datastoreDestroyed');
+        this.listen(window, 'data-imported', '_projectDataChanged');
+      });
+    },
+
+    detached: function() {
+      this.unlisten(window, 'project-object-changed', '_projectDataChanged');
+      this.unlisten(window, 'project-object-deleted', '_projectDataChanged');
+      this.unlisten(window, 'datastore-destroyed', '_datastoreDestroyed');
+      this.unlisten(window, 'data-imported', '_projectDataChanged');
+    },
+    // Updated the list of projects when project object changed
+    _projectDataChanged: function(e) {
+      if (e.cancelable) {
+        return;
+      }
+      Polymer.RenderStatus.afterNextRender(this, function() {
+        this._updateProjectsList();
+      });
+    },
+    // Updated the list of projects when project datastore has been destroyed.
+    _datastoreDestroyed: function(e) {
+      var store = e.detail.datastore;
+      if (typeof store === 'string') {
+        if (store !== 'legacy-projects') {
+          return;
+        }
+      } else {
+        if (store.indexOf('legacy-projects') === -1) {
+          return;
+        }
+      }
+      this.set('projects', undefined);
+      Polymer.RenderStatus.afterNextRender(this, function() {
+        this._updateProjectsList();
+      });
+    },
+
+    /**
+     * Resets the state of the UI
+     */
+    reset: function() {
+      this.isSaved = false;
+      this.isDrive = false;
+      this.name = '';
+      this.projectName = '';
+      this.set('projects', []);
+    },
+    /**
+     * Sends the `cancel-request-edit` custom event to cancel the edit.
+     */
+    _cancel: function() {
+      this.fire('cancel-request-edit', undefined, {
+        bubbles: false
+      });
+    },
+    /**
+     * Sets `override` to `false` and sends the form.
+     */
+    _save: function() {
+      this._setOverride(false);
+      this._sendForm();
+    },
+    /**
+     * Sets `override` to `true` and sends the form.
+     */
+    _override: function() {
+      this._setOverride(true);
+      this._sendForm();
+    },
+    // Validates and submits the form.
+    _sendForm: function() {
+      if (!this.$.form.validate()) {
+        return;
+      }
+      this.$.form.submit();
+    },
+    // Updates list of available projects after the overlay is opened.
+    _updateProjectsList: function() {
+      var db = this._projectDb;
+      return db.allDocs({
+        // jscs:disable
+        include_docs: true
+        // jscs:enable
+      })
+      .then(function(r) {
+        return r.rows.map(function(i) {
+          return i.doc;
+        });
+      })
+      .then(result => result.sort(this._projectsSortFn))
+      .then(result => {
+        this.set('projects', result);
+        Polymer.RenderStatus.afterNextRender(this, function() {
+          this.notifyResize();
+        });
+      })
+      .catch(err => {
+        this.fire('send-analytics', {
+          type: 'exception',
+          description: 'save-dialog-view:' + err.message,
+          fatal: false
+        });
+        this.fire('app-log', {'message': err, 'level': 'error'});
+        throw new Error(err.message);
+      });
+    },
+    // Sort function used to sort projects in order.
+    _projectsSortFn: function(a, b) {
+      if (a.order === b.order) {
+        return 0;
+      }
+      if (a.order > b.order) {
+        return 1;
+      }
+      if (a.order < b.order) {
+        return -1;
+      }
+    },
+    /**
+     * Computes a list of suggestion for autocomplete element.
+     * From the list of `projects` it takes names for each project and returns
+     * new list for suggestions.
+     */
+    _computeAutocomplete: function(projects) {
+      if (!projects || !projects.length) {
+        return;
+      }
+      return projects.map(item => item.name);
+    },
+    /**
+     * Computes if currently entered project name already exists in the
+     * datastore.
+     * @return {Boolean} True if current `projectName` is not associated with
+     * any of the existing projects.
+     */
+    _computeProjectIsNew: function() {
+      return !this.projectInfo;
+    },
+    /**
+     * Sends the `save-request` custom event with computed detail object.
+     */
+    _formSubmit: function(event) {
+      event.preventDefault();
+      var detail = this._computeEventDetail();
+      if (detail.isProject && !detail.projectId && !detail.projectName) {
+        return;
+      }
+      this.fire('save-request', detail, {
+        composed: true,
+        cancelable: true
+      });
+    },
+    /**
+     * Computes `save-request` custom event's `detail` object
+     * @return {Object} A detail property of the event.
+     */
+    _computeEventDetail: function() {
+      var detail = {
+        name: this.name,
+        override: this.override,
+        isDrive: this.isDrive,
+        isProject: !!(this.projectName || this.projectId)
+      };
+      if (this.description) {
+        detail.description = this.description;
+      }
+      if (detail.isProject) {
+        if (this.projectIsNew || !this.projects) {
+          detail.projectName = this.projectName;
+          detail.projectIsNew = true;
+        } else {
+          detail.projectId = this.projectId;
+          detail.projectIsNew = false;
+        }
+      }
+      if (this.request) {
+        detail.request = this.request;
+      }
+      return detail;
+    },
+    /**
+     * Function used to compute project name when projectId changes.
+     * It is used when project ID changes from the outside of the element to
+     * indicate that the existing request already belongs to a project.
+     */
+    _computeProjectName: function(projectId, projectsRecord) {
+      if (!projectId || !projectsRecord || !projectsRecord.base) {
+        return;
+      }
+      var project = projectsRecord.base.find(item => item._id === projectId);
+      if (!project) {
+        return;
+      }
+      if (this.projectName !== project.name) {
+        this.set('projectName', project.name);
+      }
+    },
+    // Computes `projectId` property when `projectIsNew` changes.
+    _projectIsNewChanged: function(projectIsNew) {
+      if (projectIsNew) {
+        return;
+      }
+      var info = this.projectInfo;
+      if (!info) {
+        console.error('Project is not new but no info is available.');
+        return;
+      }
+      this.set('projectId', info._id);
+    },
+    /**
+     * The `IronOverlayBehavior` focuses of the combobox (which is using
+     * `IronOverlayBehavior` as well in paper-autocomplete element) and it
+     * opend the autocomplete. This closes the autocomplete after the `source`
+     * property change (projects list). I wasn't able to determine how not to
+     * focus on the element when the overlay is opened. This is simple
+     * walkaround.
+     */
+    _ensureComboClosed: function(projects) {
+      if (projects && projects.length) {
+        setTimeout(() => {
+          var combo = this.$$('paper-combobox');
+          combo.opened = false;
+          combo.blur();
+        }, 1);
+      }
+    },
+
+    _toggleOptions: function() {
+      this.additionalOptionsOpened = !this.additionalOptionsOpened;
+    },
+
+    _requestChanged: function(request) {
+      if (!request) {
+        return;
+      }
+      var history = this.isHistory;
+      var isSaved = history ? false : !!request._id;
+      var isDrive = history ? false : !!request.driveId;
+
+      this.set('name', request.name);
+      this.set('description', request.description);
+      this.set('isSaved', isSaved);
+      this.set('isDrive', isDrive);
+      this.set('projectId', request.legacyProject || undefined);
+      if (!this.projectId) {
+        this.set('projectName', '');
+      }
+    },
+    /**
+     * Notifies resize when the height of autogrow textarea changes.
+     */
+    _autogrowCheckResize: function() {
+      if (!this._lastAutogrowHeight) {
+        this._lastAutogrowHeight = this.$.autogrow.offsetHeight;
+        return;
+      }
+      if (this._lastAutogrowHeight !== this.$.autogrow.offsetHeight) {
+        this._lastAutogrowHeight = this.$.autogrow.offsetHeight;
+        this.notifyResize();
+      }
+    }
+  });
+  </script>
+</dom-module>

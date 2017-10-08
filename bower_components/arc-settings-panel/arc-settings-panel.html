@@ -1,0 +1,272 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../arc-request-settings-panel/arc-request-settings-panel.html">
+<link rel="import" href="../arc-data-settings-panel/arc-data-settings-panel.html">
+<link rel="import" href="../arc-privacy-settings-panel/arc-privacy-settings-panel.html">
+<link rel="import" href="../app-pouchdb/pouchdb.html">
+
+<!--
+Settings panel for ARC.
+
+This elemet and whole settings data system must change so there's no point
+of documenting it right now.
+
+### Example
+```
+<arc-settings-panel></arc-settings-panel>
+```
+
+### Styling
+`<arc-settings-panel>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--arc-settings-panel` | Mixin applied to the element | `{}`
+
+@group UI Elements
+@element arc-settings-panel
+@demo demo/index.html
+-->
+<dom-module id="arc-settings-panel">
+  <template>
+    <style>
+    :host {
+      display: block;
+      @apply --arc-settings-panel;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+    </style>
+    <arc-data-settings-panel cookie-storage="{{cookieStorage}}" hidden$="[[hideData]]" page="{{_dataSubpage}}"></arc-data-settings-panel>
+    <arc-request-settings-panel request-timeout="{{requestTimeout}}" hidden$="[[hideRequest]]" variables-enabled="{{variablesEnabled}}" page="{{_requestSubpage}}"></arc-request-settings-panel>
+    <arc-privacy-settings-panel analytics-enabled="{{analyticsEnabled}}" hidden$="[[hidePrivacy]]"></arc-privacy-settings-panel>
+  </template>
+  <script>
+  Polymer({
+    is: 'arc-settings-panel',
+    properties: {
+      // True when initial settings state has been read and set.
+      initialRead: {
+        type: Boolean,
+        value: false,
+        notify: true
+      },
+      // Request timeout setting
+      requestTimeout: {
+        type: Number,
+        observer: '_timeoutChanged',
+        value: 45
+      },
+      // Variables enabled setting
+      variablesEnabled: {
+        type: Boolean,
+        observer: '_variableChanged',
+        value: true
+      },
+      // Google Analytics setting
+      analyticsEnabled: Boolean,
+      // Cookie store setting
+      cookieStorage: {
+        type: Boolean,
+        observer: '_cookiesChanged',
+        value: true
+      },
+      // currently selected subpage of the request settings
+      _requestSubpage: {
+        type: Number
+      },
+      _dataSubpage: Number,
+      // Computed value. True if the request panel should not be rendered
+      hideRequest: {
+        type: Boolean,
+        value: false,
+        readOnly: true
+      },
+      // Computed value. True if the data panel should not be rendered
+      hideData: {
+        type: Boolean,
+        value: false,
+        readOnly: true
+      },
+      // Computed value. True if the privacy panel should not be rendered
+      hidePrivacy: {
+        type: Boolean,
+        value: false,
+        readOnly: true
+      }
+    },
+
+    observers: [
+      '_subpageChanged(_requestSubpage, _dataSubpage)'
+    ],
+
+    ready: function() {
+      this._readAnalyticsState();
+    },
+
+    attached: function() {
+      Polymer.RenderStatus.afterNextRender(this, function() {
+        this._readSettings();
+        this._attachListeners();
+      });
+    },
+
+    _attachListeners: function() {
+      this.listen(window, 'settings-changed', '_changedHandler');
+      this.listen(window, 'analytics-permitted-changed', '_analyticsChangedHandler');
+    },
+
+    detached: function() {
+      this.unlisten(window, 'settings-changed', '_changedHandler');
+      this.unlisten(window, 'analytics-permitted-changed', '_analyticsChangedHandler');
+    },
+    // Sends `settings-read` event to request for current settings state from
+    // settings provider
+    _readSettings: function() {
+      var event = this.fire('settings-read', {}, {
+        composed: true,
+        cancelable: true
+      });
+      if (!event.defaultPrevented) {
+        throw new Error('Settings provided not found.');
+      }
+      event.detail.result.then(settings => this._processValues(settings));
+    },
+
+    _processValues: function(obj) {
+      Object.keys(obj).forEach(name => this._processValue(name, obj[name]));
+      this.initialRead = true;
+    },
+    // Handler for the `settings-changed`. Maps store values to local variables
+    _changedHandler: function(e) {
+      this._processValue(e.detail.name, e.detail.value);
+    },
+    /**
+     * Processes a store value by mapping the key to local variable
+     */
+    _processValue: function(name, value) {
+      switch (name) {
+        case 'MAGICVARS_ENABLED':
+          value = this._boolValue(value);
+          if (this.variablesEnabled !== value) {
+            this.set('variablesEnabled', value);
+          }
+          break;
+        case 'useCookieStorage':
+          value = this._boolValue(value);
+          if (this.cookieStorage !== value) {
+            this.set('cookieStorage', value);
+          }
+          break;
+        case 'requestDefaultTimeout':
+          value = this._numValue(value);
+          if (this.requestTimeout !== value) {
+            this.set('requestTimeout', value);
+          }
+          break;
+      }
+    },
+    // Returns a boolean value for the `value`
+    _boolValue: function(value) {
+      var type = typeof value;
+      if (type === 'boolean') {
+        return value;
+      }
+      if (type === 'string') {
+        return type === 'true' ? true : false;
+      }
+      return !!value;
+    },
+    // Returns a numeric value for the `value`
+    _numValue: function(val) {
+      val = Number(val);
+      if (val !== val) {
+        return 0;
+      }
+      return val;
+    },
+    // Reads Google Analytics settings which are kept is separate data store
+    _readAnalyticsState: function() {
+      var db = new PouchDB('analytics-meta');
+      db.get('metadata')
+      .then(doc => {
+        if (doc.disableTracking === false || doc.disableTracking === 'false') {
+          this.set('analyticsEnabled', false);
+        } else {
+          this.set('analyticsEnabled', true);
+        }
+      })
+      .catch(e => {
+        if (e.status === 404) {
+          return this.set('analyticsEnabled', true);
+        }
+        throw e;
+      });
+    },
+    // Sends `settings-changed` event when value in the UI change.
+    _updateSetting: function(key, value, oldValue) {
+      var event = this.fire('settings-changed', {
+        name: key,
+        value: value
+      }, {
+        cancelable: true
+      });
+      if (!event.defaultPrevented) {
+        this._processValue(key, oldValue);
+        throw new Error('Settings provided not found.');
+      }
+    },
+
+    _timeoutChanged: function(value, oldValue) {
+      if (oldValue === undefined || !this.initialRead) {
+        return;
+      }
+      this._updateSetting('requestDefaultTimeout', value, oldValue);
+    },
+
+    _variableChanged: function(value, oldValue) {
+      if (oldValue === undefined || !this.initialRead) {
+        return;
+      }
+      this._updateSetting('MAGICVARS_ENABLED', value, oldValue);
+    },
+
+    _cookiesChanged: function(value, oldValue) {
+      if (oldValue === undefined || !this.initialRead) {
+        return;
+      }
+      this._updateSetting('useCookieStorage', value, oldValue);
+    },
+    // Handler for the `analytics-permitted-changed` event.
+    _analyticsChangedHandler: function(e) {
+      var permitted = e.detail.permitted;
+      if (permitted !== this.analyticsEnabled) {
+        this.set('analyticsEnabled', permitted);
+      }
+    },
+    // Computes `isSubpage` property
+    _subpageChanged: function(request, data) {
+      var requestState = data !== 0;
+      var dataState = request !== 0;
+      var privacyState = request !== 0 || data !== 0;
+      this._setHideRequest(requestState);
+      this._setHideData(dataState);
+      this._setHidePrivacy(privacyState);
+    }
+  });
+  </script>
+</dom-module>

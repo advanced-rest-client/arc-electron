@@ -1,0 +1,165 @@
+<!--
+@license
+Copyright 2017 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../iron-pages/iron-pages.html">
+<link rel="import" href="../paper-toast/paper-toast.html">
+<link rel="import" href="../arc-icons/arc-icons.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="export-data-selector.html">
+<link rel="import" href="export-target-selector.html">
+
+<!--
+Data export panel for Advanced REST Client.
+
+Provides the UI and and logic to export data from the data store to selected
+export method provider. It uses events API to communicate with other elements.
+
+Required elements to be present in the DOM:
+
+-   `arc-data-export` - getting data from the datastore
+-   element that handles `export-data` event
+-   element that handles `google-drive-data-save` event
+
+### Example
+```
+<export-panel></export-panel>
+```
+
+### Styling
+`<export-panel>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--export-panel` | Mixin applied to the element | `{}`
+`--error-toast` | Mixin applied to the error toast message | `{}`
+`--warning-primary-color` | Error toast background color | `#FF7043`
+`--warning-contrast-color` | Error toast color | `#fff`
+`--arc-font-headline` | Mixin applied to the header | `{}`
+
+@group UI Elements
+@element export-panel
+@demo demo/index.html
+-->
+<dom-module id="export-panel">
+  <template>
+    <style>
+    :host {
+      display: block;
+      @apply --export-panel;
+    }
+
+    h2 {
+      @apply --arc-font-headline;
+    }
+
+    .title-action {
+      @apply --layout-horizontal;
+      @apply --layout-center;
+    }
+
+    .error-toast {
+      background-color: var(--warning-primary-color, #FF7043);
+      color: var(--warning-contrast-color, #fff);
+      @apply --error-toast;
+    }
+    </style>
+
+    <iron-pages selected="[[selectedPage]]">
+     <section class="export-actions">
+       <h2>Export data</h2>
+       <export-data-selector on-export="_exportRequested"></export-data-selector>
+     </section>
+     <section class="export-actions">
+      <div class="title-action">
+        <paper-icon-button icon="arc:arrow-back" on-tap="screenBack"></paper-icon-button>
+        <h2>Export data</h2>
+      </div>
+      <export-target-selector data="[[_arcExport]]" content-type="application/json" file-name="[[_fileName]]" on-exported="screenBack"></export-target-selector>
+     </section>
+   </iron-pages>
+   <paper-toast id="exportToast" text="Preparing data. This may take a minute."></paper-toast>
+   <paper-toast id="exportError" class="error-toast" text="Export unavailable (missing component). Please, report an issue."></paper-toast>
+  </template>
+  <script>
+  Polymer({
+    is: 'export-panel',
+    properties: {
+      selectedPage: {
+        type: Number,
+        value: 0,
+        notify: true
+      },
+      // Prepared data to export.
+      _arcExport: Object,
+      // A name for the file export
+      _fileName: String
+    },
+    /**
+     * Requests data export for selected data types.
+     * Fires `export-user-data` event that can be handled by `arc-data-export`
+     * element or any compatible.
+     *
+     * @param {String|Array<String>} sources Type or list of data types to export.
+     */
+    _exportData: function(sources) {
+      this.$.exportToast.opened = true;
+      this._setExportFileName();
+      var event = this.fire('export-user-data', {
+        type: sources,
+        noExport: true
+      }, {
+        cancelable: true,
+        composed: true
+      });
+      if (!event.defaultPrevented) {
+        this.$.exportToast.opened = false;
+        this.$.exportError.opened = true;
+        throw new Error('Export element not found.');
+      }
+      this.fire('send-analytics', {
+        type: 'event',
+        category: 'Engagement',
+        action: 'Click',
+        label: 'Export panel preparing data'
+      });
+      // Return value for tests
+      return event.detail.result.then(data => {
+        this.$.exportToast.opened = false;
+        this.selectedPage = 1;
+        this._arcExport = data;
+      });
+    },
+    // Handles the export event from the selector view
+    _exportRequested: function(e) {
+      this._exportData(e.detail.types);
+    },
+    // Moves the view to previous screen.
+    screenBack: function() {
+      this.selectedPage = 0;
+      if (this._arcExport) {
+        this._arcExport = undefined;
+      }
+    },
+    // Sets the _fileName property to a file name with date.
+    _setExportFileName: function() {
+      var date = new Date();
+      var day = date.getDate();
+      var year = date.getFullYear();
+      var month = date.getMonth() + 1;
+      this._fileName = 'arc-data-export-' + day + '-' + month + '-' + year + '.json';
+    }
+  });
+  </script>
+</dom-module>

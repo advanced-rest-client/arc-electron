@@ -1,0 +1,123 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <title>bytes-counter demo</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+  <link rel="import" href="../../paper-toast/paper-toast.html">
+  <link rel="import" href="../bytes-counter.html">
+
+  <style is="custom-style" include="demo-pages-shared-styles">
+
+    .vertical-section-container {
+      max-width: 600px;
+    }
+
+    output {
+      display: block;
+      margin-top: 20px;
+      padding: 0.73em 0.54em;
+      border: 1px grey solid;
+    }
+  </style>
+</head>
+<body unresolved>
+  <div class="vertical-section-container centered">
+    <h3>Size of string</h3>
+    <demo-snippet>
+      <template is="dom-bind">
+        <textarea value="{{value::input}}"></textarea>
+        <bytes-counter value="[[value]]" bytes="{{bytes}}"></bytes-counter>
+        <output>Current input has [[bytes]] bytes</output>
+      </template>
+    </demo-snippet>
+
+    <h3>Size of file</h3>
+    <demo-snippet>
+      <template is="dom-bind" id="file">
+        <input on-change="fileChanged" type="file">
+        <bytes-counter bytes="{{bytes}}"></bytes-counter>
+        <output>Current input has [[bytes]] bytes</output>
+        <script>
+          var file = document.getElementById('file');
+          file.fileChanged = function(e) {
+            e.target.nextElementSibling.value = e.target.files[0];
+          };
+        </script>
+      </template>
+    </demo-snippet>
+
+    <h3>Size of FormData</h3>
+    <demo-snippet>
+      <template is="dom-bind" id="form">
+        <form method="post" enctype="multipart/form-data" on-submit="submit">
+          <input type="file" name="file">
+          <input name="text">
+          <input type="submit" value="Submit">
+        </form>
+        <bytes-counter bytes="{{bytes}}" on-error="onError"></bytes-counter>
+        <p>Note: Computed size is the size of the entire multipart message</p>
+        <output>Current input has [[bytes]] bytes</output>
+        <script>
+          var form = document.getElementById('form');
+          form.submit = function(e) {
+            e.preventDefault();
+            e.target.nextElementSibling.value = new FormData(e.target);
+          };
+          form.onError = function(e) {
+            var toast = document.body.querySelector('paper-toast');
+            toast.text = e.detail.message;
+            toast.opened = true;
+          };
+        </script>
+      </template>
+    </demo-snippet>
+
+    <h3>Size of ArrayBuffer</h3>
+    <demo-snippet>
+      <template is="dom-bind" id="buffer">
+        <textarea on-input="onInput"></textarea>
+        <bytes-counter bytes="{{bytes}}"></bytes-counter>
+        <output>Current input has [[bytes]] bytes</output>
+        <script>
+          var buffer = document.getElementById('buffer');
+          buffer.onInput = function(e) {
+            var value;
+            if ('TextEncoder' in window) {
+              var encoder = new TextEncoder();
+              var encoded = encoder.encode(e.target.value);
+              value = encoded.buffer;
+            } else {
+              var str = e.target.value;
+              value = new ArrayBuffer(str.length);
+              var _bufferView = new Uint8Array(value);
+              for (var i = 0; i < str.length; i++) {
+                _bufferView[i] = str.charCodeAt(i);
+              }
+            }
+            e.target.nextElementSibling.value = value;
+          };
+        </script>
+      </template>
+    </demo-snippet>
+
+    <paper-toast></paper-toast>
+  </div>
+</body>
+</html>

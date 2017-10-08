@@ -1,0 +1,687 @@
+<!--
+@license
+Copyright 2016 Pawel Psztyc, The ARC team
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+
+Adapted from https://github.com/PETComputacaoUFPR/code-mirror and
+https://github.com/PolymerLabs/code-mirror
+The MIT License (MIT)
+
+Copyright (c) 2015 PET Computação UFPR
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Copyright (c) 2012 The Polymer Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+  * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+  * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+  * Neither the name of Google Inc. nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-validatable-behavior/iron-validatable-behavior.html">
+<link rel="import" href="../iron-form-element-behavior/iron-form-element-behavior.html">
+<link rel="import" href="codemirror-import.html">
+<!--
+## Code-Mirror
+Polymer element wrapping [CodeMirror](http://codemirror.net)
+
+### What is this?
+Code-Mirror is a Web Component made with [Polymer](https://www.polymer-project.org/) that wraps a default text-area with CodeMirror's highlight syntax, plugins and options.
+
+### Installation and usage
+
+`bower install --save advanced-rest-client/code-mirror`
+
+### Example:
+
+```html
+...
+<head>
+    <link rel="import" href="bower_components/code-mirror/code-mirror.html"/>
+</head>
+<body>
+  <code-mirror mode="javascript" theme="ambiance" line-numbers on-change="valueChanged">
+      function myScript() {
+        return 100;
+      }
+  </code-mirror>
+</body>
+```
+The `<code-mirror>` element must be initialized with the `mode` property set. Otherwise it will initialize itself without any syntaxt highlighting, indent and autofill support.
+
+### Accessing options
+The element exposes the `setOption()` function that should be used to set editor options.
+
+```
+this.$.cm.setOption('extraKeys', {
+  'Ctrl-Space': (cm) => {
+    CodeMirror.showHint(cm, CodeMirror.hint['http-headers'], {
+      container: Polymer.dom(this.root)
+    });
+  }
+});
+```
+
+Additionaly the element has the `editor` property which is a refferene to CodeMirror instance.
+
+### Rendering hidden element
+CodeMirror has issues with rendering while the element is hidden. If the element is active
+but not visible (e.g. in `<iron-pages>` element) then you may want to call `refresh()`
+function on a CodeMirror instance after showing the element.
+
+### Styling
+`<code-mirror>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--code-mirror` | Mixin applied to the element | `{}`
+`--code-mirror-wrapper` | Mixin applied to the wrapper element (where the CM is rendered) | `{}`
+`--code-mirror-editor` | Mixin applied to the editor element  | `{}`
+
+@group UI Elements
+@element code-mirror
+@demo demo/index.html
+@hero hero.svg
+-->
+<dom-module id="code-mirror">
+  <template strip-whitespace>
+    <style>
+     :host {
+      display: block;
+      @apply(--code-mirror);
+    }
+
+    #content {
+      display: none;
+    }
+
+    #wrapper {
+      @apply(--code-mirror-wrapper);
+    }
+
+    #wrapper .CodeMirror {
+      @apply(--code-mirror-editor);
+    }
+    </style>
+    <div id="wrapper"></div>
+    <div id="content">
+      <content></content>
+    </div>
+  </template>
+  <script>
+  (function() {
+    'use strict';
+
+    var importLocation = '';
+    (function() {
+      var url;
+      if (window.currentImport && window.currentImport.URL) {
+        url = window.currentImport.URL;
+        if (window.currentImport._URL) {
+          url = window.currentImport._URL;
+        }
+      } else if (window.currentImport._URL) {
+        url = window.currentImport._URL;
+      } else {
+        url = window.location.href;
+      }
+      if (url === 'about:blank') {
+        importLocation = '../';
+        // in test cases for edge this will fail because it should be set to ../../
+        // but right now I can't waste time to check how to check if this is the particular case.
+      } else {
+        var path = url.substr(url.indexOf('/', 8));
+        path = path.substr(0, path.lastIndexOf('/') + 1);
+        if (path.indexOf('/test') !== -1 || path.indexOf('/demo') !== -1) {
+          path = path.substr(0, path.length - 1);
+          path = path.substr(0, path.lastIndexOf('/') + 1);
+        }
+        importLocation = path;
+      }
+    })();
+
+    Polymer({
+      is: 'code-mirror',
+
+      behaviors: [Polymer.IronValidatableBehavior, Polymer.IronFormElementBehavior],
+
+      /**
+       * Fires every time the content of the editor is changed.
+       *
+       * @event change
+       * @param {Object} change Is a `{from, to, text, removed, origin}` object
+       *    containing information about the changes that occurred
+       */
+      /**
+       * Fired before a change is applied, and its handler may choose to modify or
+       * cancel the change.
+       *
+       * @event before-change
+       * @param {Object} change It has `from`, `to`, and `text` properties, as with the `change`
+       * event.
+       *
+       *    It also has a `cancel()` method, which can be called to cancel the change, and, if the
+       *  change isn't coming from an undo or redo event, an `update(from, to, text)` method, which
+       *  may be used to modify the change.
+       */
+      properties: {
+        /**
+         * An array of options to set after the editor has been created.
+         *
+         * @type {Array}
+         */
+        _pendingOptions: {
+          type: Array,
+          value: []
+        },
+        /**
+         * Editor's value.
+         * If set at initialization time any content inside this element will be replaced by this
+         * value.
+         *
+         * @type {String}
+         */
+        value: {
+          type: String,
+          notify: true,
+          observer: '_valueChanged'
+        },
+        /**
+         * The mode to use. When not given, this will default to the first mode that was loaded.
+         * It may be a string, which either simply names the mode or is a MIME type associated with
+         * the mode.
+         * Alternatively, it may be an object containing configuration options for the mode, with
+         * a name property that names the mode. For example
+         * <code>{name: "javascript", json: true}</code>
+         *
+         * @type {String}
+         */
+        mode: {
+          type: String,
+          value: function() {
+            return {
+              name: 'javascript',
+              json: true
+            };
+          },
+          observer: '_modeChanged'
+        },
+        /**
+         * Explicitly set the line separator for the editor. By default (value null), the document
+         * will be split on CRLFs as well as lone CRs and LFs, and a single LF will be used as line
+         * separator in all output.
+         *
+         * @type {String}
+         */
+        lineSeparator: {
+          type: String,
+          observer: '_lineSeparatorChanged'
+        },
+        /**
+         * The theme to style the editor with.
+         *
+         * @type {String}
+         */
+        theme: {
+          type: String,
+          value: 'xq-light',
+          observer: '_themeChanged'
+        },
+        /**
+         * The width of a tab character.
+         * Defaults to 2.
+         *
+         * @type {Number}
+         */
+        tabSize: {
+          type: Number,
+          observer: '_tabSizeChanged'
+        },
+        /**
+         * Whether to show line numbers to the left of the editor.
+         *
+         * @type {Boolean}
+         */
+        lineNumbers: {
+          type: Boolean,
+          observer: '_lineNumbersChanged'
+        },
+        /**
+         * Whether to use the context-sensitive indentation that the mode provides (or just indent
+         * the same as the line before).
+         *
+         * @type {Boolean}
+         */
+        smartIndent: {
+          type: Boolean,
+          observer: '_smartIndentChanged'
+        },
+        /**
+         * Configures the key map to use. The default is "default", which is the only key map
+         * defined in codemirror.js itself.
+         *
+         * @type {String}
+         */
+        keyMap: {
+          type: String,
+          observer: '_keyMapChanged'
+        },
+        /**
+         * Whether CodeMirror should scroll or wrap for long lines. Defaults to false (scroll).
+         *
+         * @type {Boolean}
+         */
+        lineWrapping: {
+          type: Boolean,
+          observer: '_lineWrappingChanged'
+        },
+        /**
+         * This disables editing of the editor content by the user. If the special value "nocursor"
+         * is given (instead of simply true), focusing of the editor is also disallowed.
+         *
+         * @type {Boolean}
+         */
+        readOnly: {
+          type: Boolean,
+          observer: '_readOnlyChanged'
+        },
+        /**
+         * Whether the cursor should be drawn when a selection is active.
+         *
+         * @type {Boolean}
+         */
+        showCursorWhenSelecting: {
+          type: Boolean,
+          observer: '_showCursorWhenSelectingChanged'
+        },
+        /**
+         * When enabled, which is the default, doing copy or cut when there is no selection will
+         * copy or cut the whole lines that have cursors on them.
+         *
+         * @type {Boolean}
+         */
+        lineWiseCopyCut: {
+          type: Boolean,
+          observer: '_lineWiseCopyCutChanged'
+        },
+        /**
+         * The maximum number of undo levels that the editor stores. Note that this includes
+         * selection change events. Defaults to 200.
+         *
+         * @type {Boolean}
+         */
+        undoDepth: {
+          type: Number,
+          observer: '_undoDepthChanged'
+        },
+        /**
+         * The period of inactivity (in milliseconds) that will cause a new history event to be
+         * started when typing or deleting. Defaults to 1250.
+         *
+         * @type {Number}
+         */
+        historyEventDelay: {
+          type: Number,
+          observer: '_historyEventDelayChanged'
+        },
+        /**
+         * Can be used to make CodeMirror focus itself on initialization. Defaults to off.
+         *
+         * @type {Boolean}
+         */
+        autofocus: {
+          type: Boolean,
+          observer: '_autofocusChanged'
+        },
+        /**
+         * A reference to the CodeMirror instance.
+         *
+         * @type {Object}
+         */
+        editor: {
+          type: Object,
+          readOnly: true
+        },
+        /**
+         * Fires every time the content of the editor is changed.
+         *
+         * @type {Function}
+         */
+        _changeHandler: {
+          value: function() {
+            return this._onChangeEvent.bind(this);
+          }
+        },
+        /**
+         * This event is fired before a change is applied, and its handler may choose to modify or
+         * cancel the change.
+         *
+         * @type {Function}
+         */
+        _beforeChangeHandler: {
+          value: function() {
+            return this._onBeforeChangeEvent.bind(this);
+          }
+        },
+        /**
+         * Tru when value change observer shouldn't set the edir value.
+         * E.g. when setting `value` on editor change.
+         */
+        _settingInternal: Boolean,
+        /**
+         * Import location of code mirror assets. Relative path to code-mirror directory.
+         * This value will be assigned to CodeMirror.modeURL that is used to import scripts. Also
+         * the `/mode/%N/%N.js` suffix will be added to the location.
+         */
+        importLocation: {
+          type: String,
+          value: function() {
+            if (importLocation) {
+              // it will be something like /some/path/code-mirror/
+              // ad we need /some/path only.
+              importLocation = importLocation.replace('code-mirror/', 'codemirror/');
+              var base = document.querySelector('base');
+              if (base && base.href) {
+                if (importLocation[0] === '/') {
+                  importLocation = importLocation.substr(1);
+                }
+              }
+            }
+            return importLocation;
+          }
+        }
+      },
+
+      observers: [
+        '_importLocationChanegd(importLocation)'
+      ],
+
+      ready: function() {
+        this._importTheme('codemirror');
+        if (!this.value) {
+          this.value = this.textContent.trim();
+        }
+        try {
+          var editor = CodeMirror(this.$.wrapper, {
+            value: this.value,
+            mode: this.mode,
+            theme: this.theme
+          });
+          this._setEditor(editor);
+          this._pendingOptions.forEach(function(item) {
+            this.setOption(item.option, item.value);
+            if (item.post) {
+              try {
+                item.post();
+              } catch (e) {}
+            }
+          }, this);
+        } catch (e) {
+          console.error('Unable to initialize CodeMirror.', e);
+          this.fire('error', e);
+        }
+      },
+      /**
+       * Refresh the content when attached to the DOM.
+       */
+      attached: function() {
+        if (!this.editor) {
+          return;
+        }
+        this.editor.on('change', this._changeHandler);
+        this.editor.on('beforeChange', this._beforeChangeHandler);
+        this.editor.refresh();
+        this.focus();
+      },
+
+      detached: function() {
+        if (!this.editor) {
+          return;
+        }
+        this.editor.off('change', this._changeHandler);
+        this.editor.off('beforeChange', this._beforeChangeHandler);
+      },
+      /**
+       * Focus cursor on an editor.
+       */
+      focus: function() {
+        if (!this.editor) {
+          return;
+        }
+        this.editor.focus();
+      },
+      /**
+       * Set option on an editor.
+       *
+       * @param {String} option An option name to setOption
+       * @param {Any} value A value to be set.
+       */
+      setOption: function(option, value) {
+        if (!this.editor) {
+          this._pendingOptions.push({
+            option: option,
+            value: value
+          });
+          return;
+        }
+        this.editor.setOption(option, value);
+      },
+      /**
+       * Set an editor value when `value` property changed.
+       */
+      _valueChanged: function(value) {
+        if (!this.editor) {
+          return;
+        }
+
+        if (this.editor.getValue() !== value && value !== undefined &&
+          value !== null) {
+          if (typeof value !== 'string') {
+            value = String(value);
+          }
+          this.editor.setValue(value);
+        } else if (value === undefined || value === null) {
+          this.editor.setValue('');
+        }
+      },
+      /** Auto-called when mode has changed */
+      _modeChanged: function() {
+        var val = this.mode;
+        var mode;
+        var spec;
+        var info;
+        var m = /.+\.([^.]+)$/.exec(val);
+        if (m) {
+          info = CodeMirror.findModeByExtension(m[1]);
+          if (info) {
+            mode = info.mode;
+            spec = info.mime;
+          }
+        } else if (/\//.test(val)) {
+          info = CodeMirror.findModeByMIME(val);
+          if (info) {
+            mode = info.mode;
+            spec = val;
+          }
+        } else {
+          mode = spec = val;
+        }
+        if (!this.editor) {
+          this._pendingOptions.push({
+            option: 'mode',
+            value: mode,
+            post: function() {
+              CodeMirror.autoLoadMode(this.editor, mode);
+            }.bind(this)
+          });
+          return;
+        }
+        if (!mode) {
+          // spec = 'text/html';
+          // mode = 'htmlmixed';
+
+          // disable CM
+          this.setOption('mode', null);
+          return;
+        }
+        this.setOption('mode', spec);
+        CodeMirror.autoLoadMode(this.editor, mode);
+      },
+      /** Auto-called when `theme` property has changed  */
+      _themeChanged: function(theme) {
+        theme = theme || 'xq-light';
+        this._cleanThemes();
+        this._importTheme(theme);
+        this.setOption('theme', theme);
+      },
+
+      // Removes previously added theme elements.
+      _cleanThemes: function() {
+        var dom = Polymer.dom(this.root);
+        var old = dom.querySelector('[data-theme]');
+        if (old) {
+          dom.removeChild(old);
+        }
+      },
+
+      _importTheme: function(theme) {
+        var s = document.createElement('style', 'custom-style');
+        s.include = theme;
+        s.dataset.theme = theme;
+        Polymer.dom(this.root).appendChild(s);
+        this.updateStyles();
+      },
+
+      _tabSizeChanged: function() {
+        this.setOption('tabSize', this.tabSize);
+      },
+
+      _lineNumbersChanged: function() {
+        this.setOption('lineNumbers', this.lineNumbers);
+      },
+
+      _lineSeparatorChanged: function() {
+        this.setOption('lineSeparator', this.lineSeparator);
+      },
+
+      _smartIndentChanged: function() {
+        this.setOption('smartIndent', this.smartIndent);
+      },
+
+      _keyMapChanged: function() {
+        this.setOption('keyMap', this.keyMap);
+      },
+
+      _lineWrappingChanged: function() {
+        this.setOption('lineWrapping', this.lineWrapping);
+      },
+
+      _readOnlyChanged: function() {
+        this.setOption('readOnly', this.readOnly);
+      },
+
+      _showCursorWhenSelectingChanged: function() {
+        this.setOption('showCursorWhenSelecting', this.showCursorWhenSelecting);
+      },
+
+      _lineWiseCopyCutChanged: function() {
+        this.setOption('lineWiseCopyCut', this.lineWiseCopyCut);
+      },
+
+      _undoDepthChanged: function() {
+        this.setOption('undoDepth', this.undoDepth);
+      },
+
+      _historyEventDelayChanged: function() {
+        this.setOption('historyEventDelay', this.historyEventDelay);
+      },
+
+      _autofocusChanged: function() {
+        this.setOption('autofocus', this.autofocus);
+      },
+
+      _onChangeEvent: function(instance, changeObj) {
+        this.set('value', this.editor.getValue());
+        this.fire('value-change', {
+          change: changeObj
+        });
+      },
+
+      _onBeforeChangeEvent: function(instance, changeObj) {
+        var e = this.fire('before-change', {
+          change: changeObj
+        });
+        if (e.detail.change.canceled) {
+          this.set('value', this.editor.getValue());
+        }
+      },
+      /**
+       * Sets the CodeMirror.modeURL variable value.
+       * To thre import location it will add a `mode/%N/%N.js` pattern.
+       */
+      _importLocationChanegd: function(importLocation) {
+        if (importLocation[importLocation.length - 1] !== '/') {
+          importLocation += '/';
+        }
+        CodeMirror.modeURL = importLocation + 'mode/%N/%N.js';
+      },
+
+      _getValidity: function() {
+        if (this.required && !this.value) {
+          return false;
+        }
+        return true;
+      }
+    });
+  })();
+  </script>
+</dom-module>

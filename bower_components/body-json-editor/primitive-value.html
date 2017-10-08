@@ -1,0 +1,198 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../paper-listbox/paper-listbox.html">
+<link rel="import" href="../paper-item/paper-item.html">
+<link rel="import" href="../paper-autocomplete/paper-autocomplete.html">
+<link rel="import" href="body-json-editor-behavior.html">
+<!--
+The `primitive-value` element produces final value of a primitive property.
+Renders input field or a dropdown depending on the model properties.
+
+### Styling
+`<primitive-value>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--primitive-value` | Mixin applied to the element. | `{}`,
+`--arc-font-body1` | Theme mixin, default font applied to this element. | `{}`
+`--code-type-text-value-color` | Text color of the code highligted string value | `#080`
+`--code-type-number-value-color` | Text color of the code highligted numeric value | `#303F9F`
+`--code-type-boolean-value-color` | Text color of the code highligted boolean value | `#4A148C`
+`--code-type-null-value-color` | Text color of the code highligted nullable value | `#4A148C`
+
+@group UI Elements
+@element primitive-value
+@demo demo/index.html Regular use of the element
+@demo demo/raml.html Use of the element with RAML type
+-->
+<dom-module id="primitive-value">
+  <template>
+    <style>
+    :host {
+      display: block;
+      @apply --arc-font-body1;
+      @apply --primitive-value;
+    }
+
+    .value-field {
+      position: relative;
+      display: inline-block;
+    }
+
+    :host,
+    .value-field {
+      @apply --layout-flex;
+      @apply --layout-horizontal;
+    }
+
+    paper-input {
+      width: 100%;
+    }
+
+    paper-input[type="text"] {
+      --paper-input-container-input: {
+        color: var(--code-type-text-value-color, #080);
+      }
+    }
+
+    paper-input[type="number"] {
+      --paper-input-container-input: {
+        color: var(--code-type-number-value-color, #303F9F);
+      }
+    }
+
+    .boolean-input {
+      --paper-input-container-input: {
+        color: var(--code-type-boolean-value-color, #4A148C);
+      }
+    }
+
+    .null-value {
+      font-style: italic;
+      color: var(--code-type-null-value-color, #4A148C);
+    }
+
+    paper-autocomplete {
+      top: var(--body-json-editor-autocomplete-top, 34px);
+    }
+    </style>
+    <template is="dom-if" if="[[model.isEnum]]">
+      <paper-dropdown-menu label="Select value" required="[[model.required]]" no-label-float="[[!narrow]]">
+        <paper-listbox class="dropdown-content" attr-for-selected="data-value" selected="{{value}}">
+          <template is="dom-repeat" items="[[model.enum]]">
+            <paper-item data-value$="[[item]]">[[item]]</paper-item>
+          </template>
+        </paper-listbox>
+      </paper-dropdown-menu>
+    </template>
+
+    <template is="dom-if" if="[[model.isBoolean]]">
+      <paper-dropdown-menu label="Select boolean value" required="[[model.required]]" class="boolean-input" no-label-float="[[!narrow]]">
+        <paper-listbox class="dropdown-content" attr-for-selected="data-value" selected="{{value}}">
+          <paper-item data-value="true">True</paper-item>
+          <paper-item data-value="false">False</paper-item>
+        </paper-listbox>
+      </paper-dropdown-menu>
+    </template>
+
+    <template is="dom-if" if="[[model.isNull]]">
+      <span class="null-value">Null</span>
+    </template>
+
+    <template is="dom-if" if="[[displayInput]]">
+      <span class="value-field">
+        <paper-input
+          id="valueInput"
+          label="Property value"
+          value="{{value}}"
+          required="[[model.required]]"
+          pattern="[[model.pattern]]"
+          name="[[name]]"
+          auto-validate
+          type$="[[model.inputType]]"
+          min="[[model.minimum]]"
+          max="[[model.maximum]]"
+          maxlength="[[model.maxLength]]"
+          minlength="[[model.minLength]]"
+          step="[[model.inputStep]]"
+          no-label-float="[[!narrow]]"></paper-input>
+        <paper-autocomplete id="valueAutocomplete" source="[[valueSuggestions]]" open-on-focus></paper-autocomplete>
+      </span>
+    </template>
+  </template>
+  <script>
+    Polymer({
+      is: 'primitive-value',
+
+      behaviors: [ArcBehaviors.BodyJsonEditorBehavior],
+
+      properties: {
+        narrow: {
+          type: Boolean,
+          value: false
+        },
+        // Computed value, if true then regular input will be displayed.
+        displayInput: {
+          type: Boolean,
+          value: false,
+          observer: '_displayInputChanged',
+          computed: '_computeDisplayInput(model.isBoolean, model.isEnum, model.isNull)'
+        },
+        /**
+         * List of suggestions to display for a value.
+         */
+        valueSuggestions: Array
+      },
+      /**
+       * Computes if the input should be displayed with this editor.
+       * The input is not displayed if any of the arguments is trully.
+       */
+      _computeDisplayInput: function(isBoolean, isEnum, isNull) {
+        return !isBoolean && !isEnum && !isNull;
+      },
+
+      _displayInputChanged: function(display) {
+        if (!display) {
+          return;
+        }
+        Polymer.RenderStatus.afterNextRender(this, function() {
+          var input = this.$$('#valueInput');
+          var autocomplete = this.$$('#valueAutocomplete');
+          autocomplete.target = input;
+        });
+      },
+
+      // Sends an event to the parent element to remove the propety.
+      _remove: function() {
+        this.fire('remove-property', {
+          value: this.value
+        });
+      },
+      // Handler to be called when type change for this model item has been
+      // requested.
+      _changeType: function() {
+        this._previousType = this.value.type;
+        this.set('value.type', '');
+      },
+
+      // Cancels the type change and sets previous value.
+      _cancelTypeChange: function() {
+        this.set('value.type', this._previousType);
+      }
+    });
+  </script>
+</dom-module>

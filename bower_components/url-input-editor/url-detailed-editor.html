@@ -1,0 +1,414 @@
+<!--
+@license
+Copyright 2017 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../iron-form/iron-form.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-autocomplete/paper-autocomplete.html">
+<link rel="import" href="../arc-icons/arc-icons.html">
+<link rel="import" href="../paper-tooltip/paper-tooltip.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="url-editor-behavior.html">
+<link rel="import" href="url-parser.html">
+<!--
+`<url-detailed-editor>` Presents a form element that contains a list of URL
+parameters.
+
+The element can be validated as a regular form element.
+
+### Example
+```
+<url-detailed-editor url="{{url}}" invalid="{{invalid}}"></url-detailed-editor>
+```
+
+### Styling
+`<url-input-editor>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--url-input-editor` | Mixin applied to the element | `{}`
+
+@group UI Elements
+@element url-input-editor
+@demo demo/index.html
+-->
+<dom-module id="url-detailed-editor">
+  <template>
+    <style>
+    :host {
+      display: block;
+    }
+
+    .host-input {
+      @apply(--layout-flex);
+    }
+
+    .path-input {
+      @apply(--layout-flex);
+    }
+
+    .anchor-input {
+      @apply(--layout-flex);
+    }
+
+    .form-row {
+      @apply(--layout-horizontal);
+      @apply(--layout-flex);
+    }
+
+    .param-name {
+      margin-right: 12px;
+    }
+
+    .param-value {
+      @apply(--layout-flex);
+    }
+
+    .params-list {
+      margin: 12px 0;
+    }
+
+    .query-title {
+      @apply(--arc-font-caption);
+      color: #737373;
+    }
+
+    #detailedClose {
+      @apply --toggle-button;
+      padding: 0;
+      width: 24px;
+      height: 24px;
+    }
+
+    #detailedClose:hover {
+      @apply --toggle-button-hover;
+    }
+    </style>
+    <form is="iron-form" id="form">
+      <paper-input id="host" label="Host" value="{{model.host}}" class="host-input" required auto-validate error-message="Valid host is required. You can use variables here." on-keydown="_hostKeyDown" on-paste="_hostPaste">
+        <paper-icon-button id="detailedClose" suffix icon="arc:keyboard-arrow-up" on-tap="close"></paper-icon-button>
+      </paper-input>
+      <paper-input id="path" label="Path" value="{{model.path}}" class="path-input" auto-validate pattern="\S*" error-message="You may want to encode this value before sending it to the server"></paper-input>
+
+      <div class="params-list">
+        <label class="query-title">Query parameters</label>
+
+        <template is="dom-repeat" id="paramsList" items="{{model.search}}" on-dom-change="_onParamsRender">
+          <div class="form-row">
+            <paper-input no-label-float inline auto-validate value="{{item.name}}" class="param-name" placeholder="Param name" pattern="\S*" error-message="You may want to encode this value before sending it to the server"></paper-input>
+            <paper-input no-label-float inline auto-validate value="{{item.value}}" class="param-value" placeholder="Param value" pattern="\S*" error-message="You may want to encode this value before sending it to the server"></paper-input>
+            <span>
+              <paper-icon-button icon="arc:close" on-tap="_removeSearchParam" on-focus="_valueFieldLeft"></paper-icon-button>
+              <paper-tooltip animation-delay="200">Remove parameter</paper-tooltip>
+            </span>
+          </div>
+        </template>
+
+        <paper-button raised on-tap="addSearchParam">Add</paper-button>
+      </div>
+      <paper-input label="Hash" value="{{model.anchor}}" class="anchor-input"></paper-input>
+    </form>
+
+    <div class="encode-actions">
+      <span>
+        <paper-button on-tap="_encodeParameters">Encode URL</paper-button>
+        <paper-tooltip>URL encodes parameters in the editor</paper-tooltip>
+      </span>
+      <span>
+        <paper-button on-tap="_decodeParameters">Decode URL</paper-button>
+        <paper-tooltip>URL decodes parameters in the editor</paper-tooltip>
+      </span>
+    </div>
+
+    <paper-tooltip animation-delay="200" for="detailedClose">Close detailed editor</paper-tooltip>
+  </template>
+  <script>
+  Polymer({
+    is: 'url-detailed-editor',
+
+    behaviors: [ArcBehaviors.UrlEditorBehavior],
+
+    properties: {
+      model: Object,
+      // Reference to the Host input field.
+      hostField: {
+        type: Object,
+        value: function() {
+          return this.$.host;
+        }
+      },
+      detailsOpened: {
+        type: Boolean,
+        notify: true
+      }
+    },
+
+    observers: [
+      '_isOpenedChanged(_isOpened)',
+      '_valueChanged(value, _isOpened)',
+      '_modelChanged(model.*)'
+    ],
+
+    ready: function() {
+      if (!this.model) {
+        this._computeModel('https://');
+      }
+    },
+
+    // Creates a model when value change from the outside of the element.
+    _valueChanged: function(value, _isOpened) {
+      if (!_isOpened || this.__internalValueChange) {
+        return;
+      }
+      this._computeModel(value);
+      this._ensureEmptyRow();
+    },
+    /**
+     * Computes model for the view from a URL value.
+     */
+    _computeModel: function(value) {
+      if (!value) {
+        return this.set('model', {});
+      }
+      this.__modelComputation = true;
+      this.set('model', {});
+      var parser = new UrlParser(value);
+      var protocol = parser.protocol;
+      var host = parser.host;
+      if (host) {
+        if (protocol) {
+          host = protocol + '//' + host;
+        }
+      } else {
+        if (protocol) {
+          host = protocol + '//';
+        }
+      }
+      this.set('model.host', host || '');
+      this.set('model.path', parser.path || '');
+      this.set('model.anchor', parser.anchor || '');
+      var params = parser.searchParams.map(function(item) {
+        return {
+          name: item[0],
+          value: item[1]
+        };
+      });
+      this.set('model.search', params);
+      this.__parser = parser;
+      this.__modelComputation = false;
+    },
+
+    _modelChanged: function(record) {
+      if (this.__modelComputation) {
+        return;
+      }
+      if (record.path === 'model') {
+        return;
+      }
+      var path = record.path.split('.');
+      if (!this.__parser) {
+        this.__parser = new UrlParser('');
+      }
+      if (path[2] === 'length') {
+        return;
+      }
+      switch (path[1]) {
+        case 'host':
+          this._updateParserHost(record.value);
+        break;
+        case 'path':
+          this.__parser.path = record.value;
+        break;
+        case 'search':
+          if (!path[2]) {
+            return;
+          }
+          this._updateParserSearch(record.base.search);
+        break;
+        case 'anchor':
+          this.__parser.anchor = record.value;
+        break;
+        default: return;
+      }
+      if (path[2] === 'splices' && path[1] !== 'search') {
+        return;
+      }
+      this.__internalValueChange = true;
+      this.set('value', this.__parser.value);
+      this.__internalValueChange = false;
+    },
+
+    _updateParserHost: function(value) {
+      var index = value.indexOf('://');
+      if (index === -1) {
+        this.__parser.protocol = undefined;
+        this.__parser.host = value;
+      } else {
+        this.__parser.protocol = value.substr(0, index + 1);
+        this.__parser.host = value.substr(index + 3);
+      }
+    },
+
+    _updateParserSearch: function(search) {
+      this.__parser.searchParams = search.map(function(item) {
+        return [item.name, item.value];
+      });
+    },
+
+    /** Called when URL params form has been renederd. */
+    _onParamsRender: function() {
+      if (!this.root) {
+        return;
+      }
+      if (this.__initializetinOpened) {
+        this.__initializetinOpened = false;
+        this.$.host.focus();
+        return;
+      }
+      var row = Polymer.dom(this.root).querySelectorAll('.params-list > .form-row');
+      if (!row || !row.length) {
+        return;
+      }
+      row = row.pop();
+      try {
+        row.children[0].focus();
+      } catch (e) {}
+    },
+    /**
+     * Adds a new Query Parameter to the list.
+     */
+    addSearchParam: function() {
+      var obj = {
+        name: '',
+        value: ''
+      };
+      if (!this.model) {
+        this.set('model', {});
+      }
+      if (this.model.search) {
+        this.push('model.search', obj);
+      } else {
+        this.set('model.search', [obj]);
+      }
+    },
+
+    _removeSearchParam: function(e) {
+      var index = e.model.get('index');
+      this.splice('model.search', index, 1);
+    },
+
+    _getValidity: function() {
+      return this.$.form.validate();
+    },
+
+    _isOpenedChanged: function(isOpened) {
+      if (isOpened) {
+        this.__initializetinOpened = true;
+      }
+    },
+
+    _ensureEmptyRow: function() {
+      var model = this.model;
+      if (!model || !model.search || !model.search.length) {
+        this.addSearchParam();
+      }
+    },
+
+    _valueFieldLeft: function(e) {
+      var index = e.model.get('index');
+      if (this.model.search.length - 1 !== index) {
+        return;
+      }
+      var item = e.model.get('item');
+      if (item.name) {
+        this.async(function() {
+          var t = Polymer.dom(e).rootTarget;
+          if (t.focused) {
+            t._setFocused(false);
+          }
+        }, 1);
+        this.addSearchParam();
+      }
+    },
+
+    _hostKeyDown: function(e) {
+      if (e.keyCode !== 191) {
+        return;
+      }
+
+      var pos = 0;
+      var input = e.target.inputElement || e.target;
+      if (document.selection) {
+        input.focus();
+        var sel = document.selection.createRange();
+        sel.moveStart('character', -input.value.length);
+        pos = sel.text.length;
+      } else if (input.selectionStart || input.selectionStart === '0') {
+        pos = input.selectionStart;
+      }
+      if (pos > 8) {
+        e.preventDefault();
+        this.set('model.path', '/');
+        this.$.path.focus();
+      }
+    },
+
+    _hostPaste: function(e) {
+      var data = e.clipboardData.getData('text/plain');
+      if (!data) {
+        return;
+      }
+      e.preventDefault();
+      e.stopPropagation();
+      this.set('value', data);
+    },
+    // Closes the panel
+    close: function() {
+      this.detailsOpened = false;
+    },
+    /**
+     * Dispatches the `url-encode` event. The editor handles the action.
+     */
+    _encodeParameters: function() {
+      this.fire('url-encode', undefined, {
+        bubbles: false
+      });
+    },
+    /**
+     * Dispatches the `url-decode` event. The editor handles the action.
+     */
+    _decodeParameters: function() {
+      this.fire('url-decode', undefined, {
+        bubbles: false
+      });
+    }
+
+    /**
+     * Fired when encode URL action has been called.
+     *
+     * The event does not bubbles.
+     *
+     * @event url-encode
+     */
+    /**
+     * Fired when decode URL action has been called.
+     *
+     * The event does not bubbles.
+     *
+     * @event url-decode
+     */
+  });
+  </script>
+</dom-module>

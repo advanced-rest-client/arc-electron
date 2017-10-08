@@ -1,0 +1,498 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../iron-collapse/iron-collapse.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../paper-autocomplete/paper-autocomplete.html">
+<link rel="import" href="../paper-input/paper-input-container.html">
+<link rel="import" href="../paper-input/paper-input-error.html">
+<link rel="import" href="../paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../paper-listbox/paper-listbox.html">
+<link rel="import" href="../paper-item/paper-item.html">
+<link rel="import" href="../arc-icons/arc-icons.html">
+<link rel="import" href="../marked-element/marked-element.html">
+<link rel="import" href="../markdown-styles/markdown-styles.html">
+<link rel="import" href="../paper-tooltip/paper-tooltip.html">
+<link rel="import" href="../iron-form-element-behavior/iron-form-element-behavior.html">
+<link rel="import" href="../events-target-behavior/events-target-behavior.html">
+<link rel="import" href="../arc-polyfills/arc-polyfills.html">
+<!--
+A headers form item that renders input fields.
+
+The element support names **suggestions** if [arc-definitions](https://github.com/advanced-rest-client/arc-definitions)
+element is present in the DOM.
+
+It also support headers fill support if any of [headers-support](https://github.com/advanced-rest-client/headers-support)
+elements are in the DOM.
+
+Both elements can be replaced by any other element that intercepts events supported
+by the elements. See element's docs for more information.
+
+## request-header-changed event
+
+This element also intersepts `request-header-changed` event **and cancels it**.
+Once the event is intercepted the value of this form item changes and the changes
+are propagated to the editor which should send `request-headers-changed` event.
+The event is canceled so elements that can react on the other event should not
+update value for `request-header-changed` event as a redundant operation.
+
+By default this eleemnt will listen for this event on `window` object.
+Use `eventsTarget` property to set event listener target for this event to limit
+source of the event.
+
+### Styling
+`<headers-form-editor>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--headers-form-editor-item` | Mixin applied to the element | `{}`
+`--headers-form-row` | Mixin applied to every form row | `{}`
+`--headers-form-editor-input-label-color` | Color of the input label | `--raml-headers-form-input-label-color` or `rgba(0, 0, 0, 0.48)`
+`--headers-form-editor-input-label-color-required` | Color of the input label if the form control is required. | `--raml-headers-form-required-input-label-color` or `rgba(0, 0, 0, 0.72)`
+`--inline-fom-action-icon-color` | Color of the icons in the form editor | `rgba(0, 0, 0, 0.74)`
+`--inline-fom-action-icon-color-hover` | Color of the icons in the form editor when hovering | `--accent-color` or `rgba(0, 0, 0, 0.74)`
+`--inline-documentation-color` | Color of the inline documentation text | `rgba(0, 0, 0, 0.87)`
+
+@group UI Elements
+@element headers-form-editor-item
+@demo demo/index.html
+-->
+<dom-module id="headers-form-editor-item">
+  <template strip-whitespace>
+    <style include="markdown-styles"></style>
+    <style>
+    :host {
+      display: block;
+      position: relative;
+      @apply --headers-form-editor-item;
+
+      --paper-input-container-label: {
+        color: var(--headers-form-editor-input-label-color, var(--raml-headers-form-input-label-color, rgba(0, 0, 0, 0.48)));
+      };
+    }
+
+    :host([required]) paper-input-container {
+      --paper-input-container-label: {
+        color: var(--headers-form-editor-input-label-color-required, var(--raml-headers-form-required-input-label-color, rgba(0, 0, 0, 0.72)));
+      };
+    }
+
+    .input {
+      @apply(--layout-horizontal);
+      @apply(--layout-flex);
+    }
+
+    :host([narrow]) .input {
+      @apply(--layout-vertical);
+      margin-bottom: 12px;
+    }
+
+    .docs {
+      @apply(--arc-font-common-base);
+      font-size: 13px !important;
+      font-weight: 200;
+      line-height: 24px;
+      color: var(--inline-documentation-color, rgba(0, 0, 0, 0.87));
+    }
+
+    .markdown-html * {
+      font-size: 13px !important;
+    }
+
+    .markdown-html p:first-child {
+      margin-top: 0;
+      padding-top: 0;
+    }
+
+    .markdown-html p:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .help-icon,
+    .helper-icon,
+    .delete-icon {
+      color: var(--inline-fom-action-icon-color, rgba(0, 0, 0, 0.74));
+      transition: color 0.2s linear;
+    }
+
+    .help-icon:hover,
+    .helper-icon:hover,
+    .delete-icon:hover {
+      color: var(--inline-fom-action-icon-color-hover, var(--accent-color, rgba(0, 0, 0, 0.74)));
+    }
+
+    .value-input {
+      @apply(--layout-horizontal);
+      @apply(--layout-center);
+      @apply(--layout-flex);
+    }
+
+    .value-input paper-dropdown-menu,
+    .value-input .header-value-container {
+      @apply(--layout-flex);
+    }
+
+    .header-name {
+      margin-right: 8px;
+    }
+
+    paper-autocomplete {
+      top: 54px;
+    }
+    </style>
+    <div class="value-input">
+      <template is="dom-if" if="[[item.isEnum]]" restamp>
+        <paper-dropdown-menu label="[[item.inputLabel]]" name="[[name]]" required$="[[item.required]]">
+          <paper-listbox class="dropdown-content" attr-for-selected="data-value" selected="{{value}}">
+            <template is="dom-repeat" items="[[item.enum]]">
+              <paper-item data-value$="[[item]]">[[item]]</paper-item>
+            </template>
+          </paper-listbox>
+        </paper-dropdown-menu>
+      </template>
+      <template is="dom-if" if="[[!item.isEnum]]" restamp>
+        <div class="input">
+          <paper-input-container class="header-name" auto-validate>
+            <label>Header name</label>
+            <input
+              is="iron-input"
+              class="name-change-input"
+              on-focus="_headerNameFocus"
+              type="text"
+              value="{{name::input}}"
+              required
+              pattern="\S*"/>
+            <paper-input-error>Header name is not valid</paper-input-error>
+          </paper-input-container>
+
+          <paper-input-container class="header-value-container" auto-validate always-float-label$="[[item.inputFloatLabel]]">
+            <label>[[item.inputLabel]]</label>
+            <input is="iron-input"
+              name$="[[name]]"
+              class="value-change-input"
+              on-focus="_headerValueFocus"
+              type$="[[item.inputType]]"
+              value="{{value::input}}"
+              pattern$="[[item.pattern]]"
+              min$="[[item.minimum]]"
+              max$="[[item.maximum]]"
+              minlength$="[[item.minLength]]"
+              maxlength$="[[item.maxLength]]"
+              placeholder$="[[item.inputPlaceholder]]"
+              required$="[[item.required]]" />
+            <paper-input-error>Header value is not valid</paper-input-error>
+          </paper-input-container>
+        </div>
+      </template>
+      <template is="dom-if" if="[[!item.required]]">
+        <span>
+          <paper-icon-button class="delete-icon" icon="arc:close" on-tap="removeItem" on-focus="_valueFieldLeft"></paper-icon-button>
+          <paper-tooltip animation-delay="200">Remove header</paper-tooltip>
+        </span>
+      </template>
+      <template is="dom-if" if="[[item.fillSupport]]">
+        <span>
+          <paper-icon-button class="helper-icon" icon="arc:edit" on-tap="_requestHeaderSupport"></paper-icon-button>
+          <paper-tooltip animation-delay="200">Open header editor</paper-tooltip>
+        </span>
+      </template>
+      <template is="dom-if" if="[[item.description]]">
+        <span>
+          <paper-icon-button class="help-icon" icon="arc:help" on-tap="openDescription"></paper-icon-button>
+          <paper-tooltip animation-delay="200">Show dosumentation for the header</paper-tooltip>
+        </span>
+      </template>
+    </div>
+    <template is="dom-if" if="[[item.description]]" restamp>
+      <iron-collapse class="docs">
+        <marked-element markdown="[[item.description]]">
+          <div class="markdown-html markdown-body"></div>
+        </marked-element>
+      </iron-collapse>
+    </template>
+    <template is="dom-if" if="[[!item.isEnum]]" restamp>
+      <paper-autocomplete open-on-focus on-query="_queryHeaderName" on-selected="_onHeaderNameSelected"></paper-autocomplete>
+    </template>
+  </template>
+  <script>
+  (function() {
+    'use strict';
+    Polymer({
+      is: 'headers-form-editor-item',
+
+      behaviors: [
+        Polymer.IronFormElementBehavior,
+        ArcBehaviors.EventsTargetBehavior
+      ],
+      /**
+       * Fired when the user requested to remove this item from the form.
+       *
+       * @event remove-header-form-item
+       */
+      /**
+       * Fired when the form item lost focus from the value field and
+       * delete icon gained focus (used tab).
+       *
+       * @event append-item-if-needed
+       */
+      properties: {
+        /**
+         * A model item to use to render a form element.
+         */
+        item: Object,
+
+        /**
+         * The name of this element.
+         * Ovverides `Polymer.IronFormElementBehavior` name property to notify
+         * changes outside the element.
+         */
+        name: {
+          type: String,
+          notify: true,
+          observer: '_nameChnaged'
+        },
+
+        /**
+         * It is currently focused input field for header name.
+         * This field will receive autocomplete support.
+         * @type {HTMLElement}
+         */
+        activeHeaderNameField: {
+          type: HTMLElement,
+          readOnly: true
+        },
+        /**
+         * Active autocomplete element.
+         *
+         * @type {HTMLElement}
+         */
+        activeAutocompleteNameField: {
+          type: HTMLElement,
+          readOnly: true
+        },
+        // If set, the form will be rendered in mobile friendly view.
+        narrow: {
+          type: Boolean,
+          reflectToAttribute: true
+        }
+      },
+
+      attached: function() {
+        if (this.name) {
+          this._nameChnaged(this.name);
+        }
+      },
+
+      _attachListeners: function(node) {
+        this.listen(node, 'request-header-changed', '_headerChangeHandler');
+      },
+
+      _detachListeners: function(node) {
+        this.unlisten(node, 'request-header-changed', '_headerChangeHandler');
+      },
+
+      // Opens the documentation for the item (if exists).
+      openDescription: function() {
+        var collapse = this.$$('.docs');
+        collapse.opened = !collapse.opened;
+      },
+
+      // Handler for the remove button click.
+      removeItem: function() {
+        this.fire('remove-header-form-item', {}, {
+          bubbles: false
+        });
+      },
+
+      // Handler for header name field focus
+      _headerNameFocus: function(e) {
+        var autocomplete = this.$$('paper-autocomplete');
+        if (!autocomplete.target) {
+          autocomplete.target = e.target;
+        }
+      },
+
+      _headerValueFocus: function() {
+        var autocomplete = this.$$('paper-autocomplete');
+        if (autocomplete || autocomplete.opened) {
+          autocomplete.opened = false;
+        }
+      },
+      /**
+       * A handler for the name change.
+       * It updates the description and example of the header if the header
+       * name is known to to the element (using `arc-definitions` element).
+       *
+       * Note, this element do not provide `arc-definitions` element and it
+       * must be set somewhere in the DOM.
+       */
+      _nameChnaged: function(name) {
+        if (!this.isAttached) {
+          return;
+        }
+        this._lookupHeadersSupport(name);
+        this._updateHeaderInfo(name);
+      },
+
+      /**
+       * Queries for header description and examples.
+       * If details for the header name are available then it will set the
+       * corresponding item's example and description properties.
+       *
+       * @param {String} name Header name.
+       */
+      _updateHeaderInfo: function(name) {
+        if (!name) {
+          this._updateCustomHeaderMeta();
+          return;
+        }
+        var info = this._queryHeaderNameSuggestions(name);
+        var item = info.find(function(item) {
+          return item.key === name;
+        });
+        if (!item) {
+          item = {};
+        }
+        this._updateCustomHeaderMeta(item.desc, item.example);
+      },
+      /**
+       * Updates headers metadata information after retrieving it from the
+       * `arc-definitions` element.
+       *
+       * @param {string} desc Description of the header
+       * @param {string} example Example value of the header.
+       */
+      _updateCustomHeaderMeta: function(desc, example) {
+        desc = desc || '';
+        example = example || '';
+        var placeholder;
+        if (example && typeof example === 'string') {
+          placeholder = 'Example: ' + example;
+        } else {
+          placeholder = undefined;
+        }
+        var float = placeholder ? true : false;
+        this.set(['item', 'description'], desc);
+        this.set(['item', 'example'], example);
+        this.set(['item', 'inputFloatLabel'], float);
+        this.set(['item', 'inputPlaceholder'], placeholder);
+      },
+
+      /**
+       * Handler for autosuggestion element.
+       * It sends an event to query the definitions element for suggestions.
+       *
+       * Note, this element do not provide `arc-definitions` element and it
+       * must be set somewhere in the DOM.
+       */
+      _queryHeaderName: function() {
+        var value = this.name;
+        var suggestions = this._queryHeaderNameSuggestions(value);
+        var autocomplete = this.$$('paper-autocomplete');
+        autocomplete.source = suggestions.map(function(item) {
+          return item.key;
+        });
+      },
+      /**
+       * Queries the `arc-definition` element for a header.
+       *
+       * @param {string} q Name of the header.
+       * @return {array} List of matched headers names.
+       */
+      _queryHeaderNameSuggestions: function(q) {
+        var event = this.fire('query-headers', {
+          'type': 'request',
+          'query': q
+        }, {
+          composed: true,
+          cancelable: true
+        });
+        if (event.defaultPrevented) {
+          return event.detail.headers;
+        }
+        return [];
+      },
+
+      /**
+       * A handler called when the user selects a suggestion.
+       */
+      _onHeaderNameSelected: function(e) {
+        this.set('name', e.detail.value);
+        this.$$('.name-change-input').fire('bind-value-changed');
+      },
+      /**
+       * Queries DOM (using event bus) for an element that support a header.
+       * Sends the `headers-support-lookup` header with the header name
+       * and if the event is canceled then sets a flag that for this particular
+       * header support is available.
+       *
+       * See advanced-rest-client/headers-support-behavior element for more
+       * details.
+       *
+       * @param {String} name Header name to query for support for.
+       */
+      _lookupHeadersSupport: function(name) {
+        var event = this.fire('headers-support-lookup', {
+          header: name
+        }, {
+          cancelable: true,
+          composed: true
+        });
+        this.set(['item', 'fillSupport'], event.defaultPrevented);
+      },
+      /**
+       * Requests header fill support from the support element.
+       * Sends the `headers-support-requested` custom event to activate helper.
+       * If the event is not canceled then it sets a falg that support is not
+       * available.
+       */
+      _requestHeaderSupport: function() {
+        var event = this.fire('headers-support-requested', {
+          header: this.name,
+          value: this.value
+        }, {
+          cancelable: true,
+          composed: true
+        });
+
+        if (!event.defaultPrevented) {
+          this.set(['item', 'fillSupport'], false);
+        }
+      },
+      /**
+       * Informs parent element that new filed should be added to the form if
+       * needed.
+       */
+      _valueFieldLeft: function() {
+        this.fire('append-item-if-needed', {}, {
+          bubbles: false
+        });
+      },
+
+      _headerChangeHandler: function(e) {
+        var eventName = e.detail.name.toLowerCase();
+        var name = this.name.toLowerCase();
+        if (eventName !== name || e.defaultPrevented) {
+          return;
+        }
+        e.preventDefault();
+        this.set('value', e.detail.value);
+        this.$$('.value-change-input').fire('bind-value-changed');
+      }
+    });
+  })();
+  </script>
+</dom-module>

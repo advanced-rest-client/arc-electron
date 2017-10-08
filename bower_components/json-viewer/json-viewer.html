@@ -1,0 +1,798 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../text-search-behavior/text-search-behavior.html">
+<link rel="import" href="../paper-spinner/paper-spinner.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="js-max-number-error.html">
+
+<!--
+`<json-viewer>` A JSON payload viewer for the JSON response.
+
+This element uses a web worker to process the JSON data.
+To simplify our lives and app build process the worker script is embeded in the
+imported template body. It will extract worker data from it and create the
+worker. Otherwise build process would need to incude a worker script file
+into set path which is not very programmer friendly.
+
+### Example
+```
+<json-viewer json='{"json": "test"}'></json-viewer>
+```
+
+## Custom search
+If the platform doesn't support native text search, this element implements
+`ArcBehaviors.TextSearchBehavior` and exposes the `query` attribute.
+Set any text to the `query` attribute and it will automatically highlight
+occurance of the text.
+See demo for example.
+
+## Big numbers in JavaScript
+This element marks all numbers that are above `Number.MAX_SAFE_INTEGER` value
+and locates the numeric value in source json if passed json was a string or
+when `raw` attribute was set. In this case it will display a warning and
+explanation about use of big numbers in JavaScript.
+See js-max-number-error element documentation for more information.
+
+## Content actions
+The element can render a actions pane above the code view. Action pane is to
+display content actions that is relevan in context of the response displayed
+below the icon buttons. It should be icon buttons or just buttons added to this
+view.
+
+Buttons need to have `content-action` property set to be included to this view.
+
+```
+<json-viewer json='{"json": "test"}'>
+  <paper-icon-button content-action title="Copy content to clipboard" icon="arc:content-copy"></paper-icon-button>
+</json-viewer>
+```
+
+### Styling
+`<json-viewer>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--json-viewer` | Mixin applied to the element | `{}`
+`--code-type-null-value-color` | Color of the null value. | `#708`
+`--code-type-boolean-value-color` | Color of the boolean value | `#708`
+`--code-punctuation-value-color` | Punctuation color. | `black`
+`--code-type-number-value-color` | Color of the numeric value | `blue`
+`--code-type-text-value-color` | Color of the string value. | `#48A`
+`--code-array-index-color` | Color of the array counter. | `rgb(119, 119, 119)`
+`--code-type-link-color` | Color of link inserted into the viewer. | `#1976d2`
+
+@group UI Elements
+@element json-viewer
+@demo demo/index.html
+-->
+<dom-module id="json-viewer">
+  <template>
+    <style>
+     :host {
+      display: block;
+      font-family: monospace;
+      font-size: 10pt;
+      color: black;
+      cursor: text;
+      -webkit-user-select: text;
+      @apply(--json-viewer);
+    }
+
+    .prettyPrint {
+      padding: 8px;
+    }
+
+    .stringValue {
+      white-space: normal;
+    }
+
+    .brace {
+      display: inline-block;
+    }
+
+    .numeric {
+      color: var(--code-type-number-value-color, blue);
+    }
+
+    .nullValue {
+      color: var(--code-type-null-value-color, #708);
+    }
+
+    .booleanValue {
+      color: var(--code-type-boolean-value-color, #708);
+    }
+
+    .punctuation {
+      color: var(--code-punctuation-value-color, black);
+    }
+
+    .stringValue {
+      color: var(--code-type-text-value-color, #48A);
+    }
+
+    .node {
+      position: relative;
+      white-space: nowrap;
+      margin-bottom: 4px;
+      word-wrap: break-word;
+    }
+
+    .array-counter {
+      color: gray;
+      font-size: 11px;
+    }
+
+    .array-counter::before {
+      content: "Array[" attr(count) "]";
+      user-select: none;
+      pointer-events: none;
+    }
+
+    *[data-expanded="false"] > .array-counter::before {
+      content: "Array[" attr(count) "] ...";
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .array-key-number::before {
+      content: "" attr(index) ":";
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .key-name {
+      color: var(--code-type-text-value-color, #48A);
+    }
+
+    .rootElementToggleButton {
+      position: absolute;
+      top: 0;
+      left: -9px;
+      font-size: 14px;
+      cursor: pointer;
+      font-weight: bold;
+      user-select: none;
+    }
+
+    .rootElementToggleButton::after {
+      content: "-";
+    }
+
+    .array-key-number {
+      color: var(--code-array-index-color, rgb(119, 119, 119));
+    }
+
+    .info-row {
+      display: none;
+      margin: 0 8px;
+      text-indent: 0;
+    }
+
+    div[data-expanded="false"] div[collapse-indicator] {
+      display: inline-block !important;
+    }
+
+    div[data-expanded="false"] div[data-element] {
+      display: none !important;
+    }
+
+    .arc-search-mark.selected {
+      background-color: #ff9632;
+    }
+
+    div[data-expanded="false"] .punctuation.hidden {
+      opacity: 0;
+    }
+
+    .hidden {
+      color: rgba(0, 0, 0, 0.24);
+    }
+
+    a[response-anchor] {
+      color: var(--code-type-link-color, #1976d2);
+    }
+
+    paper-spinner:not([active]) {
+      display: none;
+    }
+
+    .actions-panel {
+      @apply(--layout-horizontal);
+      @apply(--layout-center);
+      @apply(--response-raw-viewer-action-bar);
+    }
+
+    .actions-panel.hidden {
+      display: none;
+    }
+    </style>
+    <paper-spinner active="[[working]]"></paper-spinner>
+    <div class="error" hidden$="[[!isError]]">
+      <p>There was an error parsing JSON data</p>
+    </div>
+    <div class$="[[_computeActionsPanelClass(showOutput)]]">
+      <content select="[content-action]"></content>
+    </div>
+    <output id="output" hidden$="[[!showOutput]]" on-tap="_handleDisplayClick"></output>
+    <script id="jsonWorker" type="text/js-worker">
+    var SafeHtmlUtils = {
+      AMP_RE: new RegExp(/&/g),
+      GT_RE: new RegExp(/>/g),
+      LT_RE: new RegExp(/</g),
+      SQUOT_RE: new RegExp(/'/g),
+      QUOT_RE: new RegExp(/"/g),
+
+      htmlEscape: function(s) {
+        if (s.indexOf('&') !== -1) {
+          s = s.replace(SafeHtmlUtils.AMP_RE, '&amp;');
+        }
+        if (s.indexOf('<') !== -1) {
+          s = s.replace(SafeHtmlUtils.LT_RE, '&lt;');
+        }
+        if (s.indexOf('>') !== -1) {
+          s = s.replace(SafeHtmlUtils.GT_RE, '&gt;');
+        }
+        if (s.indexOf('"') !== -1) {
+          s = s.replace(SafeHtmlUtils.QUOT_RE, '&quot;');
+        }
+        if (s.indexOf('\'') !== -1) {
+          s = s.replace(SafeHtmlUtils.SQUOT_RE, '&#39;');
+        }
+        return s;
+      }
+    };
+
+    function JSONViewer(data) {
+      var jsonData = data.json;
+      this.rawData = data.raw || '';
+      this.cssPrefix = data.cssPrefix || '';
+      this.debug = data.debug || false;
+      this._numberIndexes = {}; // Regexp number indexes
+      this.jsonValue = null;
+      this.latestError = null;
+      this.elementsCounter = 0;
+      if (typeof jsonData === 'string') {
+        try {
+          this.jsonValue = JSON.parse(jsonData);
+          if (!this.rawData) {
+            this.rawData = jsonData;
+          }
+        } catch (e) {
+          this.latestError = e.message;
+        }
+      } else {
+        this.jsonValue = jsonData;
+      }
+    }
+    /**
+     * Uses the performance API to mark an event.
+     */
+    JSONViewer.prototype.mark = function(title) {
+      // I hate you IE! <\3
+      if (!this.debug) {
+        return;
+      }
+      if (!(performance in self)) {
+        return;
+      }
+      performance.mark(title);
+    };
+    /**
+     * Creates a list of measurements performed during the HTML generation.
+     */
+    JSONViewer.prototype.getMeasurements = function() {
+      if (!this.debug) {
+        return;
+      }
+      if (!(performance in self)) {
+        return;
+      }
+      performance.measure('get-html', 'get-html-start', 'get-html-end');
+      var items = performance.getEntriesByType('mark');
+      items.forEach(function(mark) {
+        if (~mark.name.indexOf('parse-start-')) {
+          var id = mark.name.substr(12);
+          performance.measure('parse-' + id, 'parse-start-' + id, 'parse-start-' + id);
+        }
+      });
+      var items = performance.getEntriesByType('measure');
+      var result = items.map(function(measure) {
+        return {
+          duration: measure.duration,
+          name: measure.name,
+          startTime: measure.startTime
+        }
+      });
+      return {
+        items: result
+      };
+    };
+    /**
+     * Get created HTML content.
+     */
+    JSONViewer.prototype.getHTML = function() {
+      this.mark('get-html-start');
+      var parsedData = '<div class="' + this.cssPrefix + 'prettyPrint">';
+      parsedData += this.parse(this.jsonValue);
+      parsedData += '</div>';
+      this.mark('get-html-end');
+      return parsedData;
+    };
+    /**
+     * Parse JSON data
+     */
+    JSONViewer.prototype.parse = function(data, opts) {
+      opts = opts || {};
+      this.__parseCallCounter = this.__parseCallCounter || 0;
+      this.__parseCallCounter++;
+      this.mark('parse-start-' + this.__parseCallCounter);
+      var result = '';
+      if (data === null) {
+        result += this.parseNullValue();
+      } else if (typeof data === 'number') {
+        result += this.parseNumericValue(data);
+      } else if (typeof data === 'boolean') {
+        result += this.parseBooleanValue(data);
+      } else if (typeof data === 'string') {
+        result += this.parseStringValue(data);
+      } else if (data instanceof Array) {
+        result += this.parseArray(data);
+      } else {
+        result += this.parseObject(data);
+      }
+      if (opts.hasNextSibling && !opts.holdComa) {
+        result += '<span class="' + this.cssPrefix + 'punctuation hidden">,</span>';
+      }
+      this.mark('parse-end-' + this.__parseCallCounter);
+      return result;
+    };
+
+    JSONViewer.prototype.parseNullValue = function() {
+      var result = '';
+      result += '<span class="' + this.cssPrefix + 'nullValue">';
+      result += 'null';
+      result += '</span>';
+      return result;
+    };
+
+    JSONViewer.prototype.parseNumericValue = function(number) {
+      var expectedNumber;
+      if (number > 9007199254740991) { // IE doesn't support Number.MAX_SAFE_INTEGER
+        var comp = String(number);
+        comp = comp.substr(0, 16);
+        var r = new RegExp(comp + '(\\d+),?', 'gim');
+        if (comp in this._numberIndexes) {
+          r.lastIndex = this._numberIndexes[comp];
+        }
+        var _result = r.exec(this.rawData);
+        if (_result) {
+          this._numberIndexes[comp] = _result.index;
+          expectedNumber = comp + _result[1];
+        }
+      }
+
+      var result = '';
+      result += '<span class="' + this.cssPrefix + 'numeric">';
+      if (expectedNumber) {
+        result += '<js-max-number-error class="' + this.cssPrefix +
+          'number-error" expected-number="' + expectedNumber + '">';
+      }
+      result += number + '';
+      if (expectedNumber) {
+        result += '</js-max-number-error>';
+      }
+      result += '</span>';
+      return result;
+    };
+
+    JSONViewer.prototype.parseBooleanValue = function(bool) {
+      var result = '';
+      result += '<span class="' + this.cssPrefix + 'booleanValue">';
+      if (bool !== null && bool !== undefined) {
+        result += bool + '';
+      } else {
+        result += 'null';
+      }
+      result += '</span>';
+      return result;
+    };
+
+    JSONViewer.prototype.parseStringValue = function(str) {
+      var result = '';
+      var value = str || '';
+      if (value !== null && value !== undefined) {
+        value = SafeHtmlUtils.htmlEscape(value);
+        if (value.slice(0, 1) === '/' || value.substr(0, 4) === 'http') {
+          value = '<a class="' + this.cssPrefix + '" title="Click to insert into URL field" ' +
+            'response-anchor add-root-url href="' + value + '">' + value + '</a>';
+        }
+      } else {
+        value = 'null';
+      }
+      result += '&quot;';
+      result += '<span class="' + this.cssPrefix + 'stringValue">';
+      result += value;
+      result += '</span>';
+      result += '&quot;';
+      return result;
+    };
+
+    JSONViewer.prototype.parseObject = function(object) {
+      var result = '';
+      result += '{';
+      result += '<div collapse-indicator class="' + this.cssPrefix + 'info-row">...</div>';
+      Object.getOwnPropertyNames(object)
+      .forEach(function(key, i, arr) {
+        var value = object[key];
+        var lastSibling = (i + 1) === arr.length;
+        var parseOpts = {
+          hasNextSibling: !lastSibling
+        };
+        if (value instanceof Array) {
+          parseOpts.holdComa = true;
+        }
+        var elementNo = this.elementsCounter++;
+        var data = this.parse(value, parseOpts);
+        var hasManyChildren = this.elementsCounter - elementNo > 1;
+        result += '<div data-element="' + elementNo + '" style="margin-left: 24px" class="' +
+          this.cssPrefix + 'node">';
+        var _nan = isNaN(key);
+        if (_nan) {
+          result += '&quot;';
+        }
+        result += this.parseKey(key);
+        if (_nan) {
+          result += '&quot;';
+        }
+        result += ': ' + data;
+        if (hasManyChildren) {
+          result += '<div data-toggle="' + elementNo + '" class="' + this.cssPrefix +
+            'rootElementToggleButton"></div>';
+        }
+        result += '</div>';
+      }, this);
+      result += '}';
+      return result;
+    };
+
+    JSONViewer.prototype.parseArray = function(array) {
+      var cnt = array.length;
+      var result = '';
+      result += '<span class="' + this.cssPrefix + 'punctuation hidden">[</span>';
+      result += '<span class="' + this.cssPrefix + 'array-counter brace punctuation" count="' +
+        cnt + '"></span>';
+      for (var i = 0; i < cnt; i++) {
+        var elementNo = this.elementsCounter++;
+
+        var lastSibling = (i + 1) === cnt;
+        var data = this.parse(array[i], {
+          hasNextSibling: !lastSibling
+        });
+        var hasManyChildren = this.elementsCounter - elementNo > 1;
+        result += '<div data-element="' + elementNo +
+          '" style="margin-left: 24px" class="' + this.cssPrefix + 'node">';
+        result += '<span class="' + this.cssPrefix + 'array-key-number" index="' + i +
+          '"> &nbsp;</span>';
+        result += data;
+        if (hasManyChildren) {
+          result += '<div data-toggle="' + elementNo + '" class="' + this.cssPrefix +
+            'rootElementToggleButton"></div>';
+        }
+        result += '</div>';
+      }
+      result += '<span class="' + this.cssPrefix + 'punctuation hidden">],</span>';
+      return result;
+    };
+
+    JSONViewer.prototype.parseKey = function(key) {
+      var result = '';
+      result += '<span class="' + this.cssPrefix + 'key-name">' + key + '</span>';
+      return result;
+    };
+
+    self.onmessage = function(e) {
+      try {
+        var parser = new JSONViewer(e.data);
+        if (parser.latestError !== null) {
+          self.postMessage({
+            message: parser.latestError,
+            error: true
+          });
+          return;
+        }
+        var html = parser.getHTML();
+        var result = {
+          message: html,
+          error: false
+        };
+        if (e.data.debug) {
+          result.measurement = parser.getMeasurements();
+        }
+        self.postMessage(result);
+        parser = null;
+      } catch (e) {
+        self.postMessage({
+          message: e.message,
+          error: true
+        });
+      }
+    };
+    </script>
+  </template>
+  <script>
+  Polymer({
+    is: 'json-viewer',
+    /**
+     * Event called when the user click on the anchor in display area.
+     *
+     * @event action-link-change
+     * @param {String} url The URL handled by this event.
+     */
+    /**
+     * Fired when web worker finished work and the data are displayed.
+     *
+     * @event json-viewer-parsed
+     */
+    properties: {
+      /**
+       * JSON data to parse and display.
+       * It can be either JS object (already parsed string) or string value.
+       * If the passed object is a string then JSON.parse function will be
+       * used to parse string.
+       */
+      json: {
+        type: String,
+        observer: '_changed'
+      },
+      /**
+       * If it's possible, set this property to the JSON string.
+       * It will help to handle big numbers that are not parsed correctly by
+       * the JSON.parse function. The parser will try to locate the number
+       * in the source string and display it in the correct form.
+       *
+       * P.S.
+       * Calling JSON.stringify on a JS won't help here :) Must be source
+       * string.
+       */
+      raw: String,
+      /**
+       * True if error ocurred when parsing the `json` data.
+       * An error message will be displayed.
+       */
+      isError: {
+        type: Boolean,
+        readOnly: true,
+        value: false,
+        notify: true
+      },
+      /**
+       * True when JSON is beeing parsed.
+       */
+      working: {
+        type: Boolean,
+        readOnly: true,
+        value: false,
+        notify: true
+      },
+      /**
+       * True when output should be shown (JSON has been parsed without errors)
+       */
+      showOutput: {
+        type: Boolean,
+        readOnly: true,
+        value: false,
+        computed: '_computeShowOutput(working, isError, json)'
+      },
+      // A reference to the web worker object.
+      _worker: Object,
+      // function to be called when worker data are received
+      _workerDataHandler: {
+        type: Function,
+        value: function() {
+          return this._workerData.bind(this);
+        }
+      },
+      // function to be called when worker error data are received
+      _workerErrorHandler: {
+        type: Function,
+        value: function() {
+          return this._workerError.bind(this);
+        }
+      },
+
+      // An element which should be used for text search.
+      _textSearch: {
+        type: HTMLElement,
+        value: function() {
+          return this.$.output;
+        }
+      },
+      /**
+       * If set it will highlight each occurance of the query in the
+       * JSON viewer.
+       */
+      query: {
+        type: String,
+        observer: '_queryChanged'
+      },
+      // If true then it prints the execution time to the console.
+      debug: Boolean
+    },
+
+    behaviors: [
+      ArcBehaviors.TextSearchBehavior
+    ],
+
+    detached: function() {
+      if (this._worker) {
+        this._worker.removeEventListener('message', this._workerDataHandler);
+        this._worker.removeEventListener('error', this._workerErrorHandler);
+        this._worker = undefined;
+        // Created URL via URL.createObjectURL will be cleaned by the browser.
+      }
+    },
+
+    ready: function() {
+      this._isReady = true;
+      if (this.json) {
+        this._changed(this.json);
+      }
+    },
+
+    // Called when `json` property changed. It starts parsing the data.
+    _changed: function(json) {
+      if (!this._isReady) {
+        return;
+      }
+      this._setIsError(false);
+      this.$.output.innerText = '';
+      if (json === undefined) {
+        return;
+      }
+      var html;
+      if (json === null) {
+        html = '<div class="prettyPrint"><span class="nullValue">null';
+        html += '</span></div>';
+        this.$.output.innerHTML = html;
+        this.$.output.removeAttribute('hidden');
+        return;
+      }
+
+      if (json === false) {
+        html = '<div class="prettyPrint"><span class="booleanValue">false';
+        html += '</span></div>';
+        this.$.output.innerHTML = html;
+        this._setShowOutput(true);
+        return;
+      }
+
+      this._setWorking(true);
+      if (!this._worker) {
+        var blob = new Blob([this.$.jsonWorker.textContent], {
+          type: 'text/javascript'
+        });
+        var worker = new Worker(window.URL.createObjectURL(blob));
+        worker.addEventListener('message', this._workerDataHandler);
+        worker.addEventListener('error', this._workerErrorHandler);
+        this._worker = worker;
+      }
+      var debug = this.debug;
+      var ua = navigator.userAgent;
+      if (ua.indexOf('MSIE ') !== -1 || ua.indexOf('Trident') !== -1) {
+        debug = false; // performance API is not available in web workers in IE....
+      }
+      this._worker.postMessage({
+        json: json,
+        raw: this.raw,
+        cssPrefix: this.nodeName.toLowerCase() + ' style-scope ',
+        debug: debug
+      });
+    },
+    // Called when worker data received.
+    _workerData: function(e) {
+      var data = e.data;
+      if (data.error) {
+        this._setIsError(true);
+        this.$.output.innerHTML = data.message;
+      } else {
+        this.$.output.innerHTML = data.message;
+      }
+      this._setWorking(false);
+      if (this.debug) {
+        if (data.measurement.items && data.measurement.items.length) {
+          console.groupCollapsed('JSON viewer parse measurements');
+          console.table(data.measurement.items);
+          console.groupEnd();
+        }
+      }
+      this.fire('json-viewer-parsed');
+    },
+    // Called when workr error received.
+    _workerError: function() {
+      this._setIsError(true);
+      this._setWorking(false);
+      this.fire('json-viewer-parsed');
+    },
+    // Compute if output should be shown.
+    _computeShowOutput: function(working, isError, json) {
+      if (working) {
+        return false;
+      }
+      if (isError) {
+        return true;
+      }
+      return !!json && json !== null && json !== false;
+    },
+    // Called when the user click on the display area. It will handle view toggle and links clicks.
+    _handleDisplayClick: function(e) {
+      if (!e.target) {
+        return;
+      }
+
+      if (e.target.nodeName === 'A') {
+        e.preventDefault();
+        this.fire('action-link-change', {
+          url: e.target.getAttribute('href')
+        });
+        return;
+      }
+      var toggleId = e.target.dataset.toggle;
+      if (!toggleId) {
+        return;
+      }
+      var parent = Polymer.dom(this.root)
+        .querySelector('div[data-element="' + toggleId + '"]');
+      if (!parent) {
+        return;
+      }
+      var expanded = parent.dataset.expanded;
+      if (!expanded || expanded === 'true') {
+        parent.dataset.expanded = 'false';
+      } else {
+        parent.dataset.expanded = 'true';
+      }
+    },
+    /**
+     * Called automatically when the `query` property change.
+     * It highlights word occurence in the JSON viewer.
+     *
+     * This function is called automatically when the `query` property change.
+     *
+     * @param {String} query Current `query` value.
+     */
+    _queryChanged: function(query) {
+      if (!query) {
+        this.cleanMarked();
+        return;
+      }
+      this.mark(query);
+    },
+    /**
+     * Computes CSS class for the actions pane.
+     *
+     * @param {Boolean} showOutput The `showOutput` propety value of the element.
+     * @return CSS class names for the panel depending on state of the
+     * `showOutput`property.
+     */
+    _computeActionsPanelClass: function(showOutput) {
+      var clazz = 'actions-panel';
+      if (!showOutput) {
+        clazz += ' hidden';
+      }
+      return clazz;
+    }
+  });
+  </script>
+</dom-module>

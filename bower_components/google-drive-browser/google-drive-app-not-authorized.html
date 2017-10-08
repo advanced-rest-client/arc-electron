@@ -1,0 +1,90 @@
+<!--
+@license
+Copyright 2017 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<!--
+An element that explains why the user can't open the file with the application
+because the app is not on file's ACL list.
+
+@element google-drive-app-not-authorized
+-->
+<dom-module id="google-drive-app-not-authorized">
+  <template>
+    <style>
+    :host {
+      display: block;
+      @apply --arc-font-body1;
+      @apply --layout-vertical;
+      @apply --layout-flex;
+      @apply --google-drive-app-not-authorized;
+    }
+
+    h2 {
+      margin-left: 16px;
+      @apply --arc-font-headline;
+      @apply --google-drive-browser-title;
+    }
+
+    p {
+      margin: 1em 16px;
+      color: rgba(0,0,0,0.78);
+    }
+
+    paper-button {
+      margin: 1em 16px;
+    }
+
+    .main-action {
+      @apply --action-button;
+      height: 36px;
+      font-size: 14px;
+    }
+
+    .secondary-action {
+      color: var(--secondary-action-button-color, --primary-color);
+      height: 36px;
+      font-size: 14px;
+    }
+    </style>
+    <h2>App authorization error</h2>
+    <div>
+      <p>The application can't open files that are not created by you or the application.</p>
+      <p>Please go to Drive web application, <b>select the file and choose "Open with" and next this application name.</b>
+      <div class="actions">
+        <paper-button on-tap="back" class="secondary-action">Back to the list</paper-button>
+        <paper-button raised class="main-action" on-tap="openDrive">Open the file</paper-button>
+      </div>
+    </div>
+  </template>
+  <script>
+    Polymer({
+      is: 'google-drive-app-not-authorized',
+
+      properties: {
+        // A drive file object
+        item: Object
+      },
+
+      back: function() {
+        this.fire('back');
+      },
+
+      openDrive: function() {
+        var url = this.item.webViewLink;
+        window.open(url);
+      }
+    });
+  </script>
+</dom-module>

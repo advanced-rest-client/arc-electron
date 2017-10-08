@@ -1,0 +1,26 @@
+{
+  "People": [{
+    "firstName": "Chris",
+    "lastName": "Richardson",
+    "headline": "Founder of Eventuate, Inc - a microservices startup",
+    "location": "San Francisco,California",
+    "positions": {
+      "_total": 1,
+      "values": [{
+        "company": {
+          "industry": "Computer Software",
+          "name": "Eventuate"
+        },
+        "summary": "Creating a platform for writing event-driven, microservice-based applications.",
+        "isCurrent": true,
+        "title": "Founder and CEO"
+      }]
+    },
+    "num-recommenders": "3",
+    "num-publications": "3",
+    "num-patents": "0",
+    "num-skills": "36",
+    "num-certification": "0",
+    "num-courses": "0"
+  }]
+}

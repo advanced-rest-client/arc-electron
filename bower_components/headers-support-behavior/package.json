@@ -1,0 +1,33 @@
+{
+  "name": "headers-support-behavior",
+  "version": "0.1.2",
+  "license": "Apache-2.0 OR CC-BY-4.0",
+  "description": "A common behaviors for headers fill support",
+  "devDependencies": {
+    "polymer-cli": "^0.16.0"
+  },
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "private": false,
+  "main": [
+    "headers-support-behavior.html"
+  ],
+  "author": "The Advanced REST client authors <arc@mulesoft.com>",
+  "scripts": {
+    "serve": "node_modules/.bin/polymer serve",
+    "lint": "node_modules/.bin/polymer lint headers-support-behavior.html",
+    "test-sauce": "node_modules/.bin/polymer test --plugin sauce --job-name \"headers-support-behavior:local-test\"",
+    "test": "node_modules/.bin/polymer test",
+    "deps": "npm install --quiet && bower install --quiet",
+    "update-deps": "npm update --quiet && bower update --quiet"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/advanced-rest-client/headers-support-behavior.git"
+  },
+  "bugs": {
+    "url": "https://github.com/advanced-rest-client/headers-support-behavior/issues",
+    "email": "arc@mulesoft.com"
+  }
+}

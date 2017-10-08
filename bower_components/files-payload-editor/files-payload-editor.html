@@ -1,0 +1,300 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../arc-icons/arc-icons.html">
+<link rel="import" href="../paper-material/paper-material.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../iron-validatable-behavior/iron-validatable-behavior.html">
+<link rel="import" href="../iron-form-element-behavior/iron-form-element-behavior.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../request-payload-editor-behavior/request-payload-editor-behavior.html">
+<!--
+`<files-payload-editor>` A request body editor to add files as a payload.
+With this element the user can select single file that will be used in the request body.
+
+As other payload editors it fires `payload-value-changed` custom event when value change.
+
+The element can be used in forms when `iron-form` is used. It contains validation methods to
+validate user input.
+
+### Example
+```
+<files-payload-editor></files-payload-editor>
+```
+
+### Styling
+`<files-payload-editor>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--files-payload-editor` | Mixin applied to the element | `{}`
+`--files-payload-editor-file-item` | Mixin applied to a selected file item | `{}`
+`--files-payload-editor-file-trigger-color` | Color of the file input | `--accent-color` or `#FF5722`
+`--files-payload-editor-file-summary-color` | Color of the selected file summary | `rgba(0,0,0,0.74)`
+`--files-payload-editor-selected-file-name-color` | Selected file name label color | `rgba(0,0,0,0.74)`
+`--files-payload-editor-selected-file-icon-color` | Color of the icon in the selected file section | `--accent-color` or `#2196F3`
+`--arc-font-body1` | Theme mixin, applied to text elements | `{}`
+`--inline-fom-action-icon-color` | Theme variable, color of the delete icon | `rgba(0, 0, 0, 0.74)`
+`--inline-fom-action-icon-color-hover` | Theme variable, color of the delete icon when hovering | `--accent-color` or `rgba(0, 0, 0, 0.74)`
+
+@group UI Elements
+@element files-payload-editor
+@demo demo/index.html
+-->
+<dom-module id="files-payload-editor">
+  <template>
+    <style>
+    :host {
+      display: block;
+      padding: 12px 0;
+      @apply(--files-payload-editor);
+    }
+
+    .selector {
+      @apply(--layout-horizontal);
+      @apply(--layout-center);
+    }
+
+    .list {
+      margin: 0 0.29em;
+      display: inline-block;
+      margin-top: 12px;
+    }
+
+    paper-material {
+      padding: 0.4em 0.57em;
+      @apply(--layout-horizontal);
+      @apply(--layout-center);
+      @apply(--files-payload-editor-file-item);
+    }
+
+    .file-trigger {
+      margin-right: 12px;
+      color: var(--files-payload-editor-file-trigger-color, var(--accent-color, #FF5722));
+    }
+
+    .files-counter-message {
+      @apply(--layout-flex);
+      @apply(--arc-font-body1);
+      color: var(--files-payload-editor-file-summary-color, rgba(0,0,0,0.74));
+    }
+
+    .file-icon {
+      color: var(--files-payload-editor-selected-file-icon-color, var(--accent-color, #2196F3));
+    }
+
+    .delete-icon {
+      color: var(--inline-fom-action-icon-color, rgba(0, 0, 0, 0.74));
+      transition: color 0.2s linear;
+    }
+
+    .delete-icon:hover {
+      color: var(--inline-fom-action-icon-color-hover, var(--accent-color, rgba(0, 0, 0, 0.74)));
+    }
+
+    .file-name {
+      @apply(--arc-font-body1);
+      margin-left: 8px;
+      color: var(--files-payload-editor-selected-file-name-color, rgba(0,0,0,0.74));
+    }
+    </style>
+    <div class="selector">
+      <paper-button raised on-tap="_selectFile" class="file-trigger">Choose a file</paper-button>
+      <template is="dom-if" if="[[hasFile]]">
+        <span class="files-counter-message" hidden$="[[!hasFile]]">1 file selected, [[fileSize]] bytes</span>
+      </template>
+    </div>
+    <template is="dom-if" if="[[hasFile]]">
+      <div class="list">
+        <paper-material elevation="1">
+          <iron-icon class="file-icon" icon="arc:insert-drive-file"></iron-icon>
+          <span class="file-name">[[fileName]]</span>
+          <paper-icon-button class="delete-icon" icon="arc:close" hidden$="[[!hasFile]]" title="Clear file" on-tap="removeFile"></paper-icon-button>
+        </paper-material>
+      </div>
+    </template>
+    <input type="file" hidden on-change="_fileObjectChanged" />
+  </template>
+  <script>
+  Polymer({
+    is: 'files-payload-editor',
+
+    behaviors: [
+      Polymer.IronFormElementBehavior,
+      Polymer.IronValidatableBehavior,
+      ArcBehaviors.RequestPayloadEditorBehavior
+    ],
+
+    /**
+     * Fired when the value of the control change.
+     *
+     * @event payload-value-changed
+     * @param {Blob} value Selected file or undefined if no file selected.
+     */
+    properties: {
+      // Computed value, true if the control has files.
+      hasFile: {
+        type: Boolean,
+        readOnly: true
+      },
+      /**
+       * If set the value will be base64 encoded.
+       */
+      base64Encode: Boolean,
+      // Selected file name
+      fileName: String,
+      // Selected file size,
+      fileSize: Number
+    },
+
+    observers: ['_valueChnaged(value, _isOpened)'],
+
+    _valueChnaged: function(value, _isOpened) {
+      this._setHasFile(!!value);
+      if (!_isOpened) {
+        return;
+      }
+      this.fire('payload-value-changed', {
+        value: value
+      });
+      if (!value) {
+        return;
+      }
+      if (value instanceof Blob) {
+        this.set('fileName', value.name || 'blob');
+        this.set('fileSize', value.size);
+      }
+      if (!this.fileName || (!this.fileSize && this.fileSize !== 0)) {
+        this._updateFileMeta(value);
+        return;
+      }
+      var type;
+      if (value.type) {
+        type = value.type;
+      } else {
+        type = 'application/octet-stream';
+      }
+      this.fire('content-type-changed', {
+        value: type
+      });
+    },
+    /**
+     * Updated `fileName` and `fileSize` from a base64 encoded string value
+     *
+     * @param {String} value File as base64 string
+     */
+    _updateFileMeta: function(value) {
+      if (!value || value instanceof Blob) {
+        return;
+      }
+      var type;
+      if (value.indexOf('data:') === 0) {
+        value = value.substr(5);
+        var comaIndex = value.indexOf(',');
+        type = value.substr(0, value.indexOf(';'));
+        value = value.substr(comaIndex + 1);
+      }
+      var byteChars;
+      try {
+        byteChars = atob(value);
+      } catch (e) {
+        console.info('Unable to decode base64 string');
+      }
+      type = type || 'application/octet-stream';
+      this.fire('content-type-changed', {
+        value: type
+      });
+      this.set('fileName', 'blob');
+      this.set('fileSize', byteChars ? byteChars.length : -1);
+    },
+    /**
+     * A handler to choose file button click.
+     * This function will find a proper input[type="file"] and programatically click on it to open
+     * file dialog.
+     */
+    _selectFile: function() {
+      var file = this.$$('input[type="file"]');
+      file.click();
+    },
+
+    /**
+     * A handler to file change event for input[type="file"].
+     * This will update files array for corresponding `this.value` array object.
+     */
+    _fileObjectChanged: function(e) {
+      this._setFileValue(e.target.files[0]);
+      this.$$('.file-trigger').blur();
+    },
+    /**
+     * Sets the `value` depending on `base64Encode` option.
+     *
+     * @param {Blob} file A file to set as a value.
+     */
+    _setFileValue: function(file) {
+      if (!file) {
+        this.set('value', undefined);
+        return;
+      }
+      if (!this.base64Encode) {
+        this.set('value', file);
+        return;
+      }
+      var reader = new FileReader();
+      var context = this;
+      reader.addEventListener('load', function() {
+        var typed = new Uint8Array(this.result);
+        var result = btoa(String.fromCharCode.apply(null, typed));
+        context.set('value', result);
+        context.__informBase64Conversion();
+      });
+      reader.addEventListener('error', function() {
+        context.set('value', 'Invalid file');
+        context.__informBase64Conversion();
+      });
+      reader.readAsArrayBuffer(file);
+    },
+    // Send an event when base64 conversion ends
+    __informBase64Conversion: function() {
+      this.fire('base64-value-set', {}, {
+        bubbles: false
+      });
+    },
+    // Overides Polymer.IronValidatableBehavior
+    _getValidity: function() {
+      return this._computeHasFile(this.value);
+    },
+
+    _computeHasFile: function(file) {
+      if (!file) {
+        return false;
+      }
+      var enc = this.base64Encode;
+      if (enc) {
+        return !!file;
+      }
+      return file instanceof Blob;
+    },
+
+    removeFile: function() {
+      this.value = undefined;
+      this.fileName = undefined;
+      this.fileSize = undefined;
+      this._setHasFile(false);
+      var file = this.$$('input[type="file"]');
+      file.value = '';
+    }
+  });
+  </script>
+</dom-module>

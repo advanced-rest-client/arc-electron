@@ -1,0 +1,609 @@
+<!--
+@license
+Copyright 2017 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../request-payload-editor-behavior/request-payload-editor-behavior.html">
+<link rel="import" href="../arc-polyfills/arc-polyfills.html">
+<link rel="import" href="body-json-editor-behavior.html">
+<link rel="import" href="property-editor.html">
+<!--
+`<body-json-editor>` A JSON editor for HTTP body
+
+It provides a visual editor for the JSON body.
+
+### Example
+```
+<body-json-editor value='["apple", 1234]'></body-json-editor>
+```
+
+To set / get value on / from the element use the `value` property. Each time
+something change in the editor the string `value` will be regenerated.
+It is also possible to set a JavaScript objkect on this element using
+`json` property but it is immutable and changes will not be reflected to it.
+
+### Styling
+`<body-json-editor>` provides the following custom properties and mixins for
+styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--body-json-editor` | Mixin applied to the element | `{}`
+`--body-json-editor-action-button` | Mixin applied to the action buttons | ``
+`--body-json-editor-autocomplete-top` | CSS top property for autocomplete elements | `32px`
+
+See docs for other elements in the package for more styling options.
+
+@group UI Elements
+@element body-json-editor
+@demo demo/index.html Regular use of the element
+@demo demo/raml.html Use of the element with RAML type
+-->
+<dom-module id="body-json-editor">
+  <template>
+    <style>
+     :host {
+      display: block;
+      @apply --body-json-editor;
+    }
+
+    .action-button {
+      color: var(--primary-color);
+      @apply --body-json-editor-action-button;
+    }
+    </style>
+    <template is="dom-if" if="[[_modelNotSet]]">
+      <div class="add-action">
+        <paper-button class="action-button" on-tap="_addProperty">Add object property</paper-button>
+        <paper-button class="action-button" on-tap="_addItem">Add array item</paper-button>
+      </div>
+    </template>
+    <template is="dom-if" if="[[model.isObject]]">
+      <template is="dom-repeat" items="{{model.properties}}" id="object">
+        <property-editor narrow="[[narrow]]" value="{{item.value}}" name="{{item.name}}" model="{{item}}" type-model="[[typeModel]]" on-remove-property="_removeProperty" on-duplicate-property="_onDuplicateObject" on-last-used-type="_updateLastUsedType"></property-editor>
+      </template>
+      <div class="add-action">
+        <paper-button class="action-button" on-tap="_addProperty">Add property</paper-button>
+      </div>
+    </template>
+    <template is="dom-if" if="[[model.isArray]]">
+      <template is="dom-repeat" items="{{model.items}}" id="array">
+        <property-editor narrow="[[narrow]]" no-key value="{{item.value}}" model="{{item}}" type-model="[[typeModel]]" on-remove-property="_removeProperty" on-duplicate-property="_onDuplicateObject" on-last-used-type="_updateLastUsedType"></property-editor>
+      </template>
+      <div class="add-action">
+        <paper-button class="action-button" on-tap="_addItem">Add array item</paper-button>
+      </div>
+    </template>
+  </template>
+  <script>
+  Polymer({
+    is: 'body-json-editor',
+    behaviors: [
+      ArcBehaviors.BodyJsonEditorBehavior,
+      ArcBehaviors.RequestPayloadEditorBehavior
+    ],
+    properties: {
+      /**
+       * A JavaScript representation of RAML data type object.
+       */
+      ramlType: Object,
+      /**
+       * View model for the editor.
+       */
+      model: {
+        type: Object,
+        readOnly: true
+      },
+      /**
+       * A data model for autocomplete functions generated from `schema` or
+       * `raml` property.
+       */
+      typeModel: {
+        type: Object,
+        readOnly: true
+      },
+      // If true the the model is not set.
+      _modelNotSet: {
+        type: Boolean,
+        value: true,
+        computed: '_computeModelNotSet(model)'
+      },
+      /**
+       * A type of last added item.
+       */
+      _lastAddedType: String
+    },
+
+    observers: [
+      '_typeChanged(_isOpened, ramlType)',
+      '_valueChanged(_isOpened, value)',
+      '_modelChanged(_isOpened, model.*)'
+    ],
+
+    /**
+     * Generates data model for a RAML type.
+     */
+    _typeChanged: function(opened, type) {
+      if (!opened || !type) {
+        return;
+      }
+      if (type instanceof Array) {
+        type = type[0];
+      }
+      if (!type) {
+        return;
+      }
+      this._computeRamlBaseModel(type);
+      var model = this.__computeTypeModel(type);
+      this._setTypeModel(model);
+    },
+
+    __computeTypeModel: function(type) {
+      if (!type) {
+        return;
+      }
+      if (['object', 'array'].indexOf(type.type) === -1) {
+        return;
+      }
+
+      var result = this._computeTypeModel(type);
+      return result;
+    },
+
+    _computeModelNotSet: function(model) {
+      return !model || !(model.properties || model.items);
+    },
+    /**
+     * Computes view base model from the RAML type.
+     */
+    _computeRamlBaseModel: function(type) {
+      var baseType = type.type;
+      var model = this._computeModelItem({
+        isRoot: true,
+        type: baseType
+      });
+      this._setModel(model);
+    },
+
+    /**
+     * To be called when the model is not yet created and should be created for
+     * an object with a single property
+     */
+    _addProperty: function() {
+      this.__createItemType('object');
+    },
+
+    _addItem: function() {
+      this.__createItemType('array');
+    },
+
+    __createItemType: function(type) {
+      var base = {
+        isRoot: false
+      };
+      if (this._lastAddedType) {
+        base.type = this._lastAddedType;
+      }
+      var property = this._computeModelItem(base);
+      var propertyName;
+      if (type === 'object') {
+        propertyName = 'properties';
+      } else {
+        propertyName = 'items';
+      }
+      if (!this.model) {
+        var model = this._computeModelItem({
+          type: type,
+          isRoot: true,
+        });
+        model[propertyName].push(property);
+        this._setModel(model);
+      } else {
+        this.push(['model', propertyName], property);
+      }
+    },
+    /**
+     * Removes a property from the view model.
+     * Called when editor element fires `remove-property` custom event.
+     */
+    _removeProperty: function(e) {
+      var index = e.model.get('index');
+      var model = this.model;
+      var property;
+      if (model.isObject) {
+        property = 'properties';
+      } else {
+        property = 'items';
+      }
+      if (model[property].length === 1) {
+        this._setModel(undefined);
+      } else {
+        this.splice(['model', property], index, 1);
+      }
+    },
+    /**
+     * Handles model change and creates a value.
+     * Note, this is async task and it's debounced for 10 ms because the model
+     * can notify change lot of times for single change (depending on the model
+     * structure).
+     */
+    _modelChanged: function(opened, record) {
+      if (!opened || !record || !record.path) {
+        return;
+      }
+      if (record.path.indexOf('length') !== -1) {
+        return;
+      }
+      this.debounce('model-to-value', function() {
+        this._setValueFromModel();
+      }, 10);
+    },
+    /**
+     * Sets the `value` property as a result of computation of a value from
+     * current model.
+     * This sets `_internalValueChage` property that prevents computation of
+     * the model.
+     */
+    _setValueFromModel: function() {
+      var model = this.model;
+      var value = this._computeJson(model);
+      value = JSON.stringify(value);
+      this._internalValueChage = true;
+      this.set('value', value);
+      this._internalValueChage = false;
+    },
+    /**
+     * Computes JavaScript object from the model as a representation of the
+     * value returned by this editor.
+     * @param {Array} model Current state of the model.
+     * @return {Object} JavaScript object computed from the model.
+     */
+    _computeJson: function(model) {
+      var result = model.isArray ? [] : {};
+
+      var properties;
+      if (model.isArray) {
+        if (!model.items || !model.items.length) {
+          return result;
+        }
+        properties = model.items;
+      } else {
+        if (!model.properties || !model.properties.length) {
+          return result;
+        }
+        properties = model.properties;
+      }
+
+      properties.forEach(function(item) {
+        var _value;
+        if (item.isObject || item.isArray) {
+          _value = this._computeJson(item);
+        } else {
+          _value = this._valueWithType(item);
+        }
+        if (model.isArray) {
+          result[result.length] = _value;
+        } else {
+          result[item.name] = _value;
+        }
+      }, this);
+      return result;
+    },
+    /**
+     * Computes correct type of an object.
+     * All values in the model are string. This function deserializes values
+     * depending on `value` property of the model.
+     *
+     * For example, result of calling this function for the following model:
+     * ```
+     * {
+     *   type: integer,
+     *   value: "1235"
+     * }
+     * ```
+     *
+     * is:
+     *
+     * ```
+     * 1235 // typeof "number"
+     * ```
+     *
+     * @param {Object} model The model from which it takes `value` and `type`
+     * properties.
+     * @return {any} The `value` property but with type.
+     */
+    _valueWithType: function(model) {
+      var result;
+      switch (model.type) {
+        case 'integer':
+        case 'float':
+          result = Number(model.value);
+          if (result !== result) {
+            result = model.value;
+          }
+          break;
+        case 'boolean':
+          var type = typeof model.value;
+          if (type === 'boolean') {
+            result = model.value;
+          } else {
+            if (model.value === 'true') {
+              result = true;
+            } else {
+              result = false;
+            }
+          }
+          break;
+        case 'null':
+          result = null;
+          break;
+        default:
+          result = model.value;
+      }
+
+      return result;
+    },
+
+    // Updates the model if the value attribute change from the outside.
+    _valueChanged: function(opened, value) {
+      if (!opened || this._internalValueChage) {
+        return;
+      }
+      var json;
+      if (typeof value === 'string') {
+        try {
+          json = JSON.parse(value);
+        } catch (e) {
+          return;
+        }
+      } else {
+        json = value;
+      }
+      var model = this._modelFromValue(json);
+      this._setModel(model);
+    },
+    /**
+     * Generates a view model from a value property.
+     * @param {Object} obj JavaScript object or array.
+     */
+    _modelFromValue: function(obj) {
+      var type = this._detectObjectType(obj);
+      if (!(type === 'object' || type === 'array')) {
+        console.info('body-json-editor can only support objects or arrays.');
+        return;
+      }
+      var model = this._computeValueProperyModel(obj);
+      model.isRoot = true;
+      return model;
+    },
+    /**
+     * Computes a model for a property
+     * @param {Object} value RAML type definition
+     * @param {?String} key A key name for this type
+     * @return {Object} Computed mode for the type.
+     */
+    _computeValueProperyModel: function(value, key) {
+      var baseType = this._detectObjectType(value);
+      var baseModel = this._computeModelItem({
+        type: baseType,
+        isRoot: false,
+        name: key || '',
+        value: value || ''
+      });
+
+      if (baseModel.isArray) {
+        value.forEach(function(item) {
+          var _model = this._computeValueProperyModel(item);
+          if (_model.isBoolean) {
+            _model.value = String(_model.value);
+          }
+          baseModel.items.push(_model);
+        }, this);
+      } else if (baseModel.isObject) {
+        Object.keys(value).forEach(function(key) {
+          var _model = this._computeValueProperyModel(value[key], key);
+          if (_model.isBoolean) {
+            _model.value = String(_model.value);
+          }
+          baseModel.properties.push(_model);
+        }, this);
+      }
+      return baseModel;
+    },
+
+    /**
+     * @param {any} obj Object to test for a type.
+     * @return {String} type of object.
+     */
+    _detectObjectType: function(obj) {
+      if (obj === undefined || obj === null) {
+        return 'null';
+      }
+      var type = typeof obj;
+      switch (type) {
+        case 'number':
+          if (!Number.isInteger(obj)) {
+            return 'float';
+          }
+          return type;
+        case 'string':
+          var _test = Number(obj);
+          if (_test !== _test) {
+            // not a number
+            return type;
+          }
+          if (!Number.isInteger(_test)) {
+            return 'float';
+          }
+          return 'number';
+        case 'boolean':
+          return type;
+      }
+      if (this._isArray(obj)) {
+        return 'array';
+      }
+      return 'object';
+    },
+
+    _updateLastUsedType: function(e) {
+      this._lastAddedType = e.detail.value;
+    },
+
+    /**
+     * Computes the data model from the RAML type definition.
+     *
+     * TODO: Support union types.
+     *
+     * @param {Object} type RAML's type definition
+     * @return {Object} The data model.
+     */
+    _computeTypeModel: function(type) {
+      if (!type) {
+        return;
+      }
+      var dataType = type.type;
+      switch (dataType) {
+        case 'object':
+        case 'enum':
+          return this._computeObjectTypeModel(type);
+        case 'array':
+          return this._computeArrayTypeModel(type);
+      }
+    },
+    /**
+     * Computes data model for an object.
+     * @param {Object} type RAML type definition.
+     * @return {Array} Model for the type.
+     */
+    _computeObjectTypeModel: function(type) {
+      var result = {
+        defaultsMapping: {},
+        typesMapping: {},
+        keys: [],
+        valuesMapping: {},
+        type: type.type,
+        isArray: false,
+        isObject: true,
+        properties: {}
+      };
+
+      if (!type.properties) {
+        return result;
+      }
+      var typeProperties = type.properties;
+      if (!(typeProperties instanceof Array)) {
+        typeProperties = this._obj2array(typeProperties);
+      }
+
+      for (var i = 0, size = typeProperties.length; i < size; i++) {
+        var property = typeProperties[i];
+        var key = property.key;
+        result.keys.push(key);
+        result.typesMapping[key] = property.type;
+
+        if (property.type !== 'object') {
+          var typeDefault = this._propertyDefault(property);
+          if (typeDefault) {
+            result.defaultsMapping[key] = typeDefault;
+          }
+          var typeValues = this._propertyValues(property);
+          if (typeValues && typeValues.length) {
+            result.valuesMapping[key] = typeValues;
+          }
+        }
+        var model = this._computeTypeModel(property);
+        if (model) {
+          result.properties[key] = model;
+        }
+      }
+      return result;
+    },
+    /**
+     * Computes data model for an array.
+     * @param {Object} type RAML type definition.
+     * @return {Array} Model for the type.
+     */
+    _computeArrayTypeModel: function(type) {
+      var result = {
+        types: [],
+        type: type.type,
+        isArray: true,
+        isObject: false
+      };
+
+      var items = type.items;
+      if (this._isArray(items)) {
+        items = items[0];
+      }
+      if (typeof items === 'string') {
+        result.types.push(items);
+        return result;
+      }
+      if (items.type) {
+        result.types.push(items.type);
+        if (items.type === 'object' && items.properties) {
+          result.properties = {
+            '': this._computeTypeModel(items)
+          };
+        }
+      }
+
+      return result;
+    },
+    /**
+     * Computes a default value for a RAML type.
+     * @param {Object} type RAML type definition.
+     * @return {String} The default value if any.
+     */
+    _propertyDefault: function(type) {
+      if (type.default) {
+        return type.default;
+      }
+      if (type.required && type.examples) {
+        return type.examples[0];
+      }
+    },
+    /**
+     * Computes a list of possible values for the type.
+     * The list is computed from `default` and `examples` properties.
+     *
+     * @param {Object} type RAML type definition.
+     * @return {Array} List of all possible values.
+     */
+    _propertyValues: function(type) {
+      var result = [];
+      if (type.default) {
+        result.push(type.default);
+      }
+      if (type.examples) {
+        result = result.concat(type.examples);
+      }
+      return result;
+    },
+    /**
+     * Transforms object to an array and add a `key` on the items.
+     */
+    _obj2array: function(obj) {
+      if (obj instanceof Array) {
+        return obj;
+      }
+      return Object.keys(obj).map(function(key) {
+        if (Object(obj[key]) === obj[key]) {
+          obj[key].key = key;
+        }
+        return obj[key];
+      });
+    }
+  });
+  </script>
+</dom-module>

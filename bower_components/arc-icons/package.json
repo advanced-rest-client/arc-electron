@@ -1,0 +1,27 @@
+{
+  "name": "arc-icons",
+  "version": "1.0.23",
+  "license": "LICENSE.md",
+  "description": "An icons set for Advanced REST client.",
+  "devDependencies": {
+    "polymer-cli": "^0.17.0"
+  },
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "private": false,
+  "main": [
+    "arc-icons.html"
+  ],
+  "author": "The Advanced REST client authors",
+  "scripts": {
+    "serve": "node_modules/.bin/polymer serve",
+    "lint": "node_modules/.bin/polymer lint arc-icons.html",
+    "deps": "npm install --quiet && bower install --quiet",
+    "update-deps": "npm update --quiet && bower update --quiet"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/advanced-rest-client/arc-icons.git"
+  }
+}

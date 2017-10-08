@@ -1,0 +1,187 @@
+<!--
+@license
+Copyright 2017 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<script>
+
+window.ArcBehaviors = window.ArcBehaviors || {};
+/**
+ * A set of common properties and function used by all elements in the JSON editor.
+ *
+ * @polymerBehavior ArcBehaviors.BodyJsonEditorBehavior
+ */
+window.ArcBehaviors.BodyJsonEditorBehavior = {
+  properties: {
+    name: {
+      type: String,
+      notify: true,
+      value: ''
+    },
+
+    value: {
+      type: String,
+      notify: true
+    },
+    // Model for the view.
+    model: {
+      type: Object,
+      notify: true
+    },
+    // Data model for the view.
+    typeModel: Object,
+    // Display form in the narrow layout
+    narrow: {
+      type: Boolean,
+      reflectToAttribute: true,
+      value: false
+    }
+  },
+
+  observers: [
+  ],
+
+  _computeModelItem: function(base) {
+    base = base || {};
+    var result = {
+      value: base.value || '',
+      name: base.name || ''
+    };
+    var type = this._computeModelItemTypeProperties(base.type);
+    result = Object.assign(result, type);
+    if (result.isComplex) {
+      result.isRoot = base.isRoot;
+    }
+    if (result.isObject) {
+      result.properties = [];
+    } else if (result.isArray) {
+      result.items = [];
+    } else if (result.isEnum) {
+      result.enum = [];
+    }
+
+    if (base.properties && base.properties.length) {
+      result.properties = base.properties;
+    }
+    if (base.items && base.items.length) {
+      result.items = base.items;
+    }
+    if (base.enum && base.enum.length) {
+      result.enum = base.enum;
+    }
+
+    switch (true) {
+      case result.isString: result.inputType = 'text'; break;
+      case result.isNumber:
+        result.inputType = 'number';
+        switch (result.type) {
+          case 'float':
+            result.inputStep = 0.00001;
+            break;
+          case 'integer':
+          case 'number':
+            result.inputStep = 1;
+            break;
+        }
+        break;
+      default:
+        result.inputType = 'text';
+    }
+    return result;
+  },
+  /**
+   * Computes model item properties related to data type.
+   * @param {?String} type Type name
+   * @return {Object} Map of model properties related to a type.
+   */
+  _computeModelItemTypeProperties: function(type) {
+    var result = {
+      hasType: true,
+      isObject: false,
+      isArray: false,
+      isNull: false,
+      isBoolean: false,
+      isNumber: false,
+      isString: false,
+      isDate: false,
+      isEnum: false,
+      isComplex: false,
+      isPrimitive: true,
+      type: type
+    };
+    switch (type) {
+      case 'string': result.isString = true; break;
+      case 'null': result.isNull = true; break;
+      case 'boolean': result.isBoolean = true; break;
+      case 'null': result.isNull = true; break;
+      case 'enum': result.isEnum = true; break;
+      case 'array':
+        result.isArray = true;
+        result.isComplex = true;
+        result.isPrimitive = false;
+        break;
+      case 'number':
+      case 'integer':
+      case 'float':
+        result.isNumber = true;
+        break;
+      case 'object':
+        result.isObject = true;
+        result.isComplex = true;
+        result.isPrimitive = false;
+        break;
+      default:
+        result.hasType = false;
+        result.isPrimitive = false;
+    }
+    return result;
+  },
+  /**
+   * Detects if passed object is an array.
+   * @param {any} obj Object to test
+   * @return {Boolean} True if passed ibject is an array.
+   */
+  _isArray: function(obj) {
+    return Object.prototype.toString.apply(obj) === '[object Array]';
+  },
+  /**
+   * Deep clones an object.
+   * @param {any} obj An object to be cloned.
+   * @return {any} Copy of an object.
+   */
+  _clone: function(obj) {
+    var result;
+    var i;
+    if (typeof obj !== 'object') {
+      return obj;
+    }
+    if (!obj) {
+      return obj;
+    }
+
+    if (this._isArray(obj)) {
+      result = [];
+      for (i = 0; i < obj.length; i += 1) {
+        result[i] = this._clone(obj[i]);
+      }
+      return result;
+    }
+
+    result = {};
+    for (i in obj) {
+      if (obj.hasOwnProperty(i)) {
+        result[i] = this._clone(obj[i]);
+      }
+    }
+    return result;
+  }
+};
+</script>

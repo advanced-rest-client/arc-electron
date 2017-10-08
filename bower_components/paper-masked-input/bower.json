@@ -1,0 +1,53 @@
+{
+  "name": "paper-masked-input",
+  "description": "Material design password field",
+  "license": "Apache-2.0 OR CC-BY-4.0",
+  "authors": [
+    "The Advanced REST Client authors"
+  ],
+  "keywords": [
+    "web-components",
+    "polymer",
+    "input",
+    "password",
+    "material design",
+    "paper elements"
+  ],
+  "private": false,
+  "main": [
+    "paper-masked-input.html"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:advanced-rest-client/paper-masked-input.git"
+  },
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.0.0",
+    "arc-icons": "advanced-rest-client/arc-icons#^1.0.0",
+    "paper-input": "PolymerElements/paper-input#^1.1.17",
+    "paper-icon-button": "PolymerElements/paper-icon-button#^1.1.2",
+    "paper-tooltip": "PolymerElements/paper-tooltip#<2"
+  },
+  "devDependencies": {
+    "iron-component-page": "polymerelements/iron-component-page#^1.0.0",
+    "web-component-tester": "^4.0.0",
+    "paper-styles": "polymerelements/paper-styles#^1.0.2",
+    "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^1.0.0",
+    "iron-test-helpers": "PolymerElements/iron-test-helpers#^1.4.0",
+    "test-fixture": "PolymerElements/test-fixture#^3.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0",
+    "iron-icon": "PolymerElements/iron-icon#^1.0.0",
+    "iron-icons": "PolymerElements/iron-icons#^1.0.0"
+  },
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tasks"
+  ],
+  "version": "1.0.7",
+  "resolutions": {
+    "test-fixture": "^3.0.0"
+  }
+}

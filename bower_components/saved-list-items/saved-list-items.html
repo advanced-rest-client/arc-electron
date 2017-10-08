@@ -1,0 +1,571 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-list/iron-list.html">
+<link rel="import" href="../paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../iron-dropdown/iron-dropdown.html">
+<link rel="import" href="../paper-styles/shadow.html">
+<link rel="import" href="../iron-scroll-threshold/iron-scroll-threshold.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../date-time/date-time.html">
+<link rel="import" href="../http-method-label/http-method-label.html">
+<link rel="import" href="../paper-item/paper-icon-item.html">
+<link rel="import" href="../paper-item/paper-item-body.html">
+<link rel="import" href="../paper-tooltip/paper-tooltip.html">
+<link rel="import" href="../paper-toast/paper-toast.html">
+<!--
+A `<saved-list-items>` element renders a list of fistory items.
+
+## Data model
+
+Each history item requires the following properties:
+
+-   `method` (String) HTTP method of the request
+-   `url` (String) The URL of the request
+-   `name` (String) Request name
+
+## Example
+
+```html
+<saved-list-items id="saved" items="[[list]]"></saved-list-items>
+```
+
+## List handing
+
+The element uses `<iron-list>` element that creates a virtual list containing
+limited number of child elements. It allows to load huge number of requests
+without harming the performance.
+
+## Adding pagination
+
+Simplest solution is to override the `items` array with new values.
+It causes list reset and the list jumps to the fisrt element. To avoid this behavior use element's `addItems` function.
+
+### Styling
+`<history-list-items>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--saved-list-items` | Mixin applied to each list item | `{}`
+`--saved-list-items-url-label` | Mixin applied to the URL label element | `{}`
+`--saved-list-items-name-label` | Mixin applied to the request name label element | `{}`
+`--saved-list-items-method-label` | Mixin applied to the method label element. | `{}`
+`--saved-list-items-method-label-container` | Mixin applied to the method label parent container element. | `{}`
+`--saved-list-item` | Mixin applied to the list item | `{}`
+`--saved-list-item-selected` | Mixin applied to the selected list item | `{}`
+`--saved-list-item-selected-background-color` | Selection color for list items. | `#E0E0E0`
+`--saved-list-items-selection-counter` | Mixin applied to the selection counter | `{}`
+`--saved-list-items-search-input` | Mixin applied to the search input | `{}`
+`--saved-list-items-header` | Mixin applied to the list header options section. | `{}`
+`--saved-list-items-list` | Mixin applied to the list (`iron-list`) | `{}`
+`--action-button` | Mixin apllied to the primary action buttons | `{}`
+`--secondary-action-button-color` | Color of the secondary action button | `--primary-color`
+`--arc-font-body1` | Mixin applied to the element | `{}`
+
+@group UI Elements
+@element saved-list-items
+@demo demo/index.html
+-->
+<dom-module id="saved-list-items">
+  <template>
+    <style>
+    :host {
+      display: block;
+      @apply --arc-font-body1;
+      @apply --layout-vertical;
+      @apply --saved-list-items;
+    }
+
+    .saved-item > paper-icon-item {
+      @apply --saved-list-item;
+    }
+
+    .saved-item.selected > paper-icon-item {
+      background-color: var(--saved-list-item-selected-background-color, #E0E0E0);
+      @apply --saved-list-item-selected;
+    }
+
+    http-method-label {
+      margin-right: 8px;
+      @apply --saved-list-items-method-label;
+    }
+
+    paper-item-body {
+      @apply --saved-list-items-body;
+    }
+
+    .method-label {
+      @apply --saved-list-items-method-label-container;
+    }
+
+    .url-label {
+      @apply --saved-list-items-url-label;
+    }
+
+    .name {
+      cursor: text;
+      @apply --saved-list-items-name-label;
+    }
+
+    .name-change-popover {
+      background-color: white;
+      padding: 16px;
+      @apply --shadow-elevation-4dp;
+    }
+
+    .table-options {
+      @apply --layout-horizontal;
+      @apply --layout-center;
+      padding-left: 16px;
+      padding-bottom: 24px;
+      margin: 24px 0;
+      @apply --saved-list-items-header;
+    }
+
+    .table-options .hiddable {
+      opacity: 1;
+      transition: opacity 0.2s cubic-bezier(0.47, 0, 0.75, 0.72);
+    }
+
+    .table-options.inactive .hiddable {
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    .main-action {
+      @apply --action-button;
+      height: 36px;
+      font-size: 14px;
+    }
+
+    .secondary-action {
+      color: var(--secondary-action-button-color, --primary-color);
+      height: 36px;
+      font-size: 14px;
+    }
+
+    .selected-counter {
+      display: inline-block;
+      margin-left: 8px;
+      font-size: 16px;
+      @apply --saved-list-items-selection-counter;
+    }
+
+    .selected-actions {
+      margin-left: 24px;
+      @apply --layout-flex;
+    }
+
+    .search {
+      margin-right: 12px;
+    }
+
+    .search > paper-input {
+      @apply --saved-list-items-search-input;
+    }
+
+    iron-list {
+      flex: 1 1 auto;
+      @apply --saved-list-items-list;
+    }
+
+    .empty-info {
+      margin-left: 16px;
+      font-size: 16px;
+      @apply --empty-info;
+    }
+    </style>
+    <section class$="table-options [[_computeOptionsTableClass(hasSelection)]]">
+      <span>
+        <paper-checkbox class="select-all" checked="{{allSelected}}"></paper-checkbox>
+        <paper-tooltip animation-delay="200" position="right" offset="0">Select / deselect all</paper-tooltip>
+      </span>
+      <span class="selected-counter hiddable">[[selectedItems.length]] item(s) selected</span>
+      <div class="selected-actions hiddable">
+        <paper-button class="main-action" data-action="export-all" raised on-tap="_exportSelected">Export</paper-button>
+        <paper-button class="secondary-action" data-action="delete-all" on-tap="_deleteSelected">Delete</paper-button>
+      </div>
+      <div class="search">
+        <paper-input label="Search" no-label-float value="{{keyword}}" type="search" on-search="_searchList"></paper-input>
+      </div>
+    </section>
+    <template is="dom-if" if="[[empty]]">
+      <p class="empty-info">No items to display.</p>
+    </template>
+    <iron-list id="list" items="[[items]]" selected-items="{{selectedItems}}" multi-selection selection-enabled hidden$="[[empty]]">
+      <template>
+        <div class$="saved-item [[_computeRowClass(selected)]]">
+          <paper-icon-item tabindex$="[[tabIndex]]" aria-label$="Select/Deselect [[item.url]]">
+            <paper-checkbox data-action="select-item" checked="{{selected}}" item-icon></paper-checkbox>
+            <span class="method-label">
+              <http-method-label method="[[item.method]]"></http-method-label>
+            </span>
+            <paper-item-body two-line>
+              <div class="url-label">[[item.url]]</div>
+              <div secondary><span data-action="name-edit" class="name" on-tap="_editName">[[item.name]]</span></div>
+            </paper-item-body>
+            <paper-button class="secondary-action" data-action="item-detail" on-tap="_requestDetails">Details</paper-button>
+            <paper-button class="main-action" data-action="open-item" on-tap="_navigateItem" raised>Open</paper-button>
+          </paper-icon-item>
+        </div>
+      </template>
+    </iron-list>
+    <iron-scroll-threshold id="scrollTheshold" lower-threshold="[[threshold]]" on-lower-threshold="_thresholdReached" scroll-target="[[_scrollTarget]]"></iron-scroll-threshold>
+    <iron-dropdown id="nameChange" always-on-top focus-target="[[_nameInput]]" on-iron-overlay-closed="_nameEditorClosed">
+      <div class="dropdown-content name-change-popover">
+        <paper-input label="Request name" id="nameChangeInput" on-keydown="_nameKeyDown"></paper-input>
+      </div>
+    </iron-dropdown>
+    <paper-toast text="Select list item first" id="noSelectionToast"></paper-toast>
+  </template>
+  <script>
+  Polymer({
+    is: 'saved-list-items',
+    /**
+     * Fired when the user clicked on a delete button on an item or delete
+     * selected in the table header.
+     *
+     * The event does not bubbles.
+     *
+     * @event list-items-delete
+     * @param {Array} items List of items to be deleted. Each item is a request
+     * object as passed to the `items` array.
+     */
+    /**
+     * Fires when the user selects to export currently selected items.
+     *
+     * The event does not bubbles.
+     *
+     * @event list-items-export
+     * @param {Array} items List of items to be deleted. Each item is a request
+     * object as passed to the `items` array.
+     */
+    /**
+     * Fired when the user search the list.
+     *
+     * The event does not bubbles.
+     *
+     * @event list-items-search
+     * @param {String} q Search query. Can be empty when cleared.
+     */
+    /**
+     * Fired when single item selection has changed. It isn't fired when multiple
+     * selection has changed at once.
+     *
+     * The event does not bubbles.
+     *
+     * @event list-items-selection-changed
+     * @param {Object} item The request object
+     * @param {Number} index Index of the item on the list
+     * @param {Boolean} selected Whether the item is selected or not.
+     */
+    /**
+     * Fired when the user clicked on an open button on an item.
+     *
+     * The event does not bubbles.
+     *
+     * @event list-item-open
+     * @param {Object} item An object associated with this item.
+     * @param {Number} index Object's index in the list.
+     */
+    /**
+     * Fired when the user nearly scrolled to the ened of the list.
+     * It usually means that the app should load more results.
+     *
+     * The event does not bubbles.
+     *
+     * @event list-items-threshold
+     */
+    /**
+     * Fired when the name of an item has changed in the UI and the changed
+     * schold be commited to the datastore.
+     *
+     * The event does not bubbles.
+     *
+     * @event list-item-name-changed
+     * @param {Object} item An object associated with this item.
+     * @param {Number} index Object's index in the list.
+     */
+    /**
+     * Fired when the "request details" has been requested via this UI.
+     * @event list-item-details
+     * @param {Object} item An object associated with this item.
+     */
+    properties: {
+      // The list of saved items to render.
+      items: Array,
+      // List of selected items on the list.
+      selectedItems: {
+        type: Array,
+        notify: true
+      },
+      /**
+       * A list lower treshold point when the `list-item-open` is fired.
+       */
+      threshold: {
+        type: Number,
+        value: 80
+      },
+      /**
+       * Computed value of if current list has a selection.
+       */
+      hasSelection: {
+        type: Boolean,
+        value: false,
+        computed: '_computeHasSelection(selectedItems.length)',
+        notify: true
+      },
+      // Reference to the name change input.
+      _nameInput: {
+        type: HTMLElement,
+        value: function() {
+          return this.$.nameChangeInput;
+        }
+      },
+      // True to select / deselect all elements from the list
+      allSelected: Boolean,
+      // Filter keyword for search
+      keyword: {
+        type: String,
+        notify: true
+      },
+      // List scroll target for the threshold.
+      _scrollTarget: {
+        type: Object,
+        value: function() {
+          return this.$.list;
+        }
+      },
+      /**
+       * If set the empty message will appear instead of list.
+       * This property is not computed by the element because of complex
+       * conditions that exists outside the scope of this element.
+       */
+      empty: {
+        type: Boolean,
+        value: false
+      }
+    },
+
+    listeners: {
+      'iron-select': '_onSelectItem',
+      'iron-deselect': '_onSelectItem',
+      'iron-activate': '_onSelectItem',
+      'iron-changed': '_onSelectItem',
+      'iron-change': '_onSelectItem'
+    },
+
+    observers: [
+      '_sizeChanged(items.length)',
+      '_toggleSelectAll(allSelected)'
+    ],
+
+    hostAttributes: {
+      'role': 'list'
+    },
+    // Notifies the list about the change. It re-renders the items.
+    refresh: function() {
+      this.$.list.fire('iron-resize');
+    },
+    // Clears scroll treshold triggers when size of the items array change.
+    _sizeChanged: function(length) {
+      if (length) {
+        this.async(() => {
+          this.$.scrollTheshold.clearTriggers();
+          this.refresh();
+        }, 1);
+      }
+    },
+    // Computes list item row class
+    _computeRowClass: function(selected) {
+      return selected ? 'selected' : '';
+    },
+
+    // Called to request details panel for the list item
+    _requestDetails: function(e) {
+      var item = e.model.get('item');
+      this.fire('list-item-details', {
+        item: item
+      }, {
+        bubbles: false
+      });
+    },
+
+    // Handler for tap action on the "open" button
+    _navigateItem: function(e) {
+      this.fire('list-item-open', {
+        item: e.model.get('item'),
+        index: e.model.get('index')
+      }, {
+        bubbles: false
+      });
+    },
+    // Fires the `list-items-threshold` to request for more data
+    _thresholdReached: function() {
+      this.fire('list-items-threshold', {}, {
+        bubbles: false
+      });
+    },
+    // Computes `hasSelection` property based on selection length
+    _computeHasSelection: function(length) {
+      return !!length;
+    },
+    // Opens the name change popover over clicked name
+    _editName: function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var name = e.model.get('item.name');
+
+      this.__currentEditModel = e.model;
+      this._nameInput.value = name;
+
+      e = Polymer.dom(e);
+      this.$.nameChange.positionTarget = e.localTarget.parentElement ||
+        e.localTarget;
+      this.$.nameChange.opened = true;
+    },
+    // Handles keydown event in name input. For enter it commits the change
+    _nameKeyDown: function(e) {
+      if (e.keyCode !== 13) {
+        return;
+      }
+      this._commitNameChange();
+    },
+    // Updates model with new name and sends `list-item-name-changed` event
+    _commitNameChange: function() {
+      var model = this.__currentEditModel;
+      var value = this._nameInput.value;
+      model.set('item.name', value);
+      this.fire('list-item-name-changed', {
+        item: model.get('item'),
+        index: model.get('index')
+      }, {
+        bubbles: false
+      });
+      this.$.nameChange.opened = false;
+    },
+    // Called when the name editor popover was closed
+    _nameEditorClosed: function() {
+      this.__currentEditModel = null;
+      this._nameInput.value = '';
+    },
+    /**
+     * Use this method to add new items to the `items` array.
+     * It will prohibit list jumping while changing the list object manually
+     *
+     * @param {Array} items List of items to add.
+     */
+    addItems: function(items) {
+      if (!items || !items.length) {
+        return;
+      }
+      if (!this.items) {
+        return this.set('items', items);
+      }
+      items.forEach(item => this.push('items', item));
+    },
+
+    /**
+     * Toggles selection of of all itmes on the list.
+     * @param {Boolean} allSelected Current state of the `allSelected` property.
+     */
+    _toggleSelectAll: function(allSelected) {
+      var selectedItems = this.selectedItems;
+      var items = this.items;
+      if (!selectedItems || !items) {
+        return;
+      }
+      if (allSelected) {
+        if (selectedItems.length === items.length) {
+          return;
+        }
+        items.forEach(item => this.$.list.selectItem(item));
+      } else {
+        if (selectedItems.length === 0) {
+          return;
+        }
+        items.forEach(item => this.$.list.deselectItem(item));
+      }
+    },
+
+    _computeOptionsTableClass: function(hasSelection) {
+      return hasSelection ? '' : ' inactive';
+    },
+    /**
+     * Informs hosting application to delete currently selected items.
+     */
+    _deleteSelected: function() {
+      var selected = this.selectedItems;
+      if (!selected || !selected.length) {
+        this.$.noSelectionToast.opened = true;
+        return;
+      }
+      this.__deleteItems(selected);
+    },
+    // Fires `list-items-delete` event to inform hosring application to remove items.
+    __deleteItems: function(items) {
+      this.fire('list-items-delete', {
+        items: items
+      }, {
+        bubbles: false
+      });
+    },
+    // Fires `list-items-export` event to export current selection.
+    _exportSelected: function() {
+      var selected = this.selectedItems;
+      if (!selected || !selected.length) {
+        this.$.noSelectionToast.opened = true;
+        return;
+      }
+      this.fire('list-items-export', {
+        items: selected,
+      }, {
+        bubbles: false
+      });
+    },
+    // Fires the `list-items-search` with current filter value.
+    _searchList: function() {
+      this.fire('list-items-search', {
+        q: this.keyword,
+      }, {
+        bubbles: false
+      });
+    },
+    // Handler for the selection related events.
+    _onSelectItem: function(e) {
+      e = Polymer.dom(e);
+      var model = this.$.list.modelForElement(e.rootTarget);
+      if (!model) {
+        return;
+      }
+      var item = model.get('item');
+      var selected = e.rootTarget.checked;
+      if (selected) {
+        this.$.list.selectItem(item);
+      } else {
+        this.$.list.deselectItem(item);
+      }
+      this.fire('list-items-selection-changed', {
+        item: item,
+        index: model.get('index'),
+        selected: selected
+      }, {
+        bubbles: false
+      });
+    }
+  });
+  </script>
+</dom-module>

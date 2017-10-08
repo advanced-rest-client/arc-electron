@@ -1,0 +1,13 @@
+{
+  "private": false,
+  "devDependencies": {
+    "gulp": "^3.8.5",
+    "web-component-tester": "^4.0.0"
+  },
+  "scripts": {
+    "test": "gulp test:local"
+  },
+  "engines": {
+    "node": ">=0.10.0"
+  }
+}

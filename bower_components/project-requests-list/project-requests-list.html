@@ -1,0 +1,485 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../dom-reorderer/dom-reorderer.html">
+<link rel="import" href="../iron-dropdown/iron-dropdown.html">
+<link rel="import" href="../paper-styles/shadow.html">
+<link rel="import" href="../paper-tooltip/paper-tooltip.html">
+<link rel="import" href="../paper-toast/paper-toast.html">
+<link rel="import" href="../paper-item/paper-icon-item.html">
+<link rel="import" href="../paper-item/paper-item-body.html">
+<link rel="import" href="../http-method-label/http-method-label.html">
+
+<!--
+A list of requests in the project details view.
+
+The list doesn't offer any logic related to data models. Actions peformed by the
+user have to be handled by event handlers and performed in hosting application.
+
+Note: **All events fired by this element do not bubbles**.
+
+### Example
+```html
+<project-requests-list items="[...]"></project-requests-list>
+<script>
+document.querySelector('project-requests-list')
+.addEventListener('list-items-delete', function(e) {
+  console.log('Items to delete:', e.detail.items);
+});
+</script>
+```
+
+### Styling
+
+`<project-requests-list>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--project-requests-list` | Mixin applied to the element | `{}`
+`--project-requests-list-item` | Mixin applied to each item on the list | `{}`
+`--project-requests-list-item-selected-background-color` | Background color of selected item | `#E0E0E0`
+`--project-requests-list-item-selected` | Mixin applied to selected item | `{}`
+`--action-button` | Mixin apllied to the primary action buttons | `{}`
+`--secondary-action-button-color` | Color of the secondary action button | `--primary-color`
+`--primary-color` | Color of the secondary action buttons | ``
+`--arc-font-body1` | Mixin applied to the labels in the table header | `{}`
+`--project-requests-list-method-label` | Mixin applied to the `http-method-label` element | `{}`
+`--project-requests-list-method-label-container` Mixin applied to the method label parent container element. | `{}`
+`--project-requests-list-url-label` | Mixin applied to the URL label element | `{}`
+`--project-requests-list-name-label` | Mixin applied to the request name label element | `{}`
+`--project-requests-list-body` | Mixn applied to the URL and name container | `{}`
+`--project-requests-list-header` | Mixin applied to the list header options section. | `{}`
+`--project-requests-list-selection-counter` | Mixin applied to the selection counter | `{}`
+`--project-requests-list-search-input` | Mixin applied to the search input | `{}`
+
+@group UI Elements
+@element project-requests-list
+@demo demo/index.html
+-->
+<dom-module id="project-requests-list">
+  <template strip-whitespace>
+    <style>
+    :host {
+      display: block;
+      @apply --layout-vertical;
+      @apply --project-requests-list;
+    }
+
+    .history-item {
+      z-index: 0;
+    }
+
+    .history-item.dragging {
+      z-index: 1;
+      background-color: #fff;
+    }
+
+    .history-item > paper-icon-item {
+      @apply --project-requests-list-item;
+    }
+
+    .history-item.selected > paper-icon-item {
+      background-color: var(--project-requests-list-item-selected-background-color, #E0E0E0);
+      @apply --project-requests-list-item-selected;
+    }
+
+    http-method-label {
+      margin-right: 12px;
+      @apply --project-requests-list-method-label;
+    }
+
+    paper-item-body {
+      @apply --project-requests-list-body;
+    }
+
+    .method-label {
+      @apply --project-requests-list-method-label-container;
+    }
+
+    .url-label {
+      @apply --project-requests-list-url-label;
+    }
+
+    .name {
+      cursor: text;
+      @apply --project-requests-list-name-label;
+    }
+
+    .name-change-popover {
+      background-color: white;
+      padding: 16px;
+      @apply --shadow-elevation-4dp;
+    }
+
+    .table-options {
+      @apply(--layout-horizontal);
+      @apply(--layout-center);
+      padding-left: 16px;
+      margin: 24px 0;
+      @apply --project-requests-list-header;
+    }
+
+    .table-options .hiddable {
+      opacity: 1;
+      transition: opacity 0.2s cubic-bezier(0.47, 0, 0.75, 0.72);
+    }
+
+    .table-options.inactive .hiddable {
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    .main-action {
+      @apply --action-button;
+      height: 36px;
+      font-size: 14px;
+    }
+
+    .secondary-action {
+      color: var(--secondary-action-button-color, --primary-color);
+      height: 36px;
+      font-size: 14px;
+    }
+
+    .selected-counter {
+      @apply --arc-font-body1;
+      display: inline-block;
+      margin-left: 8px;
+      font-size: 16px;
+      @apply --project-requests-list-selection-counter;
+    }
+
+    .selected-actions {
+      margin-left: 24px;
+      @apply --layout-flex;
+    }
+
+    .search {
+      margin-right: 12px;
+    }
+
+    .search > paper-input {
+      @apply --project-requests-list-search-input;
+    }
+    </style>
+    <section class$="table-options [[_computeOptionsTableClass(hasSelection)]]">
+      <span>
+        <paper-checkbox class="select-all" checked="{{allSelected}}"></paper-checkbox>
+        <paper-tooltip animation-delay="200" position="right" offset="0">Select / deselect all</paper-tooltip>
+      </span>
+      <span class="selected-counter hiddable">[[selectedItems.length]] item(s) selected</span>
+      <div class="selected-actions hiddable">
+        <paper-button class="main-action" data-action="export-all" raised on-tap="_exportSelected">Export</paper-button>
+        <paper-button class="secondary-action" data-action="delete-all" on-tap="_deleteSelected">Delete</paper-button>
+      </div>
+      <div class="search">
+        <paper-input label="Filter" no-label-float value="{{keyword}}" type="search"></paper-input>
+      </div>
+    </section>
+    <dom-reorderer>
+      <template is="dom-repeat" id="list" items="[[items]]" filter="_filterView" observe="url method name">
+        <div class$="history-item [[_computeRowClass(item.selected)]]">
+          <paper-icon-item>
+            <paper-checkbox checked="[[item.selected]]" item-icon  aria-label$="Select/Deselect [[item.url]]"></paper-checkbox>
+            <span class="method-label">
+              <http-method-label method="[[item.method]]"></http-method-label>
+            </span>
+            <paper-item-body two-line>
+              <div class="url-label">[[item.url]]</div>
+              <div secondary><span class="name" on-tap="_editName">[[item.name]]</span></div>
+            </paper-item-body>
+            <paper-button class="secondary-action" data-action="item-detail" on-tap="_requestDetails">Details</paper-button>
+            <paper-button class="main-action" on-tap="_navigateItem" raised>Open</paper-button>
+          </paper-icon-item>
+        </div>
+      </template>
+    </dom-reorderer>
+    <array-selector id="selector" items="{{items}}" selected="{{selectedItems}}" multi toggle></array-selector>
+    <iron-dropdown id="nameChange" always-on-top focus-target="[[_nameInput]]" on-iron-overlay-closed="_nameEditorClosed">
+      <div class="dropdown-content name-change-popover">
+        <paper-input label="Request name" id="nameChangeInput" on-keydown="_nameKeyDown"></paper-input>
+      </div>
+    </iron-dropdown>
+    <paper-toast text="Select list item first" id="noSelectionToast"></paper-toast>
+  </template>
+  <script>
+  Polymer({
+    is: 'project-requests-list',
+    /**
+     * Fired when the user clicked on a delete button on an item.
+     * This event does not bubbles.
+     *
+     * @event list-items-delete
+     * @param {Array} items A list of items to delete.
+     */
+    /**
+     * Fired when the user clicked on an open button on an item.
+     * This event does not bubbles.
+     *
+     * @event list-item-open
+     * @param {Object} item An object associated with this item.
+     */
+    /**
+     * Fired when the name of an item has changed in the UI.
+     * This event does not bubbles.
+     *
+     * @event list-item-name-changed
+     * @param {Object} item Request object with updated name.
+     */
+    /**
+     * Dispatched when the user requested to export selected items.
+     * This event does not bubbles.
+     *
+     * @event list-items-export
+     * @param {Array} items List of request objects requested to be exported.
+     */
+    /**
+     * Fired when the "request details" has been requested via this UI.
+     * @event list-item-details
+     * @param {Object} item An object associated with this item.
+     */
+    properties: {
+      // The list of request objects to render.
+      items: Array,
+      // List of selected items on the list.
+      selectedItems: {
+        type: Array,
+        notify: true
+      },
+      /**
+       * If true, the user selected some elements on list. Check the
+       * `this.selectedItems` property to check for the selected elements.
+       */
+      hasSelection: {
+        type: Boolean,
+        value: false,
+        computed: '_computeHasSelection(selectedItems.length)'
+      },
+      // Reference to the name change input element.
+      _nameInput: {
+        type: HTMLElement,
+        value: function() {
+          return this.$.nameChangeInput;
+        }
+      },
+      // True to select all elements from the list
+      allSelected: Boolean,
+      // Filter keyword. It filters the view matching name, url or method.
+      keyword: String
+    },
+
+    observers: [
+      '_toggleSelectAll(allSelected)',
+      '_reRender(keyword)'
+    ],
+
+    hostAttributes: {
+      'role': 'list'
+    },
+
+    listeners: {
+      'tap': '_onSelectItem'
+    },
+
+    /**
+     * Computes if the item has selected class name.
+     */
+    _computeRowClass: function(selected) {
+      if (selected) {
+        return 'selected';
+      }
+    },
+    // Called to delete single item from the list
+    _deleteItem: function(e) {
+      var items = [e.model.get('item')];
+      this.__deleteItems(items);
+    },
+    // Handler for tap action on the "open" button
+    _navigateItem: function(e) {
+      this.fire('list-item-open', {
+        item: e.model.get('item')
+      }, {
+        bubbles: false
+      });
+    },
+    // Computes the `hasSelection` property value
+    _computeHasSelection: function(length) {
+      return !!length;
+    },
+    // Called to bring the name change dialog in fron of the table item.
+    _editName: function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      var name = e.model.get('item.name');
+
+      this.__currentEditredModel = e.model;
+      this.$.nameChangeInput.value = name;
+
+      e = Polymer.dom(e);
+      this.$.nameChange.positionTarget = e.localTarget.parentElement ||
+        e.localTarget;
+      this.$.nameChange.opened = true;
+    },
+    // Saves and notifies change to the name when enter is hit.
+    _nameKeyDown: function(e) {
+      if (e.keyCode !== 13) {
+        return;
+      }
+      var model = this.__currentEditredModel;
+      var value = this.$.nameChangeInput.value;
+      model.set('item.name', value);
+      this.fire('list-item-name-changed', {
+        item: model.get('item')
+      }, {
+        bubbles: false
+      });
+      this.$.nameChange.opened = false;
+    },
+    // Called when the name change dialog closes to clean variables.
+    _nameEditorClosed: function() {
+      this.__currentEditredModel = undefined;
+      this.$.nameChangeInput.value = '';
+    },
+    /**
+     * Toggles selection of of all itmes on the list.
+     * @param {Boolean} allSelected Current state of the `allSelected` property.
+     */
+    _toggleSelectAll: function(allSelected) {
+      var selectedItems = this.selectedItems;
+      var items = this.items;
+      if (!selectedItems || !items) {
+        return;
+      }
+      if (allSelected) {
+        if (selectedItems.length === items.length) {
+          return;
+        }
+        items.forEach((i, index) => {
+          this.$.selector.select(i);
+          this.set(['items', index, 'selected'], true);
+        });
+      } else {
+        if (selectedItems.length === 0) {
+          return;
+        }
+        items.forEach((i, index) => {
+          this.$.selector.deselect(i);
+          this.set(['items', index, 'selected'], false);
+        });
+      }
+    },
+
+    _computeOptionsTableClass: function(hasSelection) {
+      return hasSelection ? '' : ' inactive';
+    },
+    /**
+     * Informs hosting application to delete currently selected items.
+     */
+    _deleteSelected: function() {
+      var selected = this.selectedItems;
+      if (!selected || !selected.length) {
+        this.$.noSelectionToast.opened = true;
+        return;
+      }
+      this.__deleteItems(selected);
+    },
+    // Fires `list-items-delete` event to inform hosring application to remove items.
+    __deleteItems: function(items) {
+      this.fire('list-items-delete', {
+        items: items,
+      }, {
+        bubbles: false
+      });
+    },
+    // Fires `list-items-export` event to export current selection.
+    _exportSelected: function() {
+      var selected = this.selectedItems;
+      if (!selected || !selected.length) {
+        this.$.noSelectionToast.opened = true;
+        return;
+      }
+      this.fire('list-items-export', {
+        items: selected,
+      }, {
+        bubbles: false
+      });
+    },
+    // Filter function for the table.
+    _filterView: function(item) {
+      if (!item) {
+        return false;
+      }
+      var keyword = this.keyword;
+      if (!keyword || typeof keyword !== 'string') {
+        return true;
+      }
+      keyword = keyword.toLowerCase();
+      if (item.url && item.url.toLowerCase().indexOf(keyword) !== -1) {
+        return true;
+      }
+      if (item.method && item.method.toLowerCase().indexOf(keyword) !== -1) {
+        return true;
+      }
+      if (item.name && item.name.toLowerCase().indexOf(keyword) !== -1) {
+        return true;
+      }
+      return false;
+    },
+    // Re-renders the view when the keyword change to apply filter
+    _reRender: function() {
+      this.$.list.render();
+    },
+    // Called to request details panel for the list item
+    _requestDetails: function(e) {
+      var item = e.model.get('item');
+      this.fire('list-item-details', {
+        item: item
+      }, {
+        bubbles: false
+      });
+    },
+
+    // Handler for the selection related events.
+    _onSelectItem: function(e) {
+      var model = this.$.list.modelForElement(Polymer.dom(e).path[0]);
+      if (!model) {
+        return;
+      }
+      var target = Polymer.dom(e).path[0];
+      if (target.localName === 'input' ||
+          target.localName === 'button' ||
+          target.localName === 'select' ||
+          target.localName === 'paper-button') {
+        return;
+      }
+
+      var item = model.get('item');
+      var state = !item.selected;
+      var index = model.get('index');
+      if (state) {
+        this.$.selector.select(item);
+        this.set(['items', index, 'selected'], state);
+      } else {
+        this.$.selector.deselect(item);
+        this.set(['items', index, 'selected'], state);
+      }
+    }
+  });
+  </script>
+</dom-module>

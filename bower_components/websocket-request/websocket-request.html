@@ -1,0 +1,494 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../web-socket/web-socket.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-input/paper-textarea.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../paper-progress/paper-progress.html">
+<link rel="import" href="../paper-tabs/paper-tabs.html">
+<link rel="import" href="../paper-tabs/paper-tab.html">
+<link rel="import" href="../paper-toast/paper-toast.html">
+<link rel="import" href="../iron-pages/iron-pages.html">
+<link rel="import" href="../file-drop/file-drop.html">
+<link rel="import" href="../paper-autocomplete/paper-autocomplete.html">
+<link rel="import" href="../arc-models/websocket-url-history-model.html">
+<script src="web-socket-message.js"></script>
+<!--
+Web socket request panel.
+
+Contains an UI and logic to make a connection to a websocket server and send and receive messages.
+
+### Example
+```
+<websocket-request messages="{{messages}}" connected="{{connected}}"></websocket-request>
+```
+
+### Styling
+`<websocket-request>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--websocket-request` | Mixin applied to the element | `{}`
+`--websocket-request-url-input` | Mixin applied to the URL input | `{}`
+`--websocket-request-connection-info` | Mixin applied to the message lable when websocket is connected | `{}`
+`--websocket-request-connected-url-label` | Mixin applied to the URL label when connected | `{}`
+`--websocket-request-file-drop` | Mixin applied to the `<file-drop>` element | `{}`
+
+@group UI Elements
+@element websocket-request
+@demo demo/index.html
+-->
+<dom-module id="websocket-request">
+  <template>
+    <style>
+    :host {
+      display: block;
+      position: relative;
+      @apply --websocket-request;
+    }
+
+    .connection-info {
+      @apply --layout-horizontal;
+      @apply --layout-center;
+    }
+
+    .url-input {
+      @apply --websocket-request-url-input;
+    }
+
+    .url-input,
+    .connection-info p {
+      @apply --layout-flex;
+    }
+
+    .connection-info p {
+      height: 62px;
+      padding: 0;
+      margin: 0;
+      @apply --layout-horizontal;
+      @apply --layout-center;
+      @apply --websocket-request-connection-info;
+    }
+
+    .connection-info span {
+      margin-left: 4px;
+      font-weight: 500;
+      @apply --websocket-request-connected-url-label;
+    }
+
+    .action-button {
+      height: 40px;
+      @apply --action-button;
+    }
+
+    .action-button:hover {
+      @apply --action-button-hover;
+    }
+
+    .action-button[disabled] {
+      @apply --action-button-disabled;
+    }
+
+    paper-autocomplete {
+      bottom: 0;
+    }
+
+    .send-file {
+      margin: 20px;
+    }
+
+    file-drop {
+      @apply --websocket-request-file-drop;
+    }
+    </style>
+    <div class="connection-info-line">
+      <div class="connection-info">
+        <template is="dom-if" if="[[!connected]]">
+          <paper-input id="socketUrl" label="Socket URL" value="{{url}}" on-keydown="_urlKeyDown" class="url-input"></paper-input>
+          <paper-button raised class="action-button" disabled$="[[connectDisabled]]" on-tap="connect">Connect</paper-button>
+        </template>
+        <template is="dom-if" if="[[connected]]">
+          <p>Connected to <span>[[url]]</span></p>
+          <paper-button on-tap="disconnect" raised>Disconnect</paper-button>
+        </template>
+      </div>
+      <paper-checkbox checked="{{autoReconnect}}">Reconnect automatically</paper-checkbox>
+    </div>
+
+    <template is="dom-if" if="[[connecting]]">
+      <div class="connecting-info">
+        <p>Connecting to the remote server...</p>
+        <paper-progress indeterminate></paper-progress>
+      </div>
+    </template>
+
+    <template is="dom-if" if="[[retrying]]">
+      <h3>Connection lost</h3>
+      <p>Trying to reconnect.</p>
+    </template>
+
+    <template is="dom-if" if="[[connected]]">
+      <div class="message-editor">
+        <paper-tabs selected="{{selectedTab}}">
+          <paper-tab>Text</paper-tab>
+          <paper-tab>File</paper-tab>
+        </paper-tabs>
+        <iron-pages selected="{{selectedTab}}">
+          <section>
+            <paper-textarea label="Message to send" value="{{message}}" on-keydown="_messageKeydown"></paper-textarea>
+            <paper-button raised class="action-button" on-tap="_sendMessage" disabled$="{{!messageSendEnabled}}">send</paper-button>
+          </section>
+          <section>
+            <file-drop file="{{file}}" on-file-accepted="_fileAccepted"></file-drop>
+            <paper-button raised class="action-button send-file" on-tap="_sendFileMessage" disabled$="{{!hasFile}}">send</paper-button>
+          </section>
+        </iron-pages>
+      </div>
+    </template>
+
+    <websocket-url-history-model events-target="[[_eventsTarget]]"></websocket-url-history-model>
+    <web-socket id="socket"
+      url="[[url]]"
+      retrying="{{retrying}}"
+      no-retry="[[!autoReconnect]]"
+      on-message="_messageReceived"
+      on-disconnected="_onDisconnected"
+      on-connected="_onConnected"
+      on-error="_onError"></web-socket>
+    <paper-autocomplete
+      vertical-offset="24"
+      horizontal-offset="24"
+      target="[[urlInput]]"
+      id="autocomplete"
+      loader
+      open-on-focus
+      on-query="_queryUrlHistory"
+      on-selected="_onSuggestionSelected"
+      opened="{{suggesionsOpened}}"></paper-autocomplete>
+    <paper-toast text="Enter remote address first. Eg. ws://echo.websocket.org" id="emptyAddress"></paper-toast>
+    <paper-toast duration="7000" id="error"></paper-toast>
+  </template>
+  <script>
+  Polymer({
+    is: 'websocket-request',
+    properties: {
+      /**
+       * Remote URL to connect to
+       */
+      url: {
+        type: String,
+        observer: '_urlChanged',
+        notify: true
+      },
+      /**
+       * True if the `web-socket` is connecting to the remote server.
+       */
+      connecting: {
+        type: Boolean,
+        readOnly: true,
+        value: false,
+        notify: true
+      },
+      /**
+       * True if the socket is connected.
+       */
+      connected: {
+        type: Boolean,
+        readOnly: true,
+        value: false,
+        notify: true
+      },
+      /**
+       * Tru if the socket is disconnected (`connect` is false) but the component is trying to
+       * reconnect.
+       */
+      retrying: Boolean,
+      /**
+       * If set the socket will automatically retry the connection when it was
+       * closed by any reason.
+       */
+      autoReconnect: Boolean,
+      /**
+       * Computed value, true when the connect button is disabled.
+       */
+      connectDisabled: {
+        type: Boolean,
+        value: true,
+        readOnly: true
+      },
+      /**
+       * Currently opened request input tab.
+       */
+      selectedTab: {
+        type: Number,
+        value: 0
+      },
+      /**
+       * An input filed for the URL value.
+       * It is used by `paper-autocomplete` element as an input target.
+       */
+      urlInput: {
+        readOnly: true,
+        type: Object
+      },
+      // Event target for the model.
+      _eventsTarget: {
+        readOnly: true,
+        type: Object,
+        value: function() {
+          return this;
+        }
+      },
+      // A message to be send to the server when connected.
+      message: String,
+      // A file object added to the file editor
+      file: Object,
+      // Computed value, true when the file is set
+      hasFile: {
+        type: Boolean,
+        value: false
+      },
+      /**
+       * List of messages sent and received from the server.
+       */
+      messages: {
+        type: Array,
+        notify: true
+      },
+      // Computed value, true when send message button is enabled
+      messageSendEnabled: {
+        type: Boolean,
+        value: false,
+        computed: '_computeButtonVisible(message)'
+      },
+      // True if URL suggestions are opened
+      suggesionsOpened: Boolean
+    },
+
+    ready: function() {
+      Polymer.RenderStatus.afterNextRender(this, function() {
+        var input = this.$$('#socketUrl');
+        this._setUrlInput(input);
+      });
+    },
+
+    // Called when the socket has been disconnected
+    _onDisconnected: function(e) {
+      e.stopPropagation();
+      this._setConnecting(false);
+      this._setConnected(false);
+    },
+    // Called when tghe socket has been connected.
+    _onConnected: function(e) {
+      e.stopPropagation();
+      this._setConnecting(false);
+      this._setConnected(true);
+    },
+    /**
+     * Handler for the `<web-socket>` error event.
+     */
+    _onError: function(e) {
+      console.error(e.detail.error);
+      this.fire('app-log', {
+        'message': ['No support for given header.', e.detail.error],
+        'level': 'error'
+      });
+      this._setConnecting(false);
+      this.$.error.text = e.detail.error.message || 'Unknown error occured';
+      this.$.error.opened = true;
+    },
+    /**
+     * Called when the remote URL has changed.
+     * Sets a state of `connectDisabled` attribute.
+     */
+    _urlChanged: function() {
+      if (String(this.url).trim() === '') {
+        this._setConnectDisabled(true);
+      } else {
+        this._setConnectDisabled(false);
+      }
+    },
+    // Connects on enter.
+    _urlKeyDown: function(e) {
+      if (e.keyCode === 13) {
+        this.connect();
+      }
+    },
+    /**
+     * Connects to the remove machine.
+     */
+    connect: function() {
+      if (this.suggesionsOpened) {
+        // Accepting suggestions.
+        return;
+      }
+      var url = this.url;
+      if (url.trim() === '') {
+        this.$.emptyAddress.opened = true;
+        return;
+      }
+      this._setConnecting(true);
+      this.$.socket.open();
+      this.fire('send-analytics', {
+        type: 'event',
+        category: 'Web sockets',
+        action: 'Connect to socket'
+      });
+      this._updateUrlHistory(url);
+    },
+    /**
+     * Disconnects from the remote machine.
+     */
+    disconnect: function() {
+      this.$.socket.close();
+    },
+    // Updates the URL object in the history datastore.
+    _updateUrlHistory: function(url) {
+      var event = this.fire('websocket-url-history-read', {
+        url: url
+      }, {
+        cancelable: true
+      });
+      return event.detail.result.then(doc => {
+        if (!doc) {
+          doc = {
+            _id: url,
+            cnt: 1,
+            time: Date.now()
+          };
+        } else {
+          doc.cnt++;
+          doc.time = Date.now();
+        }
+        event = this.fire('websocket-url-history-changed', {
+          item: doc
+        }, {
+          cancelable: true
+        });
+        return event.detail.result;
+      });
+    },
+    // Queries for the list of history URLs for autocomplete function.
+    _queryUrlHistory: function(e) {
+      var value = e.detail.value;
+      let event = this.fire('websocket-url-history-query', {
+        q: value
+      }, {
+        cancelable: true
+      });
+      if (!event.detail.result) {
+        throw new Error('Query not handled');
+      }
+      event.detail.result.then(data => {
+        let suggestions = data.map((item) => item._id);
+        this.$.autocomplete.source = suggestions;
+      })
+      .catch(() => {
+        this.$.autocomplete.source = [];
+      });
+    },
+    // Connects to the server when URL suggestion has been selected.
+    _onSuggestionSelected: function() {
+      this.async(() => {
+        this.connect();
+      }, 1);
+    },
+    /**
+     * Sends the message to the server when the user pressed ctrl + enter
+     * while typing in the input.
+     */
+    _messageKeydown: function(e) {
+      if (e.keyCode === 13 && e.ctrlKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        this._sendMessage();
+      }
+    },
+
+    /**
+     * Send a string message.
+     */
+    _sendMessage: function() {
+      var msg = this.message;
+      if ((typeof msg === 'string') && msg.trim() === '') {
+        return;
+      }
+      this._send(msg);
+    },
+
+    // Handler for the `file-accepted` event sent by the `file-drop` element.
+    _fileAccepted: function() {
+      this.hasFile = true;
+    },
+    /**
+     * Send a file message
+     */
+    _sendFileMessage: function() {
+      if (!this.file) {
+        return;
+      }
+      this._send(this.file);
+      this.$$('file-drop').reset();
+      this.hasFile = false;
+    },
+    /**
+     * Sends a message to opened socket.
+     * Also appends a message to the list of messages.
+     *
+     * @param {String|Blob} data Data to send.
+     */
+    _send: function(data) {
+      this.$.socket.message = data;
+      this.$.socket.send();
+      this.message = '';
+      var message = new WebSocketMessage({
+        message: data,
+        direction: 'out'
+      });
+      if (this.messages) {
+        this.push('messages', message);
+      } else {
+        this.set('messages', [message]);
+      }
+
+      this.fire('send-analytics', {
+        type: 'event',
+        category: 'Web sockets',
+        action: 'Send message'
+      });
+    },
+    /**
+     * Message received handler.
+     */
+    _messageReceived: function(e) {
+      var message = new WebSocketMessage({
+        message: e.detail.data,
+        direction: 'in'
+      });
+      this.push('messages', message);
+    },
+    /**
+     * Compute if send button should be visible.
+     *
+     * @param {Any} obj If anything is passed to the function it should return true.
+     * @return {Boolean} True if file is available.
+     */
+    _computeButtonVisible: function(obj) {
+      return !!obj;
+    }
+  });
+  </script>
+</dom-module>

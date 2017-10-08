@@ -1,0 +1,181 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../paper-masked-input/paper-masked-input.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../arc-icons/arc-icons.html">
+<link rel="import" href="../iron-form/iron-form.html">
+<link rel="import" href="auth-methods-behavior.html">
+<link rel="import" href="auth-methods-styles.html">
+<!--
+The `<auth-method-ntlm>` element displays a form to provide the NTLM auth credentials.
+It only provides data since NTLM authentication and all calculations must be conducted
+when working on socket.
+
+This form requires to provide at least username and password. The domain parameter is not required
+in NTLM so it may be empty.
+
+### Example
+```
+<auth-method-basic username="john" password="doe" domain="my-nt-domain"></auth-method-basic>
+```
+### Styling
+`<auth-methods>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--auth-method-panel` | Mixin applied to the element. | `{}`
+`--auth-method-ntlm` | Mixin applied to all uath elements. | `{}`
+
+This is very basic element. Style inputs using input's or toggle's css variables.
+
+@group UI Elements
+@element auth-method-ntlm
+@demo demo/ntlm.html
+-->
+<dom-module id="auth-method-ntlm">
+  <template>
+    <style include="auth-methods-styles">
+    :host {
+      display: block;
+      @apply(--auth-method-panel);
+      @apply(--auth-method-ntlm);
+    }
+    </style>
+    <div class="row">
+      <div class="stepper">
+        <span class="step">[[_computeStep(stepStartIndex, 1)]]</span>
+        <span class="step-header">
+          <span class="step-title">Set authorization data</span>
+        </span>
+      </div>
+      <div class="step-content">
+        <div class="line"></div>
+        <form is="iron-form" id="form" autocomplete="on">
+          <paper-input required auto-validate label="User name" value="{{username}}" type="text" autocomplete="on">
+            <paper-icon-button suffix on-tap="_clearField" icon="arc:clear" alt="Clear input icon" title="Clear username"></paper-icon-button>
+          </paper-input>
+          <paper-masked-input required auto-validate label="Password" value="{{password}}" autocomplete="on"></paper-masked-input>
+          <paper-input label="NT domain" value="{{domain}}" type="text">
+            <paper-icon-button suffix on-tap="_clearField" icon="arc:clear" alt="Clear input icon" title="Clear domain"></paper-icon-button>
+          </paper-input>
+        </form>
+      </div>
+    </div>
+  </template>
+  <script>
+  Polymer({
+    is: 'auth-method-ntlm',
+    behaviors: [ArcBehaviors.AuthMethodsBehavior],
+    /**
+     * Fired when error occured when decoding hash.
+     *
+     * @event error
+     * @param {Error} error The error object.
+     */
+    /**
+     * Fired when the any of the auth method settings has changed.
+     * This event will be fired quite frequently - each time anything in the text field changed.
+     * With one exception. This event will not be fired if the validation of the form didn't passed.
+     *
+     * The `domain` field is not required in the form so check for missing `domain` value if it's
+     * required in your application.
+     *
+     * @event auth-settings-changed
+     * @param {Object} settings Current settings containing domain, password
+     * and username.
+     * @param {String} type The authorization type - ntlm
+     * @param {Boolean} valid True if the form has been validated.
+     */
+    properties: {
+      // The domain parameter for the request.
+      domain: {
+        type: String,
+        notify: true,
+        value: ''
+      },
+      // The password.
+      password: {
+        type: String,
+        notify: true,
+        value: ''
+      },
+      // The username.
+      username: {
+        type: String,
+        notify: true,
+        value: ''
+      }
+    },
+
+    /**
+     * Gets a map of current settings (user provided data).
+     */
+    get settings() {
+      return this._getSettings();
+    },
+
+    /**
+     * Validate the form.
+     *
+     * @param {Boolean} passive If true then it will check validity of the form but will not
+     * highlight the fields when invalid. Default to false.
+     * @return {Boolean} `true` if valid, `false` otherwise.
+     */
+    validate: function(passive) {
+      return passive ? this.$.form.checkValidity() : this.$.form.validate();
+    },
+
+    observers: [
+      '_settingsChanged(username, password, domain)'
+    ],
+
+    _settingsChanged: function() {
+      var validationResult = this.$.form.validate();
+      var settings = this._getSettings();
+      var detail = {
+        settings: settings,
+        type: 'ntlm',
+        valid: validationResult
+      };
+      this.fire('auth-settings-changed', detail);
+    },
+
+    _getSettings: function() {
+      return {
+        domain: this.domain,
+        password: this.password,
+        username: this.username
+      };
+    },
+
+    // Removes a value from the (paper-)input going up through path of the event.
+    _clearField: function(e) {
+      e = Polymer.dom(e);
+      var path = e.path;
+      var inputTarget;
+      while ((inputTarget = path.shift())) {
+        if (inputTarget.nodeName === 'INPUT' || inputTarget.nodeName === 'PAPER-INPUT') {
+          break;
+        }
+      }
+      if (!inputTarget) {
+        return;
+      }
+      inputTarget.value = '';
+    }
+  });
+  </script>
+</dom-module>

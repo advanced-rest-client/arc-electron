@@ -1,0 +1,42 @@
+{
+  "name": "arc-icons",
+  "description": "An icons set for Advanced REST client",
+  "authors": [
+    "The Advanced REST Client authors"
+  ],
+  "keywords": [
+    "web-components",
+    "polymer",
+    "icons",
+    "advanced-rest-client"
+  ],
+  "private": true,
+  "main": [
+    "arc-icons.html"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:advanced-rest-client/arc-icons.git"
+  },
+  "dependencies": {
+    "iron-icon": "PolymerElements/iron-icon#^1.0.10",
+    "iron-iconset-svg": "PolymerElements/iron-iconset-svg#^1.0.9",
+    "polymer": "Polymer/polymer#^1.0.0"
+  },
+  "devDependencies": {
+    "paper-styles": "polymerelements/paper-styles#^1.0.2",
+    "iron-component-page": "polymerelements/iron-component-page#1.0.0",
+    "iron-flex-layout": "polymerelements/iron-flex-layout#^1.0.0",
+    "iron-meta": "polymerelements/iron-meta#^1.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0"
+  },
+  "ignore": [
+    ".editorconfig",
+    ".gitattributes",
+    ".gitignore",
+    ".jsbeautifyrc",
+    ".jscsrc",
+    ".jshintrc"
+  ],
+  "version": "1.0.23"
+}

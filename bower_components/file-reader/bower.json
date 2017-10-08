@@ -1,0 +1,31 @@
+{
+  "name": "file-reader",
+  "version": "1.0.3",
+  "license": "LICENSE.txt",
+  "description": "A file reader element.",
+  "authors": [
+    "Pawel Psztyc",
+    "Advanced REST client team"
+  ],
+  "keywords": [
+    "web-components",
+    "polymer",
+    "files"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jarrodek/file-reader.git"
+  },
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.1.0"
+  },
+  "devDependencies": {
+    "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
+    "paper-styles": "PolymerElements/paper-styles#^1.0.4",
+    "test-fixture": "PolymerElements/test-fixture#^1.0.0",
+    "web-component-tester": "^4.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0"
+  },
+  "main": "file-reader.html",
+  "ignore": []
+}

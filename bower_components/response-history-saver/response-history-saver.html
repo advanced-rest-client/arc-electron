@@ -1,0 +1,530 @@
+<!--
+@license
+Copyright 2017 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../arc-polyfills/arc-polyfills.html">
+<link rel="import" href="../app-pouchdb/pouchdb.html">
+<link rel="import" href="../uuid-generator/uuid-generator.html">
+<link rel="import" href="../url/url-polyfill.html">
+<link rel="import" href="../fetch-polyfill/fetch-polyfill.html">
+
+<!--
+# response-history-saver element
+
+An element that saves requests history in a datastore.
+
+It handles the `response-ready` event asynchronously and updates both
+requests history and history data data store.
+
+The requests history keeps a daily record of requests made by the application.
+It keeps record of rhe request data that can be restored lated by the
+application.
+
+The history data keeps record of every request made by the application. It can
+be used to analyse performance of an API endpoint.
+
+## Data model
+
+### request history
+
+All properties are strings.
+
+Property | Description
+----------------|-------------
+`_id` | PouchDB database key. Combination of current day (YYYY-MM-dd) + URI encoded request URL and HTTP method name. Each value is separated with a forward slash (/).
+`created` | Timestamp of a time when the record has been created
+`updated` | Timestamp of a time when the record has been updated for the last time
+`headers` | List of request headers as a HTTP header string. Can be empty string
+`method` | Can be anything but most probably it is a valid HTTP method name
+`payload` | Request body. It is always transformed to string.
+`url` | the URL of the request.
+
+### request data
+
+Note that payload is always string even if the response body was different type.
+
+Property | Type | Description
+----------------|-------------|-------------
+`_id` | `String` | PouchDB database key. Combination of URI encoded request URL, HTTP method name and generated UUID. Each value is separated with a forward slash (/).
+`timings` | `Object` | Valid HAR 1.2 timings object.
+`totalTime` | `Number` | Number of milliseconds that took to perform the full request.
+`created` | `Number` | Timestamp of the entry
+`request` | `Object` | A request details object (see below).
+`request.headers` | `String` | HTTP headers string sent to the server.
+`request.payload` | `String` | HTTP message string set to the server.
+`request.url` | `String` | Request URL
+`request.method` | `String` | HTTP method of the request
+`response` | `Object` | Response details object
+`response.statusCode` | `Number` | A status code of the response.
+`response.statusText` | `String` | Status text message. Can be empty or undefined.
+`response.headers` | `String` | HTTP headers string of the response.
+`response.payload` | `String` | Response body string.
+`stats` | `Object` | Request and response basic statistics
+`stats.request` | `Object` | Request basic statistics
+`stats.request.headersSize` | `Number` | Request headers size in bytes
+`stats.request.payloadSize` | `Number` | Request payload size in bytes
+`stats.response` | `Object` | Response basic statistics
+`stats.response.headersSize` | `Number` | Response headers size in bytes
+`stats.response.payloadSize` | `Number` | Response payload size in bytes
+
+### Example
+```
+<response-history-saver></response-history-saver>
+```
+
+@group Logic Elements
+@element response-history-saver
+-->
+<script>
+Polymer({
+  is: 'response-history-saver',
+
+  attached: function() {
+    this.listen(window, 'response-ready', '_afterRequestHandler');
+  },
+
+  detached: function() {
+    this.listen(window, 'response-ready', '_afterRequestHandler');
+  },
+  /**
+   * @return {PouchDB} A PouchDB instance for the history-data store.
+   */
+  get _dbData() {
+    return new PouchDB('history-data');
+  },
+  /**
+   * @return {PouchDB} A PouchDB instance for the history-requests store.
+   */
+  get _dbHistory() {
+    return new PouchDB('history-requests');
+  },
+  /**
+   * Handler to the `response-ready` event
+   */
+  _afterRequestHandler: function(e) {
+    var response = e.detail.response.clone();
+    var request = e.detail.request.clone();
+    var timings = e.detail.timings;
+    // Async so the response can be rendered to the user faster.
+    this.async(function() {
+      this.saveHistory(request, response, timings);
+    }, 100);
+  },
+
+  saveHistory: function(request, response, timings) {
+    var context = this;
+    var requestBodyBuffer;
+    var responseBodyBuffer;
+    return this._preparePayload(request)
+      .catch(function() {})
+      .then(function(buffer) {
+        requestBodyBuffer = buffer;
+      })
+      .then(function() {
+        return context._preparePayload(response);
+      })
+      .catch(function() {})
+      .then(function(buffer) {
+        responseBodyBuffer = buffer;
+      })
+      .then(function() {
+        return context._saveHistoryData(request, response, requestBodyBuffer,
+          responseBodyBuffer, timings);
+      })
+      .then(function() {
+        return context._updateHistory(request, requestBodyBuffer, timings);
+      });
+  },
+
+  _preparePayload: function(request) {
+    if (!request.arrayBuffer || ['HEAD', 'GET'].indexOf(request.method) !== -1) {
+      return Promise.resolve();
+    }
+    return request.arrayBuffer();
+  },
+  /**
+   * Saves history data for history analysis in the data store.
+   *
+   * @param {Request} request The request object containg information about
+   * the request
+   * @param {Response} response The response object for the response
+   * @param {?ArrayBuffer} requestBuffer Read buffer of the request body. Optional.
+   * @param {?ArrayBuffer} responseBuffer Read buffer of the response body. Optional.
+   * @param {?Object} eventTimings The timings object as descrived in HAR 1.2 spec. Optional.
+   * @return {Promise} A promise resolved when data were inserted to the
+   * datastore.
+   */
+  _saveHistoryData: function(request, response, requestBuffer, responseBuffer, eventTimings) {
+    var doc = this._createHistoryDataModel(request, response, requestBuffer,
+      responseBuffer, eventTimings);
+    var db = this._dbData;
+    return db.put(doc)
+    .catch(function(e) {
+      return this._handleException(e);
+    }.bind(this));
+  },
+  // Creates a data store model for `_saveHistoryData`
+  _createHistoryDataModel: function(request, response, requestBuffer,
+    responseBuffer, eventTimings) {
+    var responseHeaders = this._computeHeaders(response);
+    var requestHeaders = this._computeHeaders(request);
+    var timings = this._computeTimings(eventTimings);
+    var totalTime = this._computeTotalTime(timings);
+    var requestPayloadSize = this._computePayloadSize(requestBuffer);
+    var responsePayloadSize = this._computePayloadSize(responseBuffer);
+    var requestHeadersSize = this._calculateBytes(requestHeaders);
+    var responseHeadersSize = this._calculateBytes(responseHeaders);
+    var requestStartTime = this._computeStartTime(eventTimings);
+    var url = this._computeHistoryStoreUrl(request.url);
+    var id = this._computeHistoryDataId(url);
+    var requestPayload = this._computePayloadString(requestBuffer);
+    var responsePayload = this._computePayloadString(responseBuffer);
+
+    var doc = {
+      _id: id,
+      timings: timings,
+      totalTime: totalTime,
+      created: requestStartTime,
+      request: {
+        headers: requestHeaders,
+        payload: requestPayload,
+        url: request.url,
+        method: request.method,
+      },
+      response: {
+        statusCode: response.status,
+        statusText: response.statusText,
+        headers: responseHeaders,
+        payload: responsePayload
+      },
+      stats: {
+        request: {
+          headersSize: requestHeadersSize,
+          payloadSize: requestPayloadSize
+        },
+        response: {
+          headersSize: responseHeadersSize,
+          payloadSize: responsePayloadSize
+        }
+      }
+    };
+    return doc;
+  },
+  /**
+   * Updates the requests history data store.
+   * If the request for given URL and method has been already performed this
+   * day then the record in the datastore is updated with new data.
+   * Otherwise a new record is created.
+   *
+   * @param {Request} request The request object.
+   * @param {?ArrayBuffer} requestBuffer An array buffer with the request
+   * payload.
+   * @param {?Object} eventTimings A HAR 1.2 timings object from the response
+   * event.
+   * @return {Promise} A promise that is resolved then the history object has
+   * been updated in the data store.
+   */
+  _updateHistory: function(request, requestBuffer, eventTimings) {
+    var requestStartTime = this._computeStartTime(eventTimings);
+    var today = this._getDayToday(requestStartTime);
+    var key = today + '/' + encodeURIComponent(request.url) + '/' +
+      request.method;
+    var requestPayload = this._computePayloadString(requestBuffer);
+    return this._writeHistoryItem(key, request, requestPayload,
+      requestStartTime);
+  },
+  /**
+   * Performs a write to the history-request store.
+   */
+  _writeHistoryItem: function(key, request, payload, time) {
+    var db = this._dbHistory;
+    var context = this;
+    var doc;
+    return db.get(key)
+      .then(function(doc) {
+        return context._createHistoryInserDocument(doc, key, time, request,
+          payload);
+      })
+      .catch(function(e) {
+        if (e.status !== 404) {
+          return context._handleException(e);
+        }
+        return context._createHistoryInserDocument(null, key, time, request,
+          payload);
+      })
+      .then(function(_doc) {
+        doc = _doc;
+        return db.put(doc);
+      })
+      .then(function(result) {
+        doc._id = result.id;
+        doc._rev = result.rev;
+        context.fire('history-object-changed', {
+          id: result.id,
+          rev: result.rev,
+          item: doc
+        });
+        return doc;
+      })
+      .catch(function(e) {
+
+        return context._handleException(e);
+      });
+  },
+
+  _createHistoryInserDocument: function(doc, key, time, request, payload) {
+    doc = doc || {};
+    doc._id = doc._id || key;
+    doc.created = doc.created || time;
+    doc.updated = time;
+    doc.headers = this._computeHeaders(request);
+    doc.method = request.method;
+    doc.payload = payload;
+    doc.url = request.url;
+    return doc;
+  },
+  /**
+   * Computes a valid timings object as descrived in HAR 1.2 spec.
+   *
+   * @param {?Object} eventTimings A timings object passed by the response
+   * event
+   * @return {Object} A valid HAR 1.2 timings object.
+   */
+  _computeTimings: function(eventTimings) {
+    eventTimings = eventTimings || {};
+    var timings = {
+      connect: eventTimings.connect || -1,
+      receive: eventTimings.receive || -1,
+      send: eventTimings.send || -1,
+      ssl: eventTimings.ssl || -1,
+      wait: eventTimings.wait || -1
+    };
+    return timings;
+  },
+  /**
+   * Computes a timestamp of the request start time.
+   * If timings object provided with the response event contains `startTime`
+   * property it will compute timestamp from it. Otherwise it will use
+   * current time.
+   *
+   * @param {?Object} timings Timings object from the response event.
+   * @return {Number} Timestamp of the request start.
+   */
+  _computeStartTime: function(eventTimings) {
+    eventTimings = eventTimings || {};
+    return eventTimings.startTime ?
+      new Date(eventTimings.startTime).getTime() :
+      Date.now();
+  },
+  /**
+   * Computes total time of the request from the timings object.
+   *
+   * @param {Object} timings A timings object as described in HAR 1.2 spec.
+   * @return {Number} Sum of times in the `timings` object. The `-1` values
+   * doeasn't adds. It returns `-1` if all values are -1.
+   */
+  _computeTotalTime: function(timings) {
+    var values = Object.keys(timings).map(function(key) {
+      return timings[key];
+    });
+    var total = values.reduce(function(sum, value) {
+      if (value > -1) {
+        return sum + value;
+      }
+      return sum;
+    }, 0);
+    if (total === 0) {
+      total = -1;
+    }
+    return total;
+  },
+  /**
+   * Computes headers string from request/response object.
+   *
+   * @param {Request|Response} obj A request or response object.
+   * @return {String} HTTP string headers in the object.
+   */
+  _computeHeaders: function(obj) {
+    if (!obj || !obj.headers) {
+      return '';
+    }
+    var parts = [];
+    obj.headers.forEach(function(value, key) {
+      parts.push(key + ': ' + value);
+    });
+    return parts.join('\n');
+  },
+  /**
+   * Produces valid URL to be used in the history-data store.
+   * The URL is stripped from query parameters and hash.
+   *
+   * @param {String} url A URL to process
+   * @return {String}
+   */
+  _computeHistoryStoreUrl: function(url) {
+    try {
+      url = new URL(url);
+      url.search = '';
+      url.hash = '';
+      url = url.toString();
+    } catch (e) {}
+    if (url) {
+      url = url.replace(/\?#/g, '');
+    }
+    return url;
+  },
+  /**
+   * Computes size of the payload.
+   *
+   * @param {ArrayBuffer|Blob|String} payload The payload
+   * @return {Number} Size of the payload
+   */
+  _computePayloadSize: function(payload) {
+    if (!payload) {
+      return 0;
+    }
+    if (payload instanceof ArrayBuffer) {
+      return payload.byteLength;
+    } else if (payload instanceof Blob) {
+      return payload.size;
+    } else {
+      return this._calculateBytes(payload);
+    }
+  },
+  /**
+   * Calculates size of the string
+   * @param {String} str A string to compute size from.
+   * @return {Number} Size of the string.
+   */
+  _calculateBytes: function(str) {
+    if (!str || !str.length || typeof str !== 'string') {
+      return 0;
+    }
+    var s = str.length;
+    for (var i = str.length - 1; i >= 0; i--) {
+      var code = str.charCodeAt(i);
+      if (code > 0x7f && code <= 0x7ff) {
+        s++;
+      } else if (code > 0x7ff && code <= 0xffff) {
+        s += 2;
+      }
+      if (code >= 0xDC00 && code <= 0xDFFF) {
+        i--; //trail surrogate
+      }
+    }
+    return s;
+  },
+  /**
+   * Computes an ID for the `history-data` datas tore.
+   *
+   * @param {String} url Request URL stripped from query parameters and
+   * the hash.
+   * @param {String} method HTTP method name.
+   * @return {String} Generated unique for this request data store ID. It uses
+   * UUID generator to add some random data to the ID except for the
+   * URL and method.
+   */
+  _computeHistoryDataId: function(url, method) {
+    if (!this.__uuid) {
+      this.__uuid = document.createElement('uuid-generator');
+    }
+    var id = encodeURIComponent(url) + '/' + method + '/' +
+      this.__uuid.generate();
+    return id;
+  },
+  /**
+   * Computes a payload message as a string.
+   *
+   * @param {ArrayBuffer} buff A buffer with the payload
+   * @return {String}
+   */
+  _computePayloadString: function(buff) {
+    var result = '';
+    if (!buff) {
+      return result;
+    }
+    if (typeof buff === 'string') {
+      return buff;
+    }
+    return this._arrayBufferToString(buff);
+  },
+
+  /**
+   * Convert ArrayBuffer to readable form
+   * @param {ArrayBuffer} buff
+   * @returns {String} Converted string
+   */
+  _arrayBufferToString: function(buffer) {
+    if (!!buffer.buffer) {
+      var b = buffer.slice(0);
+      buffer = b.buffer;
+    }
+    if ('TextDecoder' in window) {
+      try {
+        var decoder = new TextDecoder('utf-8');
+        var view = new DataView(buffer);
+        return decoder.decode(view);
+      } catch (e) {
+        return '';
+      }
+    }
+    var str = '';
+    try {
+      var array = new Uint8Array(buffer);
+      for (var i = 0; i < array.length; ++i) {
+        str += String.fromCharCode(array[i]);
+      }
+    } catch (e) {}
+    return str;
+  },
+
+  /**
+   * Setss hours, minutes, seconds and ms to 0 and returns timestamp.
+   *
+   * @return {Number} Timestamp to the day.
+   */
+  _getDayToday: function(timestamp) {
+    var d = new Date(timestamp);
+    var tCheck = d.getTime();
+    if (tCheck !== tCheck) {
+      throw new Error('Invalid timestamp: ' + timestamp);
+    }
+    d.setMilliseconds(0);
+    d.setSeconds(0);
+    d.setMinutes(0);
+    d.setHours(0);
+    return d.getTime();
+  },
+
+  // Handles exceptions to log message ad throws the same exception
+  _handleException: function(e) {
+    this.fire('app-log', {
+      'message': ['Url history model', e],
+      'level': 'error'
+    });
+    var message;
+    if (e instanceof Error) {
+      message = e.message;
+    } else {
+      message = JSON.stringify(e);
+    }
+    this.fire('send-analytics', {
+      type: 'exception',
+      description: message,
+      fatal: true
+    });
+    console.error('Url history model', e);
+    throw new Error(e.message || e);
+  }
+});
+</script>

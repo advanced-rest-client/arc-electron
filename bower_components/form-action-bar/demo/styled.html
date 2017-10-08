@@ -1,0 +1,47 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+  <title>form-action-bar demo</title>
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+  <link rel="import" href="../../paper-button/paper-button.html">
+  <link rel="import" href="../form-action-bar.html">
+  <style is="custom-style" include="demo-pages-shared-styles">
+  .styled {
+    --form-action-bar-background: var(--paper-blue-500);
+    --form-action-bar-height: 120px;
+  }
+  .styled paper-button {
+    color: #fff;
+  }
+  </style>
+</head>
+
+<body unresolved>
+  <h1>Styled form bar</h1>
+  <p>The bar renders itself at the bottom of the page</p>
+  <demo-snippet>
+    <template>
+      <form-action-bar class="styled">
+        <paper-button>cancel</paper-button>
+        <paper-button>save</paper-button>
+      </form-action-bar>
+    </template>
+  </demo-snippet>
+</body>
+
+</html>

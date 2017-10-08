@@ -1,7 +1,7 @@
 {
   "name": "advanced-rest-client",
   "description": "The Advanced REST Client desktop application.",
-  "version": "11.0.1",
+  "version": "11.0.8",
   "homepage": "https://advancedrestclient.com/",
   "license": "LICENSE.md",
   "author": {
@@ -18,10 +18,10 @@
     "build-w": "npx electron-builder -w",
     "build-m": "npx electron-builder -m"
   },
-  "main": "app/main.js",
+  "main": "main.js",
   "devDependencies": {
     "electron": "~1.7.8",
-    "electron-builder": "^19.34.1"
+    "electron-builder": "^19.35.0"
   },
   "dependencies": {
     "electron-log": "^2.2.9",
@@ -37,16 +37,34 @@
     "productName": "Advanced REST Client",
     "artifactName": "${productName}-${version}-${arch}.${ext}",
     "asar": true,
-    "copyright": "Copyright © year Mulesoft",
+    "copyright": "Copyright © 2017 Mulesoft",
     "files": [
-      "app"
+      "app.html",
+      "main.js",
+      "assets/",
+      "bower_components/",
+      "menus/",
+      "scripts/",
+      "src/",
+      "styles/"
     ],
     "mac": {
       "category": "public.app-category.developer-tools",
-      "target": [{
-        "target": "dmg",
-        "arch": ["x64"]
-        }]
+      "icon": "build/icon.icns",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
     },
     "dmg": {
       "contents": [
@@ -64,23 +82,35 @@
     },
     "linux": {
       "category": "Development",
-      "target": [{
+      "target": [
+        {
           "target": "deb",
-          "arch": ["x64", "ia32"]
-        }, {
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        },
+        {
           "target": "rpm",
-          "arch": ["x64", "ia32"]
+          "arch": [
+            "x64",
+            "ia32"
+          ]
         }
       ],
       "vendor": "Mulesoft",
       "synopsis": "A developert tool to test a HTTP request"
     },
     "win": {
-      "artifactName": "arc-${version}-${arch}.${ext}",
-      "target": [{
-        "target": "nsis",
-        "arch": ["x64", "ia32"]
-      }]
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        }
+      ]
     },
     "publish": [
       {

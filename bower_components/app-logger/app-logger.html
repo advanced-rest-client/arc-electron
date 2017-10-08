@@ -1,0 +1,196 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../app-pouchdb/pouchdb.html">
+<link rel="import" href="../app-pouchdb-collate/app-pouchdb-collate.html">
+<!--
+A logger for web components. Allows to print messages and save them into the datastore
+
+It listening for `app-log` events and logs evens when the event occure.
+The event detail object may have `level` property which describes log level of the message.
+It should also contain `message` property with the message to log.
+
+See `level` property documentation for logging level details.
+
+### Example
+
+#### Handling info events only
+
+```html
+<app-logger level="info"></app-logger>
+```
+
+#### Handling all events
+
+```html
+<app-logger></app-logger>
+```
+
+@group Logic Elements
+@element app-logger
+@hero hero.svg
+-->
+<dom-module id="app-logger">
+  <template>
+    <style>
+    :host {
+      display: none;
+    }
+    </style>
+    <app-pouchdb-collate id="collate"></app-pouchdb-collate>
+  </template>
+  <script>
+  Polymer({
+
+    is: 'app-logger',
+    properties: {
+      /**
+       * Level of debug messages.
+       * By default all incomming messages will be logged. It's possible to limit it according
+       * to the following hierarchy:
+       * - error
+       * - warning
+       * - debug
+       * - info
+       * For example if `warning` is set it will log errors from `error` and `warning` level.
+       */
+      level: String,
+      // If set, the data store inster is disabled.
+      noDatabase: Boolean
+    },
+
+    get db() {
+      return new PouchDB('logs');
+    },
+
+    attached: function() {
+      this._eventTarget = Polymer.dom(this).host || document;
+      this.listen(this._eventTarget, 'app-log', '_handleLog');
+    },
+
+    detached: function() {
+      this.unlisten(this._eventTarget, 'app-log', '_handleLog');
+    },
+
+    _handleLog: function(event) {
+      var detail = event.detail;
+      if (!detail) {
+        return;
+      }
+      var level = detail.level || undefined;
+      var msg = detail.message;
+      if (msg instanceof Array) {
+        msg.unshift(level);
+      } else {
+        msg = [level, msg];
+      }
+      event.stopImmediatePropagation();
+      event.preventDefault();
+      this.log.apply(this, msg);
+    },
+    /**
+     * Logs a message.
+     *
+     * @param {String} level Log level
+     * @param {any} messages list of objects to log
+     */
+    log: function(level, ...messages) {
+      if (!this.checkLevel(level)) {
+        return Promise.resolve();
+      }
+      if (!level) {
+        console.log.apply(console, messages);
+      } else {
+        (console[level] || console.log).apply(console, messages);
+      }
+      if (this.noDatabase) {
+        return Promise.resolve();
+      }
+      var doc = this._prepareDoc(messages, level);
+      doc._id = this._getId(doc, ['time', 'type']);
+      return this.db.put(doc);
+    },
+    /**
+     * Prepares a document to insert into the datastore from messages
+     *
+     * @param {Array} messages List of objects to insert into the datastore.
+     * @param {?String} level Log level
+     * @return {Object} PouchDB datastore document.
+     */
+    _prepareDoc: function(messages, level) {
+      var now = Date.now();
+      var result = {
+        type: level || 'log',
+        time: now
+      };
+      messages = messages.map(item => {
+        if (typeof item === 'string') {
+          return item;
+        } else if (item instanceof Error) {
+          result.stack = item.stack;
+          result.type = 'error';
+          return item.message;
+        } else if (item instanceof Element) {
+          return item.toString();
+        } else if (item instanceof Date) {
+          return item.toGMTString();
+        } else if (item instanceof Event) {
+          let msg = `[Event] type: ${item.type}`;
+          if (item.detail) {
+            msg += ', detail: ' + JSON.stringify(item.detail);
+          }
+          return msg;
+        }
+        return String(item);
+      });
+      result.logs = messages;
+      if (!result.stack) {
+        let err = new Error('');
+        let stack = err.stack;
+        if (stack) {
+          stack = stack.split('\n');
+          stack.splice(0, 2);
+          stack[0] = stack[0].replace(/\s+at\s/, '');
+          stack = stack.join('\n');
+        }
+        result.stack = stack || '';
+      }
+      return result;
+    },
+
+    _getId: function(doc, sort) {
+      return this.$.collate.getId(doc, sort);
+    },
+
+    checkLevel: function(level) {
+      if (!this.level) {
+        return true;
+      }
+      if (!level && this.level) {
+        return false;
+      }
+      switch (this.level) {
+        case 'error':
+          return ['error'].indexOf(level) !== -1;
+        case 'warning':
+          return ['error', 'warning'].indexOf(level) !== -1;
+        case 'debug':
+          return ['error', 'warning', 'debug'].indexOf(level) !== -1;
+        default:
+          return true;
+      }
+    }
+  });
+  </script>
+</dom-module>

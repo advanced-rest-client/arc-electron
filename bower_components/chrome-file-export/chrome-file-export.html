@@ -1,0 +1,166 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../events-target-behavior/events-target-behavior.html">
+<link rel="import" href="../chrome-app-filesystem/chrome-app-filesystem.html">
+<!--
+File export using Chrome apps API
+
+### Example
+```html
+<chrome-file-export></chrome-file-export>
+<script>
+var event = new CustomEvent('export-data', {
+  detail: {
+    data: new Blob(['test']),
+    type: 'text/plain',
+    file: 'example-name.txt' // This is optional.
+  },
+  cancelable: true,
+  bubbles: true
+});
+document.body.dispatchEvent(event);
+if (event.defaultPrevented) {
+  consoloe.log('File exported');
+}
+</script>
+```
+
+@group Chrome Elements
+@element chrome-file-export
+-->
+<script>
+Polymer({
+  is: 'chrome-file-export',
+
+  /**
+   * Fited when the export operation ended
+   * @event export-data-end
+   */
+
+  /**
+   * Fired when the export operation errored
+   *
+   * @event export-data-error
+   */
+
+  behaviors: [ArcBehaviors.EventsTargetBehavior],
+
+  detached: function() {
+    var writer = this._fileWriter;
+    if (writer) {
+      writer.removeEventListener('file-write', this.__writeHandler);
+      writer.removeEventListener('error', this.__errorHandler);
+      Polymer.dom(this.root).removeChild(writer);
+      this._fileWriter = undefined;
+    }
+  },
+
+  _attachListeners: function(node) {
+    this.listen(node, 'export-data', '_dataExportHandler');
+    this.listen(node, 'save-content-to-file', '_legacyEventHandler');
+  },
+
+  _detachListeners: function(node) {
+    this.unlisten(node, 'export-data', '_dataExportHandler');
+    this.unlisten(node, 'save-content-to-file', '_legacyEventHandler');
+  },
+  /**
+   * Handler for the `export-data` event. Cancels the event and calls the
+   * `writeFile()` function with properties received from the event.
+   *
+   * See element description for more information.
+   */
+  _dataExportHandler: function(e) {
+    if (e.defaultPrevented) {
+      return;
+    }
+    var data = e.detail.data;
+    var type = e.detail.type;
+    var file = e.detail.file;
+
+    if (data && type) {
+      e.preventDefault();
+      this.writeFile(data, type, file);
+    }
+  },
+  // To be removed.
+  _legacyEventHandler: function(e) {
+    var data = e.detail.content;
+    e.preventDefault();
+    this.writeFile(data, 'text/plain', 'saved-data');
+  },
+  /**
+   * Writtes file to user's local filesysten using Chrome apps API.
+   *
+   * @param {String|Blob|Object} data Data to write.
+   * @param {String} type `data`'s content type
+   * @param {?String} filename Optional, suggested filename.
+   */
+  writeFile: function(data, type, filename) {
+    var writter = this._getWriter();
+    writter.content = this._prepareContent(data);
+    writter.mime = type;
+    if (filename) {
+      writter.filename = filename;
+    }
+    writter.write();
+  },
+  /**
+   * Transforms the constent to any of the required formats which is an array
+   * of strings or Blob.
+   *
+   * @param {String|Blob|Object} data Data to write.
+   * @return {Array<String>|Blob} Data that are accepted by the data writter.
+   */
+  _prepareContent: function(data) {
+    if (data instanceof Blob) {
+      return data;
+    }
+    if (typeof data === 'string') {
+      return [data];
+    }
+
+    return [JSON.stringify(data)];
+  },
+
+  /**
+   * Appends file writer component to the element shadow root if haven't
+   * already.
+   *
+   * @return {HTMLElement} File writer
+   */
+  _getWriter: function() {
+    var writer = this._fileWriter;
+    if (!writer) {
+      this.__writeHandler = this._fileWriteHandler.bind(this);
+      this.__errorHandler = this._fileErrorHandler.bind(this);
+      writer = document.createElement('chrome-app-filesystem');
+      writer.addEventListener('file-write', this.__writeHandler);
+      writer.addEventListener('error', this.__errorHandler);
+      Polymer.dom(this.root).appendChild(writer);
+      this._fileWriter = writer;
+    }
+    return writer;
+  },
+
+  _fileWriteHandler: function() {
+    this.fire('export-data-end');
+  },
+
+  _fileErrorHandler: function(e) {
+    this.fire('export-data-error', e.detail);
+  }
+});
+</script>

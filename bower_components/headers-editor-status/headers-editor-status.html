@@ -1,0 +1,117 @@
+<!--
+@license
+Copyright 2016 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../arc-icons/arc-icons.html">
+<!--
+`<headers-editor-status>` A status bar for the headers editor
+
+Can display computed size of the headers and validation status of
+the headers editor. 
+
+### Example
+```
+<headers-editor-status message="Content-Type is missing" invalid size="12"></headers-editor-status>
+```
+
+### Styling
+`<headers-editor-status>` provides the following custom properties and mixins for styling:
+
+Custom property | Description | Default
+----------------|-------------|----------
+`--headers-editor-status` | Mixin applied to the element | `{}`,
+`--headers-editor-status-color` | Color of the message nd the icon | `--primary-valid-color` or `#48982A`
+`--headers-editor-status-error-color` | Color of the error message | `--primary-error-color` or `rgba(255, 0, 0, 0.54)`
+`--headers-editor-status-counter-color` | Color of the bytes counter | `rgba(0, 0, 0, 0.54)`
+`--headers-editor-status-message` | Mixin applied to the message container | `{}`
+`--arc-font-body1` | Theme mixin, applied to text elements | `{}`
+
+@group UI Elements
+@element headers-editor-status
+@demo demo/index.html
+-->
+<dom-module id="headers-editor-status">
+  <template>
+    <style>
+    :host {
+      display: block;
+      padding: 4px 12px;
+      @apply(--headers-editor-status);
+    }
+
+    .status-line {
+      @apply(--layout-horizontal);
+    }
+
+    .validation-status {
+      @apply(--layout-horizontal);
+      @apply(--layout-flex);
+      @apply(--layout-center);
+    }
+
+    .validation-status,
+    .status-icon {
+      color: var(--headers-editor-status-error-color, var(--primary-error-color, rgba(255, 0, 0, 0.54)));
+    }
+
+    .validation-status[valid],
+    .validation-status[valid] .status-icon {
+      color: var(--headers-editor-status-color, var(--primary-valid-color, #48982A));
+    }
+
+    .message {
+      margin: 0 12px;
+      padding: 0;
+      @apply(--arc-font-body1);
+      white-space: pre;
+      @apply(--headers-editor-status-message);
+    }
+
+    .bytes-counter {
+      @apply(--arc-font-body1);
+      color: var(--headers-editor-status-counter-color, rgba(0, 0, 0, 0.54));
+    }
+    </style>
+    <div class="status-line">
+      <div class="validation-status" valid$="[[!invalid]]">
+        <iron-icon icon="arc:spellcheck" class="status-icon"></iron-icon>
+        <p class="message">[[message]]</p>
+      </div>
+      <div class="bytes-counter">
+        <span>[[size]]</span>
+        <span>bytes</span>
+      </div>
+    </div>
+  </template>
+  <script>
+  Polymer({
+    is: 'headers-editor-status',
+    properties: {
+      /**
+       * Headers size in bytes.
+       */
+      size: Number,
+      /**
+       * Should be set to true to indicate error an display the error message.
+       */
+      invalid: Boolean,
+      /**
+       * Error message to display in case of error.
+       */
+      message: String
+    }
+  });
+  </script>
+</dom-module>

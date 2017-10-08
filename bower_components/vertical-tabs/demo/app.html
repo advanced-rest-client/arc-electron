@@ -1,0 +1,206 @@
+<!doctype html>
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+
+  <title>vertical-tabs demo</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+  <link rel="import" href="../../arc-demo-helpers/arc-demo-snippet.html">
+  <link rel="import" href="../../paper-tabs/paper-tab.html">
+  <link rel="import" href="../../iron-pages/iron-pages.html">
+  <link rel="import" href="../vertical-tabs.html">
+  <style is="custom-style" include="demo-pages-shared-styles">
+
+    :root {
+      --paper-tabs-selection-bar-color: #03a9f4;
+      --paper-tab-ink: #03a9f4;
+    }
+
+    .vertical-section-container {
+      max-width: 600px;
+    }
+
+    vertical-tabs[align-left] img {
+      margin: 0 12px;
+    }
+
+  </style>
+</head>
+<body unresolved>
+  <div class="vertical-section-container centered">
+    <h3>Right tabbed `vertical-tabs`</h3>
+    <arc-demo-snippet selected="0">
+      <template>
+        <vertical-tabs selected="{{selected}}">
+          <paper-tab>Tab one</paper-tab>
+          <paper-tab>Tab two</paper-tab>
+          <paper-tab>Tab three</paper-tab>
+
+          <iron-pages content selected="{{selected}}">
+            <section>
+              <img src="http://lorempixel.com/400/200/cats/"/>
+            </section>
+            <section>
+              <img src="http://lorempixel.com/400/250/cats/"/>
+            </section>
+            <section>
+              <img src="http://lorempixel.com/400/300/cats/"/>
+            </section>
+          </iron-pages>
+        </vertical-tabs>
+      </template>
+    </arc-demo-snippet>
+
+    <h3>Left tabbed `vertical-tabs`</h3>
+    <arc-demo-snippet selected="0">
+      <template>
+        <vertical-tabs align-left selected="{{selected}}">
+          <paper-tab>Tab one</paper-tab>
+          <paper-tab>Tab two</paper-tab>
+          <paper-tab>Tab three</paper-tab>
+
+          <iron-pages content selected="{{selected}}">
+            <section>
+              <img src="http://lorempixel.com/400/200/cats/"/>
+            </section>
+            <section>
+              <img src="http://lorempixel.com/400/250/cats/"/>
+            </section>
+            <section>
+              <img src="http://lorempixel.com/400/300/cats/"/>
+            </section>
+          </iron-pages>
+        </vertical-tabs>
+      </template>
+    </arc-demo-snippet>
+
+    <h3>No selection bar</h3>
+    <arc-demo-snippet selected="0">
+      <template>
+        <style>
+          .styled paper-tab.iron-selected {
+            background-color: #478fcc;
+            color: #fff;
+          }
+        </style>
+
+        <vertical-tabs class="styled" no-bar selected="{{selected}}">
+          <paper-tab>Tab one</paper-tab>
+          <paper-tab>Tab two</paper-tab>
+          <paper-tab>Tab three</paper-tab>
+
+          <iron-pages content selected="{{selected}}">
+            <section>
+              <img src="http://lorempixel.com/400/200/cats/"/>
+            </section>
+            <section>
+              <img src="http://lorempixel.com/400/250/cats/"/>
+            </section>
+            <section>
+              <img src="http://lorempixel.com/400/300/cats/"/>
+            </section>
+          </iron-pages>
+
+        </vertical-tabs>
+      </template>
+    </arc-demo-snippet>
+
+    <h3>No slide animation with `no-slide`</h3>
+    <arc-demo-snippet selected="0">
+      <template>
+        <vertical-tabs no-slide selected="{{selected}}">
+          <iron-pages content selected="{{selected}}">
+            <section>
+              <img src="http://lorempixel.com/400/200/cats/"/>
+            </section>
+            <section>
+              <img src="http://lorempixel.com/400/250/cats/"/>
+            </section>
+            <section>
+              <img src="http://lorempixel.com/400/300/cats/"/>
+            </section>
+          </iron-pages>
+          <paper-tab>Tab one</paper-tab>
+          <paper-tab>Tab two</paper-tab>
+          <paper-tab>Tab three</paper-tab>
+        </vertical-tabs>
+      </template>
+    </arc-demo-snippet>
+
+    <h3>No ripple animation with `noink`</h3>
+    <arc-demo-snippet selected="0">
+      <template>
+        <vertical-tabs noink selected="{{selected}}">
+          <iron-pages content selected="{{selected}}">
+            <section>
+              <img src="http://lorempixel.com/400/200/cats/"/>
+            </section>
+            <section>
+              <img src="http://lorempixel.com/400/250/cats/"/>
+            </section>
+            <section>
+              <img src="http://lorempixel.com/400/300/cats/"/>
+            </section>
+          </iron-pages>
+          <paper-tab>Tab one</paper-tab>
+          <paper-tab>Tab two</paper-tab>
+          <paper-tab>Tab three</paper-tab>
+        </vertical-tabs>
+      </template>
+    </arc-demo-snippet>
+
+    <h3>Scrolled `vertical-tabs`</h3>
+    <arc-demo-snippet selected="0" sections='["http://lorempixel.com/400/250/cats/","http://lorempixel.com/400/350/cats/","http://lorempixel.com/200/200/cats/","http://lorempixel.com/400/400/cats/","http://lorempixel.com/800/600/cats/","http://lorempixel.com/100/100/cats/","http://lorempixel.com/400/350/cats/","http://lorempixel.com/256/350/cats/","http://lorempixel.com/400/150/cats/","http://lorempixel.com/450/250/cats/","http://lorempixel.com/400/350/cats/","http://lorempixel.com/400/350/cats/"]'>
+      <template>
+        <style is="custom-style">
+          vertical-tabs[scrollable] {
+            max-height: 250px;
+          }
+          vertical-tabs {
+            --paper-tabs-content: {
+              max-width: 100%;
+              overflow: auto;
+            }
+          }
+        </style>
+        <vertical-tabs scrollable selected="{{selected}}">
+          <iron-pages content selected="{{selected}}">
+            <template is="dom-repeat" items="[[sections]]">
+              <section>
+                <img src="[[item]]"/>
+              </section>
+            </template>
+          </iron-pages>
+          <paper-tab>NUMBER ONE ITEM</paper-tab>
+          <paper-tab>ITEM TWO</paper-tab>
+          <paper-tab>THE THIRD ITEM</paper-tab>
+          <paper-tab>THE ITEM FOUR</paper-tab>
+          <paper-tab>FIFTH</paper-tab>
+          <paper-tab>THE SIXTH TAB</paper-tab>
+          <paper-tab>NUMBER SEVEN</paper-tab>
+          <paper-tab>EIGHT</paper-tab>
+          <paper-tab>NUMBER NINE</paper-tab>
+          <paper-tab>THE TENTH</paper-tab>
+          <paper-tab>THE ITEM ELEVEN</paper-tab>
+          <paper-tab>TWELFTH ITEM</paper-tab>
+        </vertical-tabs>
+      </template>
+    </arc-demo-snippet>
+  </div>
+</body>
+</html>
