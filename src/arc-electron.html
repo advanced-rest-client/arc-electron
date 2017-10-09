@@ -162,7 +162,7 @@
     <paper-toast id="errorToast" duration="5000"></paper-toast>
     <paper-toast id="offlineToast" class="offline-toast" text="You are now offline. Can't make new requests."></paper-toast>
     <search-bar id="content-search-bar" on-iron-overlay-opened="textSearchBarOpened"></search-bar>
-    <app-analytics tracking-id="UA-18021184-6" app-name="ARC-electon" app-id="[[appId]]" app-version="[[appVersion]]" disable-tracking="{{analyticsDisabled}}" data-source="chrome-app">
+    <app-analytics tracking-id="UA-18021184-6" app-name="ARC-electon" app-id="[[appId]]" app-version="[[appVersion]]" disable-tracking="{{analyticsDisabled}}" data-source="electron-app">
       <template is="dom-repeat" items="[[gaCustomMetrics]]">
         <app-analytics-custom type="metric" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
       </template>
@@ -170,7 +170,7 @@
         <app-analytics-custom type="dimension" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
       </template>
     </app-analytics>
-    <app-analytics tracking-id="UA-18021184-14" app-name="ARC" app-id="[[appId]]" app-version="[[appVersion]]" data-source="chrome-app" disable-tracking="{{analyticsDisabled}}">
+    <app-analytics tracking-id="UA-18021184-14" app-name="ARC" app-id="[[appId]]" app-version="[[appVersion]]" data-source="electron-app" disable-tracking="{{analyticsDisabled}}">
       <template is="dom-repeat" items="[[gaCustomMetrics]]">
         <app-analytics-custom type="metric" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
       </template>
@@ -178,7 +178,7 @@
         <app-analytics-custom type="dimension" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
       </template>
     </app-analytics>
-    <app-analytics tracking-id="UA-71458341-2" app-name="ARC" app-id="[[appId]]" app-version="[[appVersion]]" data-source="chrome-app" disable-tracking="{{analyticsDisabled}}">
+    <app-analytics tracking-id="UA-71458341-2" app-name="ARC" app-id="[[appId]]" app-version="[[appVersion]]" data-source="electron-app" disable-tracking="{{analyticsDisabled}}">
       <template is="dom-repeat" items="[[gaCustomMetrics]]">
         <app-analytics-custom type="metric" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
       </template>
@@ -204,7 +204,7 @@
   <script>
     const {ArcPreferences} = require('./scripts/arc-preferences');
     const ipc = require('electron').ipcRenderer;
-
+    const {app} = require('electron').remote;
     Polymer({
       is: 'arc-electron',
 
@@ -214,8 +214,18 @@
         route: Object,
         routeData: Object,
         driveFileRoute: Object,
-        appId: String,
-        appVersion: String,
+        // Application ID for analytics
+        appId: {
+          type: String,
+          value: 'com.mulesoft.arc'
+        },
+        // Current application varsion
+        appVersion: {
+          type: String,
+          value: function() {
+            return app.getVersion();
+          }
+        },
         gaCustomMetrics: Array,
         gaCustomDimensions: Array,
         drawerWidth: {
@@ -285,6 +295,23 @@
           this.set('route.path', '/request/latest/0');
         }
         this._requestAuthToken(false);
+        this.setupAnalytics();
+      },
+
+      setupAnalytics: function() {
+        this.gaCustomDimensions = [];
+        this.push('gaCustomDimensions', {
+          index: 1,
+          value: process.versions.chrome
+        });
+        this.push('gaCustomDimensions', {
+          index: 2,
+          value: this.appVersion
+        });
+        this.push('gaCustomDimensions', {
+          index: 5,
+          value: 'stable'
+        });
       },
 
       _setupRequestRoute: function(record) {
