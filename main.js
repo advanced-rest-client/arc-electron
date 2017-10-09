@@ -9,10 +9,10 @@ const {ArcIdentity} = require('./scripts/oauth2');
 
 class Arc {
   constructor() {
+    this._registerProtocols();
     this.menu = new ArcMainMenu();
     this.wm = new ArcWindowsManager();
     this.us = new UpdateStatus(this.wm, this.menu);
-
     this._listenMenu(this.menu);
   }
 
@@ -20,6 +20,27 @@ class Arc {
     app.on('ready', this._readyHandler.bind(this));
     app.on('window-all-closed', this._allClosedHandler.bind(this));
     app.on('activate', this._activateHandler.bind(this));
+  }
+  /**
+   * Registers application protocol and adds a handler.
+   * The handler will be called when a user navigate to `protocol://data`
+   * url in a browser. This is used when opening / creating a file from
+   * Google Drive menu.
+   */
+  _registerProtocols() {
+    app.setAsDefaultProtocolClient('arc-file');
+    app.on('open-url', function(event, url) {
+      event.preventDefault();
+      var fileData = url.substr(11);
+      var parts = fileData.split('/');
+      switch (parts[0]) {
+        case 'drive':
+          // arc-file://drive/open/file-id
+          // arc-file://drive/create/file-id
+          this.wm.open('/request/drive/' + parts[1] + '/' + parts[2]);
+        break;
+      }
+    });
   }
 
   _readyHandler() {
