@@ -122,10 +122,11 @@
     ],
     "protocols": {
       "name": "ARC file open",
-      "schemes": ["arc-file"]
+      "schemes": [
+        "arc-file"
+      ]
     }
   },
-
   "oauth2": {
     "client_id": "1076318174169-u4a5d3j2v0tbie1jnjgsluqk1ti7ged3.apps.googleusercontent.com",
     "auth_uri": "https://accounts.google.com/o/oauth2/v2/auth",
