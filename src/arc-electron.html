@@ -6,8 +6,6 @@
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/arc-icons/arc-icons.html">
 <link rel="import" href="../bower_components/arc-menu/arc-menu.html">
-<link rel="import" href="../bower_components/paper-menu/paper-menu.html">
-<link rel="import" href="../bower_components/paper-menu-button/paper-menu-button.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
 <link rel="import" href="../bower_components/iron-icon/iron-icon.html">
@@ -135,39 +133,6 @@
         <paper-toolbar id="mainToolbar" class="main-toolbar">
           <paper-icon-button class="toolbar-hide" icon="arc:menu" paper-drawer-toggle title="Toggle drawer" alt="Drawer toggle icon"></paper-icon-button>
           <div class="title">[[pageTitle]]</div>
-          <paper-menu-button horizontal-align="right">
-            <paper-icon-button icon="arc:more-vert" class="dropdown-trigger"></paper-icon-button>
-            <paper-menu class="dropdown-content">
-              <paper-icon-item on-tap="openAbout">
-                <iron-icon item-icon icon="arc:info-outline"></iron-icon>
-                About
-              </paper-icon-item>
-              <paper-icon-item on-tap="openLicense">
-                <span item-icon></span>
-                License
-              </paper-icon-item>
-              <paper-icon-item on-tap="openSettings">
-                <iron-icon item-icon icon="arc:settings"></iron-icon>
-                Preferences
-              </paper-icon-item>
-              <paper-icon-item on-tap="openImportExport">
-                <iron-icon item-icon icon="arc:import-export"></iron-icon>
-                Import and export data
-              </paper-icon-item>
-              <paper-icon-item on-tap="onNewWindow">
-                <iron-icon item-icon icon="arc:open-in-new"></iron-icon>
-                New window
-              </paper-icon-item>
-              <paper-icon-item on-tap="openIssueReport">
-                <iron-icon item-icon icon="arc:bug-report"></iron-icon>
-                Report an issue
-              </paper-icon-item>
-              <paper-icon-item on-tap="openLogs">
-                <iron-icon item-icon icon="arc:list"></iron-icon>
-                Toggle console
-              </paper-icon-item>
-            </paper-menu>
-          </paper-menu-button>
         </paper-toolbar>
         <!-- Main Content -->
         <div class="content">
