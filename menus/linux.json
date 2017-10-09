@@ -1,66 +1,199 @@
 {
   "menu": [{
-      "label": "File",
-      "submenu": [
-        {"label": "New Window", "command": "application:new-window", "accelerator": "CommandOrControl+n"},
-        {"type": "separator"},
-        {"label": "Settings", "command": "application:show-settings", "accelerator": "CommandOrControl+,"},
-        {"type": "separator"},
-        {"label": "Save", "command": "request:save", "accelerator": "CommandOrControl+s"},
-        {"label": "Save as...", "command": "request:save-as", "accelerator": "CommandOrControl+Shift+s"},
-        {"type": "separator"},
-        {"label": "Import data", "command": "application:import-data"},
-        {"label": "Export data", "command": "application:export-data"}
-        {"type": "separator"},
-        {"label": "Quit", "command": "application:quit"}
-      ]
-    }, {
-        "label": "View",
-        "submenu": [
-          {"role": "togglefullscreen"},
-          {
-            "label": "Developer",
-            "submenu": [
-              {"role": "reload"},
-              {"role": "forcereload"},
-              {"role": "toggledevtools"}
-            ]
+    "label": "File",
+    "submenu": [{
+        "label": "New Window",
+        "command": "application:new-window",
+        "accelerator": "CommandOrControl+n"
+      },
+      {
+        "type": "separator"
+      },
+      {
+        "label": "Settings",
+        "command": "application:show-settings",
+        "accelerator": "CommandOrControl+,"
+      },
+      {
+        "type": "separator"
+      },
+      {
+        "label": "Save",
+        "command": "request:save",
+        "accelerator": "CommandOrControl+s"
+      },
+      {
+        "label": "Save as...",
+        "command": "request:save-as",
+        "accelerator": "CommandOrControl+Shift+s"
+      },
+      {
+        "type": "separator"
+      },
+      {
+        "label": "Import data",
+        "command": "application:import-data"
+      },
+      {
+        "label": "Export data",
+        "command": "application:export-data"
+      },
+      {
+        "type": "separator"
+      },
+      {
+        "label": "Quit",
+        "command": "application:quit"
+      }
+    ]
+  }, {
+    "label": "Edit",
+    "submenu": [{
+        "role": "undo"
+      },
+      {
+        "role": "redo"
+      },
+      {
+        "type": "separator"
+      },
+      {
+        "role": "cut"
+      },
+      {
+        "role": "copy"
+      },
+      {
+        "role": "paste"
+      },
+      {
+        "role": "pasteandmatchstyle"
+      },
+      {
+        "role": "selectall"
+      },
+      {
+        "role": "delete"
+      }
+    ]
+  }, {
+    "label": "View",
+    "submenu": [{
+        "role": "togglefullscreen"
+      },
+      {
+        "label": "Developer",
+        "submenu": [{
+            "role": "reload"
           },
-          {"type": "separator"},
-          {"role": "resetzoom"},
-          {"role": "zoomin"},
-          {"role": "zoomout"},
-          {"role": "minimize"}
+          {
+            "role": "forcereload"
+          },
+          {
+            "role": "toggledevtools"
+          }
         ]
-      }, {
-        "label": "Window",
-        "role": "window",
-        "submenu": [
-          {"role": "minimize"},
-          {"role": "zoom"},
-          {"type": "separator"},
-          {"role": "front"}
-        ]
-      }, {
-        "label": "Help",
-        "role": "help",
-        "submenu": [
-          {"label": "VERSION", "enabled": false},
-          {"label": "License information", "command": "application:open-license"},
-          {"type": "separator"},
-          {"label": "Restart and Install Update", "command": "application:install-update", "visible": false},
-          {"label": "Check for Update", "command": "application:check-for-update", "visible": false},
-          {"label": "Checking for Update", "enabled": false, "visible": false},
-          {"label": "Downloading Update", "enabled": false, "visible": false},
-          {"label": "Privacy policy", "command": "application:open-privacy-policy"},
-          {"label": "Documentation", "command": "application:open-documentation"},
-          {"label": "Frequently Asked Questions", "command": "application:open-faq"},
-          {"type": "separator"},
-          {"label": "Community Discussions", "command": "application:open-discussions"},
-          {"label": "Report Issue", "command": "application:report-issue"},
-          {"label": "Search Issues", "command": "application:search-issues"},
-          {"type": "separator"},
-          {"label": "About ARC", "command": "application:about"}
-        ]
-      }]
+      },
+      {
+        "type": "separator"
+      },
+      {
+        "role": "resetzoom"
+      },
+      {
+        "role": "zoomin"
+      },
+      {
+        "role": "zoomout"
+      },
+      {
+        "role": "minimize"
+      }
+    ]
+  }, {
+    "label": "Window",
+    "role": "window",
+    "submenu": [{
+        "role": "minimize"
+      },
+      {
+        "role": "zoom"
+      },
+      {
+        "type": "separator"
+      },
+      {
+        "role": "front"
+      }
+    ]
+  }, {
+    "label": "Help",
+    "role": "help",
+    "submenu": [{
+        "label": "VERSION",
+        "enabled": false
+      },
+      {
+        "label": "License information",
+        "command": "application:open-license"
+      },
+      {
+        "type": "separator"
+      },
+      {
+        "label": "Restart and Install Update",
+        "command": "application:install-update",
+        "visible": false
+      },
+      {
+        "label": "Check for Update",
+        "command": "application:check-for-update",
+        "visible": false
+      },
+      {
+        "label": "Checking for Update",
+        "enabled": false,
+        "visible": false
+      },
+      {
+        "label": "Downloading Update",
+        "enabled": false,
+        "visible": false
+      },
+      {
+        "label": "Privacy policy",
+        "command": "application:open-privacy-policy"
+      },
+      {
+        "label": "Documentation",
+        "command": "application:open-documentation"
+      },
+      {
+        "label": "Frequently Asked Questions",
+        "command": "application:open-faq"
+      },
+      {
+        "type": "separator"
+      },
+      {
+        "label": "Community Discussions",
+        "command": "application:open-discussions"
+      },
+      {
+        "label": "Report Issue",
+        "command": "application:report-issue"
+      },
+      {
+        "label": "Search Issues",
+        "command": "application:search-issues"
+      },
+      {
+        "type": "separator"
+      },
+      {
+        "label": "About ARC",
+        "command": "application:about"
+      }
+    ]
+  }]
 }
