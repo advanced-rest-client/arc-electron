@@ -180,11 +180,11 @@
             <websocket-panel attr-for-opened="opened" data-route="socket"></websocket-panel>
             <history-panel attr-for-opened="opened" data-route="history"></history-panel>
             <saved-requests-panel attr-for-opened="opened" data-route="saved"></saved-requests-panel>
-            <data-import-export-panel data-route="dataimport" api-key="592877543090-6tqu3mbhcbc3437cfj5f0ahjtui5tjac.apps.googleusercontent.com"></data-import-export-panel>
+            <data-import-export-panel data-route="dataimport" api-key="1076318174169-u4a5d3j2v0tbie1jnjgsluqk1ti7ged3.apps.googleusercontent.com"></data-import-export-panel>
             <arc-settings-panel data-route="settings"></arc-settings-panel>
             <arc-about data-route="about"></arc-about>
             <project-details attr-for-opened="opened" data-route="project" project-id="[[projectRoute.id]]" attr-for-opened="opened"></project-details>
-            <google-drive-browser data-route="drive" attr-for-opened="opened" api-key="592877543090-6tqu3mbhcbc3437cfj5f0ahjtui5tjac.apps.googleusercontent.com" access-token="[[accessToken]]" on-drive-file-picker-data="_openDriveRequest"></google-drive-browser>
+            <google-drive-browser data-route="drive" attr-for-opened="opened" api-key="1076318174169-u4a5d3j2v0tbie1jnjgsluqk1ti7ged3.apps.googleusercontent.com" access-token="[[accessToken]]" on-drive-file-picker-data="_openDriveRequest"></google-drive-browser>
           </iron-pages>
         </div>
       </paper-scroll-header-panel>
@@ -272,7 +272,8 @@
         },
 
         _drawerInitTrackWidth: Number,
-        _drawerInitTransition: Number
+        _drawerInitTransition: Number,
+        accessToken: String
       },
 
       created: function() {
@@ -296,7 +297,8 @@
         navigate: '_navigateHandler',
         'drawerResizer.track': '_drawerTrack',
         tap: '_handleLinks',
-        'content-copy': '_copyContentHandler'
+        'content-copy': '_copyContentHandler',
+        'google-autorize': '_googleOauthTokenRequested'
       },
 
       observers: [
@@ -508,7 +510,8 @@
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
-        window.open(target.href);
+        const shell = require('electron').remote.shell;
+        shell.openExternal(target.href);
       },
 
       onNewWindow: function() {
@@ -585,6 +588,34 @@
           case 'import-data': this.openImport(); break;
           case 'export-data': this.openExport(); break;
         }
+      },
+
+      _googleOauthTokenRequested: function(e) {
+        var scope = e.detail.scope.split(' ');
+        ipc.send('oauth-2-get-token', {
+          interactive: true,
+          scopes: scope
+        });
+        var context = this;
+        var rejected;
+        function resolved(sender, token) {
+          ipc.removeListener('oauth-2-token-ready', resolved);
+          ipc.removeListener('oauth-2-token-error', rejected);
+          context.fire('google-signin-success', {
+            scope: scope,
+            token: token
+          });
+          context.accessToken = token;
+        }
+        rejected = function() {
+          ipc.removeListener('oauth-2-token-ready', resolved);
+          ipc.removeListener('oauth-2-token-error', rejected);
+          context.fire('google-signout', {
+            scope: scope
+          });
+        };
+        ipc.on('oauth-2-token-ready', resolved);
+        ipc.on('oauth-2-token-error', rejected);
       }
     });
   </script>

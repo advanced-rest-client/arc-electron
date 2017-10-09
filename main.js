@@ -5,6 +5,7 @@ const dialog = require('electron').dialog;
 const {ArcWindowsManager} = require('./scripts/windows-manager');
 const {UpdateStatus} = require('./scripts/update-status');
 const {ArcMainMenu} = require('./scripts/main-menu');
+const {ArcIdentity} = require('./scripts/oauth2');
 
 class Arc {
   constructor() {
@@ -113,4 +114,14 @@ ipc.on('new-window', function() {
 
 ipc.on('toggle-devtools', (event) => {
   event.sender.webContents.toggleDevTools();
+});
+
+ipc.on('oauth-2-get-token', (event, options) => {
+  ArcIdentity.getAuthToken(options)
+  .then(token => {
+    event.sender.send('oauth-2-token-ready', token);
+  })
+  .catch(cause => {
+    event.sender.send('oauth-2-token-error', cause);
+  });
 });
