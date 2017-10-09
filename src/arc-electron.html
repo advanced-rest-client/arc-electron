@@ -41,6 +41,7 @@
 <link rel="import" href="../styles/app-theme.html">
 <link rel="import" href="arc-request-panel/arc-request-panel.html">
 <link rel="import" href="file-export/file-export.html">
+<link rel="import" href="about-arc/about-arc.html">
 
 <dom-module id="arc-electron">
   <template>
@@ -148,7 +149,7 @@
             <saved-requests-panel attr-for-opened="opened" data-route="saved"></saved-requests-panel>
             <data-import-export-panel data-route="dataimport" api-key="1076318174169-u4a5d3j2v0tbie1jnjgsluqk1ti7ged3.apps.googleusercontent.com"></data-import-export-panel>
             <arc-settings-panel data-route="settings"></arc-settings-panel>
-            <arc-about data-route="about"></arc-about>
+            <about-arc data-route="about" update-state="[[updateState]]"></about-arc>
             <project-details attr-for-opened="opened" data-route="project" project-id="[[projectRoute.id]]" attr-for-opened="opened"></project-details>
             <google-drive-browser data-route="drive" attr-for-opened="opened" api-key="1076318174169-u4a5d3j2v0tbie1jnjgsluqk1ti7ged3.apps.googleusercontent.com" access-token="[[accessToken]]" on-drive-file-picker-data="_openDriveRequest"></google-drive-browser>
           </iron-pages>
@@ -207,9 +208,7 @@
   <file-export></file-export>
   </template>
   <script>
-    const {
-      ArcPreferences
-    } = require('./scripts/arc-preferences');
+    const {ArcPreferences} = require('./scripts/arc-preferences');
     const ipc = require('electron').ipcRenderer;
 
     Polymer({
@@ -240,7 +239,9 @@
 
         _drawerInitTrackWidth: Number,
         _drawerInitTransition: Number,
-        accessToken: String
+        accessToken: String,
+        // Latest update event data
+        updateState: Array
       },
 
       created: function() {
@@ -634,10 +635,12 @@
         clipboard.writeText(e.detail.value);
         e.preventDefault();
       },
-
+      /**
+       * Handler for update app events sent from main process.
+       * Sets the `updateState` property that is passed to the about page.
+       */
       _updateEventHandler: function(...args) {
-        // TODO: add support for update events
-        console.log('Update event: ', args);
+        this.updateState = args[1];
       },
       /**
        * Handles action performed in main thread (menu action) related to

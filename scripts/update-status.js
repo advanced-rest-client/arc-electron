@@ -1,6 +1,7 @@
 const {ArcBase} = require('./arc-base');
 const {autoUpdater} = require('electron-updater');
 const {dialog, nativeImage} = require('electron');
+const {ArcPreferences} = require('./arc-preferences');
 const log = require('electron-log');
 const path = require('path');
 autoUpdater.logger = log;
@@ -24,10 +25,17 @@ class UpdateStatus extends ArcBase {
    * This function **must** be called after the app ready event.
    */
   start() {
-    log.info('Initializing Auto Updater...');
-    setTimeout(() => {
-      this.check();
-    }, 1000);
+    var pref = new ArcPreferences();
+    return pref.loadSettings()
+    .then(settings => {
+      if (settings.autoUpdate === false) {
+        return;
+      }
+      log.info('Initializing Auto Updater...');
+      setTimeout(() => {
+        this.check();
+      }, 5000);
+    });
   }
 
   _ensureScope() {

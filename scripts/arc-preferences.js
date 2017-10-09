@@ -67,10 +67,10 @@ class ArcPreferences extends ArcBase {
 
   defaultSettings() {
     return {
-      'HISTORY_ENABLED': true,
-      'MAGICVARS_ENABLED': true,
+      'useVariables': true,
       'useCookieStorage': true,
-      'requestDefaultTimeout': 45
+      'requestDefaultTimeout': 45,
+      'autoUpdate': true
     };
   }
 

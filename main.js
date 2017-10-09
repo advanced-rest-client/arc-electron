@@ -146,3 +146,11 @@ ipc.on('oauth-2-get-token', (event, options) => {
     event.sender.send('oauth-2-token-error', cause);
   });
 });
+ipc.on('check-for-update', () => {
+  arcApp.us.check({
+    notify: false
+  });
+});
+ipc.on('install-update', () => {
+  arcApp.us.installUpdate();
+});
