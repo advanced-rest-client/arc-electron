@@ -53,12 +53,9 @@ class IdentityProvider {
    * if there's an authorization error.
    */
   getAuthToken(opts) {
-    if (!opts.scopes) {
-      return Promise.reject('Scopes parameter not set.');
-    }
     return this.getTokenInfo()
     .then(info => {
-      if (info && this.isTokenAuthorized(info, opts.scopes)) {
+      if (info && this.isTokenAuthorized(info, opts.scopes || this.oauthConfig.scopes)) {
         return info;
       }
       this.requestOptions = opts;
@@ -186,11 +183,12 @@ class IdentityProvider {
       expires_in: oauthParams.get('expires_in')
     };
     var scope = oauthParams.get('scope');
+    var requestedScopes = this.requestOptions.scopes || this.oauthConfig.scopes;
     if (scope) {
       scope = scope.split(' ');
-      scope = this.requestOptions.scopes.concat(scope);
+      scope = requestedScopes.concat(scope);
     } else {
-      scope = this.requestOptions.scopes;
+      scope = requestedScopes.scopes;
     }
     tokenInfo.scopes = scope;
     tokenInfo.expires_at = this.computeExpires(tokenInfo);
@@ -300,7 +298,7 @@ class IdentityProvider {
     url += 'client_id=' + encodeURIComponent(cnf.client_id);
     url += '&redirect_uri=' + encodeURIComponent(cnf.redirect_uri);
     url += '&response_type=' + cnf.response_type;
-    url += '&scope=' + this.computeScope(opts.scopes);
+    url += '&scope=' + this.computeScope(opts.scopes || this.oauthConfig.scopes);
     url += '&state=' + this.setStateParameter();
     if (cnf.include_granted_scopes) {
       url += '&include_granted_scopes=true';
@@ -337,7 +335,7 @@ class IdentityProvider {
     if (!cnf.client_id) {
       messages.push('"client_id" is required but is missing.');
     }
-    if (!opts.scopes || !opts.scopes.length) {
+    if (!(opts.scopes && opts.scopes.length) && !(cnf.scopes && cnf.scopes.length)) {
       messages.push('"scopes" is required but is missing.');
     }
     if (!cnf.auth_uri) {
