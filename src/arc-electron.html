@@ -118,6 +118,7 @@
     <app-route route="{{route}}" pattern="/:base" data="{{routeData}}"></app-route>
     <app-route route="{{route}}" pattern="/project/:id" data="{{projectRoute}}"></app-route>
     <app-route route="{{route}}" pattern="/request/:type/:id" data="{{requestRoute}}"></app-route>
+    <app-route route="{{route}}" pattern="/request/drive/:action/:id" data="{{driveFileRoute}}"></app-route>
 
     <paper-drawer-panel responsive-width="1000px" id="paperDrawerPanel" force-narrow="{{forceNarrowLayout}}" narrow="{{narrowLayout}}" drawer-width="[[drawerWidth]]" disable-edge-swipe disable-swipe>
       <paper-scroll-header-panel drawer>
@@ -254,6 +255,7 @@
         selectedRequest: String,
         route: Object,
         routeData: Object,
+        driveFileRoute: Object,
         appId: String,
         appVersion: String,
         gaCustomMetrics: Array,
@@ -298,15 +300,21 @@
         'drawerResizer.track': '_drawerTrack',
         tap: '_handleLinks',
         'content-copy': '_copyContentHandler',
-        'google-autorize': '_googleOauthTokenRequested'
+        'google-autorize': '_googleOauthTokenRequested',
+        'on-process-incoming-data': '_processIcomingData'
       },
 
       observers: [
-        '_routeDataChanged(routeData.*)'
+        '_setupRequestRoute(requestRoute.*)',
+        '_driveFileRouteChanged(driveFileRoute.*)'
       ],
 
       _routeDataChanged: function(record) {
-        console.log(record.base);
+        var params = record && record.base;
+        switch (params.base) {
+          case 'request':
+            return this._setupRequestRoute(params);
+        }
       },
 
       ready: function() {
@@ -314,6 +322,132 @@
         if (!this.route.path) {
           this.set('route.path', '/request/latest/0');
         }
+        this._requestAuthToken(false);
+      },
+
+      _setupRequestRoute: function(record) {
+        var params = record && record.base;
+        this.pageTitle = 'Request';
+        if (!params || !params.type) {
+          return;
+        }
+        var id;
+        switch (params.type) {
+          case 'history': id = params.id; break;
+          case 'saved': id = params.id; break;
+          case 'restore':
+          case 'latest':
+          case 'current':
+            this.selectedRequest = undefined;
+            return;
+          case 'drive':
+            // console.log(this.driveFileRoute);
+            // debugger;
+            this.selectedRequest = undefined;
+            // return this.openDriveItem(params.driveId);
+            return;
+          default:
+            this.selectedRequest = undefined;
+            console.error('ID not handled!', params);
+            throw new Error('ID not handled!');
+        }
+        this.selectedRequest = decodeURIComponent(id);
+      },
+
+      _driveFileRouteChanged: function(record) {
+        var params = record && record.base;
+        if (!params || !params.action || !params.id) {
+          return;
+        }
+        // open and create actions are basically the same...
+        this.openDriveItem(params.id);
+      },
+
+      openDriveItem: function(id) {
+        Polymer.RenderStatus.afterNextRender(this, function() {
+          if (!this.accessToken) {
+            this.addEventListener('oauth-2-token-ready', function clb() {
+              this.removeEventListener('oauth-2-token-ready', clb);
+              this.openDriveItem(id);
+            });
+            return this._requestAuthToken(true);
+          }
+          this.fire('navigate', {
+            base: 'drive'
+          });
+          var picker = Polymer.dom(this.root).querySelector('google-drive-browser');
+          picker._isOpened = true;
+          picker._downloadFile(id);
+        });
+      },
+      /**
+       * Handles opening a file from Google Drive.
+       * Normalizes content to the import object and opens import panel
+       * if the data is import data or a request if import data contains single
+       * request.
+       */
+      _openDriveRequest: function(e) {
+        var opts = {
+          diveId: e.detail.diveId
+        };
+        this._processIcomingData(e.detail.content, opts);
+      },
+
+      _isSingleRequest: function(data) {
+        if (!data.requests || !data.requests.length) {
+          return false;
+        }
+        if (data.requests.length !== 1) {
+          return false;
+        }
+        if (data.projects && data.projects.length === 0) {
+          delete data.projects;
+        }
+        if (data.history && data.history.length === 0) {
+          delete data.history;
+        }
+        if (Object.keys(data).length === 4) {
+          return true;
+        }
+        return false;
+      },
+
+      _processIcomingData: function(data, opts) {
+        if (!data) {
+          return;
+        }
+        opts = opts || {};
+        var event = this.fire('import-normalize', {
+          content: data
+        }, {
+          cancelable: true
+        });
+        event.detail.result.then((data) => {
+          if (this._isSingleRequest(data)) {
+            let obj = data.requests[0];
+            if (opts.diveId) {
+              obj.type = 'google-drive';
+              obj.driveId = opts.diveId;
+            }
+            Polymer.dom(this.root).querySelector('arc-request-panel').request = obj;
+            this.fire('navigate', {
+              base: 'request',
+              type: 'current',
+              id: '0'
+            });
+          } else {
+            let panel = Polymer.dom(this.root).querySelector('data-import-export-panel');
+            panel.importObject = data;
+            panel.importPage = 3;
+            this.openImportExport();
+          }
+        })
+        .catch(cause => this.notifyError(cause.message));
+      },
+
+      notifyError: function(message) {
+        this.$.errorToast.text = message;
+        this.$.errorToast.opened = true;
       },
 
       // Starts listening for main script events.
@@ -351,34 +485,22 @@
         var params = e.detail;
         var url;
         switch (params.base) {
-          case 'default':
-            url = '/request/latest/0';
-            break;
-          case 'history':
-            url = '/history';
-            break;
-          case 'settings':
-            url = '/settings';
-            break;
-          case 'about':
-            url = '/about';
-            break;
-          case 'socket':
-            url = '/socket';
-            break;
-          case 'saved':
-            url = '/saved';
-            break;
-          case 'dataimport':
-            url = '/dataimport';
-            break;
+          case 'default': url = '/request/latest/0'; break;
+          case 'history': url = '/history'; break;
+          case 'settings': url = '/settings'; break;
+          case 'about': url = '/about'; break;
+          case 'socket': url = '/socket'; break;
+          case 'saved': url = '/saved'; break;
+          case 'dataimport': url = '/dataimport'; break;
           case 'project':
             if (params.id) {
               url = '/project/' + params.id;
             }
             break;
           case 'request':
-            url = '/request/' + params.type + '/' + encodeURIComponent(params.id);
+            let type = params.type || 'latest';
+            let id = params.id || '0';
+            url = '/request/' + type + '/' + encodeURIComponent(id);
             break;
           case 'drive':
             url = '/drive';
@@ -592,13 +714,22 @@
 
       _googleOauthTokenRequested: function(e) {
         var scope = e.detail.scope.split(' ');
+        this._requestAuthToken(true, scope);
+      },
+
+      _requestAuthToken: function(interactive, scope) {
+        if (this.__requestingToken) {
+          return;
+        }
+        this.__requestingToken = true;
         ipc.send('oauth-2-get-token', {
-          interactive: true,
+          interactive: interactive,
           scopes: scope
         });
         var context = this;
         var rejected;
         function resolved(sender, token) {
+          context.__requestingToken = false;
           ipc.removeListener('oauth-2-token-ready', resolved);
           ipc.removeListener('oauth-2-token-error', rejected);
           context.fire('google-signin-success', {
@@ -608,6 +739,7 @@
           context.accessToken = token;
         }
         rejected = function() {
+          context.__requestingToken = false;
           ipc.removeListener('oauth-2-token-ready', resolved);
           ipc.removeListener('oauth-2-token-error', rejected);
           context.fire('google-signout', {
