@@ -511,7 +511,7 @@ Custom property | Description | Default
       if (!request) {
         return;
       }
-      var history = this.isHistory;
+      var history = this.isHistory || request.type === 'history';
       var isSaved = history ? false : !!request._id;
       var isDrive = history ? false : !!request.driveId;
 

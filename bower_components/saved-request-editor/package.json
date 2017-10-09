@@ -1,6 +1,6 @@
 {
   "name": "saved-request-editor",
-  "version": "0.1.5",
+  "version": "0.1.7",
   "license": "Apache-2.0 OR CC-BY-4.0",
   "description": "An applet to edit saved request data",
   "devDependencies": {

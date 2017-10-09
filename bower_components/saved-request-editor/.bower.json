@@ -1,7 +1,7 @@
 {
   "name": "saved-request-editor",
   "description": "An applet to edit saved request data",
-  "version": "0.1.5",
+  "version": "0.1.7",
   "license": "Apache-2.0 OR CC-BY-4.0",
   "authors": [
     "The Advanced REST client authors <arc@mulesoft.com>"
@@ -51,13 +51,13 @@
     "tasks"
   ],
   "homepage": "https://github.com/advanced-rest-client/saved-request-editor",
-  "_release": "0.1.5",
+  "_release": "0.1.7",
   "_resolution": {
     "type": "version",
-    "tag": "0.1.5",
-    "commit": "50ff61af289b0e0422dd04de223e6446c5f0bb52"
+    "tag": "0.1.7",
+    "commit": "5a3430b06f5331cf03c0c7b4bdf19e669a649d0f"
   },
   "_source": "https://github.com/advanced-rest-client/saved-request-editor.git",
-  "_target": "^0.1.1",
+  "_target": "^0.1.7",
   "_originalSource": "advanced-rest-client/saved-request-editor"
 }
