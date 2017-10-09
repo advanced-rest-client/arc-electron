@@ -29,7 +29,7 @@ class Arc {
    */
   _registerProtocols() {
     app.setAsDefaultProtocolClient('arc-file');
-    app.on('open-url', function(event, url) {
+    app.on('open-url', (event, url) => {
       event.preventDefault();
       var fileData = url.substr(11);
       var parts = fileData.split('/');
