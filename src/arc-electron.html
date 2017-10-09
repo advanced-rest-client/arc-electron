@@ -162,50 +162,44 @@
     <paper-toast id="errorToast" duration="5000"></paper-toast>
     <paper-toast id="offlineToast" class="offline-toast" text="You are now offline. Can't make new requests."></paper-toast>
     <search-bar id="content-search-bar" on-iron-overlay-opened="textSearchBarOpened"></search-bar>
-    <app-analytics
-      tracking-id="UA-18021184-6"
-      app-name="ARC"
-      app-id="[[appId]]"
-      app-version="[[appVersion]]"
-      disable-tracking="{{analyticsDisabled}}"
-      data-source="chrome-app">
+    <app-analytics tracking-id="UA-18021184-6" app-name="ARC-electon" app-id="[[appId]]" app-version="[[appVersion]]" disable-tracking="{{analyticsDisabled}}" data-source="chrome-app">
       <template is="dom-repeat" items="[[gaCustomMetrics]]">
         <app-analytics-custom type="metric" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
       </template>
-  <template is="dom-repeat" items="[[gaCustomDimensions]]">
+      <template is="dom-repeat" items="[[gaCustomDimensions]]">
         <app-analytics-custom type="dimension" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
       </template>
-  </app-analytics>
-  <app-analytics tracking-id="UA-18021184-14" app-name="ARC" app-id="[[appId]]" app-version="[[appVersion]]" data-source="chrome-app" disable-tracking="{{analyticsDisabled}}">
-    <template is="dom-repeat" items="[[gaCustomMetrics]]">
+    </app-analytics>
+    <app-analytics tracking-id="UA-18021184-14" app-name="ARC" app-id="[[appId]]" app-version="[[appVersion]]" data-source="chrome-app" disable-tracking="{{analyticsDisabled}}">
+      <template is="dom-repeat" items="[[gaCustomMetrics]]">
         <app-analytics-custom type="metric" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
       </template>
-    <template is="dom-repeat" items="[[gaCustomDimensions]]">
+      <template is="dom-repeat" items="[[gaCustomDimensions]]">
         <app-analytics-custom type="dimension" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
       </template>
-  </app-analytics>
-  <app-analytics tracking-id="UA-71458341-2" app-name="ARC" app-id="[[appId]]" app-version="[[appVersion]]" data-source="chrome-app" disable-tracking="{{analyticsDisabled}}">
-    <template is="dom-repeat" items="[[gaCustomMetrics]]">
+    </app-analytics>
+    <app-analytics tracking-id="UA-71458341-2" app-name="ARC" app-id="[[appId]]" app-version="[[appVersion]]" data-source="chrome-app" disable-tracking="{{analyticsDisabled}}">
+      <template is="dom-repeat" items="[[gaCustomMetrics]]">
         <app-analytics-custom type="metric" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
       </template>
-    <template is="dom-repeat" items="[[gaCustomDimensions]]">
+      <template is="dom-repeat" items="[[gaCustomDimensions]]">
         <app-analytics-custom type="dimension" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
       </template>
-  </app-analytics>
-  <app-logger></app-logger>
-  <arc-definitions></arc-definitions>
-  <variables-evaluator no-before-request></variables-evaluator>
-  <variables-manager></variables-manager>
-  <request-saver></request-saver>
-  <cookie-jar></cookie-jar>
-  <response-history-saver></response-history-saver>
-  <url-history-saver></url-history-saver>
-  <arc-data-export></arc-data-export>
-  <arc-data-import></arc-data-import>
-  <authorization-data-saver></authorization-data-saver>
-  <project-model></project-model>
-  <!-- Electron specific -->
-  <file-export></file-export>
+    </app-analytics>
+    <app-logger></app-logger>
+    <arc-definitions></arc-definitions>
+    <variables-evaluator no-before-request></variables-evaluator>
+    <variables-manager></variables-manager>
+    <request-saver></request-saver>
+    <cookie-jar></cookie-jar>
+    <response-history-saver></response-history-saver>
+    <url-history-saver></url-history-saver>
+    <arc-data-export></arc-data-export>
+    <arc-data-import></arc-data-import>
+    <authorization-data-saver></authorization-data-saver>
+    <project-model></project-model>
+    <!-- Electron specific -->
+    <file-export></file-export>
   </template>
   <script>
     const {ArcPreferences} = require('./scripts/arc-preferences');
