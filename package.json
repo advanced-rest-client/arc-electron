@@ -1,7 +1,7 @@
 {
   "name": "advanced-rest-client",
   "description": "The Advanced REST Client desktop application.",
-  "version": "11.0.8",
+  "version": "11.0.9",
   "homepage": "https://advancedrestclient.com/",
   "license": "LICENSE.md",
   "author": {
@@ -119,7 +119,11 @@
         "owner": "advanced-rest-client",
         "repo": "arc-electron"
       }
-    ]
+    ],
+    "protocols": {
+      "name": "ARC file open",
+      "schemes": ["arc-file"]
+    }
   },
 
   "oauth2": {
