@@ -33,11 +33,13 @@ About page for ARC Electron.
 
     h1 {
       @apply --arc-font-display1;
+      @apply --about-arc-title;
     }
 
     .title-section {
       @apply --layout-vertical;
       @apply --layout-center-center;
+      @apply --about-arc-title-containe;
     }
 
     .hero {
@@ -57,6 +59,7 @@ About page for ARC Electron.
 
     .app-title {
       margin-left: 24px;
+      @apply --about-arc-title-container;
     }
 
     .version-meta {
@@ -65,6 +68,7 @@ About page for ARC Electron.
       @apply --arc-font-body2;
       font-size: 18px;
       color: rgba(0, 0, 0, 0.74);
+      @apply --about-arc-version-container;
     }
 
     .version {
@@ -72,20 +76,24 @@ About page for ARC Electron.
       display: inline-block;
       padding-right: 12px;
       border-right: 1px rgba(0, 0, 0, 0.14) solid;
+      @apply --about-arc-version-label;
     }
 
     .version-meta a {
       color: inherit;
       text-decoration: inherit;
+      @apply --about-arc-release-notes-label;
     }
 
     .version-meta a:hover {
       text-decoration: underline;
+      @apply --about-arc-release-notes-label-hovered;
     }
 
     .open-external-icon {
       width: 16px;
       height: 16px;
+      @apply --about-arc-open-external-icon;
     }
 
     .updates-section {
@@ -94,6 +102,7 @@ About page for ARC Electron.
       margin: 40px auto;
       background-color: #fff;
       padding: 24px;
+      @apply --about-arc-update-status-section;
     }
 
     .update-status {
