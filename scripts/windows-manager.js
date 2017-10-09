@@ -60,16 +60,17 @@ class ArcWindowsManager {
   }
 
   __loadPage(win, appPath) {
-    appPath = appPath || '#!/request/latest';
+    appPath = appPath || '#/request/latest/0';
     if (appPath[0] === '/') {
-      appPath = '#!' + appPath;
+      appPath = '#' + appPath;
     }
     var dest = path.join(__dirname, '..', 'app.html');
-    win.loadURL(url.format({
+    var full = url.format({
       pathname: dest,
       protocol: 'file:',
       slashes: true
-    }));
+    }) + appPath;
+    win.loadURL(full);
   }
 
   __attachListeners(win) {
