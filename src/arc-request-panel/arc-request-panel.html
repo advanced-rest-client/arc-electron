@@ -367,13 +367,10 @@ the License.
             this.set('projectId', undefined);
           }
           this.proxyRequest = data;
-          var id = request._id;
-          try {
-            id = encodeURIComponent(id);
-          } catch (e) {}
-          this.set('routeParams', {
-            savedId: id,
-            type: 'saved'
+          this.fire('navigate', {
+            base: 'request',
+            type: 'saved',
+            id: request._id
           });
         })
         .catch(cause => {
