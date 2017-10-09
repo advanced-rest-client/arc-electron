@@ -162,30 +162,32 @@
     <paper-toast id="errorToast" duration="5000"></paper-toast>
     <paper-toast id="offlineToast" class="offline-toast" text="You are now offline. Can't make new requests."></paper-toast>
     <search-bar id="content-search-bar" on-iron-overlay-opened="textSearchBarOpened"></search-bar>
-    <app-analytics tracking-id="UA-18021184-6" app-name="ARC-electon" app-id="[[appId]]" app-version="[[appVersion]]" disable-tracking="{{analyticsDisabled}}" data-source="electron-app">
-      <template is="dom-repeat" items="[[gaCustomMetrics]]">
-        <app-analytics-custom type="metric" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
-      </template>
-      <template is="dom-repeat" items="[[gaCustomDimensions]]">
-        <app-analytics-custom type="dimension" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
-      </template>
-    </app-analytics>
-    <app-analytics tracking-id="UA-18021184-14" app-name="ARC" app-id="[[appId]]" app-version="[[appVersion]]" data-source="electron-app" disable-tracking="{{analyticsDisabled}}">
-      <template is="dom-repeat" items="[[gaCustomMetrics]]">
-        <app-analytics-custom type="metric" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
-      </template>
-      <template is="dom-repeat" items="[[gaCustomDimensions]]">
-        <app-analytics-custom type="dimension" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
-      </template>
-    </app-analytics>
-    <app-analytics tracking-id="UA-71458341-2" app-name="ARC" app-id="[[appId]]" app-version="[[appVersion]]" data-source="electron-app" disable-tracking="{{analyticsDisabled}}">
-      <template is="dom-repeat" items="[[gaCustomMetrics]]">
-        <app-analytics-custom type="metric" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
-      </template>
-      <template is="dom-repeat" items="[[gaCustomDimensions]]">
-        <app-analytics-custom type="dimension" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
-      </template>
-    </app-analytics>
+    <template is="dom-if" if="[[telemetry]]" restamp="true">
+      <app-analytics tracking-id="UA-18021184-6" app-name="ARC-electon" app-id="[[appId]]" app-version="[[appVersion]]" disable-tracking="{{analyticsDisabled}}" data-source="electron-app">
+        <template is="dom-repeat" items="[[gaCustomMetrics]]">
+          <app-analytics-custom type="metric" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
+        </template>
+        <template is="dom-repeat" items="[[gaCustomDimensions]]">
+          <app-analytics-custom type="dimension" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
+        </template>
+      </app-analytics>
+      <app-analytics tracking-id="UA-18021184-14" app-name="ARC" app-id="[[appId]]" app-version="[[appVersion]]" data-source="electron-app" disable-tracking="{{analyticsDisabled}}">
+        <template is="dom-repeat" items="[[gaCustomMetrics]]">
+          <app-analytics-custom type="metric" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
+        </template>
+        <template is="dom-repeat" items="[[gaCustomDimensions]]">
+          <app-analytics-custom type="dimension" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
+        </template>
+      </app-analytics>
+      <app-analytics tracking-id="UA-71458341-2" app-name="ARC" app-id="[[appId]]" app-version="[[appVersion]]" data-source="electron-app" disable-tracking="{{analyticsDisabled}}">
+        <template is="dom-repeat" items="[[gaCustomMetrics]]">
+          <app-analytics-custom type="metric" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
+        </template>
+        <template is="dom-repeat" items="[[gaCustomDimensions]]">
+          <app-analytics-custom type="dimension" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
+        </template>
+      </app-analytics>
+    </template>
     <app-logger></app-logger>
     <arc-definitions></arc-definitions>
     <variables-evaluator no-before-request></variables-evaluator>
@@ -245,7 +247,23 @@
         _drawerInitTransition: Number,
         accessToken: String,
         // Latest update event data
-        updateState: Array
+        updateState: Array,
+        /**
+         * Overrides analytics element behavior.
+         * This setting is now in main application settings.
+         *
+         * TODO: Remove state setting from the element. This should be
+         * controlled from the outside.
+         */
+        analyticsDisabled: {
+          type: Boolean,
+          value: false
+        },
+        /**
+         * Sets Google Analytics state. If this is not set or falsy, then Google
+         * Analytics is diosabled (element is removed from the DOM).
+         */
+        telemetry: Boolean
       },
 
       created: function() {
@@ -273,7 +291,8 @@
         'google-autorize': '_googleOauthTokenRequested',
         'on-process-incoming-data': '_processIcomingData',
         'pick-google-drive-item': 'openDrivePicker',
-        'open-drive-selector': 'openDrivePicker'
+        'open-drive-selector': 'openDrivePicker',
+        'settings-changed': '_settingChanged'
       },
 
       observers: [
@@ -297,8 +316,41 @@
         this._requestAuthToken(false);
         this.setupAnalytics();
       },
-
+      /**
+       * Reads current settings and enables Google Analytics if it's not
+       * disabled by the uers.
+       */
       setupAnalytics: function() {
+        var event = this.fire('settings-read', {}, {
+          composed: true,
+          cancelable: true
+        });
+        if (!event.defaultPrevented) {
+          throw new Error('Settings provided not found.');
+        }
+        return event.detail.result.then(settings => {
+          if (settings.telemetry === false) {
+            this._analyticsDisabled();
+          } else {
+            this._analyticsEnabled();
+          }
+        });
+      },
+      /**
+       * Enables Google Analytics.
+       *
+       * Until settings status is checked Google Analytics components is not
+       * even in the DOM. Once the `telemetry` flag is set analytics elements
+       * are attached to the DOM and start handling events.
+       *
+       * This can be disabled by calling `_analyticsDisabled` or by sending
+       * `settings-changed` custom event with `telemetry` key.
+       */
+      _analyticsEnabled: function() {
+        this.telemetry = true;
+        if (this.gaCustomDimensions) {
+          return;
+        }
         this.gaCustomDimensions = [];
         this.push('gaCustomDimensions', {
           index: 1,
@@ -312,6 +364,34 @@
           index: 5,
           value: 'stable'
         });
+      },
+      // To be called if GA is disabled to remove GA elements from the DOM.
+      _analyticsDisabled: function() {
+        this.telemetry = false;
+        // no need to clean up custom dimensions
+        // since it is removed from DOM anyway.
+      },
+      /**
+       * Handles settings change event.
+       * If changed setting is `telemetry` then it upodates GA state.
+       */
+      _settingChanged: function(e) {
+        if (e.cancelable) {
+          return; // request for change
+        }
+        // Here we just care about `telemetry`
+        if (e.detail.name !== 'telemetry') {
+          return;
+        }
+        var value = e.detail.value;
+        if (typeof value !== 'boolean') {
+          value = value === 'false' ? false : true;
+        }
+        if (value) {
+          this._analyticsEnabled();
+        } else {
+          this._analyticsDisabled();
+        }
       },
 
       _setupRequestRoute: function(record) {

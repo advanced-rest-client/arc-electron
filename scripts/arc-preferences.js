@@ -64,13 +64,16 @@ class ArcPreferences extends ArcBase {
   updateSettings() {
     return this.storeFile(this.settingsFile, this.__settings);
   }
-
+  /**
+   * Creates default settings object.
+   */
   defaultSettings() {
     return {
       'useVariables': true,
       'useCookieStorage': true,
       'requestDefaultTimeout': 45,
-      'autoUpdate': true
+      'autoUpdate': true,
+      'telemetry': true
     };
   }
 
