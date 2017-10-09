@@ -2,10 +2,6 @@ const {BrowserWindow} = require('electron');
 const fs = require('fs-extra');
 const path = require('path');
 const {URLSearchParams} = require('url');
-const {session} = require('electron');
-const filter = {
-  urls: ['https://auth.advancedrestclient.com/*']
-};
 // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
 const windowParams = {
   width: 640,
