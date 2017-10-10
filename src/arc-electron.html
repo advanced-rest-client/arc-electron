@@ -281,7 +281,8 @@
         'on-process-incoming-data': '_processIcomingData',
         'pick-google-drive-item': 'openDrivePicker',
         'open-drive-selector': 'openDrivePicker',
-        'settings-changed': '_settingChanged'
+        'settings-changed': '_settingChanged',
+        'open-external-url': '_openExternalHandler'
       },
 
       observers: [
@@ -698,6 +699,12 @@
         e.stopImmediatePropagation();
         const shell = require('electron').remote.shell;
         shell.openExternal(target.href);
+      },
+
+      _openExternalHandler: function(e) {
+        e.preventDefault();
+        const shell = require('electron').remote.shell;
+        shell.openExternal(e.detail.url);
       },
 
       onNewWindow: function() {
