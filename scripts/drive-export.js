@@ -17,7 +17,7 @@
 const {ArcIdentity} = require('./oauth2');
 const fs = require('fs-extra');
 const path = require('path');
-// const fetch = require('node-fetch');
+const fetch = require('node-fetch');
 // const URLSafeBase64 = require('urlsafe-base64');
 
 class DriveExport {
