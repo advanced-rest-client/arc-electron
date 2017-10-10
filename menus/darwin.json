@@ -145,6 +145,12 @@
       },
       {
         "role": "zoom"
+      },
+      {"type": "separator"},
+      {
+          "label": "Find",
+          "command": "application:find",
+          "accelerator": "CommandOrControl+f"
       }
     ]
   }, {

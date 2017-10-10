@@ -690,13 +690,13 @@
         switch (e.detail.state) {
           case 'start':
             this.__drawerTrackStart();
-            break;
+          break;
           case 'track':
             this.__drawerTrack(e.detail);
-            break;
+          break;
           case 'end':
             this.__drawerTrackEnd(e.detail);
-            break;
+          break;
         }
       },
 
@@ -776,6 +776,41 @@
         panel.hideImport = true;
       },
 
+      openSaved: function() {
+        this.fire('navigate', {
+          base: '/saved'
+        });
+      },
+
+      openHistory: function() {
+        this.fire('navigate', {
+          base: '/history'
+        });
+      },
+      /**
+       * Handles "find" action depending on the context.
+       *
+       * Currently it can only be request panel context.
+       */
+      handleFindOpen: function() {
+        if (this.routeData.base !== 'request') {
+          return;
+        }
+        var searchBar = this.$['content-search-bar'];
+        if (searchBar.opened) {
+          searchBar.focusInput();
+        } else {
+          // searchBar.style.top = app.mainHeaderTop;
+          searchBar.opened = true;
+          this.fire('send-analytics', {
+            type: 'event',
+            category: 'Shortcats usage',
+            action: 'Called',
+            label: 'Search'
+          });
+        }
+      },
+
       _copyContentHandler: function(e) {
         const {
           clipboard
@@ -803,13 +838,13 @@
         switch (action) {
           case 'save':
             this.$$('arc-request-panel').onSave({});
-            break;
+          break;
           case 'save-as':
             this.$$('arc-request-panel').onSave({
               source: 'shortcut',
               shift: true
             });
-            break;
+          break;
         }
       },
       /**
@@ -825,6 +860,9 @@
           case 'open-license': this.openLicense(); break;
           case 'import-data': this.openImport(); break;
           case 'export-data': this.openExport(); break;
+          case 'open-saved': this.openSaved(); break;
+          case 'open-history': this.openHistory(); break;
+          case 'find': this.handleFindOpen(); break;
         }
       },
 

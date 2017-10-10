@@ -90,11 +90,14 @@ class Arc {
       case 'quit':
         app.quit();
       break;
+      case 'open-saved':
+      case 'open-history':
       case 'show-settings':
       case 'about':
       case 'open-license':
       case 'import-data':
       case 'export-data':
+      case 'find':
         win.webContents.send(windowCommand, action);
       break;
       case 'new-window':
