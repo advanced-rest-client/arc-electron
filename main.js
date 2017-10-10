@@ -6,6 +6,7 @@ const {ArcWindowsManager} = require('./scripts/windows-manager');
 const {UpdateStatus} = require('./scripts/update-status');
 const {ArcMainMenu} = require('./scripts/main-menu');
 const {ArcIdentity} = require('./scripts/oauth2');
+const {DriveExport} = require('./scripts/drive-export');
 
 class Arc {
   constructor() {
@@ -153,4 +154,58 @@ ipc.on('check-for-update', () => {
 });
 ipc.on('install-update', () => {
   arcApp.us.installUpdate();
+});
+
+ipc.on('google-drive-data-save', (event, requestId, content, type, fileName) => {
+  var config = {
+    resource: {
+      name: fileName,
+      description: 'Advanced REST client data export file.'
+    },
+    media: {
+      mimeType: type || 'application/json',
+      body: content
+    }
+  };
+  const drive = new DriveExport();
+  drive.create(config)
+  .then(result => {
+    event.sender.send('google-drive-data-save-result', requestId, result);
+  })
+  .catch(cause => {
+    event.sender.send('google-drive-data-save-error', requestId, cause);
+  });
+});
+
+ipc.on('drive-request-save', (event, requestId, request, fileName) => {
+  var driveId;
+  if (request.driveId) {
+    driveId = request.driveId;
+    delete request.driveId;
+  }
+  var config = {
+    resource: {
+      name: fileName + '.arc',
+    },
+    media: {
+      mimeType: 'application/json',
+      body: request
+    }
+  };
+  const drive = new DriveExport();
+  var promise;
+  if (driveId) {
+    promise = drive.update(driveId, config);
+  } else {
+    config.resource.description = request.description || 'Advanced REST client export file.';
+    promise = drive.create(config);
+  }
+
+  promise
+  .then(result => {
+    event.sender.send('drive-request-save-result', requestId, result);
+  })
+  .catch(cause => {
+    event.sender.send('drive-request-save-error', requestId, cause);
+  });
 });

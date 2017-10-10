@@ -42,6 +42,7 @@
 <link rel="import" href="arc-request-panel/arc-request-panel.html">
 <link rel="import" href="file-export/file-export.html">
 <link rel="import" href="about-arc/about-arc.html">
+<link rel="import" href="electron-drive/electron-drive.html">
 
 <dom-module id="arc-electron">
   <template>
@@ -202,6 +203,7 @@
     <project-model></project-model>
     <!-- Electron specific -->
     <file-export></file-export>
+    <electron-drive></electron-drive>
   </template>
   <script>
     const {ArcPreferences} = require('./scripts/arc-preferences');

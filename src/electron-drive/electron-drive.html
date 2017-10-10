@@ -1,0 +1,123 @@
+<!--
+@license
+Copyright 2017 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<!--
+Google Drive integration support for electron app.
+-->
+<script>
+  (function() {
+    const ipc = require('electron').ipcRenderer;
+    Polymer({
+      is: 'electron-drive',
+
+      properties: {
+        // Map of pending promises. Keys are request IDs.
+        _promises: Object,
+        // LKast used index
+        _index: Number
+      },
+
+      attached: function() {
+        this.listen(window, 'google-drive-data-save', '_dataSaveHandler');
+        this.listen(window, 'drive-request-save', '_requestSaveHandler');
+        this._addIpcListeners();
+      },
+
+      detached: function() {
+        this.unlisten(window, 'google-drive-data-save', '_dataSaveHandler');
+        this.unlisten(window, 'drive-request-save', '_requestSaveHandler');
+        this._removeIpcListeners();
+      },
+
+      _addIpcListeners: function() {
+        if (!this.__gddsr) {
+          this.__gddsr = this._dataInsertResult.bind(this);
+          this.__gddse = this._dataInsertError.bind(this);
+        }
+        ipc.on('google-drive-data-save-result', this.__gddsr);
+        ipc.on('google-drive-data-save-error', this.__gddse);
+        ipc.on('drive-request-save-result', this.__gddsr);
+        ipc.on('drive-request-save-error', this.__gddse);
+      },
+
+      _removeIpcListeners: function() {
+        if (!this.__gddsr) {
+          return;
+        }
+        ipc.removeListener('google-drive-data-save-result', this.__gddsr);
+        ipc.removeListener('google-drive-data-save-error', this.__gddse);
+        ipc.removeListener('drive-request-save-result', this.__gddsr);
+        ipc.removeListener('drive-request-save-error', this.__gddse);
+      },
+
+      _getId: function() {
+        if (!this._index) {
+          this._index = 0;
+        }
+        return ++this._index;
+      },
+
+      _dataSaveHandler: function(e) {
+        e.preventDefault();
+        const id = this._getId();
+        var content = e.detail.content;
+        var type = e.detail.contentType;
+        var fileName = e.detail.file;
+        ipc.send('google-drive-data-save', id, content, type, fileName);
+        e.detail.result = new Promise((resolve, reject) => {
+          this._addPromise(id, resolve, reject);
+        });
+      },
+
+      _requestSaveHandler: function(e) {
+        e.preventDefault();
+        const id = this._getId();
+        var request = e.detail.request;
+        var fileName = e.detail.fileName;
+        ipc.send('drive-request-save', id, request, fileName);
+        e.detail.result = new Promise((resolve, reject) => {
+          this._addPromise(id, resolve, reject);
+        });
+      },
+
+      _addPromise: function(id, resolve, reject) {
+        if (!this._promises) {
+          this._promises = {};
+        }
+        this._promises[id] = {
+          resolve: resolve,
+          reject: reject
+        };
+      },
+
+      _dataInsertResult: function(event, id, result) {
+        var promises = this._promises[id];
+        if (!promises) {
+          return;
+        }
+        promises.resolve(result);
+        delete this._promises[id];
+      },
+
+      _dataInsertError: function(event, id, cause) {
+        var promises = this._promises[id];
+        if (!promises) {
+          return;
+        }
+        promises.reject(cause);
+        delete this._promises[id];
+      }
+    });
+  })();
+</script>
