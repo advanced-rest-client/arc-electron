@@ -171,7 +171,7 @@
           <app-analytics-custom type="dimension" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
         </template>
       </app-analytics>
-      <app-analytics tracking-id="UA-18021184-14" app-name="ARC" app-id="[[appId]]" app-version="[[appVersion]]" data-source="electron-app">
+      <app-analytics tracking-id="UA-18021184-14" app-name="ARC-electon" app-id="[[appId]]" app-version="[[appVersion]]" data-source="electron-app">
         <template is="dom-repeat" items="[[gaCustomMetrics]]">
           <app-analytics-custom type="metric" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
         </template>
@@ -179,7 +179,7 @@
           <app-analytics-custom type="dimension" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
         </template>
       </app-analytics>
-      <app-analytics tracking-id="UA-71458341-2" app-name="ARC" app-id="[[appId]]" app-version="[[appVersion]]" data-source="electron-app">
+      <app-analytics tracking-id="UA-71458341-2" app-name="ARC-electon" app-id="[[appId]]" app-version="[[appVersion]]" data-source="electron-app">
         <template is="dom-repeat" items="[[gaCustomMetrics]]">
           <app-analytics-custom type="metric" index="[[item.index]]" value="[[item.value]]"></app-analytics-custom>
         </template>
@@ -366,9 +366,6 @@
        * If changed setting is `telemetry` then it upodates GA state.
        */
       _settingChanged: function(e) {
-        if (e.cancelable) {
-          return; // request for change
-        }
         // Here we just care about `telemetry`
         if (e.detail.name !== 'telemetry') {
           return;
