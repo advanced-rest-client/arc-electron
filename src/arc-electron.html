@@ -278,7 +278,7 @@
         tap: '_handleLinks',
         'content-copy': '_copyContentHandler',
         'google-autorize': '_googleOauthTokenRequested',
-        'on-process-incoming-data': '_processIcomingData',
+        'process-incoming-data': '_processIcomingDataHandler',
         'pick-google-drive-item': 'openDrivePicker',
         'open-drive-selector': 'openDrivePicker',
         'settings-changed': '_settingChanged',
@@ -467,6 +467,10 @@
           return true;
         }
         return false;
+      },
+
+      _processIcomingDataHandler: function(e) {
+        this._processIcomingData(e.detail.data);
       },
 
       _processIcomingData: function(data, opts) {
