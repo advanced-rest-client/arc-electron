@@ -5,6 +5,14 @@
         "label": "New Window",
         "command": "application:new-window",
         "accelerator": "CommandOrControl+n"
+      }, {
+          "label": "Open saved request",
+          "command": "application:open-saved",
+          "accelerator": "CommandOrControl+o"
+      }, {
+          "label": "Open history",
+          "command": "application:open-history",
+          "accelerator": "CommandOrControl+h"
       },
       {
         "type": "separator"
@@ -108,6 +116,12 @@
       },
       {
         "role": "minimize"
+      },
+      {"type": "separator"},
+      {
+          "label": "Find",
+          "command": "application:find",
+          "accelerator": "CommandOrControl+f"
       }
     ]
   }, {

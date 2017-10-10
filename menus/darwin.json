@@ -57,9 +57,17 @@
         "command": "request:save-as",
         "accelerator": "CommandOrControl+Shift+s"
       },
+      {"type": "separator"},
       {
-        "type": "separator"
+          "label": "Open saved request",
+          "command": "application:open-saved",
+          "accelerator": "CommandOrControl+o"
+      }, {
+          "label": "Open history",
+          "command": "application:open-history",
+          "accelerator": "CommandOrControl+h"
       },
+      {"type": "separator"},
       {
         "label": "Import data",
         "command": "application:import-data"

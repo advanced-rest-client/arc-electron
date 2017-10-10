@@ -5,8 +5,15 @@
         "label": "New Window",
         "command": "application:new-window",
         "accelerator": "CommandOrControl+n"
-      },
-      {
+      }, {
+          "label": "Open saved request",
+          "command": "application:open-saved",
+          "accelerator": "CommandOrControl+o"
+      }, {
+          "label": "Open history",
+          "command": "application:open-history",
+          "accelerator": "CommandOrControl+h"
+      }, {
         "type": "separator"
       },
       {
@@ -94,9 +101,7 @@
           }
         ]
       },
-      {
-        "type": "separator"
-      },
+      {"type": "separator"},
       {
         "role": "resetzoom"
       },
@@ -106,8 +111,12 @@
       {
         "role": "zoomout"
       },
+      {"role": "minimize"},
+      {"type": "separator"},
       {
-        "role": "minimize"
+          "label": "Find",
+          "command": "application:find",
+          "accelerator": "CommandOrControl+f"
       }
     ]
   }, {
