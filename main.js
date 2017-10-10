@@ -206,6 +206,10 @@ ipc.on('drive-request-save', (event, requestId, request, fileName) => {
     event.sender.send('drive-request-save-result', requestId, result);
   })
   .catch(cause => {
-    event.sender.send('drive-request-save-error', requestId, cause);
+    var result = {
+      message: cause.message || 'Unknown Goodle Drive save error',
+      stack: cause.stack || ''
+    };
+    event.sender.send('drive-request-save-error', requestId, result);
   });
 });
