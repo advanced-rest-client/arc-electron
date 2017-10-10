@@ -282,7 +282,8 @@
         'pick-google-drive-item': 'openDrivePicker',
         'open-drive-selector': 'openDrivePicker',
         'settings-changed': '_settingChanged',
-        'open-external-url': '_openExternalHandler'
+        'open-external-url': '_openExternalHandler',
+        'app-version': '_appVersionRequestHandler'
       },
 
       observers: [
@@ -857,6 +858,10 @@
         };
         ipc.on('oauth-2-token-ready', resolved);
         ipc.on('oauth-2-token-error', rejected);
+      },
+
+      _appVersionRequestHandler: function(e) {
+        e.detail.version = this.appVersion;
       }
     });
   </script>
