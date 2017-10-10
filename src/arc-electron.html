@@ -536,35 +536,74 @@
         ipc.removeListener('request-action', this.__rah);
         ipc.removeListener('command', this.__ch);
       },
-
+      /**
+       * Handler for the `navigate` custom event. Updates a route depending on
+       * passed data.
+       *
+       */
       _navigateHandler: function(e) {
         var params = e.detail;
         var url;
+        var screenName = '[unknown]';
         switch (params.base) {
-          case 'default': url = '/request/latest/0'; break;
-          case 'history': url = '/history'; break;
-          case 'settings': url = '/settings'; break;
-          case 'about': url = '/about'; break;
-          case 'socket': url = '/socket'; break;
-          case 'saved': url = '/saved'; break;
-          case 'dataimport': url = '/dataimport'; break;
+          case 'default':
+            url = '/request/latest/0';
+            screenName = 'Request - latest';
+          break;
+          case 'history':
+            url = '/history';
+            screenName = 'History';
+          break;
+          case 'settings':
+            url = '/settings';
+            screenName = 'Settings';
+          break;
+          case 'about':
+            url = '/about';
+            screenName = 'About';
+          break;
+          case 'socket':
+            url = '/socket';
+            screenName = 'Socket';
+          break;
+          case 'saved':
+            url = '/saved';
+            screenName = 'Saved';
+          break;
+          case 'dataimport':
+            url = '/dataimport';
+            screenName = 'Data import / export';
+          break;
           case 'project':
             if (params.id) {
               url = '/project/' + params.id;
+              screenName = 'Project details';
             }
-            break;
+          break;
           case 'request':
+            screenName = 'Request - ';
             let type = params.type || 'latest';
             let id = params.id || '0';
+            screenName += type;
             url = '/request/' + type + '/' + encodeURIComponent(id);
-            break;
+          break;
           case 'drive':
             url = '/drive';
-            break;
+            screenName = 'Drive selector';
+          break;
         }
         if (url) {
           this.set('route.path', url);
+          this.fire('send-analytics', {
+            type: 'screenview',
+            name: screenName
+          });
         } else {
+          this.fire('send-analytics', {
+            type: 'exception',
+            description: 'Route not handled' + JSON.stringify(params),
+            fatal: false
+          });
           throw new Error('The route is not handled correctly', params);
         }
       },
