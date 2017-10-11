@@ -3,6 +3,7 @@ const BrowserWindow = electron.BrowserWindow;
 const path = require('path');
 const url = require('url');
 const {ArcSessionControl} = require('./session-control');
+const {ArcSessionRecorder} = require('./arc-session-recorder');
 /**
  * A class that manages opened app windows.
  */
@@ -12,6 +13,7 @@ class ArcWindowsManager {
     this.__windowClosed = this.__windowClosed.bind(this);
     this.__windowMoved = this.__windowMoved.bind(this);
     this.__windowResized = this.__windowResized.bind(this);
+    this.recorder = new ArcSessionRecorder();
   }
   // True if has at leas one window.
   get hasWindow() {
@@ -41,6 +43,7 @@ class ArcWindowsManager {
       // win.webContents.openDevTools();
       this.__attachListeners(win);
       this.windows.push(win);
+      return this.recorder.record();
     });
   }
 
