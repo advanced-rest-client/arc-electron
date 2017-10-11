@@ -6,7 +6,7 @@ const {ArcPreferences} = require('./arc-preferences');
 class LatestRequest extends ArcPreferences {
   constructor() {
     super();
-    this._file = path.join(this.homeDir, 'latest.json');
+    this._file = path.join(this.userSettingsDir, 'latest.json');
   }
 
   restore() {

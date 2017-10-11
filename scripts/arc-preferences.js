@@ -1,4 +1,4 @@
-const os = require('os');
+const electron = require('electron');
 const path = require('path');
 const fs = require('fs-extra');
 const {ArcBase} = require('./arc-base');
@@ -8,8 +8,10 @@ const {ArcBase} = require('./arc-base');
 class ArcPreferences extends ArcBase {
   constructor() {
     super();
-    this.homeDir = path.join(os.homedir(), '.arc');
-    this.settingsFile = path.join(this.homeDir, 'settings.json');
+    const app = (electron.app || electron.remote.app);
+    this.userSettingsDir = app.getPath('userData');
+    this.applicationSettingsDir = app.getPath('appData');
+    this.settingsFile = path.join(this.userSettingsDir, 'settings.json');
     // Current read settings.
     this.__settings = undefined;
     this._settingsReadHandler = this._settingsReadHandler.bind(this);
