@@ -257,6 +257,7 @@
         },
         gaCustomMetrics: Array,
         gaCustomDimensions: Array,
+        // Width of the main navigation drawer.
         drawerWidth: {
           type: String,
           value: '360px',
@@ -303,7 +304,8 @@
 
       observers: [
         '_setupRequestRoute(requestRoute.*)',
-        '_driveFileRouteChanged(driveFileRoute.*)'
+        '_driveFileRouteChanged(driveFileRoute.*)',
+        '_notifyRequestPanelResize(narrowLayout)'
       ],
 
       ready: function() {
@@ -781,7 +783,9 @@
         if (!width) {
           return;
         }
+
         this.customStyle['--app-drawer-width'] = width;
+        this.customStyle['--request-panel-status-bar-left'] = width;
         this.updateStyles();
         this.$.drawerLayout.resetLayout();
       },
@@ -970,6 +974,12 @@
 
       updateInstall: function() {
         ipc.send('install-update');
+      },
+
+      _notifyRequestPanelResize: function(narrowLayout) {
+        var width = narrowLayout ? 0 : this.drawerWidth;
+        this.customStyle['--request-panel-status-bar-left'] = width;
+        this.updateStyles();
       }
     });
   </script>

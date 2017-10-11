@@ -30,7 +30,7 @@
     "network-state": "advanced-rest-client/network-state#^0.1.1",
     "arc-loader-screen": "advanced-rest-client/arc-loader-screen#^0.1.1",
     "response-view": "advanced-rest-client/response-view#^0.1.10",
-    "request-panel": "advanced-rest-client/request-panel#^0.1.1",
+    "request-panel": "advanced-rest-client/request-panel#^0.2.2",
     "request-saver": "advanced-rest-client/request-saver#^0.1.0",
     "variables-manager": "advanced-rest-client/variables-manager#^0.1.8",
     "variables-evaluator": "advanced-rest-client/variables-evaluator#^0.1.5",
