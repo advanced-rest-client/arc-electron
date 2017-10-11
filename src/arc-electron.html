@@ -1,14 +1,12 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/font-roboto-local/roboto.html">
-<link rel="import" href="../bower_components/paper-scroll-header-panel/paper-scroll-header-panel.html">
-<link rel="import" href="../bower_components/paper-drawer-panel/paper-drawer-panel.html">
-<link rel="import" href="../bower_components/paper-toolbar/paper-toolbar.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/arc-icons/arc-icons.html">
 <link rel="import" href="../bower_components/arc-menu/arc-menu.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
 <link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../bower_components/app-route/app-location.html">
 <link rel="import" href="../bower_components/app-route/app-route.html">
@@ -38,6 +36,13 @@
 <link rel="import" href="../bower_components/app-analytics/app-analytics-custom.html">
 <link rel="import" href="../bower_components/app-logger/app-logger.html">
 <link rel="import" href="../bower_components/project-details/project-details.html">
+<link rel="import" href="../bower_components/app-layout/app-header-layout/app-header-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-header/app-header.html">
+<link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer/app-drawer.html">
+<link rel="import" href="../bower_components/paper-styles/shadow.html">
+
 <link rel="import" href="../styles/app-theme.html">
 <link rel="import" href="arc-request-panel/arc-request-panel.html">
 <link rel="import" href="file-export/file-export.html">
@@ -49,33 +54,45 @@
     <style>
     :host {
       display: block;
-      position: relative;
-      min-height: 100vh;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
       -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
       background-color: var(--primary-background-color);
+      @apply --layout-fit;
     }
 
-    [hidden] {
-      display: none !important;
+    app-header-layout {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      background-color: #fff;
     }
 
-    .mainPages > * {
-      min-height: calc(100vh - 64px);
-      height: calc(100vh - 64px);
+    app-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background-color: var(--toolbar-background-color);
+      color: var(--toolbar-color);
+      height: 64px;
     }
 
-    .content,
-    #pages {
-      min-height: 100%;
-      height: 100%;
-    }
-
-    paper-toolbar paper-icon-button {
+    app-toolbar paper-icon-button {
       color: rgba(255, 255, 255, 0.87);
     }
 
-    paper-toolbar paper-icon-button:hover {
+    app-toolbar paper-icon-button:hover {
       color: var(--hover-button-accent-color);
+    }
+
+    app-drawer {
+      @apply --shadow-elevation-6dp;
     }
 
     #drawerResizer {
@@ -112,33 +129,36 @@
     .drawer-pin.visible {
       display: inline-block;
     }
+
+    .content {
+      @apply(--layout-flex);
+    }
+
+    .title-info-button {
+      background-color: #fff;
+      color: #008000;
+      border-radius: 50%;
+    }
     </style>
 
-    <app-location route="{{route}}" use-hash-as-path></app-location>
-    <app-route route="{{route}}" pattern="/:base" data="{{routeData}}"></app-route>
-    <app-route route="{{route}}" pattern="/project/:id" data="{{projectRoute}}"></app-route>
-    <app-route route="{{route}}" pattern="/request/:type/:id" data="{{requestRoute}}"></app-route>
-    <app-route route="{{route}}" pattern="/request/drive/:action/:id" data="{{driveFileRoute}}"></app-route>
-
-    <paper-drawer-panel responsive-width="1000px" id="paperDrawerPanel" force-narrow="{{forceNarrowLayout}}" narrow="{{narrowLayout}}" drawer-width="[[drawerWidth]]" disable-edge-swipe disable-swipe>
-      <paper-scroll-header-panel drawer>
-        <paper-toolbar class="main-toolbar">
-          <paper-icon-button icon="arc:menu" paper-drawer-toggle class="drawer-toggle-button" on-tap="toggleDrawer" title="Toggle drawer" alt="Drawer toggle icon"></paper-icon-button>
-          <div class="app-name flex">ARC</div>
-          <paper-icon-button icon="arc:pin-drawer" class$="[[_computePinDrawerClass(forceNarrowLayout, narrowLayout)]]" on-tap="_pinDrawer" title="Pin drawer" alt="Pin drawer"></paper-icon-button>
-        </paper-toolbar>
-        <arc-menu selected-request="[[selectedRequest]]" route-base="[[routeData.base]]"></arc-menu>
-        <div id="drawerResizer"></div>
-      </paper-scroll-header-panel>
-      <paper-scroll-header-panel main id="headerPanelMain">
-        <!-- Main Toolbar -->
-        <paper-toolbar id="mainToolbar" class="main-toolbar">
-          <paper-icon-button class="toolbar-hide" icon="arc:menu" paper-drawer-toggle title="Toggle drawer" alt="Drawer toggle icon"></paper-icon-button>
-          <div class="title">[[pageTitle]]</div>
-        </paper-toolbar>
-        <!-- Main Content -->
+    <app-header-layout has-scrolling-region id="scrollingRegion">
+      <app-header fixed shadow scroll-target="scrollingRegion">
+        <app-toolbar>
+          <paper-icon-button icon="arc:menu" on-tap="toggleDrawer" title="Toggle drawer"></paper-icon-button>
+          <div main-title>[[pageTitle]]</div>
+          <paper-icon-button icon="arc:pin-drawer" class$="[[_computePinDrawerClass(forceNarrowLayout, narrowLayout, drawerOpened)]]" on-tap="_pinDrawer" title="Pin drawer" alt="Pin drawer"></paper-icon-button>
+          <template is="dom-if" if="[[hasAppUpdate]]">
+            <paper-icon-button icon="arc:update-install" class="title-info-button" on-tap="updateInstall" title="Restart and install update"></paper-icon-button>
+          </template>
+        </app-toolbar>
+      </app-header>
+      <app-drawer-layout id="drawerLayout" force-narrow="{{forceNarrowLayout}}" narrow="{{narrowLayout}}">
+        <app-drawer id="mainDrawer" opened="{{drawerOpened}}">
+          <arc-menu selected-request="[[selectedRequest]]" route-base="[[routeData.base]]"></arc-menu>
+          <div id="drawerResizer"></div>
+        </app-drawer>
+        <app-drawer id="newsDrawer" align="right">TODO</app-drawer>
         <div class="content">
-          <!-- iron-pages -->
           <iron-pages id="pages"
             class="mainPages"
             attr-for-selected="data-route"
@@ -155,8 +175,14 @@
             <google-drive-browser mime-type="application/restclient+data" data-route="drive" attr-for-opened="opened" api-key="1076318174169-u4a5d3j2v0tbie1jnjgsluqk1ti7ged3.apps.googleusercontent.com" access-token="[[accessToken]]" on-drive-file-picker-data="_openDriveRequest"></google-drive-browser>
           </iron-pages>
         </div>
-      </paper-scroll-header-panel>
-    </paper-drawer-panel>
+      </app-drawer-layout>
+    </app-header-layout>
+
+    <app-location route="{{route}}" use-hash-as-path></app-location>
+    <app-route route="{{route}}" pattern="/:base" data="{{routeData}}"></app-route>
+    <app-route route="{{route}}" pattern="/project/:id" data="{{projectRoute}}"></app-route>
+    <app-route route="{{route}}" pattern="/request/:type/:id" data="{{requestRoute}}"></app-route>
+    <app-route route="{{route}}" pattern="/request/drive/:action/:id" data="{{driveFileRoute}}"></app-route>
     <drop-file-importer></drop-file-importer>
     <arc-license-dialog></arc-license-dialog>
     <arc-onboarding></arc-onboarding>
@@ -201,7 +227,6 @@
     <arc-data-import></arc-data-import>
     <authorization-data-saver></authorization-data-saver>
     <project-model></project-model>
-    <!-- Electron specific -->
     <file-export></file-export>
     <electron-drive></electron-drive>
   </template>
@@ -234,7 +259,8 @@
         gaCustomDimensions: Array,
         drawerWidth: {
           type: String,
-          value: '360px'
+          value: '360px',
+          observer: '_drawerWidthChanged'
         },
         forceNarrowLayout: {
           type: Boolean,
@@ -254,24 +280,11 @@
          * Sets Google Analytics state. If this is not set or falsy, then Google
          * Analytics is diosabled (element is removed from the DOM).
          */
-        telemetry: Boolean
-      },
-
-      created: function() {
-        this.__prefs = new ArcPreferences();
-        this.__prefs.observe();
-      },
-
-      attached: function() {
-        Polymer.RenderStatus.afterNextRender(this, function() {
-          this.listen(document.body, 'display-license', 'openLicense');
-          this._observeMainEvents();
-        });
-      },
-
-      detacheded: function() {
-        this.unlisten(document.body, 'display-license', 'openLicense');
-        this._unobserveMainEvents();
+        telemetry: Boolean,
+        // True if application drawer is opened.
+        drawerOpened: Boolean,
+        // True if application update is possible.
+        hasAppUpdate: Boolean
       },
 
       listeners: {
@@ -293,6 +306,44 @@
         '_driveFileRouteChanged(driveFileRoute.*)'
       ],
 
+      ready: function() {
+        // sets a default path of not initialized with path
+        if (!this.route.path) {
+          this.set('route.path', '/request/latest/0');
+        }
+        this._requestAuthToken(false);
+        this.setupAnalytics();
+        this._refreshLayout();
+      },
+
+      created: function() {
+        this.__prefs = new ArcPreferences();
+        this.__prefs.observe();
+      },
+
+      attached: function() {
+        Polymer.RenderStatus.afterNextRender(this, function() {
+          this.listen(document.body, 'display-license', 'openLicense');
+          this._observeMainEvents();
+        });
+      },
+
+      detacheded: function() {
+        this.unlisten(document.body, 'display-license', 'openLicense');
+        this._unobserveMainEvents();
+      },
+
+      _refreshLayout() {
+        // The window is not whown by the main process unless the content is
+        // ready. Because of that calculations made in the dawer and header
+        // layaouts are wrong (at a time of computations elemets size is 0).
+        // This function forces to recalculate layout.
+        Polymer.RenderStatus.afterNextRender(this, () => {
+          this.$.scrollingRegion._updateContentPosition();
+          this.$.drawerLayout.resetLayout();
+        });
+      },
+
       _routeDataChanged: function(record) {
         var params = record && record.base;
         switch (params.base) {
@@ -301,14 +352,6 @@
         }
       },
 
-      ready: function() {
-        // sets a default path of not initialized with path
-        if (!this.route.path) {
-          this.set('route.path', '/request/latest/0');
-        }
-        this._requestAuthToken(false);
-        this.setupAnalytics();
-      },
       /**
        * Reads current settings and enables Google Analytics if it's not
        * disabled by the uers.
@@ -616,18 +659,20 @@
       },
 
       toggleDrawer: function() {
-        if (this.narrowLayout) {
+        if (this.forceNarrowLayout && this.narrowLayout) {
+          this.drawerOpened = !this.drawerOpened;
+          return;
+        }
+        if (this.narrowLayout && !this.forceNarrowLayout) {
+          this.drawerOpened = !this.drawerOpened;
           return;
         }
         this.forceNarrowLayout = !this.forceNarrowLayout;
-        this.async(function() {
-          this.$.paperDrawerPanel.closeDrawer();
-        }, 1);
       },
 
-      _computePinDrawerClass: function(forceNarrowLayout, narrowLayout) {
+      _computePinDrawerClass: function(forceNarrowLayout, narrowLayout, drawerOpened) {
         var clazz = 'drawer-pin';
-        if (forceNarrowLayout && narrowLayout) {
+        if (forceNarrowLayout && narrowLayout && drawerOpened) {
           clazz += ' visible';
         }
         return clazz;
@@ -701,11 +746,14 @@
       },
 
       __drawerTrackStart: function() {
-        var main = this.$.paperDrawerPanel.$.main;
-        this.$.paperDrawerPanel.$.drawer.classList.remove('transition-drawer');
-        this._drawerInitTransition = getComputedStyle(main).getPropertyValue('transition');
-        main.style.transition = 'left ease-in-out 0.01s';
+        var content = this.$.mainDrawer.$.contentContainer;
+        this._drawerInitTransition = getComputedStyle(content).getPropertyValue('transition');
+        content.style.transition = 'left ease-in-out 0.01s';
         this._drawerInitTrackWidth = Number(this.drawerWidth.replace('px', ''));
+        if (this.forceNarrowLayout) {
+          this.forceNarrowLayout = false;
+          this.drawerOpened = true;
+        }
       },
 
       __drawerTrack: function(detail) {
@@ -714,12 +762,12 @@
           newWidth = 10;
         }
         this.drawerWidth = newWidth + 'px';
-        this.$.paperDrawerPanel.$.main.style.transition = 'left ease-in-out 0.01s';
+        // this.$.paperDrawerPanel.$.main.style.transition = 'left ease-in-out 0.01s';
       },
 
       __drawerTrackEnd: function(detail) {
-        this.$.paperDrawerPanel.$.drawer.classList.add('transition-drawer');
-        this.$.paperDrawerPanel.$.main.style.transition = this._drawerInitTransition;
+        var content = this.$.mainDrawer.$.contentContainer;
+        content.style.transition = this._drawerInitTransition;
         var newWidth = this._drawerInitTrackWidth + detail.dx;
         if (newWidth <= 10) {
           newWidth = 10;
@@ -727,6 +775,15 @@
         this.drawerWidth = newWidth + 'px';
         this._drawerInitTrackWidth = undefined;
         this._drawerInitTransition = undefined;
+      },
+
+      _drawerWidthChanged: function(width) {
+        if (!width) {
+          return;
+        }
+        this.customStyle['--app-drawer-width'] = width;
+        this.updateStyles();
+        this.$.drawerLayout.resetLayout();
       },
 
       _handleLinks: function(e) {
@@ -824,6 +881,9 @@
        */
       _updateEventHandler: function(...args) {
         this.updateState = args[1];
+        if (args[0] === 'update-available') {
+          this.hasAppUpdate = true;
+        }
       },
       /**
        * Handles action performed in main thread (menu action) related to
@@ -906,6 +966,10 @@
 
       _appVersionRequestHandler: function(e) {
         e.detail.version = this.appVersion;
+      },
+
+      updateInstall: function() {
+        ipc.send('install-update');
       }
     });
   </script>

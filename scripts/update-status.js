@@ -129,6 +129,7 @@ class UpdateStatus extends ArcBase {
   }
 
   _notifyUser(message, detail, isError) {
+    this.lastOptions = this.lastOptions || {};
     if (!this.lastOptions.notify) {
       return;
     }

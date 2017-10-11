@@ -18,8 +18,8 @@
 
   --paper-menu-background-color: #fff;
   --menu-link-color: #111111;
-  --paper-toolbar-color: #ffffff;
-  --paper-toolbar-background: var(--primary-color);
+  --toolbar-color: #ffffff;
+  --toolbar-background-color: var(--primary-color);
   --main-section-border-color: rgba(0, 0, 0, 0.12);
 
   --hover-button-accent-color: #df0052;
@@ -288,6 +288,7 @@
   /* Saved requests panel */
   --saved-requests-panel: {
     margin: 0px 24px;
+    height: calc(100vh - 64px);
   };
 
   --saved-list-item-selected-background-color: #f1f1f1;
@@ -309,9 +310,14 @@
     margin-left: 30px;
   };
 
+  --arc-menu: {
+    padding-top: 64px;
+  }
+
   /* Import / Export panels */
   --data-import-export-panel: {
     margin: 0 24px;
+    height: calc(100vh - 64px);
   };
   --import-panel: {
     padding-bottom: 16px;
@@ -321,6 +327,7 @@
   /* History panel */
   --history-panel: {
     margin: 0px 24px;
+    height: calc(100vh - 64px);
   };
 
   --history-list-item-selected-background-color: #f1f1f1;
@@ -360,7 +367,12 @@
   /* Request status bar */
   --arc-status-bar: {
     border-top: 1px #E0E0E0 solid;
+  };
+
+  --google-drive-browser: {
+    height: calc(100vh - 64px);
   }
+
 }
 
 .canary-channel paper-toolbar {
@@ -396,8 +408,8 @@ body {
 }
 .content,
 #pages {
-  min-height: 100%;
-  height: 100%;
+  /*min-height: 100%;
+  height: 100%;*/
 }
 
 paper-toolbar paper-icon-button {

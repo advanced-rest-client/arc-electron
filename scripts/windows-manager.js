@@ -51,6 +51,7 @@ class ArcWindowsManager {
       x: session.position.x,
       y: session.position.y,
       backgroundColor: '#00A2DF',
+      show: false,
       webPreferences: {
         partition: 'persist:arc-window'
       }
@@ -103,6 +104,7 @@ class ArcWindowsManager {
 
   __readyShowHandler(e) {
     e.sender.show();
+    e.sender.send('window-rendered');
   }
 }
 

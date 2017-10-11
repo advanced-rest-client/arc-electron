@@ -16,32 +16,34 @@ the License.
 <link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
 <link rel="import" href="../../bower_components/saved-request-editor/saved-request-editor.html">
 <link rel="import" href="../../bower_components/bottom-sheet/bottom-sheet.html">
+<link rel="import" href="../../bower_components/paper-styles/shadow.html">
 <link rel="import" href="socket-request.html">
 
 <dom-module id="arc-request-panel">
   <template>
     <style>
     :host {
-      @apply --layout-vertical;
-      @apply --arc-request-panel;
+      display: block;
     }
 
     request-panel {
-      @apply --layout-flex;
+      display: block;
     }
 
     #requestEditorContainer {
       min-width: 40%;
       max-width: 60%;
       left: 20%;
+      @apply --shadow-elevation-24dp;
     }
 
     .error-toast {
       @apply --error-toast;
     }
+
     </style>
     <request-panel request="{{request}}" on-request-clear-state="clearRequest" on-request-save-state="_saveHandler"></request-panel>
-    <bottom-sheet id="requestEditorContainer" with-backdrop on-iron-overlay-opened="_resizeEditorSheetContent">
+    <bottom-sheet id="requestEditorContainer" on-iron-overlay-opened="_resizeEditorSheetContent">
       <saved-request-editor id="requestEditor" on-cancel-request-edit="_cancelRequestEdit" on-save-request="_saveRequestEdit"></saved-request-detail>
     </bottom-sheet>
     <paper-toast id="errorToast" class="error-toast"></paper-toast>
