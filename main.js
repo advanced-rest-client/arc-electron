@@ -92,6 +92,7 @@ class Arc {
       break;
       case 'open-saved':
       case 'open-history':
+      case 'open-messages':
       case 'show-settings':
       case 'about':
       case 'open-license':

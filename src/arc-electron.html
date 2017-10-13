@@ -42,6 +42,8 @@
 <link rel="import" href="../bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
 <link rel="import" href="../bower_components/app-layout/app-drawer/app-drawer.html">
 <link rel="import" href="../bower_components/paper-styles/shadow.html">
+<link rel="import" href="../bower_components/arc-messages-service/arc-messages-service.html">
+<link rel="import" href="../bower_components/arc-info-messages/arc-info-messages.html">
 
 <link rel="import" href="../styles/app-theme.html">
 <link rel="import" href="arc-request-panel/arc-request-panel.html">
@@ -134,10 +136,16 @@
       @apply(--layout-flex);
     }
 
-    .title-info-button {
-      background-color: #fff;
-      color: #008000;
-      border-radius: 50%;
+    .nav-notification-button {
+      @apply --navigation-notification-button;
+    }
+
+    .nav-notification-button:hover {
+      @apply --navigation-notification-button-hover;
+    }
+
+    .nav-notification-button[active] {
+      @apply --navigation-notification-button-active;
     }
     </style>
 
@@ -147,8 +155,17 @@
           <paper-icon-button icon="arc:menu" on-tap="toggleDrawer" title="Toggle drawer"></paper-icon-button>
           <div main-title>[[pageTitle]]</div>
           <paper-icon-button icon="arc:pin-drawer" class$="[[_computePinDrawerClass(forceNarrowLayout, narrowLayout, drawerOpened)]]" on-tap="_pinDrawer" title="Pin drawer" alt="Pin drawer"></paper-icon-button>
+          <template is="dom-if" if="[[newMessages]]">
+            <span>
+              <paper-icon-button class="nav-notification-button" icon="arc:info-outline" on-tap="openInfoCenter" toggles active="[[messageCenterOpened]]"></paper-icon-button>
+              <paper-tooltip animation-delay="200">See what's new in the app</paper-tooltip>
+            </span>
+          </template>
           <template is="dom-if" if="[[hasAppUpdate]]">
-            <paper-icon-button icon="arc:update-install" class="title-info-button" on-tap="updateInstall" title="Restart and install update"></paper-icon-button>
+            <span>
+              <paper-icon-button icon="arc:update-install" class="nav-notification-button" on-tap="updateInstall"></paper-icon-button>
+              <paper-tooltip animation-delay="200">Restart and install update</paper-tooltip>
+            </span>
           </template>
         </app-toolbar>
       </app-header>
@@ -157,7 +174,9 @@
           <arc-menu selected-request="[[selectedRequest]]" route-base="[[routeData.base]]"></arc-menu>
           <div id="drawerResizer"></div>
         </app-drawer>
-        <app-drawer id="newsDrawer" align="right">TODO</app-drawer>
+        <app-drawer id="newsDrawer" align="right" opened="[[messageCenterOpened]]">
+          <arc-info-messages messages="[[appMessages]]" on-close="closeInfoCenter"></arc-info-messages>
+        </app-drawer>
         <div class="content">
           <iron-pages id="pages"
             class="mainPages"
@@ -229,6 +248,7 @@
     <project-model></project-model>
     <file-export></file-export>
     <electron-drive></electron-drive>
+    <arc-messages-service platform="electron" on-unread-changed="_unreadMessagesChanged" messages="{{appMessages}}"></arc-messages-service>
   </template>
   <script>
     const {ArcPreferences} = require('./scripts/arc-preferences');
@@ -285,7 +305,13 @@
         // True if application drawer is opened.
         drawerOpened: Boolean,
         // True if application update is possible.
-        hasAppUpdate: Boolean
+        hasAppUpdate: Boolean,
+        // True to display "new messages" icon in the main nav bar
+        newMessages: Boolean,
+        // List of cached messages from app developer.
+        appMessages: Array,
+        // If true, messages center is opened.
+        messageCenterOpened: Boolean
       },
 
       listeners: {
@@ -927,6 +953,7 @@
           case 'open-saved': this.openSaved(); break;
           case 'open-history': this.openHistory(); break;
           case 'find': this.handleFindOpen(); break;
+          case 'open-messages': this.openInfoCenter(); break;
         }
       },
 
@@ -980,6 +1007,35 @@
         var width = narrowLayout ? 0 : this.drawerWidth;
         this.customStyle['--request-panel-status-bar-left'] = width;
         this.updateStyles();
+      },
+      /**
+       * Sets `newMessages` propert depending if messaging service detected
+       * new messages.
+       */
+      _unreadMessagesChanged: function(e) {
+        var state = !!(e.detail.value && e.detail.value.length > 0);
+        this.set('newMessages', state);
+      },
+      /**
+       * Opens the info center drawwer.
+       */
+      openInfoCenter: function() {
+        this.messageCenterOpened = !this.messageCenterOpened;
+        if (this.messageCenterOpened) {
+          var service = Polymer.dom(this.root).querySelector('arc-messages-service');
+          service.readMessages();
+          window.setTimeout(function() {
+            service.unread.forEach((item, i) => {
+              service.set(['unread', i, 'read'], 1);
+            });
+          }, 4000);
+        }
+      },
+      /**
+       * Closes the info center drawwer.
+       */
+      closeInfoCenter: function() {
+        this.messageCenterOpened = false;
       }
     });
   </script>
