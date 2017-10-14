@@ -44,7 +44,7 @@
 <link rel="import" href="../bower_components/paper-styles/shadow.html">
 <link rel="import" href="../bower_components/arc-messages-service/arc-messages-service.html">
 <link rel="import" href="../bower_components/arc-info-messages/arc-info-messages.html">
-
+<link rel="import" href="../bower_components/arc-title/arc-title.html">
 <link rel="import" href="../styles/app-theme.html">
 <link rel="import" href="arc-request-panel/arc-request-panel.html">
 <link rel="import" href="file-export/file-export.html">
@@ -202,6 +202,7 @@
     <app-route route="{{route}}" pattern="/project/:id" data="{{projectRoute}}"></app-route>
     <app-route route="{{route}}" pattern="/request/:type/:id" data="{{requestRoute}}"></app-route>
     <app-route route="{{route}}" pattern="/request/drive/:action/:id" data="{{driveFileRoute}}"></app-route>
+    <arc-title base="[[routeData.base]]" page-title="{{pageTitle}}"></arc-title>
     <drop-file-importer></drop-file-importer>
     <arc-license-dialog></arc-license-dialog>
     <arc-onboarding></arc-onboarding>
@@ -457,7 +458,6 @@
 
       _setupRequestRoute: function(record) {
         var params = record && record.base;
-        this.pageTitle = 'Request';
         if (!params || !params.type) {
           return;
         }
