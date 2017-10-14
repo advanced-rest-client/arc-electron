@@ -14,6 +14,9 @@
           "command": "application:open-history",
           "accelerator": "CommandOrControl+h"
       }, {
+          "label": "Open from Google Drive",
+          "command": "application:open-drive"
+      }, {
         "type": "separator"
       },
       {
