@@ -1,5 +1,7 @@
 <link rel="import" href="../bower_components/paper-styles/typography.html">
 <link rel="import" href="../bower_components/paper-styles/color.html">
+<link rel="import" href="../bower_components/paper-styles/shadow.html">
+
 <style is="custom-style">
 :root {
   font-family: Roboto, sans-serif;
@@ -372,6 +374,7 @@
 
   --google-drive-browser: {
     height: calc(100vh - 64px);
+    margin: 0 24px;
   }
 
   --arc-info-messages: {
@@ -388,6 +391,22 @@
 
   --navigation-notification-button-active: {
     background-color: #D9FFD9;
+  }
+
+  --request-save-bottom-sheet: {
+    @apply --shadow-elevation-24dp;
+  }
+
+  --saved-requests-panel-bottom-sheet: {
+    @apply --request-save-bottom-sheet;
+  }
+
+  --history-panel-bottom-sheet: {
+    @apply --request-save-bottom-sheet;
+  }
+
+  --arc-request-panel-bottom-sheet: {
+    @apply --request-save-bottom-sheet;
   }
 }
 

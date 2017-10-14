@@ -259,10 +259,15 @@
       is: 'arc-electron',
 
       properties: {
+        // Computed current page title
         pageTitle: String,
+        // Currently selected request in the request editor
         selectedRequest: String,
+        // Route data recognized by app location element
         route: Object,
+        // Parsed route data
         routeData: Object,
+        // Parsed route data for google drive
         driveFileRoute: Object,
         // Application ID for analytics
         appId: {

@@ -54,7 +54,7 @@
     "chrome-file-export": "advanced-rest-client/chrome-file-export#^0.1.1",
     "arc-chrome-settings": "advanced-rest-client/arc-chrome-settings#^0.1.1",
     "arc-settings-panel": "advanced-rest-client/arc-settings-panel#^0.2.1",
-    "saved-requests-panel": "advanced-rest-client/saved-requests-panel#^0.1.1",
+    "saved-requests-panel": "advanced-rest-client/saved-requests-panel#^0.1.7",
     "google-drive-browser": "advanced-rest-client/google-drive-browser#^0.1.1",
     "arc-data-import": "advanced-rest-client/arc-data-import#^0.1.1",
     "data-import-export-panel": "advanced-rest-client/data-import-export-panel#^0.1.1",
