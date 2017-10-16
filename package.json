@@ -1,7 +1,7 @@
 {
   "name": "advanced-rest-client",
   "description": "The Advanced REST Client desktop application.",
-  "version": "11.0.15",
+  "version": "11.0.16",
   "homepage": "https://advancedrestclient.com/",
   "license": "LICENSE.md",
   "author": {
@@ -36,7 +36,7 @@
     "appId": "com.mulesoft.arc",
     "productName": "Advanced REST Client",
     "artifactName": "${productName}-${version}-${arch}.${ext}",
-    "asar": false,
+    "asar": true,
     "copyright": "Copyright © 2017 Mulesoft",
     "detectUpdateChannel": true,
     "files": [
