@@ -57,20 +57,24 @@
         "command": "request:save-as",
         "accelerator": "CommandOrControl+Shift+s"
       },
-      {"type": "separator"},
       {
-          "label": "Open saved request",
-          "command": "application:open-saved",
-          "accelerator": "CommandOrControl+o"
-      }, {
-          "label": "Open history",
-          "command": "application:open-history",
-          "accelerator": "CommandOrControl+h"
-      }, {
-          "label": "Open from Google Drive",
-          "command": "application:open-drive"
+        "type": "separator"
       },
-      {"type": "separator"},
+      {
+        "label": "Open saved request",
+        "command": "application:open-saved",
+        "accelerator": "CommandOrControl+o"
+      }, {
+        "label": "Open history",
+        "command": "application:open-history",
+        "accelerator": "CommandOrControl+h"
+      }, {
+        "label": "Open from Google Drive",
+        "command": "application:open-drive"
+      },
+      {
+        "type": "separator"
+      },
       {
         "label": "Import data",
         "command": "application:import-data"
@@ -149,11 +153,13 @@
       {
         "role": "zoom"
       },
-      {"type": "separator"},
       {
-          "label": "Find",
-          "command": "application:find",
-          "accelerator": "CommandOrControl+f"
+        "type": "separator"
+      },
+      {
+        "label": "Find",
+        "command": "application:find",
+        "accelerator": "CommandOrControl+f"
       }
     ]
   }, {
@@ -180,6 +186,20 @@
         "accelerator": "CommandOrControl+n"
       }
     ]
+  }, {
+    "label": "Web session",
+    "submenu": [{
+      "label": "Login to a web service",
+      "command": "application:login-external-webservice"
+    }, {
+      "label": "Cookie manager",
+      "command": "application:open-cookie-manager"
+    }, {
+      "type": "separator"
+    }, {
+      "label": "Learn more about session management",
+      "command": "application:web-session-help"
+    }]
   }, {
     "label": "Help",
     "role": "help",
