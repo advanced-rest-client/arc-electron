@@ -68,7 +68,7 @@ class ArcMainMenu extends EventEmitter {
   }
 
   _winUpdateStatusChnaged(status) {
-    var items = this.topMenu.items[4].submenu;
+    var items = this.topMenu.items[5].submenu;
     switch (status) {
       case 'checking-for-update':
         items.items[1].visible = false;
@@ -98,7 +98,7 @@ class ArcMainMenu extends EventEmitter {
   }
 
   _linuxUpdateStatusChnaged(status) {
-    var items = this.topMenu.items[4].submenu;
+    var items = this.topMenu.items[5].submenu;
     switch (status) {
       case 'checking-for-update':
         items.items[3].visible = false;
