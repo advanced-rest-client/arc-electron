@@ -255,7 +255,7 @@
     <arc-messages-service platform="electron" on-unread-changed="_unreadMessagesChanged" messages="{{appMessages}}"></arc-messages-service>
   </template>
   <script>
-    const {ArcPreferences} = require('./scripts/arc-preferences');
+    const {ArcPreferences} = require('./scripts/main/arc-preferences');
     const {CookieBridge} = require('./scripts/renderer/cookie-brindge');
     const ipc = require('electron').ipcRenderer;
     const {app} = require('electron').remote;

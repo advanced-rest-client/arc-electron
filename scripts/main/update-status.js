@@ -140,7 +140,7 @@ class UpdateStatus extends ArcBase {
       detail: detail
     };
     if (!isError) {
-      let imgPath = path.join(__dirname, '..', 'assets', 'icon.iconset', 'icon_512x512.png');
+      let imgPath = path.join(__dirname, '..', '..', 'assets', 'icon.iconset', 'icon_512x512.png');
       dialogOpts.icon = nativeImage.createFromPath(imgPath);
     }
     dialog.showMessageBox(dialogOpts);

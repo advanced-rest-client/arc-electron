@@ -2,12 +2,12 @@ const electron = require('electron');
 const app = electron.app;
 const ipc = require('electron').ipcMain;
 const dialog = require('electron').dialog;
-const {ArcWindowsManager} = require('./scripts/windows-manager');
-const {UpdateStatus} = require('./scripts/update-status');
-const {ArcMainMenu} = require('./scripts/main-menu');
-const {ArcIdentity} = require('./scripts/oauth2');
-const {DriveExport} = require('./scripts/drive-export');
-const {SessionManager} = require('./scripts/session-manager');
+const {ArcWindowsManager} = require('./scripts/main/windows-manager');
+const {UpdateStatus} = require('./scripts/main/update-status');
+const {ArcMainMenu} = require('./scripts/main/main-menu');
+const {ArcIdentity} = require('./scripts/main/oauth2');
+const {DriveExport} = require('./scripts/main/drive-export');
+const {SessionManager} = require('./scripts/main/session-manager');
 
 class Arc {
   constructor() {
@@ -117,7 +117,7 @@ class Arc {
       case 'report-issue':
       case 'search-issues':
       case 'web-session-help':
-        let {HelpManager} = require('./scripts/help-manager');
+        let {HelpManager} = require('./scripts/main/help-manager');
         HelpManager.helpWith(action);
       break;
     }

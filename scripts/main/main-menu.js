@@ -165,7 +165,7 @@ class ArcMainMenu extends EventEmitter {
 
   _getTemplate() {
     var name = this._platformToName(process.platform) + '.json';
-    var file = path.join(__dirname, '..', 'menus', name);
+    var file = path.join(__dirname, '..', '..', 'menus', name);
     return fs.readJson(file);
   }
 

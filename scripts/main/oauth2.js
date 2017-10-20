@@ -546,7 +546,7 @@ class ArcIdentity {
     if (ArcIdentity.__oauthConfig) {
       return Promise.resolve(ArcIdentity.__oauthConfig);
     }
-    return fs.readJson(path.join(__dirname, '..', 'package.json'))
+    return fs.readJson(path.join(__dirname, '..', '..', 'package.json'))
     .then(packageInfo => packageInfo.oauth2)
     .then(config => {
       ArcIdentity.__oauthConfig = config;

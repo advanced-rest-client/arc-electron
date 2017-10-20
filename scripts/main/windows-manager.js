@@ -68,7 +68,8 @@ class ArcWindowsManager {
     if (appPath[0] === '/') {
       appPath = '#' + appPath;
     }
-    var dest = path.join(__dirname, '..', 'app.html');
+    var dest = path.join(__dirname, '..', '..', 'app.html');
+    console.log(dest);
     var full = url.format({
       pathname: dest,
       protocol: 'file:',
