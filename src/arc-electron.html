@@ -45,6 +45,8 @@
 <link rel="import" href="../bower_components/arc-messages-service/arc-messages-service.html">
 <link rel="import" href="../bower_components/arc-info-messages/arc-info-messages.html">
 <link rel="import" href="../bower_components/arc-title/arc-title.html">
+<link rel="import" href="../bower_components/web-url-input/web-url-input.html">
+<link rel="import" href="../bower_components/cookie-manager/cookie-manager.html">
 <link rel="import" href="../styles/app-theme.html">
 <link rel="import" href="arc-request-panel/arc-request-panel.html">
 <link rel="import" href="file-export/file-export.html">
@@ -192,11 +194,12 @@
             <about-arc data-route="about" update-state="[[updateState]]"></about-arc>
             <project-details attr-for-opened="opened" data-route="project" project-id="[[projectRoute.id]]" attr-for-opened="opened"></project-details>
             <google-drive-browser mime-type="application/restclient+data" data-route="drive" attr-for-opened="opened" api-key="1076318174169-u4a5d3j2v0tbie1jnjgsluqk1ti7ged3.apps.googleusercontent.com" access-token="[[accessToken]]" on-drive-file-picker-data="_openDriveRequest"></google-drive-browser>
+            <cookie-manager attr-for-opened="opened" data-route="cookie-manager"></cookie-manager>
           </iron-pages>
         </div>
       </app-drawer-layout>
     </app-header-layout>
-
+    <web-url-input id="webUrlInput" purpose="web-session" on-open-web-url="_openWebUrlHandler"></web-url-input>
     <app-location route="{{route}}" use-hash-as-path></app-location>
     <app-route route="{{route}}" pattern="/:base" data="{{routeData}}"></app-route>
     <app-route route="{{route}}" pattern="/project/:id" data="{{projectRoute}}"></app-route>
@@ -252,7 +255,8 @@
     <arc-messages-service platform="electron" on-unread-changed="_unreadMessagesChanged" messages="{{appMessages}}"></arc-messages-service>
   </template>
   <script>
-    const {ArcPreferences} = require('./scripts/arc-preferences');
+    const {ArcPreferences} = require('./scripts/main/arc-preferences');
+    const {CookieBridge} = require('./scripts/renderer/cookie-brindge');
     const ipc = require('electron').ipcRenderer;
     const {app} = require('electron').remote;
     Polymer({
@@ -348,6 +352,7 @@
         this._requestAuthToken(false);
         this.setupAnalytics();
         this._refreshLayout();
+        this.cb = new CookieBridge(ipc);
       },
 
       created: function() {
@@ -604,9 +609,13 @@
         ipc.on('update-downloaded', this.__ueh);
         ipc.on('request-action', this.__rah);
         ipc.on('command', this.__ch);
+        this.cb.listen();
       },
 
       _unobserveMainEvents: function() {
+        if (this.cb) {
+          this.cb.unlisten();
+        }
         if (!this.__ueh) {
           return;
         }
@@ -674,6 +683,10 @@
             url = '/drive';
             screenName = 'Drive selector';
           break;
+          case 'cookie-manager':
+            url = '/cookie-manager';
+            screenName = 'Cookie manager';
+          break;
         }
         if (url) {
           this.set('route.path', url);
@@ -726,21 +739,6 @@
       // Pin drawer back to the app.
       _pinDrawer: function() {
         this.forceNarrowLayout = false;
-      },
-
-      /**
-       * Opens an issue tracker - new issue report.
-       */
-      openIssueReport: function() {
-        var appVersion = this.appVersion;
-        var message = 'Your description here\n\n';
-        message += '## Expected outcome\nWhat should happen?\n\n';
-        message += '## Actual outcome\nWhat happened?\n\n';
-        message += `## Versions\nApp: ${appVersion}\n`;
-        message += `Platform: ${navigator.appVersion}\n\n`;
-        message += '## Steps to reproduce\n1. \n2. \n3. ';
-        message = encodeURIComponent(message);
-        window.open('https://github.com/jarrodek/ChromeRestClient/issues/new?body=' + message);
       },
       /**
        * Opens the import / export panel
@@ -960,6 +958,8 @@
           case 'open-drive': this.openDrivePicker(); break;
           case 'find': this.handleFindOpen(); break;
           case 'open-messages': this.openInfoCenter(); break;
+          case 'login-external-webservice': this.openWebUrl(); break;
+          case 'open-cookie-manager': this.openCookieManager(); break;
         }
       },
 
@@ -1042,6 +1042,20 @@
        */
       closeInfoCenter: function() {
         this.messageCenterOpened = false;
+      },
+
+      openWebUrl: function() {
+        this.$.webUrlInput.opened = true;
+      },
+
+      _openWebUrlHandler: function(e) {
+        ipc.send('open-web-url', e.detail.url, e.detail.purpose);
+      },
+      // Navigate to the cookie manager
+      openCookieManager: function() {
+        this.fire('navigate', {
+          base: 'cookie-manager'
+        });
       }
     });
   </script>

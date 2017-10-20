@@ -144,6 +144,20 @@
       }
     ]
   }, {
+    "label": "Web session",
+    "submenu": [{
+      "label": "Login to a web service",
+      "command": "application:login-external-webservice"
+    }, {
+      "label": "Cookie manager",
+      "command": "application:open-cookie-manager"
+    }, {
+      "type": "separator"
+    }, {
+      "label": "Learn more",
+      "command": "application:web-session-help"
+    }]
+  }, {
     "label": "Help",
     "role": "help",
     "submenu": [{

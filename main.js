@@ -2,11 +2,12 @@ const electron = require('electron');
 const app = electron.app;
 const ipc = require('electron').ipcMain;
 const dialog = require('electron').dialog;
-const {ArcWindowsManager} = require('./scripts/windows-manager');
-const {UpdateStatus} = require('./scripts/update-status');
-const {ArcMainMenu} = require('./scripts/main-menu');
-const {ArcIdentity} = require('./scripts/oauth2');
-const {DriveExport} = require('./scripts/drive-export');
+const {ArcWindowsManager} = require('./scripts/main/windows-manager');
+const {UpdateStatus} = require('./scripts/main/update-status');
+const {ArcMainMenu} = require('./scripts/main/main-menu');
+const {ArcIdentity} = require('./scripts/main/oauth2');
+const {DriveExport} = require('./scripts/main/drive-export');
+const {SessionManager} = require('./scripts/main/session-manager');
 
 class Arc {
   constructor() {
@@ -14,6 +15,7 @@ class Arc {
     this.menu = new ArcMainMenu();
     this.wm = new ArcWindowsManager();
     this.us = new UpdateStatus(this.wm, this.menu);
+    this.sm = new SessionManager(this.wm);
     this._listenMenu(this.menu);
   }
 
@@ -48,6 +50,7 @@ class Arc {
     this.wm.open();
     this.us.start();
     this.menu.build();
+    this.sm.start();
   }
   // Quits when all windows are closed.
   _allClosedHandler() {
@@ -100,6 +103,8 @@ class Arc {
       case 'import-data':
       case 'export-data':
       case 'find':
+      case 'login-external-webservice':
+      case 'open-cookie-manager':
         win.webContents.send(windowCommand, action);
       break;
       case 'new-window':
@@ -111,7 +116,8 @@ class Arc {
       case 'open-discussions':
       case 'report-issue':
       case 'search-issues':
-        let {HelpManager} = require('./scripts/help-manager');
+      case 'web-session-help':
+        let {HelpManager} = require('./scripts/main/help-manager');
         HelpManager.helpWith(action);
       break;
     }
@@ -128,7 +134,7 @@ ipc.on('save-dialog', function(event, args) {
     title: 'Save to file'
   };
   if (args.file) {
-    options.nameFieldLabel = args.file;
+    options.defaultPath = args.file;
   }
   dialog.showSaveDialog(options, function(filename) {
     event.sender.send('saved-file', filename);
@@ -217,4 +223,14 @@ ipc.on('drive-request-save', (event, requestId, request, fileName) => {
     };
     event.sender.send('drive-request-save-error', requestId, result);
   });
+});
+
+ipc.on('open-web-url', (event, url, purpose) => {
+  switch (purpose) {
+    case 'web-session': arcApp.sm.openWebBrowser(url); break;
+  }
+});
+
+ipc.on('cookies-session', (event, data) => {
+  arcApp.sm.handleRequest(event.sender, data);
 });

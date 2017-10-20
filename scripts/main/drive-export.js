@@ -139,7 +139,7 @@ class DriveExport {
    * Creates an app icon string acceptable by Drive API
    */
   _appSafeIcon() {
-    const file = path.join(__dirname, '..', 'assets', 'icon.iconset', 'icon_128x128.png');
+    const file = path.join(__dirname, '..', '..', 'assets', 'icon.iconset', 'icon_128x128.png');
     return fs.readFile(file)
     .then(buffer => {
       let prefix = 'data:image/png;base64,';
