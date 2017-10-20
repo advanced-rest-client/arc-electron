@@ -133,7 +133,7 @@ ipc.on('save-dialog', function(event, args) {
     title: 'Save to file'
   };
   if (args.file) {
-    options.nameFieldLabel = args.file;
+    options.defaultPath = args.file;
   }
   dialog.showSaveDialog(options, function(filename) {
     event.sender.send('saved-file', filename);
