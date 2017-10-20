@@ -116,6 +116,7 @@ class Arc {
       case 'open-discussions':
       case 'report-issue':
       case 'search-issues':
+      case 'web-session-help':
         let {HelpManager} = require('./scripts/help-manager');
         HelpManager.helpWith(action);
       break;
@@ -231,5 +232,5 @@ ipc.on('open-web-url', (event, url, purpose) => {
 });
 
 ipc.on('cookies-session', (event, data) => {
-  this.sm.handleRequest(event.sender, data);
+  arcApp.sm.handleRequest(event.sender, data);
 });

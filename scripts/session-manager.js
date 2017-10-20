@@ -6,7 +6,7 @@ const PERSISTNAME = 'persist:web-session';
 class SessionManager {
 
   constructor(windowManager) {
-    this.wm = windowManager;  
+    this.wm = windowManager;
   }
 
   start() {
@@ -52,8 +52,27 @@ class SessionManager {
     });
   }
 
+  _computeCookieUrl(cookie) {
+    let domain = cookie.domain;
+    if (domain[0] === '.') {
+      domain = domain.substr(1);
+    }
+    let protocol = 'http';
+    if (cookie.secure) {
+      protocol += 's';
+    }
+    protocol += '://';
+    return protocol + domain + (cookie.path || '/');
+  }
+
   setCookie(cookie) {
     return new Promise((resolve, reject) => {
+      if (!cookie.url) {
+        cookie.url = this._computeCookieUrl(cookie);
+      }
+      if (cookie.expires) {
+        cookie.expirationDate = cookie.expires;
+      }
       this._session.set(cookie, (error) => {
         if (error) {
           reject(error);
@@ -64,8 +83,10 @@ class SessionManager {
     });
   }
 
-  removeCookie(url, name) {
+  removeCookie(cookie) {
     return new Promise(resolve => {
+      let name = cookie.name;
+      let url = cookie.url || this._computeCookieUrl(cookie);
       this._session.remove(url, name, () => {
         resolve();
       });
@@ -100,7 +121,11 @@ class SessionManager {
         this._handleSetCookie(win, data.id, data.cookie);
       break;
       case 'remove':
-        this._handleRemoveCookie(win, data.id, data.cookie);
+        if (data.type === 'single') {
+          this._handleRemoveCookie(win, data.id, data.cookie);
+        } else {
+          this._handleRemoveCookies(win, data.id, data.cookies);
+        }
       break;
     }
   }
@@ -135,7 +160,14 @@ class SessionManager {
   }
 
   _handleRemoveCookie(win, id, cookie) {
-    this.removeCookie(cookie.url, cookie.name)
+    this.removeCookie(cookie)
+    .then(() => this._sendResponse(win, id))
+    .catch(cause => this._sendResponseError(win, id, cause));
+  }
+
+  _handleRemoveCookies(win, id, cookies) {
+    var promises = cookies.map(cookie => this.removeCookie(cookie));
+    Promise.all(promises)
     .then(() => this._sendResponse(win, id))
     .catch(cause => this._sendResponseError(win, id, cause));
   }

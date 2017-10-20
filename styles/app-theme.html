@@ -26,7 +26,9 @@
 
   --hover-button-accent-color: #df0052;
 
-  --arc-menu-height: calc(100vh - 64px);
+  --pages-fixed-height: calc(100vh - 64px);
+  --arc-menu-height: var(--pages-fixed-height);
+
   --menu-selection-background-color: #00b9ff;
   --arc-menu-selected-background-color: var(--menu-selection-background-color);
   --saved-menu-selected-item-background-color: var(--menu-selection-background-color);
@@ -291,7 +293,7 @@
   /* Saved requests panel */
   --saved-requests-panel: {
     margin: 0px 24px;
-    height: calc(100vh - 64px);
+    height: var(--pages-fixed-height);
   };
 
   --saved-list-item-selected-background-color: #f1f1f1;
@@ -320,7 +322,7 @@
   /* Import / Export panels */
   --data-import-export-panel: {
     margin: 0 24px;
-    height: calc(100vh - 64px);
+    height: var(--pages-fixed-height);
   };
   --import-panel: {
     padding-bottom: 16px;
@@ -330,7 +332,7 @@
   /* History panel */
   --history-panel: {
     margin: 0px 24px;
-    height: calc(100vh - 64px);
+    height: var(--pages-fixed-height);
   };
 
   --history-list-item-selected-background-color: #f1f1f1;
@@ -373,7 +375,7 @@
   };
 
   --google-drive-browser: {
-    height: calc(100vh - 64px);
+    height: var(--pages-fixed-height);
     margin: 0 24px;
   }
 
@@ -407,6 +409,14 @@
 
   --arc-request-panel-bottom-sheet: {
     @apply --request-save-bottom-sheet;
+  }
+
+  /* Cookies manager */
+  --cookie-manager: {
+    height: var(--pages-fixed-height);
+    margin: 0 0px;
+    padding-top: 24px;
+    box-sizing: border-box;
   }
 }
 

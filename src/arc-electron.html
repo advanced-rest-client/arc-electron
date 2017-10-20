@@ -46,6 +46,7 @@
 <link rel="import" href="../bower_components/arc-info-messages/arc-info-messages.html">
 <link rel="import" href="../bower_components/arc-title/arc-title.html">
 <link rel="import" href="../bower_components/web-url-input/web-url-input.html">
+<link rel="import" href="../bower_components/cookie-manager/cookie-manager.html">
 <link rel="import" href="../styles/app-theme.html">
 <link rel="import" href="arc-request-panel/arc-request-panel.html">
 <link rel="import" href="file-export/file-export.html">
@@ -193,13 +194,12 @@
             <about-arc data-route="about" update-state="[[updateState]]"></about-arc>
             <project-details attr-for-opened="opened" data-route="project" project-id="[[projectRoute.id]]" attr-for-opened="opened"></project-details>
             <google-drive-browser mime-type="application/restclient+data" data-route="drive" attr-for-opened="opened" api-key="1076318174169-u4a5d3j2v0tbie1jnjgsluqk1ti7ged3.apps.googleusercontent.com" access-token="[[accessToken]]" on-drive-file-picker-data="_openDriveRequest"></google-drive-browser>
+            <cookie-manager attr-for-opened="opened" data-route="cookie-manager"></cookie-manager>
           </iron-pages>
         </div>
       </app-drawer-layout>
     </app-header-layout>
-
     <web-url-input id="webUrlInput" purpose="web-session" on-open-web-url="_openWebUrlHandler"></web-url-input>
-
     <app-location route="{{route}}" use-hash-as-path></app-location>
     <app-route route="{{route}}" pattern="/:base" data="{{routeData}}"></app-route>
     <app-route route="{{route}}" pattern="/project/:id" data="{{projectRoute}}"></app-route>
@@ -960,9 +960,6 @@
           case 'open-messages': this.openInfoCenter(); break;
           case 'login-external-webservice': this.openWebUrl(); break;
           case 'open-cookie-manager': this.openCookieManager(); break;
-          case 'cookie-changed':
-            console.warn('Implement me');
-          break;
         }
       },
 
@@ -1057,7 +1054,7 @@
       // Navigate to the cookie manager
       openCookieManager: function() {
         this.fire('navigate', {
-          base: '/cookie-manager'
+          base: 'cookie-manager'
         });
       }
     });

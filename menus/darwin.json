@@ -197,7 +197,7 @@
     }, {
       "type": "separator"
     }, {
-      "label": "Learn more about session management",
+      "label": "Learn more",
       "command": "application:web-session-help"
     }]
   }, {
