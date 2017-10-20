@@ -52,6 +52,18 @@ class SessionManager {
     });
   }
 
+  getUrlCookies(url) {
+    return new Promise((resolve, reject) => {
+      this._session.get({url: url}, (error, cookies) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(cookies);
+        }
+      });
+    });
+  }
+
   _computeCookieUrl(cookie) {
     let domain = cookie.domain;
     if (domain[0] === '.') {
@@ -113,6 +125,8 @@ class SessionManager {
       case 'get':
         if (data.type === 'all') {
           this._handleAllCookies(win, data.id);
+        } else if (data.type === 'url') {
+          this._handleUrlCookies(win, data.id, data.url);
         } else {
           this._handleDomainCookies(win, data.id, data.domain);
         }
@@ -149,6 +163,12 @@ class SessionManager {
 
   _handleDomainCookies(win, id, domain) {
     this.getDomainCookies(domain)
+    .then(cookies => this._sendResponse(win, id, cookies))
+    .catch(cause => this._sendResponseError(win, id, cause));
+  }
+
+  _handleUrlCookies(win, id, url) {
+    this.getUrlCookies(url)
     .then(cookies => this._sendResponse(win, id, cookies))
     .catch(cause => this._sendResponseError(win, id, cause));
   }

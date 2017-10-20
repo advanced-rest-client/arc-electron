@@ -12,6 +12,7 @@ class CookieBridge {
     this._onCookieSessionResponse = this._onCookieSessionResponse.bind(this);
     this._onCookieChanged = this._onCookieChanged.bind(this);
     this._onRemoveCookies = this._onRemoveCookies.bind(this);
+    this._beforeRequestHandler = this._beforeRequestHandler.bind(this);
   }
 
   listen() {
@@ -19,6 +20,7 @@ class CookieBridge {
     window.addEventListener('session-cookie-list-domain', this._onRequestDomainCookies);
     window.addEventListener('session-cookie-remove', this._onRemoveCookies);
     window.addEventListener('session-cookie-udpate', this._onUpdateCookie);
+    window.addEventListener('before-request', this._beforeRequestHandler);
     this.ipc.on('cookie-session-response', this._onCookieSessionResponse);
     this.ipc.on('cookie-changed', this._onCookieChanged);
   }
@@ -28,6 +30,7 @@ class CookieBridge {
     window.removeEventListener('session-cookie-list-domain', this._onRequestDomainCookies);
     window.removeEventListener('session-cookie-remove', this._onRemoveCookies);
     window.removeEventListener('session-cookie-udpate', this._onUpdateCookie);
+    window.removeEventListener('before-request', this._beforeRequestHandler);
     this.ipc.removeListener('cookie-session-response', this._onCookieSessionResponse);
     this.ipc.removeListener('cookie-changed', this._onCookieChanged);
   }
@@ -167,6 +170,103 @@ class CookieBridge {
       bubbles: true
     });
     document.body.dispatchEvent(event);
+  }
+  /**
+   * Handler for the ARC's event `before-request`.
+   * The event is handled asynchronously.
+   */
+  _beforeRequestHandler(e) {
+    var promise = new Promise(function(request, resolve, reject) {
+      this._processBeforeRequest(request, resolve, reject);
+    }.bind(this, e.detail));
+    e.detail.promises.push(promise);
+  }
+
+  /**
+   * Processes request before it's send to the transport library.
+   * It sets cookie header string for current URL.
+   */
+  _processBeforeRequest(request, resolve, reject) {
+    this.getCookiesHeaderValue(request.url)
+    .then(cookie => {
+      this._applyCookieHeader(cookie, request);
+      resolve(request);
+    })
+    .catch(reject);
+  }
+
+  /**
+   * Get cookies header value for given URL.
+   *
+   * @param {String} url An URL for cookies.
+   * @return {Promise<String>} Promise that resolves to header value string.
+   */
+  getCookiesHeaderValue(url) {
+    return this.getCookies(url)
+    .then(function(cookies) {
+      if (!cookies) {
+        cookies = [];
+      }
+      var strs = cookies.map(function(c) {
+        return c.name + '=' + c.value;
+      }).join('; ');
+      return strs;
+    });
+  }
+  /**
+   * Gets a list of cookies for given URL (matching domain and path as defined
+   * in Cookie spec) from  the datastore.
+   *
+   * @param {String} url An URL to match cookies.
+   * @return {Promise<Array>} List of database objects that matches cookies.
+   */
+  getCookies(url) {
+    var id = ++this._requestId;
+    this.ipc.send('cookies-session', {
+      action: 'get',
+      type: 'url',
+      url: url,
+      id: id
+    });
+    return this._appendPromise(id);
+  }
+
+  /**
+   * Applies cookie header value to current request headers.
+   * If header to be applied is computed then it will alter headers string.
+   *
+   * Note, this element do not sends `request-headers-changed` event.
+   *
+   * @param {String} header Computed headers string
+   * @param {Object} request The request object from the event.
+   */
+  _applyCookieHeader(header, request) {
+    header = header.trim();
+    if (!header) {
+      return;
+    }
+    this.fire('app-log', {
+      'message': ['Cookies to send with the request:', header],
+      'level': 'info'
+    });
+    var behavior = ArcBehaviors.HeadersParserBehavior;
+    var headers = behavior.headersToJSON.apply(behavior, [request.headers]);
+    var found = false;
+    for (var i = 0, len = headers.length; i < len; i++) {
+      if (headers[i].name.toLowerCase() === 'cookie') {
+        found = true;
+        // TODO: should it check for duplicates?
+        headers[i].value = headers[i].value + '; ' + header;
+        break;
+      }
+    }
+    if (!found) {
+      headers.push({
+        name: 'cookie',
+        value: header
+      });
+    }
+    request.headers = behavior.headersToString.apply(behavior, [headers]);
   }
 }
 exports.CookieBridge = CookieBridge;
