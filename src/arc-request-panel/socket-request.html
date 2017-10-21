@@ -54,7 +54,8 @@ the License.
       this._setLatestRequest(undefined);
     },
 
-    run: function(request) {
+    run: function(request, opts) {
+      opts = opts || {};
       if (this.connection) {
         this.connection.abort();
         this._setConnection(undefined);
@@ -62,8 +63,11 @@ the License.
       this.aborted = false;
       this._setRequestId(request.id);
       this._updateLatestRequest(Object.assign({}, request));
-      return this._readTimeout()
-      .then(timeout => this._prepareRequest(request, timeout))
+      return this._readTimeout(opts)
+      .then(timeout => {
+        opts.timeout = timeout;
+        return this._prepareRequest(request, opts);
+      })
       .then(connection => this._makeConnection(connection));
     },
 
@@ -83,7 +87,10 @@ the License.
      * @return {Promise} Promise resolved to a number of miliseconds of the
      * timeout.
      */
-    _readTimeout: function() {
+    _readTimeout: function(opts) {
+      if (opts.timeout !== undefined) {
+        return Promise.resolve(opts.timeout);
+      }
       var event = this.fire('settings-read', {}, {
         cancelable: true
       });
@@ -98,8 +105,8 @@ the License.
       });
     },
 
-    _prepareRequest: function(request, timeout) {
-      var conn = new SocketRequest(request, timeout);
+    _prepareRequest: function(request, opts) {
+      var conn = new SocketRequest(request, opts);
       this._addRequestHandlers(conn);
       this._setConnection(conn);
       return conn;
