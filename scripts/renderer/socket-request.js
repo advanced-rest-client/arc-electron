@@ -699,12 +699,13 @@ class SocketRequest extends EventEmitter {
       }
     } catch (e) {
       // It must be relative location
-      let origin = this.arcRequest.uri.origin;
+      let origin = this.uri.protocol + '//';
+      origin += this.uri.host;
       if (origin[origin.length - 1] === '/') {
         origin = origin.substr(0, origin.length - 1);
       }
       if (location[0] !== '/') {
-        location = origin + this.arcRequest.uri.pathname + location;
+        location = origin + this.uri.pathname + location;
       } else {
         location = origin + location;
       }
