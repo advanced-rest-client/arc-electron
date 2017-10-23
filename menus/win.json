@@ -2,6 +2,10 @@
   "menu": [{
     "label": "File",
     "submenu": [{
+        "label": "New tab",
+        "command": "request:new-tab",
+        "accelerator": "CommandOrControl+t"
+      }, {
         "label": "New Window",
         "command": "application:new-window",
         "accelerator": "CommandOrControl+n"
