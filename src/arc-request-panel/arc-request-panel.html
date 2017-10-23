@@ -16,6 +16,8 @@ the License.
 <link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
 <link rel="import" href="../../bower_components/saved-request-editor/saved-request-editor.html">
 <link rel="import" href="../../bower_components/bottom-sheet/bottom-sheet.html">
+<link rel="import" href="../../bower_components/openable-panel-behavior/openable-panel-behavior.html">
+<link rel="import" href="../../bower_components/app-route/app-route.html">
 <link rel="import" href="socket-request.html">
 
 <dom-module id="arc-request-panel">
@@ -41,14 +43,12 @@ the License.
     }
 
     </style>
-    <request-panel request="{{request}}" on-request-clear-state="clearRequest" on-request-save-state="_saveHandler"></request-panel>
+    <request-panel events-target="[[eventsTarget]]" request="{{request}}" on-request-clear-state="clearRequest" on-request-save-state="_saveHandler"></request-panel>
     <bottom-sheet id="requestEditorContainer" on-iron-overlay-opened="_resizeEditorSheetContent">
       <saved-request-editor id="requestEditor" on-cancel-request-edit="_cancelRequestEdit" on-save-request="_saveRequestEdit"></saved-request-detail>
     </bottom-sheet>
     <paper-toast id="errorToast" class="error-toast"></paper-toast>
     <paper-toast text="The request has been saved" id="savedOk"></paper-toast>
-    <paper-toast text="Can't restore request data. The type is unknown." id="typeMissingToast"></paper-toast>
-    <paper-toast text="Request do not exists in local database." id="missingRequestToast"></paper-toast>
     <socket-request id="socket"></socket-request>
   </template>
   <script>
@@ -56,30 +56,40 @@ the License.
     Polymer({
       is: 'arc-request-panel',
 
+      behaviors: [ArcBehaviors.OpenablePanelBehavior],
+
       properties: {
-        /**
-         * Current route params.
-         */
-        routeParams: Object,
-        /**
-         * Set by parent element to determine that this view is opened.
-         */
-        opened: Boolean,
         /**
          * Current request object.
          */
-        request: Object,
+        request: {
+          type: Object,
+          notify: true
+        },
         // Currently selected project.
-        projectId: String
+        projectId: String,
+        requestPanelId: Number,
+        proxyRequest: Object,
+        eventsTarget: {
+          type: Object,
+          value: function() {
+            return this;
+          }
+        }
       },
 
       listeners: {
         'transport-request': '_onTransportRequested',
-        'abort-request': '_abortHandler'
+        'abort-request': '_abortHandler',
+        'request-headers-changed': '_stopEvent',
+        'request-header-changed': '_stopEvent',
+        'request-is-payload-changed': '_stopEvent',
+        'content-type-changed': '_stopEvent',
+        'request-clear-state': '_stopEvent',
+        'report-response': '_stopEvent'
       },
 
       observers: [
-        '_routeChnaged(routeParams, opened)',
         '_proxyRequestChanged(proxyRequest.*)',
         '_requestChanged(request.*)',
         '_projectIdChanged(projectId)'
@@ -92,26 +102,19 @@ the License.
         return this.__latestProcessor;
       },
 
-      _routeChnaged: function(route, opened) {
-        if (!opened || !route || !route.type) {
-          return;
+      _getTabId: function(route) {
+        var tab = route.tab;
+        tab = Number(tab);
+        if (tab !== tab) {
+          return -1;
         }
-        switch (route.type) {
-          case 'saved':
-          case 'history':
-            let id = decodeURIComponent(route.id);
-            this._restoreRequestData(id, route.type);
-            break;
-          case 'current':
-          case 'drive':
-            return;
-          default:
-            this.restoreLatest();
-            break;
-        }
+        return tab;
       },
 
       _onTransportRequested: function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
         this.fire('url-history-store', {
           value: this.request.url
         }, {
@@ -123,60 +126,13 @@ the License.
       /**
        * Aborts the request.
        */
-      _abortHandler: function() {
+      _abortHandler: function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
         this.$.socket.abort();
       },
-      /**
-       * Restores saved in the datastore request data.
-       *
-       * @param {String} id ID of the record
-       * @param {String} type Type of the stored data. Can be `saved`, `history` or
-       * `drive`
-       */
-      _restoreRequestData: function(id, type) {
-        type = type || 'saved';
-        var dbName;
-        switch (type) {
-          case 'saved':
-            dbName = 'saved-requests';
-            break;
-          case 'history':
-            dbName = 'history-requests';
-            break;
-          case 'drive':
-            dbName = 'saved-requests';
-            break;
-          default:
-            this.fire('app-log', {
-              'message': `${type} is not a type of a request.`,
-              'level': 'error'
-            });
-            console.error('Can\'t restore request data. Type is unknown.', type);
-            this.fire('send-analytics', {
-              type: 'exception',
-              description: 'Can\'t restore request of a type: ' + type +
-                ' (ArcRequestPanel)',
-              fatal: true
-            });
-            this.$.typeMissingToast.opened = true;
-            return;
-        }
 
-        var db = new PouchDB(dbName);
-        return db.get(id)
-        .then((r) => {
-          r.type = type;
-          this.set('proxyRequest', r);
-        })
-        .catch((e) => {
-          this.fire('app-log', {
-            'message': e,
-            'level': 'error'
-          });
-          console.error('Can\'t restore request data', e);
-          this.$.missingRequestToast.opened = true;
-        });
-      },
       /**
        * Sets the `request` object when a proxy change.
        */
@@ -236,26 +192,26 @@ the License.
        * Handler for the save event from the request editor.
        */
       _saveHandler: function(e) {
-        this.onSave({});
+        this.save();
         e.preventDefault();
         e.stopPropagation();
       },
-
-      onSave: function(opts) {
+      /**
+       * Saves current request.
+       *
+       * @param {Object} opts Save opotions:
+       * - source {String} If `shortcut` it saves the request without
+       * opening the request dialog.
+       */
+      save: function(opts) {
         if (!this.request.url || !this.request.url.trim()) {
           return;
         }
+        opts = opts || {};
         var type = this.request.type;
-        var isDrive;
-        var isSaved;
-        if (type) {
-          isDrive = type === 'google-drive';
-          isSaved = type === 'saved';
-        } else {
-          isDrive = !!this.routeParams.externalId;
-          isSaved = !!this.routeParams.savedId;
-        }
-        if ((isDrive || isSaved) && opts.source === 'shortcut' && !opts.shift) {
+        var isDrive = type === 'google-drive' ? true : false;
+        var isSaved = type === 'saved' ? true : false;
+        if ((isDrive || isSaved) && opts.source === 'shortcut') {
           return this._saveCurrent();
         }
 
@@ -367,12 +323,17 @@ the License.
           } else if (!request.legacyProject && this.projectId) {
             this.set('projectId', undefined);
           }
-          this.proxyRequest = data;
-          this.fire('navigate', {
-            base: 'request',
-            type: 'saved',
-            id: request._id
-          });
+          if (opts.override === false && this.request._id) {
+            this.fire('navigate', {
+              base: 'request',
+              type: 'saved',
+              id: request._id,
+              tab: 'new'
+            });
+          } else {
+            this.proxyRequest = request;
+            this.fire('update-tabs');
+          }
         })
         .catch(cause => {
           console.error('Save request error', cause);
@@ -392,6 +353,14 @@ the License.
           value: id
         });
       },
+      /**
+       * Stops event propagation.
+       * It prohibits request events to leak outside current panel so
+       * it doesn't affect other opened requests.
+       */
+      _stopEvent: function(e) {
+        e.stopPropagation();
+      }
     });
   </script>
 </dom-module>

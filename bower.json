@@ -86,7 +86,8 @@
     "arc-info-messages": "advanced-rest-client/arc-info-messages#^0.1.1",
     "arc-title": "advanced-rest-client/arc-title#^0.0.2",
     "web-url-input": "advanced-rest-client/web-url-input#^0.1.1",
-    "cookie-manager": "advanced-rest-client/cookie-manager#^0.1.1"
+    "cookie-manager": "advanced-rest-client/cookie-manager#^0.1.1",
+    "paper-tabs": "PolymerElements/paper-tabs#<2"
   },
   "devDependencies": {
     "web-component-tester": "*",

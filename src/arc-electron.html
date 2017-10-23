@@ -48,7 +48,7 @@
 <link rel="import" href="../bower_components/web-url-input/web-url-input.html">
 <link rel="import" href="../bower_components/cookie-manager/cookie-manager.html">
 <link rel="import" href="../styles/app-theme.html">
-<link rel="import" href="arc-request-panel/arc-request-panel.html">
+<link rel="import" href="request-workspace/request-workspace.html">
 <link rel="import" href="file-export/file-export.html">
 <link rel="import" href="about-arc/about-arc.html">
 <link rel="import" href="electron-drive/electron-drive.html">
@@ -185,7 +185,7 @@
             attr-for-selected="data-route"
             selected-attribute="opened"
             selected="[[routeData.base]]">
-            <arc-request-panel data-route="request" route-params="{{requestRoute}}"></arc-request-panel>
+            <request-workspace data-route="request" route="{{route}}"></request-workspace>
             <websocket-panel attr-for-opened="opened" data-route="socket"></websocket-panel>
             <history-panel attr-for-opened="opened" data-route="history"></history-panel>
             <saved-requests-panel attr-for-opened="opened" data-route="saved"></saved-requests-panel>
@@ -203,7 +203,6 @@
     <app-location route="{{route}}" use-hash-as-path></app-location>
     <app-route route="{{route}}" pattern="/:base" data="{{routeData}}"></app-route>
     <app-route route="{{route}}" pattern="/project/:id" data="{{projectRoute}}"></app-route>
-    <app-route route="{{route}}" pattern="/request/:type/:id" data="{{requestRoute}}"></app-route>
     <app-route route="{{route}}" pattern="/request/drive/:action/:id" data="{{driveFileRoute}}"></app-route>
     <arc-title base="[[routeData.base]]" page-title="{{pageTitle}}"></arc-title>
     <drop-file-importer></drop-file-importer>
@@ -566,18 +565,20 @@
         }, {
           cancelable: true
         });
-        event.detail.result.then((data) => {
+        event.detail.result.then(data => {
           if (this._isSingleRequest(data)) {
             let obj = data.requests[0];
             if (opts.diveId) {
               obj.type = 'google-drive';
               obj.driveId = opts.diveId;
             }
-            Polymer.dom(this.root).querySelector('arc-request-panel').request = obj;
+            let panel = Polymer.dom(this.root).querySelector('request-workspace');
+            let tab = panel.fromObject(obj);
             this.fire('navigate', {
               base: 'request',
               type: 'current',
-              id: '0'
+              id: '0',
+              tab: tab
             });
           } else {
             let panel = Polymer.dom(this.root).querySelector('data-import-export-panel');
@@ -639,7 +640,7 @@
         var screenName = '[unknown]';
         switch (params.base) {
           case 'default':
-            url = '/request/latest/0';
+            url = '/request/latest/0/new';
             screenName = 'Request - latest';
           break;
           case 'history':
@@ -677,7 +678,12 @@
             let type = params.type || 'latest';
             let id = params.id || '0';
             screenName += type;
-            url = '/request/' + type + '/' + encodeURIComponent(id);
+            url = '/request/' + type + '/' + encodeURIComponent(id) + '/';
+            if (e.detail.tab !== undefined) {
+              url += e.detail.tab;
+            } else {
+              url += 'new';
+            }
           break;
           case 'drive':
             url = '/drive';
@@ -930,13 +936,12 @@
         }
         switch (action) {
           case 'save':
-            this.$$('arc-request-panel').onSave({});
+            this.$$('request-workspace').saveOpened({
+              source: 'shortcut'
+            });
           break;
           case 'save-as':
-            this.$$('arc-request-panel').onSave({
-              source: 'shortcut',
-              shift: true
-            });
+            this.$$('request-workspace').saveOpened();
           break;
         }
       },
