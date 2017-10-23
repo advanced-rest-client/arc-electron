@@ -152,7 +152,7 @@ the License.
         this._restoringWorkspace = true;
         this.state.restore()
         .then(data => this._worspaceStateRestored(data))
-        .catch(() => this._appendPanel())
+        .catch(() => this.appendPanel())
         .then(() => {
           this._restoringWorkspace = false;
         });
@@ -160,7 +160,7 @@ the License.
       /**
        * Adds new empty panel to the workspace.
        */
-      _appendPanel: function() {
+      appendPanel: function() {
         var obj = {
           method: 'GET'
         };
@@ -181,8 +181,8 @@ the License.
        * @return {Number} Index of created tab.
        */
       fromObject: function(obj) {
-        this._appendPanel();
-        this.selected = this.activeRequests.length - 1;
+        var index = this.appendPanel();
+        this.selected = index;
         Polymer.dom.flush();
         var panel = this._getPanel(this.selected);
         panel.request = obj;
@@ -191,10 +191,10 @@ the License.
 
       _worspaceStateRestored: function(data) {
         if (!data || !data.requests) {
-          return this._appendPanel();
+          return this.appendPanel();
         }
         data.requests.forEach(() => {
-          this._appendPanel();
+          this.appendPanel();
         });
         Polymer.dom.flush();
         data.requests.forEach((request, i) => {
@@ -205,7 +205,7 @@ the License.
       // A handler for "add" icon click.
       _addRequestHandler: function() {
         this.async(function() {
-          this._appendPanel();
+          this.appendPanel();
           this.selected = this.activeRequests.length - 1;
         }, 5);
       },
@@ -237,7 +237,7 @@ the License.
           }
         }
         if (!ar || tab >= ar.length) {
-          this._appendPanel();
+          this.appendPanel();
           // Async so selection can be applied earlier.
           Polymer.RenderStatus.afterNextRender(this, function() {
             this._openRequest(this.requestRoute, tab);
@@ -370,7 +370,7 @@ the License.
         }
         if (!this.activeRequests.length) {
           Polymer.RenderStatus.afterNextRender(this, function() {
-            this._appendPanel();
+            this.appendPanel();
           });
         }
         this.selected = index;
@@ -394,9 +394,12 @@ the License.
         }
         switch (record.path) {
           case 'activeRequests':
-          case 'activeRequests.splices':
           case 'activeRequests.length':
             return;
+          case 'activeRequests.splices':
+            if (!record.value.keySplices[0].removed.length) {
+              return;
+            }
         }
         this.debounce('storing-workspace-data', function() {
           this.state.updateRequestsSate(this.activeRequests);

@@ -932,14 +932,19 @@
         if (this.routeData.base !== 'request') {
           return;
         }
+        var workspace = this.$$('request-workspace');
         switch (action) {
           case 'save':
-            this.$$('request-workspace').saveOpened({
+            workspace.saveOpened({
               source: 'shortcut'
             });
           break;
           case 'save-as':
-            this.$$('request-workspace').saveOpened();
+            workspace.saveOpened();
+          break;
+          case 'new-tab':
+            let index = workspace.appendPanel();
+            workspace.selected = index;
           break;
         }
       },
