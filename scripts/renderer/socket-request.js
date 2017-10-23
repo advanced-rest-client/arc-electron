@@ -22,16 +22,21 @@ class SocketRequest extends EventEmitter {
    * Constructs the request from ARC's request object
    *
    * @param {Object} request ARC's request object
+   * @param {Object} opts Optional. Request configuration options
+   * - `timeout` {Number} Request timeout. Default to 0 (no timeout)
+   * - `followRedirects` {Boolean} Fllow request redirects. Default `true`.
    */
-  constructor(request, timeout) {
+  constructor(request, opts) {
     super();
+    opts = opts || {};
     this.arcRequest = Object.assign({}, request);
     this.uri = request.url;
     this.aborted = false;
     this.stats = {};
     this.state = 0;
     this.socket = undefined;
-    this._timeout = timeout;
+    this._timeout = opts.timeout || 0;
+    this.followRedirects = opts.followRedirects === undefined ? true : opts.followRedirects;
   }
 
   set uri(value) {
@@ -603,7 +608,7 @@ class SocketRequest extends EventEmitter {
     this.stats.receive = this.stats.lastReceived - this.stats.firstReceived;
     var status = this._response.status;
     if (status >= 300 && status < 400) {
-      if (this._reportRedirect(status)) {
+      if (this.followRedirects && this._reportRedirect(status)) {
         return;
       }
     } else if (status === 401 && this.auth) {
@@ -694,12 +699,13 @@ class SocketRequest extends EventEmitter {
       }
     } catch (e) {
       // It must be relative location
-      let origin = this.arcRequest.uri.origin;
+      let origin = this.uri.protocol + '//';
+      origin += this.uri.host;
       if (origin[origin.length - 1] === '/') {
         origin = origin.substr(0, origin.length - 1);
       }
       if (location[0] !== '/') {
-        location = origin + this.arcRequest.uri.pathname + location;
+        location = origin + this.uri.pathname + location;
       } else {
         location = origin + location;
       }

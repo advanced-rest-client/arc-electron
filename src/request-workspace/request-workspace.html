@@ -1,0 +1,410 @@
+<!--
+@license
+Copyright 2017 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../../bower_components/paper-tabs/paper-tab.html">
+<link rel="import" href="../../bower_components/openable-panel-behavior/openable-panel-behavior.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/app-route/app-route.html">
+<link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../arc-request-panel/arc-request-panel.html">
+
+<dom-module id="request-workspace">
+  <template>
+    <style>
+    :host {
+      display: block;
+    }
+
+    .tabs-row {
+      background-color: rgba(0, 0, 0, 0.05);
+      border-bottom: 1px #e5e5e5 solid;
+    }
+
+    .tabs-row paper-tabs {
+      --paper-tabs-content: {
+        @apply(--arc-font-common-base);
+        height: 100%;
+        border-bottom: 0 solid transparent;
+        font-style: normal;
+        color: rgba(0,0,0,0.87);
+      };
+    }
+
+    .tab-name {
+      font-size: 13px;
+      margin-right: 8px;
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .close-icon {
+      color: rgba(0, 0, 0, 0.78);
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+    }
+
+    .close-icon:hover {
+      color: rgba(255, 255, 255, 0.54);
+      background-color: #FF8A65;
+    }
+
+    .add-request-button {
+      width: 40px;
+      height: 40px;
+      margin-left: 12px;
+      cursor: pointer;
+    }
+
+    paper-tab.iron-selected {
+      background-color: rgba(255, 138, 101, 0.08);
+    }
+    </style>
+    <app-route route="{{route}}" pattern="/request/:type/:id/:tab" data="{{requestRoute}}"></app-route>
+    <div class="tabs-row">
+      <paper-tabs selected="{{selected}}" scrollable>
+        <template is="dom-repeat" items="[[activeRequests]]">
+          <paper-tab>
+            <span class="tab-name">[[_computeTabName(item)]]</span>
+            <iron-icon class="close-icon" icon="arc:close" data-index$="[[index]]" on-tap="_closeRequest"></iron-icon>
+          </paper-tab>
+        </template>
+        <paper-icon-button id="add-request-button" icon="arc:add" on-tap="_addRequestHandler" title="Add new request editor"></paper-icon-button>
+      </paper-tabs>
+    </div>
+    <iron-pages id="requests" selected-attribute="opened" selected="[[selected]]" selectable=".panel">
+      <template is="dom-repeat" items="{{activeRequests}}" restamp>
+        <arc-request-panel request-panel-id="[[index]]" class="panel" request="{{item}}"></arc-request-panel>
+      </template>
+    </iron-pages>
+
+    <paper-toast text="Can't restore request data. The type is unknown." id="typeMissingToast"></paper-toast>
+    <paper-toast text="Request do not exists in local database." id="missingRequestToast"></paper-toast>
+  </template>
+  <script>
+    const {WorkspaceState} = require('./scripts/renderer/workspace-state.js');
+    Polymer({
+      is: 'request-workspace',
+
+      behaviors: [ArcBehaviors.OpenablePanelBehavior],
+
+      properties: {
+        requestRoute: Object,
+        // Current route object
+        route: Object,
+        // List of opened requests
+        activeRequests: Array,
+        // Currently selected request tab
+        selected: {
+          type: Number,
+          value: 0,
+          notify: true
+        },
+        __ready: Boolean,
+        // Workspace state manager.
+        state: {
+          type: WorkspaceState,
+          readOnly: true
+        }
+      },
+
+      observers: [
+        '_openedChanged(_isOpened, __ready)',
+        '_routeTabChanged(requestRoute.tab)',
+        '_selectedChanged(selected)',
+        '_requestsListChanged(activeRequests.*)'
+      ],
+
+      listeners: {
+        'update-tabs': '_updateTabs'
+      },
+
+      ready: function() {
+        this._setState(new WorkspaceState());
+        this.__ready = true;
+      },
+
+      _openedChanged: function(opened) {
+        if (opened && !this.activeRequests) {
+          this.restoreWorkspace();
+        }
+      },
+      /**
+       * Restores workspace state - list of previously opened requests.
+       */
+      restoreWorkspace: function() {
+        this._restoringWorkspace = true;
+        this.state.restore()
+        .then(data => this._worspaceStateRestored(data))
+        .catch(() => this.appendPanel())
+        .then(() => {
+          this._restoringWorkspace = false;
+        });
+      },
+      /**
+       * Adds new empty panel to the workspace.
+       */
+      appendPanel: function() {
+        var obj = {
+          method: 'GET'
+        };
+        var result;
+        if (!this.activeRequests) {
+          this.set('activeRequests', [obj]);
+          result = 0;
+        } else {
+          result = this.push('activeRequests', obj);
+          result--;
+        }
+        return result;
+      },
+      /**
+       * Adds a new tab with a request object from passed `obj`.
+       *
+       * @param {Object} obj Request object to pass to the editor
+       * @return {Number} Index of created tab.
+       */
+      fromObject: function(obj) {
+        var index = this.appendPanel();
+        this.selected = index;
+        Polymer.dom.flush();
+        var panel = this._getPanel(this.selected);
+        panel.request = obj;
+        return this.selected;
+      },
+
+      _worspaceStateRestored: function(data) {
+        if (!data || !data.requests) {
+          return this.appendPanel();
+        }
+        data.requests.forEach(() => {
+          this.appendPanel();
+        });
+        Polymer.dom.flush();
+        data.requests.forEach((request, i) => {
+          let panel = this._getPanel(i);
+          panel.proxyRequest = request;
+        });
+      },
+      // A handler for "add" icon click.
+      _addRequestHandler: function() {
+        this.async(function() {
+          this.appendPanel();
+          this.selected = this.activeRequests.length - 1;
+        }, 5);
+      },
+
+      _computeTabName: function(item) {
+        if (!item) {
+          return 'unnamed';
+        }
+        if (item.name) {
+          return item.name;
+        }
+        if (item.url) {
+          return item.url;
+        }
+        return 'New request';
+      },
+
+      _routeTabChanged: function(tab) {
+        if (tab === undefined) {
+          return;
+        }
+        var ar = this.activeRequests;
+        if (tab === 'new') {
+          tab = ar ? ar.length : 0;
+        } else {
+          tab = Number(tab);
+          if (tab !== tab) {
+            tab = 0;
+          }
+        }
+        if (!ar || tab >= ar.length) {
+          this.appendPanel();
+          // Async so selection can be applied earlier.
+          Polymer.RenderStatus.afterNextRender(this, function() {
+            this._openRequest(this.requestRoute, tab);
+          });
+        }
+        if (this.selected !== tab) {
+          this.selected = tab;
+        }
+      },
+      /**
+       * Updates `tab` route property when selection change.
+       */
+      _selectedChanged: function(selected) {
+        if (!this.requestRoute || (!selected && selected !== 0)) {
+          return;
+        }
+        if (selected !== this.requestRoute.tab) {
+          this.set('requestRoute.tab', selected);
+        }
+      },
+      /**
+       * Opens a request stored in the datastore in selected `tab`.
+       */
+      _openRequest: function(route, tab) {
+        switch (route.type) {
+          case 'saved':
+          case 'history':
+            let id = decodeURIComponent(route.id);
+            this._restoreRequestData(id, route.type, tab);
+            break;
+        }
+      },
+
+      /**
+       * Restores saved in the datastore request data.
+       *
+       * @param {String} id ID of the record
+       * @param {String} type Type of the stored data. Can be `saved`, `history` or
+       * `drive`
+       * @param {Number} tab Idex of a tab where the request is restored.
+       */
+      _restoreRequestData: function(id, type, tab) {
+        type = type || 'saved';
+        var dbName;
+        switch (type) {
+          case 'saved':
+          case 'drive':
+            dbName = 'saved-requests';
+            break;
+          case 'history':
+            dbName = 'history-requests';
+            break;
+          default:
+            this.fire('app-log', {
+              'message': `${type} is not a type of a request.`,
+              'level': 'error'
+            });
+            console.error('Can\'t restore request data. Type is unknown.', type);
+            this.fire('send-analytics', {
+              type: 'exception',
+              description: 'Can\'t restore request of a type: ' + type +
+                ' (ArcRequestPanel)',
+              fatal: true
+            });
+            this.$.typeMissingToast.opened = true;
+            return;
+        }
+
+        var db = new PouchDB(dbName);
+        return db.get(id)
+        .then(request => {
+          request.type = type;
+          return this._setRequest(request, tab);
+        })
+        .catch(cause => {
+          this.fire('app-log', {
+            'message': cause,
+            'level': 'error'
+          });
+          console.error('Can\'t restore request data', cause);
+          this.$.missingRequestToast.opened = true;
+        });
+      },
+      /**
+       * Returns a request panel for given index.
+       * @param {Number} tab Request editor tab index.
+       * @return {HTMLElement} Request panel for given incdex.
+       */
+      _getPanel: function(tab) {
+        tab++;
+        return Polymer.dom(this.root)
+        .querySelector('arc-request-panel:nth-child(' + tab + ')');
+      },
+      /**
+       * Sets a request object on a given tab.
+       *
+       * @param {Object} request Request object to be set on the editor
+       * @param {Numbewr} tab Request editor tab index.
+       */
+      _setRequest: function(request, tab) {
+        Polymer.RenderStatus.afterNextRender(this, function() {
+          var panel = this._getPanel(tab);
+          panel.proxyRequest = request;
+          this._updateTabs();
+        });
+      },
+      /**
+       * Handler for clost tab icon click.
+       * Closes request panel.
+       */
+      _closeRequest: function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var index = Polymer.dom(e).localTarget.dataset.index;
+        if (!index) {
+          console.warn('Request index not found on target');
+          return;
+        }
+        index = Number(index);
+        if (index !== index) {
+          console.warn('Request index is not a number');
+          return;
+        }
+        this.splice('activeRequests', index, 1);
+        if (index === this.selected) {
+          index--;
+        }
+        if (index < 0) {
+          index = 0;
+        }
+        if (!this.activeRequests.length) {
+          Polymer.RenderStatus.afterNextRender(this, function() {
+            this.appendPanel();
+          });
+        }
+        this.selected = index;
+      },
+
+      saveOpened: function(opts) {
+        var panel = this._getPanel(this.selected);
+        panel.save(opts);
+      },
+      /**
+       * Update tabs selection.
+       * @return {[type]} [description]
+       */
+      _updateTabs: function() {
+        this.$$('paper-tabs').notifyResize();
+      },
+
+      _requestsListChanged: function(record) {
+        if (this._restoringWorkspace) {
+          return;
+        }
+        switch (record.path) {
+          case 'activeRequests':
+          case 'activeRequests.length':
+            return;
+          case 'activeRequests.splices':
+            if (!record.value.keySplices[0].removed.length) {
+              return;
+            }
+        }
+        this.debounce('storing-workspace-data', function() {
+          this.state.updateRequestsSate(this.activeRequests);
+        }, 100);
+      }
+    });
+  </script>
+</dom-module>
