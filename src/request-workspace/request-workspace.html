@@ -89,7 +89,7 @@ the License.
       </paper-tabs>
     </div>
     <iron-pages id="requests" selected-attribute="opened" selected="[[selected]]" selectable=".panel">
-      <template is="dom-repeat" items="{{activeRequests}}">
+      <template is="dom-repeat" items="{{activeRequests}}" restamp>
         <arc-request-panel request-panel-id="[[index]]" class="panel" request="{{item}}"></arc-request-panel>
       </template>
     </iron-pages>
@@ -346,7 +346,9 @@ the License.
           index = 0;
         }
         if (!this.activeRequests.length) {
-          this._appendPanel();
+          Polymer.RenderStatus.afterNextRender(this, function() {
+            this._appendPanel();
+          });
         }
         this.selected = index;
       },
