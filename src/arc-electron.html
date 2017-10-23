@@ -377,6 +377,7 @@
         // layaouts are wrong (at a time of computations elemets size is 0).
         // This function forces to recalculate layout.
         Polymer.RenderStatus.afterNextRender(this, () => {
+          this._drawerWidthChanged(this.drawerWidth);
           this.$.scrollingRegion._updateContentPosition();
           this.$.drawerLayout.resetLayout();
         });
@@ -480,8 +481,6 @@
             this.selectedRequest = undefined;
             return;
           case 'drive':
-            // console.log(this.driveFileRoute);
-            // debugger;
             this.selectedRequest = undefined;
             // return this.openDriveItem(params.driveId);
             return;
@@ -818,7 +817,6 @@
         if (!width) {
           return;
         }
-
         this.customStyle['--app-drawer-width'] = width;
         this.customStyle['--request-panel-status-bar-left'] = width;
         this.updateStyles();

@@ -52,7 +52,6 @@ the License.
     <socket-request id="socket"></socket-request>
   </template>
   <script>
-    const {LatestRequest} = require('./scripts/main/latest-request.js');
     Polymer({
       is: 'arc-request-panel',
 
@@ -91,16 +90,8 @@ the License.
 
       observers: [
         '_proxyRequestChanged(proxyRequest.*)',
-        '_requestChanged(request.*)',
         '_projectIdChanged(projectId)'
       ],
-
-      get latestRequestProcessor() {
-        if (!this.__latestProcessor) {
-          this.__latestProcessor = new LatestRequest();
-        }
-        return this.__latestProcessor;
-      },
 
       _getTabId: function(route) {
         var tab = route.tab;
@@ -129,10 +120,8 @@ the License.
       _abortHandler: function(e) {
         e.preventDefault();
         e.stopPropagation();
-
         this.$.socket.abort();
       },
-
       /**
        * Sets the `request` object when a proxy change.
        */
@@ -156,37 +145,6 @@ the License.
           this.set('projectId', data.legacyProject);
         }
         this.set('request', base);
-      },
-      // Restores latest request from local storage.
-      restoreLatest: function() {
-        return this.latestRequestProcessor.restore()
-        .then(request => this._latestLoaded(request))
-        .catch(() => this._latestLoaded());
-      },
-
-      // Handler for latest rectore call.
-      _latestLoaded: function(obj) {
-        if (!obj || !Object.keys(obj).length) {
-          obj = {
-            method: 'GET'
-          };
-        }
-        this.set('request', obj);
-      },
-
-      _requestChanged: function(record) {
-        if (!record || !record.base) {
-          return;
-        }
-        var request = record.base;
-        if (Object.keys(request).length === 1 && request.method &&
-          request.method === 'GET') {
-          // Default value.
-          return;
-        }
-        this.debounce('request-store', function() {
-          return this.latestRequestProcessor.store(this.request);
-        }, 100);
       },
       /**
        * Handler for the save event from the request editor.

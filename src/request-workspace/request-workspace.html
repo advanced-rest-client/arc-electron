@@ -98,6 +98,7 @@ the License.
     <paper-toast text="Request do not exists in local database." id="missingRequestToast"></paper-toast>
   </template>
   <script>
+    const {WorkspaceState} = require('./scripts/renderer/workspace-state.js');
     Polymer({
       is: 'request-workspace',
 
@@ -114,41 +115,64 @@ the License.
           type: Number,
           value: 0,
           notify: true
+        },
+        __ready: Boolean,
+        // Workspace state manager.
+        state: {
+          type: WorkspaceState,
+          readOnly: true
         }
       },
 
       observers: [
-        '_openedChanged(_isOpened)',
+        '_openedChanged(_isOpened, __ready)',
         '_routeTabChanged(requestRoute.tab)',
-        '_selectedChanged(selected)'
+        '_selectedChanged(selected)',
+        '_requestsListChanged(activeRequests.*)'
       ],
 
       listeners: {
         'update-tabs': '_updateTabs'
       },
 
+      ready: function() {
+        this._setState(new WorkspaceState());
+        this.__ready = true;
+      },
+
       _openedChanged: function(opened) {
-        if (opened) {
-          this.ensureRequestPanel();
+        if (opened && !this.activeRequests) {
+          this.restoreWorkspace();
         }
       },
-
-      ensureRequestPanel: function() {
-        var ar = this.activeRequests;
-        if (!ar || !ar.length) {
-          this._appendPanel();
-        }
+      /**
+       * Restores workspace state - list of previously opened requests.
+       */
+      restoreWorkspace: function() {
+        this._restoringWorkspace = true;
+        this.state.restore()
+        .then(data => this._worspaceStateRestored(data))
+        .catch(() => this._appendPanel())
+        .then(() => {
+          this._restoringWorkspace = false;
+        });
       },
-
+      /**
+       * Adds new empty panel to the workspace.
+       */
       _appendPanel: function() {
         var obj = {
           method: 'GET'
         };
+        var result;
         if (!this.activeRequests) {
           this.set('activeRequests', [obj]);
+          result = 0;
         } else {
-          this.push('activeRequests', obj);
+          result = this.push('activeRequests', obj);
+          result--;
         }
+        return result;
       },
       /**
        * Adds a new tab with a request object from passed `obj`.
@@ -165,6 +189,20 @@ the License.
         return this.selected;
       },
 
+      _worspaceStateRestored: function(data) {
+        if (!data || !data.requests) {
+          return this._appendPanel();
+        }
+        data.requests.forEach(() => {
+          this._appendPanel();
+        });
+        Polymer.dom.flush();
+        data.requests.forEach((request, i) => {
+          let panel = this._getPanel(i);
+          panel.proxyRequest = request;
+        });
+      },
+      // A handler for "add" icon click.
       _addRequestHandler: function() {
         this.async(function() {
           this._appendPanel();
@@ -186,6 +224,9 @@ the License.
       },
 
       _routeTabChanged: function(tab) {
+        if (tab === undefined) {
+          return;
+        }
         var ar = this.activeRequests;
         if (tab === 'new') {
           tab = ar ? ar.length : 0;
@@ -226,12 +267,6 @@ the License.
           case 'history':
             let id = decodeURIComponent(route.id);
             this._restoreRequestData(id, route.type, tab);
-            break;
-          case 'current':
-          case 'drive':
-            return;
-          default:
-            this.restoreLatest(tab);
             break;
         }
       },
@@ -310,18 +345,6 @@ the License.
         });
       },
       /**
-       * Restores latest request on a tab.
-       *
-       * @param {Number} tab Request editor tab index.
-       */
-      restoreLatest: function(tab) {
-        if (tab !== 0) {
-          return;
-        }
-        var panel = this._getPanel(tab);
-        panel.restoreLatest();
-      },
-      /**
        * Handler for clost tab icon click.
        * Closes request panel.
        */
@@ -363,6 +386,21 @@ the License.
        */
       _updateTabs: function() {
         this.$$('paper-tabs').notifyResize();
+      },
+
+      _requestsListChanged: function(record) {
+        if (this._restoringWorkspace) {
+          return;
+        }
+        switch (record.path) {
+          case 'activeRequests':
+          case 'activeRequests.splices':
+          case 'activeRequests.length':
+            return;
+        }
+        this.debounce('storing-workspace-data', function() {
+          this.state.updateRequestsSate(this.activeRequests);
+        }, 100);
       }
     });
   </script>
