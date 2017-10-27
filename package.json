@@ -1,7 +1,7 @@
 {
   "name": "advanced-rest-client",
   "description": "The Advanced REST Client desktop application.",
-  "version": "11.0.22",
+  "version": "11.0.23",
   "homepage": "https://advancedrestclient.com/",
   "license": "LICENSE.md",
   "author": {
@@ -21,7 +21,7 @@
   "main": "main.js",
   "devDependencies": {
     "electron": "~1.7.8",
-    "electron-builder": "^19.37.2"
+    "electron-builder": "^19.42.2"
   },
   "dependencies": {
     "electron-log": "^2.2.9",
