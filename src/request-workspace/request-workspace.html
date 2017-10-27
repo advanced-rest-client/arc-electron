@@ -133,7 +133,7 @@ the License.
 
       observers: [
         '_openedChanged(_isOpened, __ready)',
-        '_routeTabChanged(requestRoute.tab)',
+        '_routeTabChanged(requestRoute.tab, _isOpened)',
         '_selectedChanged(selected)',
         '_requestsListChanged(activeRequests.*)'
       ],
@@ -250,8 +250,8 @@ the License.
         return this.activeRequests.findIndex(item => item._id === requestId);
       },
 
-      _routeTabChanged: function(tab) {
-        if (tab === undefined || !this._isOpened) {
+      _routeTabChanged: function(tab, opened) {
+        if (tab === undefined || !opened) {
           return;
         }
         var ar = this.activeRequests;
