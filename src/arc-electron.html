@@ -185,7 +185,7 @@
             attr-for-selected="data-route"
             selected-attribute="opened"
             selected="[[routeData.base]]">
-            <request-workspace data-route="request" route="{{route}}"></request-workspace>
+            <request-workspace attr-for-opened="opened" data-route="request" route="{{route}}"></request-workspace>
             <websocket-panel attr-for-opened="opened" data-route="socket"></websocket-panel>
             <history-panel attr-for-opened="opened" data-route="history"></history-panel>
             <saved-requests-panel attr-for-opened="opened" data-route="saved"></saved-requests-panel>
@@ -680,7 +680,7 @@
             url = '/request/' + type + '/' + encodeURIComponent(id) + '/';
             if (e.detail.tab !== undefined) {
               url += e.detail.tab;
-            } else {
+            } else if (type !== 'latest') {
               url += 'new';
             }
           break;
