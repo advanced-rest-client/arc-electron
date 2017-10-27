@@ -1,3 +1,13 @@
+<a name="11.0.23"></a>
+## [11.0.23](https://github.com/advanced-rest-client/arc-electron/compare/v11.0.22...v11.0.23) (2017-10-27)
+
+
+### Update
+
+* Updating builder module ([acb3c48bb05a24a9a355853e5fb1d7c38a080de0](https://github.com/advanced-rest-client/arc-electron/commit/acb3c48bb05a24a9a355853e5fb1d7c38a080de0))
+
+
+
 <a name="11.0.22"></a>
 ## [11.0.22](https://github.com/advanced-rest-client/arc-electron/compare/v11.0.21...v11.0.22) (2017-10-27)
 
