@@ -32,5 +32,13 @@ class WorkspaceState extends ArcPreferences {
     this._data.requests = requests;
     return this.store(this._data);
   }
+
+  updateSelected(selected) {
+    if (!this._data) {
+      this._data = {};
+    }
+    this._data.selected = selected;
+    return this.store(this._data);
+  }
 }
 exports.WorkspaceState = WorkspaceState;

@@ -123,6 +123,13 @@ the License.
           readOnly: true
         }
       },
+      /**
+       * Determines if the worspace has at least one request
+       * @type {Boolean}
+       */
+      get hasRequests() {
+        return !!(this.activeRequests && this.activeRequests.length);
+      },
 
       observers: [
         '_openedChanged(_isOpened, __ready)',
@@ -201,6 +208,13 @@ the License.
           let panel = this._getPanel(i);
           panel.proxyRequest = request;
         });
+
+        if (data.selected || data.selected === 0) {
+          let i = Number(data.selected);
+          if (i === i && i < data.requests.length) {
+            this.selected = i;
+          }
+        }
       },
       // A handler for "add" icon click.
       _addRequestHandler: function() {
@@ -222,14 +236,39 @@ the License.
         }
         return 'New request';
       },
+      /**
+       * Finds requests index in the list of active requests if the request is
+       * already added to active requests.
+       *
+       * @param {String} requestId Saved request ID
+       * @return {Number} Request index or -1 if not found.
+       */
+      findRequestIndex: function(requestId) {
+        if (!requestId || !this.hasRequests) {
+          return -1;
+        }
+        return this.activeRequests.findIndex(item => item._id === requestId);
+      },
 
       _routeTabChanged: function(tab) {
-        if (tab === undefined) {
+        if (tab === undefined || !this._isOpened) {
           return;
         }
         var ar = this.activeRequests;
+        if (tab === '' && this.hasRequests && this.selected >= 0) {
+          return;
+        }
         if (tab === 'new') {
-          tab = ar ? ar.length : 0;
+          let id;
+          try {
+            id = decodeURIComponent(this.requestRoute.id);
+          } catch (e) {}
+          let index = this.findRequestIndex(id);
+          if (index >= 0) {
+            tab = index;
+          } else {
+            tab = ar ? ar.length : 0;
+          }
         } else {
           tab = Number(tab);
           if (tab !== tab) {
@@ -238,10 +277,7 @@ the License.
         }
         if (!ar || tab >= ar.length) {
           this.appendPanel();
-          // Async so selection can be applied earlier.
-          Polymer.RenderStatus.afterNextRender(this, function() {
-            this._openRequest(this.requestRoute, tab);
-          });
+          this._openRequest(this.requestRoute, tab);
         }
         if (this.selected !== tab) {
           this.selected = tab;
@@ -256,6 +292,7 @@ the License.
         }
         if (selected !== this.requestRoute.tab) {
           this.set('requestRoute.tab', selected);
+          this.state.updateSelected(selected);
         }
       },
       /**
@@ -266,7 +303,9 @@ the License.
           case 'saved':
           case 'history':
             let id = decodeURIComponent(route.id);
-            this._restoreRequestData(id, route.type, tab);
+            this.debounce('restore-request-' + id, function() {
+              this._restoreRequestData(id, route.type, tab);
+            }, 100);
             break;
         }
       },
