@@ -84,7 +84,7 @@ the License.
         'request-header-changed': '_stopEvent',
         'request-is-payload-changed': '_stopEvent',
         'content-type-changed': '_stopEvent',
-        'request-clear-state': '_stopEvent',
+        'request-clear-state': '_clearRequest',
         'report-response': '_stopEvent'
       },
 
@@ -318,6 +318,14 @@ the License.
        */
       _stopEvent: function(e) {
         e.stopPropagation();
+      },
+
+      _clearRequest: function(e) {
+        this._stopEvent(e);
+        this.set('request', {
+          method: 'GET',
+          url: ''
+        });
       }
     });
   </script>
