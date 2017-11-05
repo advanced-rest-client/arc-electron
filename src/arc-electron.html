@@ -918,7 +918,7 @@
        */
       _updateEventHandler: function(...args) {
         this.updateState = args[1];
-        if (args[0] === 'update-available') {
+        if (args[1] === 'update-available') {
           this.hasAppUpdate = true;
         }
       },
