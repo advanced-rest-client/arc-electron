@@ -47,11 +47,15 @@
 <link rel="import" href="../bower_components/arc-title/arc-title.html">
 <link rel="import" href="../bower_components/web-url-input/web-url-input.html">
 <link rel="import" href="../bower_components/cookie-manager/cookie-manager.html">
+<link rel="import" href="../bower_components/raml-js-parser/raml-js-parser.html">
+<link rel="import" href="../bower_components/raml-json-enhance/raml-json-enhance.html">
 <link rel="import" href="../styles/app-theme.html">
 <link rel="import" href="request-workspace/request-workspace.html">
 <link rel="import" href="file-export/file-export.html">
 <link rel="import" href="about-arc/about-arc.html">
 <link rel="import" href="electron-drive/electron-drive.html">
+<link rel="import" href="api-console-panel/api-console-panel.html">
+
 
 <dom-module id="arc-electron">
   <template>
@@ -195,6 +199,7 @@
             <project-details attr-for-opened="opened" data-route="project" project-id="[[projectRoute.id]]" attr-for-opened="opened"></project-details>
             <google-drive-browser mime-type="application/restclient+data" data-route="drive" attr-for-opened="opened" api-key="1076318174169-u4a5d3j2v0tbie1jnjgsluqk1ti7ged3.apps.googleusercontent.com" access-token="[[accessToken]]" on-drive-file-picker-data="_openDriveRequest"></google-drive-browser>
             <cookie-manager attr-for-opened="opened" data-route="cookie-manager"></cookie-manager>
+            <api-console-panel attr-for-opened="opened" data-route="api-console"></api-console-panel>
           </iron-pages>
         </div>
       </app-drawer-layout>
@@ -208,8 +213,9 @@
     <drop-file-importer></drop-file-importer>
     <arc-license-dialog></arc-license-dialog>
     <arc-onboarding></arc-onboarding>
+    <paper-toast id="processingRamlToast" duration="0">Processing RAML data. Please wait.</paper-toast>
+    <paper-toast id="processingRamlErrorToast" class="error-toast"></paper-toast>
     <paper-toast id="errorToast" duration="5000"></paper-toast>
-    <paper-toast id="offlineToast" class="offline-toast" text="You are now offline. Can't make new requests."></paper-toast>
     <search-bar id="content-search-bar" on-iron-overlay-opened="textSearchBarOpened"></search-bar>
     <template is="dom-if" if="[[telemetry]]" restamp="true">
       <app-analytics tracking-id="UA-18021184-6" app-name="ARC-electon" app-id="[[appId]]" app-version="[[appVersion]]" data-source="electron-app">
@@ -252,6 +258,9 @@
     <file-export></file-export>
     <electron-drive></electron-drive>
     <arc-messages-service platform="electron" on-unread-changed="_unreadMessagesChanged" messages="{{appMessages}}"></arc-messages-service>
+
+    <raml-js-parser json latest-json="{{plainRaml}}"></raml-js-parser>
+    <raml-json-enhance json="[[plainRaml.specification]]" on-raml-json-enhance-ready="_ramlEnhanced" on-error="_ramlEnhanceError"></raml-json-enhance>
   </template>
   <script>
     const {ArcPreferences} = require('./scripts/main/arc-preferences');
@@ -320,7 +329,9 @@
         // List of cached messages from app developer.
         appMessages: Array,
         // If true, messages center is opened.
-        messageCenterOpened: Boolean
+        messageCenterOpened: Boolean,
+        // Last parsed RAML output from the parser.
+        plainRaml: Object
       },
 
       listeners: {
@@ -551,7 +562,32 @@
       },
 
       _processIcomingDataHandler: function(e) {
-        this._processIcomingData(e.detail.data);
+        if (e.detail.type === 'json') {
+          this._processIcomingData(e.detail.data);
+        } else if (e.detail.type === 'raml') {
+          this.$.processingRamlToast.opened = true;
+          let parser = this.$$('raml-js-parser');
+          if (e.detail.filesystem) {
+            parser.files = e.detail.filesystem;
+          }
+          parser.loadFiles(e.detail.file);
+        }
+      },
+
+      _ramlEnhanced: function(e) {
+        this.$.processingRamlToast.opened = false;
+        var raml = e.detail.json;
+        this.$$('api-console-panel').raml = raml;
+        this.fire('navigate', {
+          base: 'api-console'
+        });
+      },
+
+      _ramlEnhanceError: function(e) {
+        this.$.processingRamlToast.opened = false;
+        var message = 'Unable to parse JSON data: ' + e.detail.message;
+        this.$.processingRamlErrorToast.text = message;
+        this.$.processingRamlErrorToast.opened = true;
       },
 
       _processIcomingData: function(data, opts) {
@@ -691,6 +727,11 @@
           case 'cookie-manager':
             url = '/cookie-manager';
             screenName = 'Cookie manager';
+          break;
+          case 'api-console':
+            let acId = params.id || 'current';
+            url = '/api-console/' + acId;
+            screenName = 'API Console';
           break;
         }
         if (url) {
