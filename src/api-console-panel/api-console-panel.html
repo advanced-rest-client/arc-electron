@@ -18,6 +18,12 @@ the License.
 <link rel="import" href="../../bower_components/raml-path-to-object/raml-path-to-object.html">
 <link rel="import" href="../../bower_components/raml-documentation-panel/raml-documentation-panel.html">
 <link rel="import" href="../../bower_components/raml-aware/raml-aware.html">
+<link rel="import" href="../../bower_components/app-route/app-location.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../bower_components/iron-scroll-target-behavior/iron-scroll-target-behavior.html">
+<link rel="import" href="../../bower_components/api-console/api-console-request.html">
+
 <!--
 Main panel to display the API console.
 -->
@@ -59,7 +65,39 @@ Main panel to display the API console.
       width: 177px;
       margin-left: 24px;
     }
+
+    .api-saver {
+      background-color: rgba(0, 0, 0, 0.05);
+      border-bottom: 1px #e5e5e5 solid;
+      @apply --arc-font-body1;
+      padding: 0 12px;
+      min-height: 48px;
+      @apply --layout-horizontal;
+      @apply --layout-center;
+    }
+
+    .save-message {
+      @apply --arc-font-body2;
+    }
+
+    .save-button {
+      color: var(--primary-color);
+      background-color: #FFF;
+    }
+
+    .error-toast {
+      @apply --error-toast;
+    }
     </style>
+    <app-location route="{{route}}" use-hash-as-path></app-location>
+    <app-route route="{{route}}" pattern="/api-console/:api" data="{{routeData}}"></app-route>
+    <template is="dom-if" if="[[isNew]]">
+      <div class="api-saver">
+        <span>Viewing documentation for [[raml.title]], version: [[raml.version]].</span>
+        <span class="save-message">This API documentation hasn’t been saved.</span>
+        <paper-button raised class="save-button" on-tap="_saveCurrent">Save</paper-button>
+      </div>
+    </template>
     <div class="panel">
       <div class="drawer-content-wrapper">
         <raml-path-selector
@@ -76,21 +114,34 @@ Main panel to display the API console.
         </div>
       </div>
       <div class="docs-content">
-        <raml-documentation-panel
-          name="docs"
-          selected-object="[[selectedObject]]"
-          selected-parent="[[selectedParent]]"
-          path="{{path}}"
-          handle-path-events></raml-documentation-panel>
+        <iron-pages class="pages-content" selected="[[page]]" attr-for-selected="name" role="main" id="mainPages">
+          <raml-documentation-panel
+            name="docs"
+            selected-object="[[selectedObject]]"
+            selected-parent="[[selectedParent]]"
+            path="[[path]]"
+            scroll-target="[[scrollTarget]]"
+            handle-path-events></raml-documentation-panel>
+          <api-console-request
+            no-extension-banner
+            name="request"
+            scroll-target="[[scrollTarget]]"
+            selected-object="[[selectedObject]]"></api-console-request>
+        </iron-pages>
       </div>
     </div>
-    <raml-path-to-object raml="[[raml]]" selected-path="{{path}}" selected-object="{{selectedObject}}" selected-parent="{{selectedParent}}"></raml-path-to-object>
+    <raml-path-to-object raml="[[raml]]" selected-path="[[path]]" selected-object="{{selectedObject}}" selected-parent="{{selectedParent}}"></raml-path-to-object>
+    <paper-toast id="storeErrorToast" class="error-toast" text="Unable to store the API in datastore. See console output for more details."></paper-toast>
+    <paper-toast id="storeExistsToast" class="error-toast" text="This api is already saved in the datastore."></paper-toast>
   </template>
   <script>
     Polymer({
       is: 'api-console-panel',
 
-      behaviors: [ArcBehaviors.OpenablePanelBehavior],
+      behaviors: [
+        ArcBehaviors.OpenablePanelBehavior,
+        Polymer.IronScrollTargetBehavior
+      ],
 
       properties: {
         // Parsed and enhanced RAML to display
@@ -100,7 +151,113 @@ Main panel to display the API console.
         // Selected RAML node.
         selectedObject: Object,
         // Selected parent object of RAML method
-        selectedParent: Object
+        selectedParent: Object,
+        // API Console's route data
+        routeData: Object,
+        // Flag determining that currently loaded API hasn't been saved
+        isNew: {
+          type: Boolean,
+          computed: '_computeIsNew(routeData.api)'
+        },
+        // Currently displayed page. Either `docs` or `request`
+        page: {
+          type: String,
+          value: 'docs'
+        }
+      },
+
+      /**
+       * @return {PouchDB} A PouchDB instance for the rest-api-data store.
+       */
+      get _db() {
+        return new PouchDB('rest-api-data');
+      },
+
+      observers: ['_routeDataChanged(routeData.*, _isOpened)'],
+
+      listeners: {
+        'scroll-to': '_onScrollRequested',
+        'raml-path-changed': '_innerPathChanged',
+        'tryit-requested': '_tryitHandler',
+        'raml-selected-path-changed': '_pathChangedEventHandler'
+      },
+
+      _routeDataChanged: function(record, opened) {
+        if (!opened) {
+          return;
+        }
+        console.log(record);
+      },
+
+      _computeIsNew: function(api) {
+        return !api || api === 'current';
+      },
+      /**
+       * Saves current API in the datastore.
+       * @return {Promise} A promise resolved when the API is saved.
+       */
+      _saveCurrent: function() {
+        var doc = this._prepareStoreObject();
+        return this._db.put(doc)
+        .then(response => {
+          this.set('routeData.api', response.id);
+          doc._id = response.id;
+          doc._rev = response.rev;
+          this.fire('rest-api-object-updated', {
+            item: doc
+          });
+        })
+        .catch(cause => {
+          if (cause.status === 409) {
+            this.$.storeExistsToast.opened = true;
+            return;
+          }
+          this.$.storeErrorToast.opened = true;
+          console.error(cause);
+        });
+      },
+      /**
+       * Preparsed PouchDB object to store in the datastore.
+       * @return {Object} Datastore object
+       */
+      _prepareStoreObject: function() {
+        var result = {
+          raml: this.raml,
+          created: Date.now()
+        };
+        var title = this.raml.title || 'Untitled';
+        var version = this.raml.version || '0';
+        var baseUri = this.raml.baseUri || '/';
+        var id = encodeURIComponent(title.toLowerCase());
+        id += '/' + encodeURIComponent(version.toLowerCase());
+        id += '/' + encodeURIComponent(baseUri.toLowerCase());
+        result._id = id;
+        return result;
+      },
+
+      // Scrolls the document to required position.
+      _onScrollRequested: function(e) {
+        this.scroll(e.detail.x || 0, e.detail.y || 0);
+      },
+
+      // Handler for `raml-path-changed` that is fired from docs elements.
+      _innerPathChanged: function(e) {
+        this.set('path', e.detail.path);
+      },
+
+      /**
+       * Handler for the `tryit-requested` event. Sets current screen to
+       * `request`.
+       */
+      _tryitHandler: function() {
+        this.page = 'request';
+      },
+
+      // Handler for the path changed event. Switches to docs if needed.
+      _pathChangedEventHandler: function() {
+        if (this.page !== 'docs') {
+          this.page = 'docs';
+        }
       }
     });
   </script>
