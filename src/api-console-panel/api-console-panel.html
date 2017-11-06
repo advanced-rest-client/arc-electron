@@ -23,7 +23,7 @@ the License.
 <link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
 <link rel="import" href="../../bower_components/iron-scroll-target-behavior/iron-scroll-target-behavior.html">
 <link rel="import" href="../../bower_components/api-console/api-console-request.html">
-
+<link rel="import" href="../arc-request-panel/socket-request.html">
 <!--
 Main panel to display the API console.
 -->
@@ -123,16 +123,21 @@ Main panel to display the API console.
             scroll-target="[[scrollTarget]]"
             handle-path-events></raml-documentation-panel>
           <api-console-request
+            redirect-url="https://install.advancedrestclient.com/auth/oauth"
             no-extension-banner
             name="request"
             scroll-target="[[scrollTarget]]"
-            selected-object="[[selectedObject]]"></api-console-request>
+            selected-object="[[selectedObject]]"
+            on-oauth2-token-requested="_oauth2TokenRequested"></api-console-request>
         </iron-pages>
       </div>
     </div>
     <raml-path-to-object raml="[[raml]]" selected-path="[[path]]" selected-object="{{selectedObject}}" selected-parent="{{selectedParent}}"></raml-path-to-object>
     <paper-toast id="storeErrorToast" class="error-toast" text="Unable to store the API in datastore. See console output for more details."></paper-toast>
     <paper-toast id="storeExistsToast" class="error-toast" text="This api is already saved in the datastore."></paper-toast>
+    <paper-toast id="notFoundErrorToast" class="error-toast" text="This API is no longer available. Datastore object not found."></paper-toast>
+    <paper-toast id="restoreErrorToast" class="error-toast" text="Cannot read API data from the data storte. See console output for more details."></paper-toast>
+    <socket-request id="socket"></socket-request>
   </template>
   <script>
     Polymer({
@@ -163,7 +168,9 @@ Main panel to display the API console.
         page: {
           type: String,
           value: 'docs'
-        }
+        },
+        // Datastore of currently loaded API.
+        loadedId: String
       },
 
       /**
@@ -173,38 +180,103 @@ Main panel to display the API console.
         return new PouchDB('rest-api-data');
       },
 
-      observers: ['_routeDataChanged(routeData.*, _isOpened)'],
+      get _dbIndex() {
+        return new PouchDB('rest-api-index');
+      },
+
+      observers: [
+        '_routeDataChanged(routeData.*, _isOpened)',
+        '_ramlChanged(raml)'
+      ],
 
       listeners: {
         'scroll-to': '_onScrollRequested',
         'raml-path-changed': '_innerPathChanged',
         'tryit-requested': '_tryitHandler',
-        'raml-selected-path-changed': '_pathChangedEventHandler'
+        'raml-selected-path-changed': '_pathChangedEventHandler',
+        'api-console-request': '_onTransportRequested',
+        'abort-request': '_abortHandler',
+        'report-response': '_onResponseHandler'
       },
 
       _routeDataChanged: function(record, opened) {
-        if (!opened) {
+        if (!opened || this.__ignoreRouteChange || !record) {
+          if (!opened) {
+            this.fire('selected-rest-api-changed', {
+              value: undefined
+            });
+          }
           return;
         }
-        console.log(record);
+        var data = record.base;
+        if (!data.api || data.api === 'current') {
+          return;
+        }
+        var id = decodeURIComponent(data.api);
+        if (this.loadedId === id) {
+          return;
+        }
+        this.loadedId = id;
+        this.restore(id);
+        this.fire('selected-rest-api-changed', {
+          value: id
+        });
+      },
+
+      _ramlChanged: function() {
+        this.set('path', 'summary');
       },
 
       _computeIsNew: function(api) {
         return !api || api === 'current';
       },
       /**
+       * Restores REST API data from the Datastore
+       *
+       * @param {String} id Datastore ID
+       */
+      restore: function(id) {
+        return this._db.get(id)
+        .then(doc => {
+          this.set('raml', doc.raml);
+        })
+        .catch(cause => {
+          if (cause.status === 404) {
+            this.$.notFoundErrorToast.opened = true;
+          } else {
+            this.$.restoreErrorToast.opened = true;
+            throw cause;
+          }
+        });
+      },
+
+      /**
        * Saves current API in the datastore.
        * @return {Promise} A promise resolved when the API is saved.
        */
       _saveCurrent: function() {
         var doc = this._prepareStoreObject();
+        var indexObj;
         return this._db.put(doc)
         .then(response => {
-          this.set('routeData.api', response.id);
-          doc._id = response.id;
           doc._rev = response.rev;
           this.fire('rest-api-object-updated', {
             item: doc
+          });
+          indexObj = this._prepareIndexObject(doc);
+          return this._dbIndex.put(indexObj);
+        })
+        .then(response => {
+          this.__ignoreRouteChange = true;
+          let id = encodeURIComponent(response.id);
+          this.set('routeData.api', id);
+          this.fire('selected-rest-api-changed', {
+            value: id
+          });
+          this.__ignoreRouteChange = false;
+          indexObj._rev = response.rev;
+          this.fire('rest-api-index-updated', {
+            item: indexObj
           });
         })
         .catch(cause => {
@@ -234,6 +306,22 @@ Main panel to display the API console.
         result._id = id;
         return result;
       },
+      /**
+       * Prepare's index data store object for the REST API.
+       *
+       * @param {Object} storeObject Data store object
+       * @return {Object} Index store object.
+       */
+      _prepareIndexObject: function(storeObject) {
+        return {
+          _id: storeObject._id,
+          title: storeObject.raml.title || 'Untitled',
+          version: storeObject.raml.version || 'Unknown version',
+          order: 0,
+          description: storeObject.raml.description,
+          dataid: storeObject._id,
+        };
+      },
 
       // Scrolls the document to required position.
       _onScrollRequested: function(e) {
@@ -258,6 +346,90 @@ Main panel to display the API console.
         if (this.page !== 'docs') {
           this.page = 'docs';
         }
+      },
+
+      _onTransportRequested: function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        this.fire('url-history-store', {
+          value: e.detail.url
+        }, {
+          cancelable: true,
+          composed: true
+        });
+        this.$.socket.run(e.detail);
+      },
+      /**
+       * Aborts the request.
+       */
+      _abortHandler: function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.$.socket.abort();
+      },
+      /**
+       * Stops event propagation.
+       * It prohibits request events to leak outside current panel so
+       * it doesn't affect other opened requests.
+       */
+      _stopEvent: function(e) {
+        e.stopPropagation();
+      },
+
+      _onResponseHandler: function(e) {
+        this.fire('api-console-response', {
+          isXhr: e.detail.isXhr,
+          response: e.detail.response,
+          responseError: e.detail.error,
+          request: e.detail.request,
+          loadingTime: e.detail.loadingTime,
+          timings: e.detail.timings,
+          redirectTimings: e.detail.redirectTimings,
+          redirects: e.detail.redirects,
+          sourceMessage: e.detail.sourceMessage
+        });
+      },
+
+      _oauth2TokenRequested: function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var rt = e.detail.type === 'implicit' ? 'token' : 'code';
+        const opts = {
+          interactive: true,
+          // jscs:disable
+          response_type: rt,
+          client_id: e.detail.clientId,
+          auth_uri: e.detail.authorizationUrl,
+          token_uri: e.detail.accessTokenUrl,
+          client_secret: e.detail.clientSecret,
+          redirect_uri: e.detail.redirectUrl,
+          // jscs:enable
+          scopes: e.detail.scopes
+        };
+
+        const ipc = require('electron').ipcRenderer;
+        ipc.send('oauth-2-launch-web-flow', opts);
+        const context = this;
+        var rejected;
+        function resolved(sender, token) {
+          ipc.removeListener('oauth-2-token-ready', resolved);
+          ipc.removeListener('oauth-2-token-error', rejected);
+          context.fire('oauth2-token-response', {
+            // jscs:disable
+            accessToken: token.access_token
+            // jscs:enable
+          });
+        }
+        rejected = function(sender, cause) {
+          ipc.removeListener('oauth-2-token-ready', resolved);
+          ipc.removeListener('oauth-2-token-error', rejected);
+          context.fire('oauth2-error', {
+            message: cause || 'Unknown error'
+          });
+        };
+        ipc.on('oauth-2-token-ready', resolved);
+        ipc.on('oauth-2-token-error', rejected);
       }
     });
   </script>

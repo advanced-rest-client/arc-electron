@@ -88,6 +88,7 @@ class IdentityProvider {
     } catch (e) {
       return Promise.reject('OAuth2: ' + e.message);
     }
+    this.requestOptions = opts;
     const url = this.computeAuthorizationUrl(opts);
     const params = Object.assign({}, windowParams);
     if (!opts.interactive) {
@@ -513,9 +514,10 @@ class ArcIdentity {
    * - `client_id` {String} The client ID used for authorization
    * - `auth_uri` {String} Authorization URI
    * - `token_uri` {String} Optional, required if `response_type` is code
+   * - `redirect_uri` {String} Auth redirect URI
    * - `client_secret` {String} Optional, required if `response_type` is code
    * - `include_granted_scopes` {Boolean} Optional.
-   * - `login_hint` {String} Optiona, user email
+   * - `login_hint` {String} Optional, user email
    * @return {Promise} A promise with auth result.
    */
   static launchWebAuthFlow(opts) {
@@ -564,8 +566,10 @@ class ArcIdentity {
     if (!provider) {
       const id = ArcIdentity._generateProviderId(oauthConfig.auth_uri, oauthConfig.client_id);
       const cnf = Object.assign({}, oauthConfig);
-      cnf.response_type = 'token';
-      cnf.include_granted_scopes = true;
+      if (!cnf.response_type) {
+        cnf.response_type = 'token';
+        cnf.include_granted_scopes = true;
+      }
       provider = new IdentityProvider(id, cnf);
       ArcIdentity._setProvider(provider);
     }
