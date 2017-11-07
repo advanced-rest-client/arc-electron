@@ -425,7 +425,7 @@ Main panel to display the API console.
           ipc.removeListener('oauth-2-token-ready', resolved);
           ipc.removeListener('oauth-2-token-error', rejected);
           context.fire('oauth2-error', {
-            message: cause || 'Unknown error'
+            message: cause.message || cause || 'Unknown error'
           });
         };
         ipc.on('oauth-2-token-ready', resolved);
