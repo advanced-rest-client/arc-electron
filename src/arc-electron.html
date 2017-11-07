@@ -49,13 +49,13 @@
 <link rel="import" href="../bower_components/cookie-manager/cookie-manager.html">
 <link rel="import" href="../bower_components/raml-js-parser/raml-js-parser.html">
 <link rel="import" href="../bower_components/raml-json-enhance/raml-json-enhance.html">
+<link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
 <link rel="import" href="../styles/app-theme.html">
 <link rel="import" href="request-workspace/request-workspace.html">
 <link rel="import" href="file-export/file-export.html">
 <link rel="import" href="about-arc/about-arc.html">
 <link rel="import" href="electron-drive/electron-drive.html">
 <link rel="import" href="api-console-panel/api-console-panel.html">
-
 
 <dom-module id="arc-electron">
   <template>
@@ -213,7 +213,9 @@
     <drop-file-importer></drop-file-importer>
     <arc-license-dialog></arc-license-dialog>
     <arc-onboarding></arc-onboarding>
-    <paper-toast id="processingRamlToast" duration="0">Processing RAML data. Please wait.</paper-toast>
+    <paper-toast id="processingRamlToast" duration="0">
+      Processing RAML data. Please wait. <paper-spinner active></paper-spinner>
+    </paper-toast>
     <paper-toast id="processingRamlErrorToast" class="error-toast"></paper-toast>
     <paper-toast id="errorToast" duration="5000"></paper-toast>
     <search-bar id="content-search-bar" on-iron-overlay-opened="textSearchBarOpened"></search-bar>
