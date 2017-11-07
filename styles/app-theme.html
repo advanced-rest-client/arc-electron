@@ -248,6 +248,11 @@
     height: 100%;
   };
 
+  /* Documentaion */
+  --raml-docs-main-content: {
+    margin-bottom: var(--raml-docs-main-content-margin-bottom, 20px);
+  };
+
   --response-view: {
     margin-bottom: 20px
   };
@@ -400,18 +405,6 @@
     @apply --shadow-elevation-24dp;
   }
 
-  --saved-requests-panel-bottom-sheet: {
-    @apply --request-save-bottom-sheet;
-  }
-
-  --history-panel-bottom-sheet: {
-    @apply --request-save-bottom-sheet;
-  }
-
-  --arc-request-panel-bottom-sheet: {
-    @apply --request-save-bottom-sheet;
-  }
-
   /* Cookies manager */
   --cookie-manager: {
     height: var(--pages-fixed-height);
@@ -420,149 +413,149 @@
     box-sizing: border-box;
   }
 
-  --raml-docs-tree-item-selected-background: var(--arc-navigation-selected-background-color, rgb(3, 169, 244));
-  --raml-docs-tree-item-selected-color: var(--arc-navigation-selected-color, #fff);
+  /* Inline docs */
+  --inline-docs-color: rgba(0, 0, 0, 0.32);
+  --raml-request-parameters-editor-docs-color: var(--inline-docs-color);
+  --raml-headers-form-docs-color: var(--inline-docs-color);
+
+  --raml-request-parameters-editor-subheader: {
+    @apply --arc-font-subhead;
+  };
+
+    /* Request panel */
+  --raml-request-panel: {
+    margin-bottom: 20px;
+    max-width: 900px;
+    margin-left: 16px;
+    margin-right: 12px;
+    @apply(--arc-request-panel);
+  };
+
+  --raml-request-url-editor: {
+    @apply --request-form-panels;
+  };
+
+  --raml-request-parameters-editor: {
+    @apply --request-form-panels;
+  };
+
+  --raml-body-editor-panel: {
+    @apply --request-form-panels;
+  };
+
+  --raml-docs-method-viewer: {
+    margin-right: 12px;
+  };
+
+  --raml-documentation-panel: {
+    padding: 0;
+  };
+
+  --raml-summary-view: {
+    @apply --request-form-panels;
+    margin-right: 12px;
+  };
+
+  --raml-path-selector: {
+    overflow: auto;
+    background-color: transparent;
+    @apply --layout-flex;
+  };
+
+  --raml-docs-tree-item-selected-background: rgb(3, 169, 244);
+  --raml-docs-tree-item-selected-color: #fff;
   --raml-path-selector-background-color: #eee;
-}
 
-.canary-channel paper-toolbar {
-  --paper-toolbar-color: rgba(0,0,0,0.87);
-  --paper-toolbar-background: var(--paper-orange-500);
-}
-.canary-channel paper-icon-button {
-  --paper-icon-button: {
-    color: rgba(0,0,0,0.87);
-    transition: color cubic-bezier(0.4, 0, 1, 1) 100ms;
-  }
-}
-.dev-channel paper-toolbar {
-  --paper-toolbar-color: rgba(255,255,255,0.87);
-  --paper-toolbar-background: var(--paper-deep-purple-500);
-}
-.dev-channel paper-icon-button {
-  --paper-icon-button: {
-    color: rgba(0,0,0,0.87);
-    transition: color cubic-bezier(0.4, 0, 1, 1) 100ms;
-  }
-}
-.beta-channel paper-toolbar {
-}
-.beta-channel paper-icon-button {
-}
+  --raml-docs-response-panel-docs-content: {
+    padding: 8px;
+    margin-left: 0px;
+  };
 
-/* General styles */
+  /* Documentation panels */
+  --params-table-header-background-color: #616161;
+  --params-table-subheader-background-color: #EEEEEE;
+  --params-table-row-border-color: #e0e0e0;
+  --params-table-row-subproperty-border-color: #e0e0e0;
+  --params-table-header-color: #FAFAFA;
 
-body {
-  @apply(--layout-fullbleed);
-  @apply(--layout-vertical);
-}
-.content,
-#pages {
-  /*min-height: 100%;
-  height: 100%;*/
-}
+  --inline-documentation-color: #1a237e;
+  --raml-headers-form-docs-color: #1a237e;
+  /* max width of the documentation main panel */
+  --raml-docs-main-content-width: 1200px;
 
-paper-toolbar paper-icon-button {
-  color: rgba(255, 255, 255, 0.87);
-}
+  --paper-checkbox-label: {
+    @apply --arc-font-body1;
+  };
 
-paper-toolbar paper-icon-button:hover {
-  color: var(--hover-button-accent-color);
-}
+  /* Label of the Type name in the body parameters list view */
+  --docs-body-parameters-table-type-name: {
+    @apply --arc-font-common-base;
+    font-size: 16px;
+    font-weight: 100;
+    margin: 0;
+    padding: 0;
+  };
 
+  /* Applied to links in RAML docs */
+  --raml-docs-link: {
+    @apply --arc-font-body1;
+    @apply --arc-link;
+  };
+
+  --auth-button: {
+    @apply --arc-font-body1ą;
+    background-color: #D1344E;
+    color: #fff;
+  };
+
+  --raml-docs-resource-viewer-navigation-wide-layout: {
+    background-color: #F4F5F6;
+    margin: 0;
+    border-left: 0;
+  };
+
+  --sidebar-list-link: {
+    @apply --arc-font-body1;
+    padding: 10px 12px;
+    @apply --arc-link;
+  };
+}
 
 /* Small */
-@media (max-width: 600px) {
-  .welcome-message .c2 {
-    font-size: 34px !important;
-  }
-}
-
-
+@media (max-width: 600px) {}
 /* Tablet+ */
-
 @media (min-width: 601px) {}
-
-
 /* Material Design Adaptive Breakpoints */
-
-
 /* mobile-small */
-
 @media all and (min-width: 0) and (max-width: 360px) and (orientation: portrait) {}
-
-
 /* mobile-large */
-
 @media all and (min-width: 361px) and (orientation: portrait) {}
-
-
 /* mobile-small-landscape */
-
 @media all and (min-width: 0) and (max-width: 480px) and (orientation: landscape) {}
-
-
 /* mobile-large-landscape */
-
 @media all and (min-width: 481px) and (orientation: landscape) {}
-
-
 /* tablet-small-landscape */
-
 @media all and (min-width: 600px) and (max-width: 960px) and (orientation: landscape) {}
-
-
 /* tablet-large-landscape */
-
 @media all and (min-width: 961px) and (orientation: landscape) {}
-
-
 /* tablet-small */
-
 @media all and (min-width: 600px) and (orientation: portrait) {}
-
-
 /* tablet-large */
-
 @media all and (min-width: 601px) and (max-width: 840px) and (orientation: portrait) {}
-
-
 /* desktop-x-small-landscape */
-
 @media all and (min-width: 0) and (max-width: 480px) and (orientation: landscape) {}
-
-
 /* desktop-x-small */
-
 @media all and (min-width: 0) and (max-width: 480px) and (max-aspect-ratio: 4/3) {}
-
-
 /* desktop-small-landscape */
-
 @media all and (min-width: 481px) and (max-width: 840px) and (orientation: landscape) {}
-
-
 /* desktop-small */
-
 @media all and (min-width: 481px) and (max-width: 840px) and (max-aspect-ratio: 4/3) {}
-
-
 /* desktop-medium-landscape */
-
 @media all and (min-width: 841px) and (max-width: 1280px) and (orientation: landscape) {}
-
-
 /* desktop-medium */
-
 @media all and (min-width: 841px) and (max-width: 1280px) and (max-aspect-ratio: 4/3) {}
-
-
 /* desktop-large */
-
 @media all and (min-width: 1281px) and (max-width: 1600px) {}
-
-
 /* desktop-xlarge */
-
 @media all and (min-width: 1601px) and (max-width: 1920px) {}
 </style>

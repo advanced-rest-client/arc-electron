@@ -32,22 +32,39 @@ Main panel to display the API console.
     <style>
     :host {
       display: block;
+      min-height: calc(100vh - 64px);
     }
 
     .panel {
       @apply --layout-horizontal;
+      min-height: inherit;
     }
 
     .drawer-content-wrapper {
       @apply --layout-flex;
       @apply --layout-vertical;
-      max-width: 280px;
       background-color: #EEEEEE;
+      position: fixed;
+      top: 64px;
+      bottom: 0;
+      width: 280px;
     }
 
     .docs-content {
       @apply --layout-flex;
       margin-left: 12px;
+      margin-right: 12px;
+      max-width: calc(100% - 280px);
+    }
+
+    .docs-content,
+    .api-saver {
+      position: relative;
+      left: 280px;
+    }
+
+    .pages-content {
+      max-width: 1100px;
     }
 
     .powered-by {
