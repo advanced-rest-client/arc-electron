@@ -199,7 +199,7 @@
             <project-details attr-for-opened="opened" data-route="project" project-id="[[projectRoute.id]]" attr-for-opened="opened"></project-details>
             <google-drive-browser mime-type="application/restclient+data" data-route="drive" attr-for-opened="opened" api-key="1076318174169-u4a5d3j2v0tbie1jnjgsluqk1ti7ged3.apps.googleusercontent.com" access-token="[[accessToken]]" on-drive-file-picker-data="_openDriveRequest"></google-drive-browser>
             <cookie-manager attr-for-opened="opened" data-route="cookie-manager"></cookie-manager>
-            <api-console-panel attr-for-opened="opened" data-route="api-console"></api-console-panel>
+            <api-console-panel attr-for-opened="opened" data-route="api-console" scroll-target="[[scrollTarget]]"></api-console-panel>
           </iron-pages>
         </div>
       </app-drawer-layout>
@@ -330,7 +330,14 @@
         // If true, messages center is opened.
         messageCenterOpened: Boolean,
         // Last parsed RAML output from the parser.
-        plainRaml: Object
+        plainRaml: Object,
+        // Scroll target for the application.
+        scrollTarget: {
+          type: Object,
+          value: function() {
+            return this.$.scrollingRegion;
+          }
+        }
       },
 
       listeners: {
