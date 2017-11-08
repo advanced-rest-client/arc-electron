@@ -285,11 +285,11 @@ class SocketRequest extends EventEmitter {
     if (defaultPorts.indexOf(port) === -1) {
       hostValue += ':' + port;
     }
-    headers.push('HOST: ' + hostValue);
+    headers.push('Host: ' + hostValue);
     var str = headers.join('\r\n');
     if (this.arcRequest.headers) {
       str += '\r\n';
-      str += this.arcRequest.headers;
+      str += this._normalizeString(this.arcRequest.headers);
     }
     var startbuffer = this.stringToArrayBuffer(str);
     var endBuffer = new Uint8Array([13, 10, 13, 10]);
