@@ -21,7 +21,7 @@
   "main": "main.js",
   "devDependencies": {
     "electron": "~1.7.8",
-    "electron-builder": "^19.42.2"
+    "electron-builder": "^19.45.4"
   },
   "dependencies": {
     "electron-log": "^2.2.9",
