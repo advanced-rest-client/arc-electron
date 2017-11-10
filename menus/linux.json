@@ -58,7 +58,8 @@
       },
       {
         "label": "Quit",
-        "command": "application:quit"
+        "command": "application:quit",
+        "accelerator": "CommandOrControl+q"
       }
     ]
   }, {
