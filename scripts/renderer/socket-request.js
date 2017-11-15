@@ -236,7 +236,8 @@ class SocketRequest extends EventEmitter {
       rejectUnauthorized: false,
       requestCert: false,
       requestOCSP: false,
-      checkServerIdentity:  function() {}
+      checkServerIdentity:  function() {},
+      servername: host,
     };
     return new Promise((resolve, reject) => {
       const connectionStart = performance.now();
