@@ -232,24 +232,12 @@ class SocketRequest extends EventEmitter {
    * @return {Promise} A promise resolved when the message was sent to a server
    */
   _connectTls(port, host) {
-    const context = tls.createSecureContext({
-      ciphers: 'ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:' +
-      'EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH:EECDH+AESGCM:EDH+' +
-      'AESGCM:ECDHE-RSA-AES128-GCM-SHA256:AES256+EECDH:DHE-RSA-AES128-GC' +
-      'M-SHA256:AES256+EDH:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GC' +
-      'M-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RS' +
-      'A-AES256-SHA:ECDHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA256:DHE-RSA-A' +
-      'ES128-SHA256:DHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA:ECDHE-RSA-DES-' +
-      'CBC3-SHA:EDH-RSA-DES-CBC3-SHA:AES256-GCM-SHA384:AES128-GCM-SHA256' +
-      ':AES256-SHA256:AES128-SHA256:AES256-SHA'
-    });
     const options = {
       rejectUnauthorized: false,
       requestCert: false,
       requestOCSP: false,
       checkServerIdentity:  function() {},
-      secureContext: context,
-      // secureProtocol: 'TLSv1_method'
+      servername: host,
     };
     return new Promise((resolve, reject) => {
       const connectionStart = performance.now();

@@ -1,29 +1,25 @@
-const net = require('net');
-const client = net.createConnection(80, 'httpbin.org', {}, () => {
-  client.on('data', (data) => {
-    console.log('Received');
-    console.log(data.toString('utf8'));
-  });
-  client.on('end', () => {
-    console.log('Socket end');
-  });
-  client.on('error', (err) => {
-    console.log('Socket error', err);
-  });
-  var message = 'PUT /anything HTTP/1.1\r\n';
-  message += 'HOST: httpbin.org\r\n';
-  message += 'content-type: application/json\r\n';
-  message += 'content-length: 16\r\n';
-  message += '\r\n';
-  message += '{\r\n';
-  message += '  "a": "b"\r\n';
-  message += '}\r\n\r\n';
-  const buffer = Buffer.from(message, 'utf8');
-  client.write(buffer, () => {
-    client.end();
-    console.log('Socket written');
-  });
+const tls = require('tls');
+const options = {
+  rejectUnauthorized: false,
+  requestCert: false,
+  requestOCSP: false,
+  minDHSize: 128,
+  servername: 'splatoon2.ink',
+  checkServerIdentity:  function() {
+    console.log('checkServerIdentity');
+  },
+  // ciphers: 'ALL',
+  // secureProtocol: 'TLSv1_2_client_method',
+  // ecdhCurve: false
+};
+const client = tls.connect(443, 'splatoon2.ink', options, () => {
+  console.log('CONNECTED');
 });
-client.once('error', function(err) {
-  console.error('client error', err);
+client.once('error', function(e) {
+  console.log('Cert', client.getPeerCertificate(true));
+  console.log('authorizationError', client.authorizationError);
+  console.log('ERROR', e);
+});
+client.once('secureConnect', () => {
+  console.log('SECURE CONNECT');
 });
