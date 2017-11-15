@@ -169,7 +169,6 @@ class SocketRequest extends EventEmitter {
         this.stats.waitingStart = performance.now();
         this.stats.send = this.stats.waitingStart - this.stats.messageSendStart;
         this.emit('loadstart');
-        this.socket.end();
         resolve();
       });
     });
