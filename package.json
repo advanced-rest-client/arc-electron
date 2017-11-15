@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "electron-log": "^2.2.9",
-    "electron-updater": "^2.10.1",
+    "electron-updater": "^2.16.1",
     "form-data": "^2.3.1",
     "fs-extra": "^4.0.2",
     "node-fetch": "^1.7.3",
