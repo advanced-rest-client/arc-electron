@@ -169,7 +169,6 @@ class SocketRequest extends EventEmitter {
         this.stats.waitingStart = performance.now();
         this.stats.send = this.stats.waitingStart - this.stats.messageSendStart;
         this.emit('loadstart');
-        this.socket.end();
         resolve();
       });
     });
@@ -574,10 +573,14 @@ class SocketRequest extends EventEmitter {
         return;
       }
     });
+    socket.on('timeout', () => {
+      this.state = SocketRequest.DONE;
+      this._errorRequest(new Error('Connection timeout.'));
+    });
     socket.on('end', () => {
       this.stats.lastReceived = performance.now();
       this.stats.receive = this.stats.lastReceived - this.stats.firstReceived;
-      if (this.stats !== SocketRequest.DONE) {
+      if (this.state !== SocketRequest.DONE) {
         if (!this._response) {
           // The parser havn't found the end of message so there was no message!
           this._errorRequest(new Error('Connection closed without sending a data'));
