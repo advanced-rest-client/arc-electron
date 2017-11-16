@@ -2,7 +2,7 @@
 class ArcBase {
 
   _debounceIndex(name) {
-    return this._dobouncers.findIndex(item => item.name === name);
+    return this._debouncers.findIndex(item => item.name === name);
   }
   /**
    * Prohibits execution of a task for some `time`.
@@ -20,8 +20,8 @@ class ArcBase {
    * @param {Number} time Number of milliseconds after which the task is executed.
    */
   debounce(name, callback, time) {
-    if (!this._dobouncers) {
-      this._dobouncers = [];
+    if (!this._debouncers) {
+      this._debouncers = [];
     }
     var index = this._debounceIndex(name);
     if (index !== -1) {
@@ -29,11 +29,11 @@ class ArcBase {
     }
     var cancelId = setTimeout(() => {
       var index = this._debounceIndex(name);
-      this._dobouncers.splice(index, 1);
+      this._debouncers.splice(index, 1);
       callback.call(this);
     }, time);
 
-    this._dobouncers.push({
+    this._debouncers.push({
       name: name,
       id: cancelId
     });
