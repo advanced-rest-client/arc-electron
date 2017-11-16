@@ -1,6 +1,6 @@
 const {ArcMeta} = require('./arc-meta');
 const _FormData = require('form-data');
-const fetch = require('node-fetch');
+const _fetch = require('node-fetch');
 const log = require('electron-log');
 log.transports.file.level = 'info';
 
@@ -23,7 +23,7 @@ class ArcSessionRecorder {
     const d = new Date();
     data.append('aid', id); // anonymousId
     data.append('tz', d.getTimezoneOffset()); //timezone
-    return fetch(this.endpoint, {
+    return _fetch(this.endpoint, {
       method: 'POST',
       body: data
     });
