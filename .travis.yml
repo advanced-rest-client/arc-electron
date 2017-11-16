@@ -1,0 +1,14 @@
+os:
+  - linux
+  - osx
+language: node_js
+
+node_js:
+  - '7'
+  - '8'
+
+script: ./script/travis-build.sh
+
+cache:
+  directories:
+    - node_modules

@@ -14,6 +14,7 @@
   "scripts": {
     "start": "electron .",
     "postinstall": "electron-builder install-app-deps",
+    "test": "mocha test/*.test.js",
     "build-l": "npx electron-builder -l",
     "build-w": "npx electron-builder -w",
     "build-m": "npx electron-builder -m"
@@ -21,7 +22,9 @@
   "main": "main.js",
   "devDependencies": {
     "electron": "~1.7.8",
-    "electron-builder": "^19.45.4"
+    "electron-builder": "^19.45.4",
+    "mocha": "^4.0.1",
+    "spectron": "^3.7.2"
   },
   "dependencies": {
     "electron-log": "^2.2.9",
