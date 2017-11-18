@@ -1,4 +1,4 @@
-const {session, BrowserWindow} = require('electron');
+const {session, BrowserWindow, app} = require('electron');
 const PERSISTNAME = 'persist:web-session';
 /**
  * A class responsible for managing chrome web session.
@@ -12,6 +12,7 @@ class SessionManager {
   start() {
     this._session = this.getSessionCookies();
     this._session.on('changed', this._cookieChanged.bind(this));
+    app.on('certificate-error', this._handleCertIssue.bind(this));
   }
 
   _cookieChanged(event, cookie, cause, removed) {
@@ -190,6 +191,38 @@ class SessionManager {
     Promise.all(promises)
     .then(() => this._sendResponse(win, id))
     .catch(cause => this._sendResponseError(win, id, cause));
+  }
+
+  _handleCertIssue(event, webContents, url, error, certificate, callback) {
+    if (this._isAppUsedUrl(url)) {
+      callback(false);
+    } else {
+      event.preventDefault();
+      callback(true);
+    }
+  }
+  /**
+   * Checks if given URL is used by the application to request an external resource.
+   * It is used by the `_handleCertIssue()` function to determine if allow
+   * bypass certificate error.
+   * Each application registered URL should be evaluated by Chromium default
+   * certificate test engine. Otherwise it's a user entered URL in
+   * web session and certificate test should be bypassed.
+   *
+   * @param {String} url An url
+   * @return {Boolean} True if certificate validation should be applied.
+   */
+  _isAppUsedUrl(url) {
+    if (!url) {
+      return false;
+    }
+    if (url.indexOf('https://advancedrestclient-1155.appspot.com') !== -1) {
+      return true;
+    }
+    if (url.indexOf('advancedrestclient.com') !== -1) {
+      return true;
+    }
+    return false;
   }
 }
 
