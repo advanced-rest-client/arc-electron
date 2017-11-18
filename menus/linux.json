@@ -107,6 +107,10 @@
           },
           {
             "role": "toggledevtools"
+          },
+          {
+            "label": "Task Manager",
+            "command": "application:task-manager"
           }
         ]
       },

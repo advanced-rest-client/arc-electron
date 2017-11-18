@@ -47,6 +47,22 @@ class ArcWindowsManager {
     });
   }
 
+  openTaskManager() {
+    var win = new BrowserWindow({
+      backgroundColor: '#00A2DF',
+      webPreferences: {
+        partition: 'persist:arc-task-manager'
+      }
+    });
+    var dest = path.join(__dirname, '..', '..', 'task-manager.html');
+    var full = url.format({
+      pathname: dest,
+      protocol: 'file:',
+      slashes: true
+    });
+    win.loadURL(full);
+  }
+
   __getNewWindow(index, session) {
     var mainWindow = new BrowserWindow({
       width: session.size.width,
@@ -69,7 +85,6 @@ class ArcWindowsManager {
       appPath = '#' + appPath;
     }
     var dest = path.join(__dirname, '..', '..', 'app.html');
-    console.log(dest);
     var full = url.format({
       pathname: dest,
       protocol: 'file:',

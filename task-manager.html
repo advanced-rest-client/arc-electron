@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <title>Task manager - Advanced REST client</title>
+  <script>
+    /* this script must run before Polymer is imported */
+    window.Polymer = {
+      dom: 'shadow',
+      lazyRegister: true
+    };
+  </script>
+  <style>
+  body {
+    font-family: Roboto, sans-serif;
+    color: #333;
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+  </style>
+</head>
+<body>
+  <arc-task-manager></arc-task-manager>
+  <link rel="import" href="src/arc-task-manager.html">
+</body>
+</html>
