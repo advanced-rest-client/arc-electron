@@ -10,6 +10,8 @@ const {ArcSessionRecorder} = require('./arc-session-recorder');
 class ArcWindowsManager {
   constructor() {
     this.windows = [];
+    // Task manager window reference.
+    this._tmWin = undefined;
     this.__windowClosed = this.__windowClosed.bind(this);
     this.__windowMoved = this.__windowMoved.bind(this);
     this.__windowResized = this.__windowResized.bind(this);
@@ -48,6 +50,12 @@ class ArcWindowsManager {
   }
 
   openTaskManager() {
+    if (this._tmWin) {
+      if (this._tmWin.isMinimized()) {
+        this._tmWin.restore();
+      }
+      return this._tmWin.focus();
+    }
     var win = new BrowserWindow({
       backgroundColor: '#00A2DF',
       webPreferences: {
@@ -61,6 +69,10 @@ class ArcWindowsManager {
       slashes: true
     });
     win.loadURL(full);
+    win.on('closed', () => {
+      this._tmWin = null;
+    });
+    this._tmWin = win;
   }
 
   __getNewWindow(index, session) {
