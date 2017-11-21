@@ -23,6 +23,8 @@ the License.
 <link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
 <link rel="import" href="../../bower_components/iron-scroll-target-behavior/iron-scroll-target-behavior.html">
 <link rel="import" href="../../bower_components/api-console/api-console-request.html">
+<link rel="import" href="../../bower_components/variables-evaluator/variables-evaluator.html">
+<link rel="import" href="../../bower_components/uuid-generator/uuid-generator.html">
 <link rel="import" href="../arc-request-panel/socket-request.html">
 <!--
 Main panel to display the API console.
@@ -155,7 +157,11 @@ Main panel to display the API console.
     <paper-toast id="storeExistsToast" class="error-toast" text="This api is already saved in the datastore."></paper-toast>
     <paper-toast id="notFoundErrorToast" class="error-toast" text="This API is no longer available. Datastore object not found."></paper-toast>
     <paper-toast id="restoreErrorToast" class="error-toast" text="Cannot read API data from the data storte. See console output for more details."></paper-toast>
+    <paper-toast id="errorToast"></paper-toast>
+    <paper-toast id="cancelToast"></paper-toast>
+    <uuid-generator id="uuid"></uuid-generator>
     <socket-request id="socket"></socket-request>
+    <variables-evaluator id="eval" no-before-request></variables-evaluator>
   </template>
   <script>
     Polymer({
@@ -188,7 +194,27 @@ Main panel to display the API console.
           value: 'docs'
         },
         // Datastore of currently loaded API.
-        loadedId: String
+        loadedId: String,
+        /**
+         * Set to true if current request has timed out in the `before-request`
+         * event handlers. The request will continue without without waiting for
+         * the event handlers anymore.
+         */
+        beforeTimedOut: {
+          type: Boolean,
+          readOnly: true
+        },
+        /**
+         * Number of milliseconds after which the `before-request` event handlers
+         * will be cancelled and the request continue without waiting for the
+         * result. When set to `0`, `null`, `undefined` or `false` the timeoout
+         * is not applied and the element waits with the request until
+         * `continue-request` event is fired.
+         */
+        handlersTimeout: {
+          type: Number,
+          value: 2000
+        }
       },
 
       observers: [
@@ -204,6 +230,14 @@ Main panel to display the API console.
         'api-console-request': '_onTransportRequested',
         'abort-request': '_abortHandler',
         'report-response': '_onResponseHandler'
+      },
+
+      attached: function() {
+        this.listen(window, 'continue-request', '_continueRequestHandler');
+      },
+
+      detached: function() {
+        this.listen(window, 'continue-request', '_continueRequestHandler');
       },
 
       _routeDataChanged: function(record, opened) {
@@ -320,16 +354,61 @@ Main panel to display the API console.
           this.page = 'docs';
         }
       },
+      _reset: function() {
+        this._awaitingContinue = false;
+        this._beforePromisesResolved = true;
+        this._requestCopy = undefined;
+        this._cancelled = false;
+        this.loading = false;
+        this._setBeforeTimedOut(false);
+      },
       _onTransportRequested: function(e) {
         e.preventDefault();
         e.stopPropagation();
-        this.fire('url-history-store', {
-          value: e.detail.url
-        }, {
-          cancelable: true,
-          composed: true
+
+        var request = this._prepareEventRequest(e.detail);
+        return this._beforeProcessVariables(request);
+      },
+      /**
+       * Prepares a request object to be used to send it with the `before-request`
+       * event. This is a "shallow" copy of the `request` property. It only creates
+       * a copy of the primitive values of the object. If the `payload` is an
+       * object (`FormData` or `File`) then it will be passed by reference instead
+       * of copying the object.
+       *
+       * It adds `promises` property to the object that is required by the
+       * `before-request` event.
+       *
+       * @param {Object} request ARC request object
+       * @return {Object} Copy of the `request` property.
+       */
+      _prepareEventRequest: function(request) {
+        var shallowCopy = Object.assign({}, request);
+        this.lastRequestId = shallowCopy.id = this.$.uuid.generate();
+        shallowCopy.promises = [];
+        if (['GET', 'HEAD'].indexOf(request.method) !== -1) {
+          delete shallowCopy.payload;
+        }
+        return shallowCopy;
+      },
+
+      /**
+       * Before the request object can be sent to any `before-request` handler
+       * it must be first evaluated by variables evaluator. It is the only way to
+       * ensure that the handler will receive actuall request data.
+       */
+      _beforeProcessVariables: function(request) {
+        return new Promise((resolve, reject) => {
+          this.cache = undefined;
+          this.context = undefined;
+          this.$.eval._processBeforeRequest(request, resolve, reject);
+        })
+        .then(request => {
+          this._beforeRequest(request);
+        })
+        .catch(() => {
+          this._beforeRequest(request);
         });
-        this.$.socket.run(e.detail);
       },
       /**
        * Aborts the request.
@@ -401,7 +480,182 @@ Main panel to display the API console.
         };
         ipc.on('oauth-2-token-ready', resolved);
         ipc.on('oauth-2-token-error', rejected);
-      }
+      },
+
+      /**
+       * Handles the before request logic.
+       * @param {Object} request The request object.
+       */
+      _beforeRequest: function(request) {
+        this._reset();
+        this.loading = true;
+        var event = this.fire('before-request', request, {
+          cancelable: true,
+          composed: true
+        });
+        if (event.defaultPrevented) {
+          return this._reportCancelation(event.detail.reason);
+        }
+        this._requestCopy = request;
+        var p = event.detail.promises;
+        if (p && p.length) {
+          this._beforePromisesResolved = false;
+          let timeout = this._computeHandlersTimeout(p);
+          p = Promise.all(p);
+          if (timeout > 0) {
+            this._currentTimeout =
+              window.setTimeout(this._onBeforeRequestTimeout.bind(this), timeout);
+          } else {
+            this._awaitingContinue = true;
+          }
+        } else {
+          p = Promise.resolve();
+        }
+        p.then(() => {
+          this._beforePromisesResolved = true;
+          if (this.beforeTimedOut || this._cancelled) {
+            return;
+          }
+          if (!this._awaitingContinue) {
+            this._continueRequest(request);
+          }
+        })
+        .catch(cause => {
+          this.loading = false;
+          this._reportError(cause);
+          console.warn(cause);
+        });
+      },
+      /**
+       * Computes timeout for the before-request event handlers.
+       * It reads a `timeout` property from a promise. If set, it returns a highest
+       * value for the timeout or default value defined in the `handlersTimeout`
+       * property. If `handlersTimeout` is falsy or any timeout property equals
+       * zero (`0`) then this function returns -1 meaning no timeout.
+       *
+       * @param {Array} promises Array of promises returned by the handlers.
+       * @return {Number} -1 for no timeout or positive number of milliseconds
+       * for the `before-request` event to be handled by all handlers.
+       */
+      _computeHandlersTimeout: function(promises) {
+        var timeout = this.handlersTimeout;
+        if (!timeout) {
+          return -1;
+        }
+        if (!promises || !promises.length) {
+          return timeout;
+        }
+        for (var i = 0, len = promises.length; i < len; i++) {
+          if (promises[i].timeout !== undefined) {
+            if (promises[i].timeout === 0) {
+              return -1;
+            }
+            if (promises[i].timeout > timeout) {
+              timeout = promises[i].timeout;
+            }
+          }
+        }
+        if (timeout === 0) {
+          timeout = -1;
+        }
+        return timeout;
+      },
+      /**
+       * Clears the before-request timeout timer.
+       */
+      _clearBeforeRequestTimeout: function() {
+        if (this._currentTimeout) {
+          window.clearTimeout(this._currentTimeout);
+          this._currentTimeout = undefined;
+        }
+      },
+      /**
+       * Called when the `before-request` timeout fired.
+       * It continues the request with current values in the `_requestCopy`
+       * property that has been sent with the `before-request` event.
+       */
+      _onBeforeRequestTimeout: function() {
+        this._currentTimeout = undefined;
+        this._setBeforeTimedOut(true);
+        console.warn('The before-request event handlers timed out.');
+        this._continueRequest(this._requestCopy);
+      },
+      /**
+       * A handler for the `continue-request` custom event.
+       * If "continues" the request if all promises for the `before-request`
+       * has been resolved.
+       * It do nothing if current request doesn't expect this event to be handled
+       * (no timeout set to 0).
+       */
+      _continueRequestHandler: function() {
+        if (!this._awaitingContinue) {
+          return;
+        }
+        if (!this._beforePromisesResolved) {
+          this._awaitingContinue = false;
+          return;
+        }
+        this._continueRequest(this._requestCopy);
+      },
+      /**
+       * Called when before request block finished (whatever the output) and the
+       * request can now be send to the transport library.
+       *
+       * @param {Object} request The request object
+       */
+      _continueRequest: function(request) {
+        this._requestCopy = undefined;
+        this._clearBeforeRequestTimeout();
+        delete request.promises;
+        delete request.reason;
+        // Changes to the `_requestCopy` object won't affect sent object.
+        // However changes made to FormData or File object of the payload property
+        // or to the `auth` object will affect send object because those are
+        // references to an object.
+        var copy = this._prepareTransportObject(request);
+        this.fire('url-history-store', {
+          value: copy.url
+        }, {
+          cancelable: true,
+          composed: true
+        });
+        this.$.socket.run(copy);
+      },
+      _reportError: function(cause) {
+        this.loading = false;
+        this._clearBeforeRequestTimeout();
+        var message = cause && cause.message ? cause.message : 'An error occurred';
+        var t = this.$.errorToast;
+        t.text = message;
+        t.opened = true;
+      },
+      /**
+       * Opens the cancelation message toast
+       * @param {?String} reason Message to display. Optional.
+       */
+      _reportCancelation: function(reason) {
+        this.loading = false;
+        reason = reason || 'The request has been canceled';
+        var t = this.$.cancelToast;
+        t.text = reason;
+        t.opened = true;
+      },
+      /**
+       * Creates an immutable request data object to be send to the transport
+       * library.
+       * @return {Object} Immutable request object.
+       */
+      _prepareTransportObject: function(request) {
+        var configuration = {};
+        Object.keys(request).forEach(key => {
+          configuration[key] = {
+            value: request[key],
+            writable: false,
+            enumerable: true
+          };
+        });
+        return Object.create(Object.prototype, configuration);
+      },
     });
   </script>
 </dom-module>
