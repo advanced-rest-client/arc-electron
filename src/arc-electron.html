@@ -31,6 +31,7 @@
 <link rel="import" href="../bower_components/arc-definitions/arc-definitions.html">
 <link rel="import" href="../bower_components/arc-license-dialog/arc-license-dialog.html">
 <link rel="import" href="../bower_components/arc-models/project-model.html">
+<link rel="import" href="../bower_components/arc-models/rest-api-model.html">
 <link rel="import" href="../bower_components/arc-onboarding/arc-onboarding.html">
 <link rel="import" href="../bower_components/app-analytics/app-analytics.html">
 <link rel="import" href="../bower_components/app-analytics/app-analytics-custom.html">
@@ -50,6 +51,7 @@
 <link rel="import" href="../bower_components/raml-js-parser/raml-js-parser.html">
 <link rel="import" href="../bower_components/raml-json-enhance/raml-json-enhance.html">
 <link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
+<link rel="import" href="../bower_components/rest-apis-list-panel/rest-apis-list-panel.html">
 <link rel="import" href="../styles/app-theme.html">
 <link rel="import" href="request-workspace/request-workspace.html">
 <link rel="import" href="file-export/file-export.html">
@@ -200,6 +202,7 @@
             <google-drive-browser mime-type="application/restclient+data" data-route="drive" attr-for-opened="opened" api-key="1076318174169-u4a5d3j2v0tbie1jnjgsluqk1ti7ged3.apps.googleusercontent.com" access-token="[[accessToken]]" on-drive-file-picker-data="_openDriveRequest"></google-drive-browser>
             <cookie-manager attr-for-opened="opened" data-route="cookie-manager"></cookie-manager>
             <api-console-panel attr-for-opened="opened" data-route="api-console" scroll-target="[[scrollTarget]]"></api-console-panel>
+            <rest-apis-list-panel attr-for-opened="opened" data-route="rest-projects"></rest-apis-list-panel>
           </iron-pages>
         </div>
       </app-drawer-layout>
@@ -257,6 +260,7 @@
     <arc-data-import></arc-data-import>
     <authorization-data-saver></authorization-data-saver>
     <project-model></project-model>
+    <rest-api-model></rest-api-model>
     <file-export></file-export>
     <electron-drive></electron-drive>
     <arc-messages-service platform="electron" on-unread-changed="_unreadMessagesChanged" messages="{{appMessages}}"></arc-messages-service>
@@ -721,6 +725,7 @@
             }
             url = '/api-console/' + acId;
           break;
+          case 'rest-projects': url = '/rest-projects'; break;
         }
         if (url) {
           this.set('route.path', url);
@@ -750,6 +755,7 @@
           case 'drive': screenName = 'Drive selector'; break;
           case 'cookie-manager': screenName = 'Cookie manager'; break;
           case 'api-console':  screenName = 'API Console'; break;
+          case 'rest-projects': screenName = 'REST APIs list'; break;
         }
         this.fire('send-analytics', {
           type: 'screenview',
