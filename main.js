@@ -158,6 +158,15 @@ ipc.on('oauth-2-get-token', (event, options) => {
     event.sender.send('oauth-2-token-error', cause);
   });
 });
+ipc.on('oauth-2-launch-web-flow', (event, options) => {
+  ArcIdentity.launchWebAuthFlow(options)
+  .then(token => {
+    event.sender.send('oauth-2-token-ready', token);
+  })
+  .catch(cause => {
+    event.sender.send('oauth-2-token-error', cause);
+  });
+});
 ipc.on('check-for-update', () => {
   arcApp.us.check({
     notify: false

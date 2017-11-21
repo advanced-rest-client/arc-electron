@@ -13,6 +13,7 @@ class ArcWindowsManager {
     this.__windowClosed = this.__windowClosed.bind(this);
     this.__windowMoved = this.__windowMoved.bind(this);
     this.__windowResized = this.__windowResized.bind(this);
+    this.__windowOpenedPopup = this.__windowOpenedPopup.bind(this);
     this.recorder = new ArcSessionRecorder();
   }
   // True if has at leas one window.
@@ -56,7 +57,8 @@ class ArcWindowsManager {
       backgroundColor: '#00A2DF',
       show: false,
       webPreferences: {
-        partition: 'persist:arc-window'
+        partition: 'persist:arc-window',
+        nativeWindowOpen: true
       }
     });
     mainWindow.__arcIndex = index;
@@ -83,6 +85,7 @@ class ArcWindowsManager {
     win.addListener('move', this.__windowMoved);
     win.addListener('resize', this.__windowResized);
     win.once('ready-to-show', this.__readyShowHandler.bind(this));
+    win.webContents.on('new-window', this.__windowOpenedPopup);
   }
 
   __windowClosed(e) {
@@ -109,6 +112,20 @@ class ArcWindowsManager {
   __readyShowHandler(e) {
     e.sender.show();
     e.sender.send('window-rendered');
+  }
+
+  __windowOpenedPopup(event, url, frameName, disposition, options) {
+    if (frameName !== 'modal') {
+      return;
+    }
+    event.preventDefault();
+    Object.assign(options, {
+      modal: true,
+      parent: event.sender,
+      width: 100,
+      height: 100
+    });
+    event.newGuest = new BrowserWindow(options);
   }
 }
 

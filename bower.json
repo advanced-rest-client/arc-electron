@@ -62,7 +62,7 @@
     "search-bar": "advanced-rest-client/search-bar#^0.1.1",
     "bottom-sheet": "advanced-rest-client/bottom-sheet#^1.0.4",
     "saved-request-detail": "advanced-rest-client/saved-request-detail#^0.1.1",
-    "drop-file-importer": "advanced-rest-client/drop-file-importer#^0.1.1",
+    "drop-file-importer": "advanced-rest-client/drop-file-importer#^0.2.0",
     "paper-menu-button": "PolymerElements/paper-menu-button#<2",
     "paper-icon-button": "PolymerElements/paper-icon-button#<2",
     "paper-menu": "PolymerElements/paper-menu#<2",
@@ -87,7 +87,11 @@
     "arc-title": "advanced-rest-client/arc-title#^0.0.2",
     "web-url-input": "advanced-rest-client/web-url-input#^0.1.1",
     "cookie-manager": "advanced-rest-client/cookie-manager#^0.1.1",
-    "paper-tabs": "PolymerElements/paper-tabs#<2"
+    "paper-tabs": "PolymerElements/paper-tabs#<2",
+    "raml-js-parser": "advanced-rest-client/raml-js-parser#^2.0.5",
+    "raml-json-enhance": "advanced-rest-client/raml-json-enhance#^0.2.9",
+    "api-console": "mulesoft/api-console#^4.2.0",
+    "rest-apis-list-panel": "advanced-rest-client/rest-apis-list-panel#^0.1.1"
   },
   "devDependencies": {
     "web-component-tester": "*",

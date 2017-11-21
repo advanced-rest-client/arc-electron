@@ -17,7 +17,6 @@ the License.
 <link rel="import" href="../../bower_components/saved-request-editor/saved-request-editor.html">
 <link rel="import" href="../../bower_components/bottom-sheet/bottom-sheet.html">
 <link rel="import" href="../../bower_components/openable-panel-behavior/openable-panel-behavior.html">
-<link rel="import" href="../../bower_components/app-route/app-route.html">
 <link rel="import" href="socket-request.html">
 
 <dom-module id="arc-request-panel">
@@ -41,7 +40,6 @@ the License.
     .error-toast {
       @apply --error-toast;
     }
-
     </style>
     <request-panel events-target="[[eventsTarget]]" request="{{request}}" on-request-clear-state="clearRequest" on-request-save-state="_saveHandler"></request-panel>
     <bottom-sheet id="requestEditorContainer" on-iron-overlay-opened="_resizeEditorSheetContent">
