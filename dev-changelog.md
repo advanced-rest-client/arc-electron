@@ -1,1 +1,2 @@
-- 18-11-2017 - New: Added Taks manager to display memory and CPU consumption. Access it via View > Developer > Task Manager
+- 18-11-2017 - New: Added Task manager to display memory and CPU consumption. Access it via View > Developer > Task Manager
+- 21-11-2017 - New: Added support for RAML (RESTful API Modeling Language) - Drag and drop a RAML zip file (or RAML file if it's a single file definition) to read the documentation for the API and make test requests to API endpoints by the request panel powered by RAML data. This feature uses Mulesoft's API console to generate the documentation.
