@@ -150,6 +150,7 @@ Main panel to display the API console.
       </div>
     </div>
     <raml-path-to-object raml="[[raml]]" selected-path="[[path]]" selected-object="{{selectedObject}}" selected-parent="{{selectedParent}}"></raml-path-to-object>
+    <paper-toast id="noModel" class="error-toast" text="REST API model not found in the DOM. Please, report an issue."></paper-toast>
     <paper-toast id="storeErrorToast" class="error-toast" text="Unable to store the API in datastore. See console output for more details."></paper-toast>
     <paper-toast id="storeExistsToast" class="error-toast" text="This api is already saved in the datastore."></paper-toast>
     <paper-toast id="notFoundErrorToast" class="error-toast" text="This API is no longer available. Datastore object not found."></paper-toast>
@@ -188,17 +189,6 @@ Main panel to display the API console.
         },
         // Datastore of currently loaded API.
         loadedId: String
-      },
-
-      /**
-       * @return {PouchDB} A PouchDB instance for the rest-api-data store.
-       */
-      get _db() {
-        return new PouchDB('rest-api-data');
-      },
-
-      get _dbIndex() {
-        return new PouchDB('rest-api-index');
       },
 
       observers: [
@@ -253,7 +243,16 @@ Main panel to display the API console.
        * @param {String} id Datastore ID
        */
       restore: function(id) {
-        return this._db.get(id)
+        var event = this.fire('rest-api-read', {
+          id: id
+        }, {
+          cancelable: true
+        });
+        if (!event.defaultPrevented) {
+          this.$.noModel.opened = true;
+          return;
+        }
+        return event.detail.result
         .then(doc => {
           this.set('raml', doc.raml);
         })
@@ -272,29 +271,24 @@ Main panel to display the API console.
        * @return {Promise} A promise resolved when the API is saved.
        */
       _saveCurrent: function() {
-        var doc = this._prepareStoreObject();
-        var indexObj;
-        return this._db.put(doc)
-        .then(response => {
-          doc._rev = response.rev;
-          this.fire('rest-api-object-updated', {
-            item: doc
-          });
-          indexObj = this._prepareIndexObject(doc);
-          return this._dbIndex.put(indexObj);
-        })
-        .then(response => {
+        var event = this.fire('rest-api-create', {
+          raml: this.raml
+        }, {
+          cancelable: true
+        });
+        if (!event.defaultPrevented) {
+          this.$.noModel.opened = true;
+          return;
+        }
+        return event.detail.result
+        .then(indexDoc => {
           this.__ignoreRouteChange = true;
-          let id = encodeURIComponent(response.id);
+          let id = encodeURIComponent(indexDoc._id);
           this.set('routeData.api', id);
           this.fire('selected-rest-api-changed', {
             value: id
           });
           this.__ignoreRouteChange = false;
-          indexObj._rev = response.rev;
-          this.fire('rest-api-index-updated', {
-            item: indexObj
-          });
         })
         .catch(cause => {
           if (cause.status === 409) {
@@ -305,51 +299,14 @@ Main panel to display the API console.
           console.error(cause);
         });
       },
-      /**
-       * Preparsed PouchDB object to store in the datastore.
-       * @return {Object} Datastore object
-       */
-      _prepareStoreObject: function() {
-        var result = {
-          raml: this.raml,
-          created: Date.now()
-        };
-        var title = this.raml.title || 'Untitled';
-        var version = this.raml.version || '0';
-        var baseUri = this.raml.baseUri || '/';
-        var id = encodeURIComponent(title.toLowerCase());
-        id += '/' + encodeURIComponent(version.toLowerCase());
-        id += '/' + encodeURIComponent(baseUri.toLowerCase());
-        result._id = id;
-        return result;
-      },
-      /**
-       * Prepare's index data store object for the REST API.
-       *
-       * @param {Object} storeObject Data store object
-       * @return {Object} Index store object.
-       */
-      _prepareIndexObject: function(storeObject) {
-        return {
-          _id: storeObject._id,
-          title: storeObject.raml.title || 'Untitled',
-          version: storeObject.raml.version || 'Unknown version',
-          order: 0,
-          description: storeObject.raml.description,
-          dataid: storeObject._id,
-        };
-      },
-
       // Scrolls the document to required position.
       _onScrollRequested: function(e) {
         this.scroll(e.detail.x || 0, e.detail.y || 0);
       },
-
       // Handler for `raml-path-changed` that is fired from docs elements.
       _innerPathChanged: function(e) {
         this.set('path', e.detail.path);
       },
-
       /**
        * Handler for the `tryit-requested` event. Sets current screen to
        * `request`.
@@ -357,18 +314,15 @@ Main panel to display the API console.
       _tryitHandler: function() {
         this.page = 'request';
       },
-
       // Handler for the path changed event. Switches to docs if needed.
       _pathChangedEventHandler: function() {
         if (this.page !== 'docs') {
           this.page = 'docs';
         }
       },
-
       _onTransportRequested: function(e) {
         e.preventDefault();
         e.stopPropagation();
-
         this.fire('url-history-store', {
           value: e.detail.url
         }, {
