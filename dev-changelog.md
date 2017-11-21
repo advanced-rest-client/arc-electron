@@ -1,0 +1,1 @@
+- 18-11-2017 - New: Added Taks manager to display memory and CPU consumption. Access it via View > Developer > Task Manager

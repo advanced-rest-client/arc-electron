@@ -10,6 +10,8 @@ const {ArcSessionRecorder} = require('./arc-session-recorder');
 class ArcWindowsManager {
   constructor() {
     this.windows = [];
+    // Task manager window reference.
+    this._tmWin = undefined;
     this.__windowClosed = this.__windowClosed.bind(this);
     this.__windowMoved = this.__windowMoved.bind(this);
     this.__windowResized = this.__windowResized.bind(this);
@@ -48,6 +50,32 @@ class ArcWindowsManager {
     });
   }
 
+  openTaskManager() {
+    if (this._tmWin) {
+      if (this._tmWin.isMinimized()) {
+        this._tmWin.restore();
+      }
+      return this._tmWin.focus();
+    }
+    var win = new BrowserWindow({
+      backgroundColor: '#00A2DF',
+      webPreferences: {
+        partition: 'persist:arc-task-manager'
+      }
+    });
+    var dest = path.join(__dirname, '..', '..', 'task-manager.html');
+    var full = url.format({
+      pathname: dest,
+      protocol: 'file:',
+      slashes: true
+    });
+    win.loadURL(full);
+    win.on('closed', () => {
+      this._tmWin = null;
+    });
+    this._tmWin = win;
+  }
+
   __getNewWindow(index, session) {
     var mainWindow = new BrowserWindow({
       width: session.size.width,
@@ -71,7 +99,6 @@ class ArcWindowsManager {
       appPath = '#' + appPath;
     }
     var dest = path.join(__dirname, '..', '..', 'app.html');
-    console.log(dest);
     var full = url.format({
       pathname: dest,
       protocol: 'file:',

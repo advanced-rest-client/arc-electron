@@ -120,6 +120,9 @@ class Arc {
         let {HelpManager} = require('./scripts/main/help-manager');
         HelpManager.helpWith(action);
       break;
+      case 'task-manager':
+        this.wm.openTaskManager();
+      break;
     }
   }
 }

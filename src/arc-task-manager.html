@@ -1,0 +1,401 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/font-roboto-local/roboto.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../bower_components/arc-icons/arc-icons.html">
+<dom-module id="arc-task-manager">
+  <template>
+    <style>
+    :host {
+      display: block;
+      background-color: #fff;
+      overflow: auto;
+      @apply --layout-fit;
+      font-size: 14px;
+    }
+
+    .title {
+      @apply --layout-flex;
+    }
+
+    .pid,
+    .cpu-usage,
+    .memory-working-size,
+    .memory-private-size,
+    .memory-shared-size {
+      padding-left: 8px;
+      padding-right: 8px;
+      text-align: right;
+      -webkit-user-select: text;
+      user-select: text;
+    }
+
+    .cpu-usage {
+      width: 60px;
+    }
+
+    .pid {
+      width: 60px;
+    }
+
+    .memory-working-size,
+    .memory-private-size,
+    .memory-shared-size {
+      width: 90px;
+    }
+
+    .th {
+      font-weight: 500;
+      @apply --layout-horizontal;
+      @apply --layout-center;
+      height: 48px;
+      padding: 0 16px;
+      font-size: 13px;
+    }
+
+    .th > div {
+      @apply --layout-horizontal;
+      @apply --layout-center;
+      @apply --layout-end-justified;
+      cursor: pointer;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .th > div.title {
+      @apply --layout-start-justified;
+    }
+
+    .th .label {
+      display: block;
+      height: 23px;
+    }
+
+    div[ordered] {
+      /* padding-right: 0px; */
+    }
+    </style>
+    <div class="th">
+      <div class="title" ordered$="[[orderTitle]]" on-tap="_changeOrder" data-order-property="title">
+        <span class="label">Process</span>
+        <template is="dom-if" if="[[orderTitle]]" restamp>
+          <iron-icon icon="[[_computeOrderIcon(orderDirection)]]"></iron-icon>
+        </template>
+      </div>
+      <div class="pid" ordered$="[[orderPid]]" on-tap="_changeOrder" data-order-property="pid">
+        <span class="label">Pid</span>
+        <template is="dom-if" if="[[orderPid]]" restamp>
+          <iron-icon icon="[[_computeOrderIcon(orderDirection)]]"></iron-icon>
+        </template>
+      </div>
+      <div class="cpu-usage" ordered$="[[orderCpu]]" on-tap="_changeOrder" data-order-property="cpu-usage">
+        <span class="label">CPU</span>
+        <template is="dom-if" if="[[orderCpu]]" restamp>
+          <iron-icon icon="[[_computeOrderIcon(orderDirection)]]"></iron-icon>
+        </template>
+      </div>
+      <div class="memory-working-size" ordered$="[[orderMemWorkingSize]]" on-tap="_changeOrder" data-order-property="memory-working">
+        <span class="label">Memory</span>
+        <template is="dom-if" if="[[orderMemWorkingSize]]" restamp>
+          <iron-icon icon="[[_computeOrderIcon(orderDirection)]]"></iron-icon>
+        </template>
+      </div>
+      <div class="memory-private-size" ordered$="[[orderMemPrivateSize]]" on-tap="_changeOrder" data-order-property="memory-private">
+        <span class="label">Private memory</span>
+        <template is="dom-if" if="[[orderMemPrivateSize]]" restamp>
+          <iron-icon icon="[[_computeOrderIcon(orderDirection)]]"></iron-icon>
+        </template>
+      </div>
+      <div class="memory-shared-size" ordered$="[[orderMemSharedSize]]" on-tap="_changeOrder" data-order-property="memory-shared">
+        <span class="label">Shared memory</span>
+        <template is="dom-if" if="[[orderMemSharedSize]]" restamp>
+          <iron-icon icon="[[_computeOrderIcon(orderDirection)]]"></iron-icon>
+        </template>
+      </div>
+    </div>
+    <template is="dom-repeat" items="[[items]]" sort="_sortItems" id="list">
+      <paper-item>
+        <div class="title">[[item.title]]</div>
+        <div class="pid">[[item.pid]]</div>
+        <div class="cpu-usage">[[item.cpu.usage]]</div>
+        <div class="memory-working-size">[[item.memory.workingSetSize]]</div>
+        <div class="memory-private-size">[[item.memory.privateBytes]]</div>
+        <div class="memory-shared-size">[[item.memory.sharedBytes]]</div>
+      </paper-item>
+    </template>
+  </template>
+  <script>
+  const {app} = require('electron').remote;
+  Polymer({
+    is: 'arc-task-manager',
+    properties: {
+      // List of items to display in the table.
+      items: Array,
+      // True if the window is active.
+      active: Boolean,
+      // True if ordering by title is enabled
+      orderTitle: Boolean,
+      // True if ordering by pid is enabled
+      orderPid: Boolean,
+      // True if ordering by cpu is enabled
+      orderCpu: Boolean,
+      // True if ordering by memory working size is enabled
+      orderMemWorkingSize: Boolean,
+      // True if ordering by memory private size is enabled
+      orderMemPrivateSize: Boolean,
+      // True if ordering by memory shared size is enabled
+      orderMemSharedSize: Boolean,
+      // Order direction. `acs` or `desc`.
+      orderDirection: {
+        type: String,
+        value: 'asc'
+      },
+      // Order property name
+      orderProperty: String
+    },
+
+    ready: function() {
+      this.active = true;
+      Polymer.RenderStatus.afterNextRender(this, () => {
+        this.refresh();
+      });
+    },
+
+    detached: function() {
+      this.active = false;
+    },
+
+    refresh: function() {
+      if (!this.active) {
+        return;
+      }
+      var metrics = app.getAppMetrics();
+      metrics = this.translateMetrics(metrics);
+      this.set('items', metrics);
+      this.async(function() {
+        this.refresh();
+      }, 2000);
+    },
+
+    /**
+     * Translates electron app metrics into the data model.
+     *
+     * @param {Array<Object>} metrics List of current metrics
+     * @return {Array} Internal data model.
+     */
+    translateMetrics: function(metrics) {
+      var result = metrics.map(metric => {
+        let cpu = this.translateCpuMetrics(metric.cpu);
+        let memory = this.translateMemoryMetrics(metric.memory);
+        let title = this.translateMetricTitle(metric.type);
+        return {
+          pid: metric.pid,
+          memory: memory,
+          cpu: cpu,
+          title: title
+        };
+      });
+
+      return result;
+    },
+    /**
+     * Translates `type` property of the metric to a title to display
+     * @param {String} type Metric type value
+     * @return {String} Title related to the type.
+     */
+    translateMetricTitle: function(type) {
+      switch (type) {
+        case 'Tab': return 'Application window';
+        case 'Browser': return 'Application';
+        default: return type;
+      }
+    },
+    /**
+     * Creates a data model for the CPU usage.
+     *
+     * @param {Object} cpu CPU metric
+     * @return {Object} Data model for CPU metrics
+     */
+    translateCpuMetrics: function(cpu) {
+      return {
+        usage: this.computePercents(cpu.percentCPUUsage),
+        usageCompare: cpu.percentCPUUsage
+        //wakeups: cpu.idleWakeupsPerSecond
+      };
+    },
+    /**
+     * Creates a data model for memory usage metrics
+     *
+     * @param {Object} memory Memory metric
+     * @return {Object} Memory usage metrics
+     */
+    translateMemoryMetrics: function(memory) {
+      return {
+        // peak: peakWorkingSetSize
+        workingSetSize: this.computeBytes(memory.workingSetSize),
+        workingSetSizeCompare: memory.workingSetSize,
+        privateBytes: this.computeBytes(memory.privateBytes),
+        privateBytesCompare: memory.privateBytes,
+        sharedBytes: this.computeBytes(memory.sharedBytes),
+        sharedBytesCompare: memory.sharedBytes
+      };
+    },
+    /**
+     * Computes readable value of bytes usage.
+     * https://stackoverflow.com/a/18650828/1127848
+     *
+     * @param {Number} bytes Number of bytes
+     * @param {String} decimals Decimal number
+     * @return {String} Size label
+     */
+    computeBytes: function(bytes, decimals) {
+      if (!bytes) {
+        return '0 B';
+      }
+      var k = 1024;
+      var dm = decimals || 2;
+      var sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+      var i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    },
+
+    computePercents: function(usage) {
+      usage = usage * 100;
+      return Math.round(usage);
+    },
+
+    _computeOrderIcon: function(direction) {
+      return direction === 'asc' ? 'arc:arrow-drop-down' : 'arc:arrow-drop-up';
+    },
+
+    _changeOrder: function(e) {
+      var target = e.currentTarget;
+      var property = target.dataset.orderProperty;
+      if (property === this.orderProperty) {
+        this.toggleOrder();
+        this.$.list.render();
+        return;
+      }
+      this._cancelOrderProperty();
+      switch (property) {
+        case 'title':
+          this.orderTitle = true;
+          break;
+        case 'pid':
+          this.orderPid = true;
+          break;
+        case 'cpu-usage':
+          this.orderCpu = true;
+          break;
+        case 'memory-shared':
+          this.orderMemSharedSize = true;
+          break;
+        case 'memory-private':
+          this.orderMemPrivateSize = true;
+          break;
+        case 'memory-working':
+          this.orderMemWorkingSize = true;
+          break;
+      }
+      this.orderProperty = property;
+      this.$.list.render();
+    },
+
+    _cancelOrderProperty: function() {
+      var prop = this.orderProperty;
+      switch (prop) {
+        case 'title':
+          this.orderTitle = false;
+          break;
+        case 'pid':
+          this.orderPid = false;
+          break;
+        case 'cpu-usage':
+          this.orderCpu = false;
+          break;
+        case 'memory-shared':
+          this.orderMemSharedSize = false;
+          break;
+        case 'memory-private':
+          this.orderMemPrivateSize = false;
+          break;
+        case 'memory-working':
+          this.orderMemWorkingSize = false;
+          break;
+      }
+      this.orderProperty = undefined;
+    },
+
+    toggleOrder: function() {
+      this.orderDirection = this.orderDirection === 'asc' ? 'desc' : 'asc';
+    },
+
+    _sortItems: function(a, b) {
+      var prop = this.orderProperty;
+      switch (prop) {
+        case 'title': return this._sortTitle(a, b);
+        case 'pid': return this._sortPid(a, b);
+        case 'cpu-usage': return this._sortCpu(a, b);
+        case 'memory-shared': return this._sortMemory(a, b, 'sharedBytesCompare');
+        case 'memory-private': return this._sortMemory(a, b, 'privateBytesCompare');
+        case 'memory-working': return this._sortMemory(a, b, 'workingSetSizeCompare');
+      }
+    },
+
+    _sortTitle: function(a, b) {
+      var dir = this.orderDirection;
+      var result = a.title.localeCompare(b.title);
+      if (dir === 'desc') {
+        return -result;
+      }
+      return result;
+    },
+
+    _sortPid: function(a, b) {
+      var result = 0;
+      if (a.pid > b.pid) {
+        result = -1;
+      }
+      if (a.pid < b.pid) {
+        result = 1;
+      }
+      if (result === 0) {
+        return result;
+      }
+      return this.orderDirection === 'asc' ? result : -result;
+    },
+
+    _sortCpu: function(a, b) {
+      var result = 0;
+      if (a.cpu.usageCompare > b.cpu.usageCompare) {
+        result = -1;
+      }
+      if (a.cpu.usageCompare < b.cpu.usageCompare) {
+        result = 1;
+      }
+      if (result === 0) {
+        return result;
+      }
+      return this.orderDirection === 'asc' ? result : -result;
+    },
+
+    _sortMemory: function(a, b, property) {
+      var result = 0;
+      var aValue = a.memory[property];
+      var bValue = b.memory[property];
+
+      if (aValue > bValue) {
+        result = -1;
+      }
+      if (aValue < bValue) {
+        result = 1;
+      }
+      if (result === 0) {
+        return result;
+      }
+      return this.orderDirection === 'asc' ? result : -result;
+    }
+  });
+  </script>
+</dom-module>
