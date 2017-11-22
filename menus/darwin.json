@@ -39,6 +39,14 @@
       },
       {
         "type": "separator"
+      }, {
+        "role": "hide"
+      }, {
+        "role": "hideothers"
+      }, {
+        "role": "unhide"
+      }, {
+        "type": "separator"
       },
       {
         "label": "Quit",
@@ -159,9 +167,6 @@
         "role": "zoomout"
       },
       {
-        "role": "close"
-      },
-      {
         "role": "minimize"
       },
       {
@@ -179,7 +184,10 @@
   }, {
     "label": "Window",
     "role": "window",
-    "submenu": [{
+    "submenu": [
+      {
+        "role": "close"
+      }, {
         "role": "minimize"
       },
       {
