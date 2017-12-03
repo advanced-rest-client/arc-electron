@@ -6,7 +6,7 @@ const {ArcPreferences} = require('./../main/arc-preferences');
 class WorkspaceState extends ArcPreferences {
   constructor() {
     super();
-    this._file = path.join(this.userSettingsDir, 'workspace.json');
+    this.dataFile = path.join(this.userSettingsDir, 'workspace.json');
     this._data = undefined;
   }
 
@@ -14,7 +14,7 @@ class WorkspaceState extends ArcPreferences {
     if (this._data) {
       return Promise.resolve(this._data);
     }
-    return this.restoreFile(this._file)
+    return this.restoreFile(this.dataFile)
     .then(data => {
       this._data = data;
       return data;
@@ -22,7 +22,7 @@ class WorkspaceState extends ArcPreferences {
   }
 
   store(data) {
-    return this.storeFile(this._file, data);
+    return this.storeFile(this.dataFile, data);
   }
 
   updateRequestsSate(requests) {

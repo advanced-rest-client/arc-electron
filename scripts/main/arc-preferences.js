@@ -39,7 +39,9 @@ class ArcPreferences extends ArcBase {
    * @return {Promise} Promise resolved when the `file` is updated.
    */
   storeFile(file, data) {
-    return fs.outputJson(file, data);
+    return fs.outputJson(file, data, {
+      spaces: 2
+    });
   }
 
   loadSettings() {
