@@ -121,6 +121,11 @@ the License.
         state: {
           type: WorkspaceState,
           readOnly: true
+        },
+        // Path to a workspace state file.
+        workspaceScript: {
+          type: String,
+          observer: '_workspaceScriptChanged'
         }
       },
       /**
@@ -143,8 +148,18 @@ the License.
       },
 
       ready: function() {
-        this._setState(new WorkspaceState());
+        this._setState(new WorkspaceState(this.workspaceScript));
         this.__ready = true;
+      },
+
+      _workspaceScriptChanged: function(script) {
+        if (this.activeRequests) {
+          this.set('activeRequests', undefined);
+        }
+        this._setState(new WorkspaceState(script));
+        if (this._isOpened) {
+          this.restoreWorkspace();
+        }
       },
 
       _openedChanged: function(opened) {

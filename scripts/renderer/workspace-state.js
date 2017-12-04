@@ -4,9 +4,13 @@ const {ArcPreferences} = require('./../main/arc-preferences');
  * A module responsible for storing / restoring latest request from user FS.
  */
 class WorkspaceState extends ArcPreferences {
-  constructor() {
+  constructor(stateFile) {
     super();
-    this.dataFile = path.join(this.userSettingsDir, 'workspace.json');
+    if (stateFile) {
+      this.dataFile = this._resolvePath(stateFile);
+    } else {
+      this.dataFile = path.join(this.userSettingsDir, 'workspace.json');
+    }
     this._data = undefined;
   }
 
