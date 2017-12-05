@@ -22,7 +22,7 @@
   "main": "main.js",
   "devDependencies": {
     "electron": "~1.7.8",
-    "electron-builder": "^19.45.4",
+    "electron-builder": "^19.47.1",
     "mocha": "^4.0.1",
     "spectron": "^3.7.2"
   },
