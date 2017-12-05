@@ -3,11 +3,11 @@ const Application = require('spectron').Application;
 
 const getElectronPath = () => {
   if (process.platform === 'win32') {
-    return path.resolve(__dirname, '../dist/win-unpacked/Advanced REST Client.exe');
+    return path.resolve(__dirname, '../dist/win-unpacked/arc.exe');
   } else if (process.platform === 'darwin') {
-    return path.resolve(__dirname, '../dist/mac/WebCatalog.app/Contents/MacOS/Advanced REST Client');
+    return path.resolve(__dirname, '../dist/mac/arc.app/Contents/MacOS/arc');
   }
-  return path.resolve(__dirname, '../dist/linux-unpacked/Advanced REST Client');
+  return path.resolve(__dirname, '../dist/linux-unpacked/arc');
 };
 
 module.exports.getApp = () => {
