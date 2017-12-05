@@ -12,5 +12,4 @@ npm --version
 export PATH=$PATH:./node_modules/.bin/
 
 npm install
-build --mac --linux
 npm test
