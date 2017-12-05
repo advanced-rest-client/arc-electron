@@ -95,15 +95,23 @@ describe('Initial paths', function() {
       });
     });
 
+    function waitFor(time) {
+      return new Promise(resolve => {
+        setTimeout(resolve, time);
+      });
+    }
+
     it('Application receives workspace-script attribute', function() {
-      return this.app.client.getAttribute('arc-electron', 'workspace-script')
+      return waitFor(1000)
+      .then(() => this.app.client.getAttribute('arc-electron', 'workspace-script'))
       .then(value => {
         assert.equal(value, workspaceFilePath);
       });
     });
 
     it('Application receives settings-script attribute', function() {
-      return this.app.client.getAttribute('arc-electron', 'settings-script')
+      return waitFor(1000)
+      .then(() => this.app.client.getAttribute('arc-electron', 'settings-script'))
       .then(value => {
         assert.equal(value, settingsFilePath);
       });
