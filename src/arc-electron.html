@@ -58,6 +58,7 @@
 <link rel="import" href="about-arc/about-arc.html">
 <link rel="import" href="electron-drive/electron-drive.html">
 <link rel="import" href="api-console-panel/api-console-panel.html">
+<link rel="import" href="app-paths-info/app-paths-info.html">
 
 <dom-module id="arc-electron">
   <template>
@@ -141,7 +142,7 @@
     }
 
     .content {
-      @apply(--layout-flex);
+      @apply --layout-flex;
     }
 
     .nav-notification-button {
@@ -191,12 +192,14 @@
             attr-for-selected="data-route"
             selected-attribute="opened"
             selected="[[routeData.base]]">
-            <request-workspace attr-for-opened="opened" data-route="request" route="{{route}}"></request-workspace>
+            <request-workspace attr-for-opened="opened" data-route="request" route="{{route}}" workspace-script="[[workspaceScript]]"></request-workspace>
             <websocket-panel attr-for-opened="opened" data-route="socket"></websocket-panel>
             <history-panel attr-for-opened="opened" data-route="history"></history-panel>
             <saved-requests-panel attr-for-opened="opened" data-route="saved"></saved-requests-panel>
             <data-import-export-panel data-route="dataimport" api-key="1076318174169-u4a5d3j2v0tbie1jnjgsluqk1ti7ged3.apps.googleusercontent.com"></data-import-export-panel>
-            <arc-settings-panel data-route="settings" attr-for-opened="opened"></arc-settings-panel>
+            <arc-settings-panel data-route="settings" attr-for-opened="opened">
+              <app-paths-info></app-paths-info>
+            </arc-settings-panel>
             <about-arc attr-for-opened="opened" data-route="about" update-state="[[updateState]]"></about-arc>
             <project-details attr-for-opened="opened" data-route="project" project-id="[[projectRoute.id]]" attr-for-opened="opened"></project-details>
             <google-drive-browser mime-type="application/restclient+data" data-route="drive" attr-for-opened="opened" api-key="1076318174169-u4a5d3j2v0tbie1jnjgsluqk1ti7ged3.apps.googleusercontent.com" access-token="[[accessToken]]" on-drive-file-picker-data="_openDriveRequest"></google-drive-browser>
@@ -264,7 +267,6 @@
     <file-export></file-export>
     <electron-drive></electron-drive>
     <arc-messages-service platform="electron" on-unread-changed="_unreadMessagesChanged" messages="{{appMessages}}"></arc-messages-service>
-
     <raml-js-parser json latest-json="{{plainRaml}}"></raml-js-parser>
     <raml-json-enhance json="[[plainRaml.specification]]" on-raml-json-enhance-ready="_ramlEnhanced" on-error="_ramlEnhanceError"></raml-json-enhance>
   </template>
@@ -341,7 +343,25 @@
           value: function() {
             return this.$.scrollingRegion.$$('#contentContainer');
           }
-        }
+        },
+        /**
+         * A workspace state file.
+         * To be set to override default location.
+         */
+        workspaceScript: {
+          type: String,
+          reflectToAttribute: true
+        },
+        /**
+         * The settings file location.
+         * To be set to override default location.
+         */
+        settingsScript: {
+          type: String,
+          reflectToAttribute: true
+        },
+        // True when the application has been initialized by the main script
+        _appInitialized: Boolean
       },
 
       listeners: {
@@ -359,35 +379,39 @@
       },
 
       observers: [
-        '_setupRequestRoute(requestRoute.*)',
-        '_driveFileRouteChanged(driveFileRoute.*)',
+        '_setupRequestRoute(_appInitialized, requestRoute.*)',
+        '_driveFileRouteChanged(_appInitialized, driveFileRoute.*)',
         '_notifyRequestPanelResize(narrowLayout)'
       ],
-
-      ready: function() {
-        // sets a default path of not initialized with path
-        if (!this.route.path) {
-          this.set('route.path', '/request/latest/0');
-        }
-        this._setUpPreferences();
-        this._requestAuthToken(false);
-        this.setupAnalytics();
-        this._refreshLayout();
-        const {CookieBridge} = require('./scripts/renderer/cookie-brindge');
-        const ipc = require('electron').ipcRenderer;
-        this.cb = new CookieBridge(ipc);
-      },
-
-      attached: function() {
-        Polymer.RenderStatus.afterNextRender(this, function() {
-          this.listen(document.body, 'display-license', 'openLicense');
-          this._observeMainEvents();
-        });
-      },
 
       detacheded: function() {
         this.unlisten(document.body, 'display-license', 'openLicense');
         this._unobserveMainEvents();
+      },
+      /**
+       * Called by the application window main script when all
+       * setup is ready and the application can be initialized.
+       */
+      initApplication: function() {
+        if (this._appInitialized) {
+          return;
+        }
+        this._setUpPreferences();
+        this._requestAuthToken(false);
+        this.listen(document.body, 'display-license', 'openLicense');
+        this.async(() => this.setupAnalytics(), 1);
+        this._refreshLayout();
+        const {CookieBridge} = require('./scripts/renderer/cookie-brindge');
+        this.cb = new CookieBridge(require('electron').ipcRenderer);
+        this._observeMainEvents();
+        this._appInitialized = true;
+        this.initRouting();
+      },
+
+      initRouting: function() {
+        if (!this.route.path) {
+          this.set('route.path', '/request/latest/0');
+        }
       },
 
       _refreshLayout() {
@@ -404,7 +428,7 @@
 
       _setUpPreferences: function() {
         const {ArcPreferences} = require('./scripts/main/arc-preferences');
-        this.__prefs = new ArcPreferences();
+        this.__prefs = new ArcPreferences(this.settingsScript);
         this.__prefs.observe();
       },
 
@@ -412,7 +436,7 @@
         var params = record && record.base;
         switch (params.base) {
           case 'request':
-            return this._setupRequestRoute(params);
+            return this._setupRequestRoute(this._appInitialized, params);
         }
       },
 
@@ -494,7 +518,10 @@
         }
       },
 
-      _setupRequestRoute: function(record) {
+      _setupRequestRoute: function(initialized, record) {
+        if (!initialized) {
+          return;
+        }
         var params = record && record.base;
         if (!params || !params.type) {
           return;
@@ -520,7 +547,10 @@
         this.selectedRequest = decodeURIComponent(id);
       },
 
-      _driveFileRouteChanged: function(record) {
+      _driveFileRouteChanged: function(initialized, record) {
+        if (!initialized) {
+          return;
+        }
         var params = record && record.base;
         if (!params || !params.action || !params.id) {
           return;
@@ -650,19 +680,10 @@
       // Starts listening for main script events.
       _observeMainEvents: function() {
         if (!this.__ueh) {
-          this.__ueh = this._updateEventHandler.bind(this);
           this.__rah = this._requestActionHandler.bind(this);
-          this.__ch = this._commandHandler.bind(this);
         }
         const ipc = require('electron').ipcRenderer;
-        ipc.on('checking-for-update', this.__ueh);
-        ipc.on('update-available', this.__ueh);
-        ipc.on('update-not-available', this.__ueh);
-        ipc.on('autoupdate-error', this.__ueh);
-        ipc.on('download-progress', this.__ueh);
-        ipc.on('update-downloaded', this.__ueh);
         ipc.on('request-action', this.__rah);
-        ipc.on('command', this.__ch);
         this.cb.listen();
       },
 
@@ -674,12 +695,6 @@
           return;
         }
         const ipc = require('electron').ipcRenderer;
-        ipc.removeListener('checking-for-update', this.__ueh);
-        ipc.removeListener('update-available', this.__ueh);
-        ipc.removeListener('update-not-available', this.__ueh);
-        ipc.removeListener('autoupdate-error', this.__ueh);
-        ipc.removeListener('download-progress', this.__ueh);
-        ipc.removeListener('update-downloaded', this.__ueh);
         ipc.removeListener('request-action', this.__rah);
         ipc.removeListener('command', this.__ch);
       },
@@ -969,16 +984,6 @@
         e.preventDefault();
       },
       /**
-       * Handler for update app events sent from main process.
-       * Sets the `updateState` property that is passed to the about page.
-       */
-      _updateEventHandler: function(...args) {
-        this.updateState = args[1];
-        if (args[1] && args[1][0] === 'update-available') {
-          this.hasAppUpdate = true;
-        }
-      },
-      /**
        * Handles action performed in main thread (menu action) related to
        * a request.
        *
@@ -1002,28 +1007,6 @@
             let index = workspace.appendPanel();
             workspace.selected = index;
           break;
-        }
-      },
-      /**
-       * Handles action performed in main thread (menu action) related to
-       * an application.
-       *
-       * @param {String} action Action name to perform.
-       */
-      _commandHandler: function(event, action) {
-        switch (action) {
-          case 'show-settings': this.openSettings(); break;
-          case 'about': this.openAbout(); break;
-          case 'open-license': this.openLicense(); break;
-          case 'import-data': this.openImport(); break;
-          case 'export-data': this.openExport(); break;
-          case 'open-saved': this.openSaved(); break;
-          case 'open-history': this.openHistory(); break;
-          case 'open-drive': this.openDrivePicker(); break;
-          case 'find': this.handleFindOpen(); break;
-          case 'open-messages': this.openInfoCenter(); break;
-          case 'login-external-webservice': this.openWebUrl(); break;
-          case 'open-cookie-manager': this.openCookieManager(); break;
         }
       },
 

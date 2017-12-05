@@ -7,7 +7,7 @@ describe('Basic', function() {
     beforeEach(function() {
       this.app = bootstrap.getApp();
       return this.app.start()
-      .then(() => console.log('App started'));
+      .then(() => this.app.client.waitUntilWindowLoaded(10000));
     });
 
     afterEach(function() {
@@ -17,9 +17,17 @@ describe('Basic', function() {
     });
 
     it('shows an initial window', function() {
-      return this.app.client.getWindowCount().then(function(count) {
+      return this.app.client.getWindowCount()
+      .then(function(count) {
         assert.equal(count, 1);
       });
     });
+
+    // it('Renders the application main element', function() {
+    //   return this.app.client.element('arc-electron')
+    //   .then(value => {
+    //     assert.ok(value.value);
+    //   });
+    // });
   });
 });

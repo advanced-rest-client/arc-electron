@@ -12,9 +12,9 @@
     "url": "https://github.com/advanced-rest-client/arc-electron"
   },
   "scripts": {
-    "start": "electron .",
+    "start": "electron . --arg1 --arg2=\"some value\"",
     "postinstall": "electron-builder install-app-deps",
-    "test": "mocha test/*.test.js",
+    "test": "NODE_ENV=test mocha test/*.test.js",
     "build-l": "npx electron-builder -l",
     "build-w": "npx electron-builder -w",
     "build-m": "npx electron-builder -m"
@@ -22,7 +22,7 @@
   "main": "main.js",
   "devDependencies": {
     "electron": "~1.7.8",
-    "electron-builder": "^19.45.4",
+    "electron-builder": "^19.47.1",
     "mocha": "^4.0.1",
     "spectron": "^3.7.2"
   },
@@ -37,8 +37,8 @@
   },
   "build": {
     "appId": "com.mulesoft.arc",
-    "productName": "Advanced REST Client",
-    "artifactName": "arc-${version}-${arch}.${ext}",
+    "productName": "arc",
+    "artifactName": "arc.${ext}",
     "asar": true,
     "copyright": "Copyright © 2017 Mulesoft",
     "detectUpdateChannel": true,
@@ -133,7 +133,7 @@
     "nsis": {
       "installerIcon": "build/icon.ico",
       "uninstallerIcon": "build/icon.ico",
-      "artifactName": "arc-${version}-setup.${ext}",
+      "artifactName": "arc-setup.${ext}",
       "shortcutName": "ARC"
     }
   },

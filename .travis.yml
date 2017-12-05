@@ -7,7 +7,7 @@ node_js:
   - '7'
   - '8'
 
-script: ./script/travis-build.sh
+script: ./test/travis-build.sh
 
 cache:
   directories:

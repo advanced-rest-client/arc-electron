@@ -4,11 +4,13 @@ const path = require('path');
 const url = require('url');
 const {ArcSessionControl} = require('./session-control');
 const {ArcSessionRecorder} = require('./arc-session-recorder');
+const ipc = require('electron').ipcMain;
 /**
  * A class that manages opened app windows.
  */
 class ArcWindowsManager {
-  constructor() {
+  constructor(startupOptions) {
+    this.startupOptions = startupOptions;
     this.windows = [];
     // Task manager window reference.
     this._tmWin = undefined;
@@ -17,6 +19,7 @@ class ArcWindowsManager {
     this.__windowResized = this.__windowResized.bind(this);
     this.__windowOpenedPopup = this.__windowOpenedPopup.bind(this);
     this.recorder = new ArcSessionRecorder();
+    ipc.on('window-reloading', this.__windowReloading.bind(this));
   }
   // True if has at leas one window.
   get hasWindow() {
@@ -115,9 +118,17 @@ class ArcWindowsManager {
     win.webContents.on('new-window', this.__windowOpenedPopup);
   }
 
+  _findWindowImdex(win) {
+    return this.windows.findIndex(item => {
+      if (item.isDestroyed()) {
+        return win === win;
+      }
+      return item.id === win.id;
+    });
+  }
+
   __windowClosed(e) {
-    var win = e.sender;
-    var index = this.windows.findIndex(item => item === win);
+    var index = this._findWindowImdex(e.sender);
     if (index === -1) {
       return;
     }
@@ -138,7 +149,27 @@ class ArcWindowsManager {
 
   __readyShowHandler(e) {
     e.sender.show();
-    e.sender.send('window-rendered');
+    this._setupWindow(e.sender);
+  }
+  /**
+   * Adds the `did-finish-load` event to reset the window when it's reloaded.
+   */
+  __windowReloading(e) {
+    e.sender.webContents.once('did-finish-load', () => {
+      this._setupWindow(e.sender);
+    });
+  }
+  /**
+   * Informs the window that it is ready to render the application.
+   */
+  _setupWindow(win) {
+    if (this.startupOptions.workspaceFile) {
+      win.send('set-workspace-file', this.startupOptions.workspaceFile);
+    }
+    if (this.startupOptions.settingsFile) {
+      win.send('set-settings-file', this.startupOptions.settingsFile);
+    }
+    win.send('window-rendered');
   }
 
   __windowOpenedPopup(event, url, frameName, disposition, options) {

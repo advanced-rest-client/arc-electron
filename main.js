@@ -8,12 +8,14 @@ const {ArcMainMenu} = require('./scripts/main/main-menu');
 const {ArcIdentity} = require('./scripts/main/oauth2');
 const {DriveExport} = require('./scripts/main/drive-export');
 const {SessionManager} = require('./scripts/main/session-manager');
+const {AppOptions} = require('./scripts/main/app-options');
 
 class Arc {
   constructor() {
     this._registerProtocols();
+    const startupOptions = this._processArguments();
     this.menu = new ArcMainMenu();
-    this.wm = new ArcWindowsManager();
+    this.wm = new ArcWindowsManager(startupOptions.getOptions());
     this.us = new UpdateStatus(this.wm, this.menu);
     this.sm = new SessionManager(this.wm);
     this._listenMenu(this.menu);
@@ -44,6 +46,12 @@ class Arc {
         break;
       }
     });
+  }
+  // processes start arguments
+  _processArguments() {
+    const startupOptions = new AppOptions();
+    startupOptions.parse();
+    return startupOptions;
   }
 
   _readyHandler() {
@@ -129,6 +137,12 @@ class Arc {
 
 const arcApp = new Arc();
 arcApp.attachListeners();
+
+// Unit testing
+if (process.env.NODE_ENV === 'test') {
+  const testInterface = require('./scripts/main/test-interface');
+  testInterface(app, arcApp);
+}
 
 // TODO: // move this to seperate file that is responsible for IPC
 ipc.on('save-dialog', function(event, args) {

@@ -1,0 +1,136 @@
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item-body.html">
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+
+<dom-module id="app-paths-info">
+  <template>
+    <style>
+    :host {
+      display: block;
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      @apply --arc-font-subhead;
+      @apply --layout-horizontal;
+      @apply --layout-center;
+      height: 48px;
+      color: var(--arc-settings-panel-header-color, --accent-color);
+      margin: 0;
+      @apply --arc-settings-panel-header;
+    }
+
+    iron-icon {
+      color: var(--arc-settings-panel-icon-color, rgba(0, 0, 0, 0.34));
+      width: 24px;
+      height: 24px;
+    }
+
+    .card {
+      @apply --shadow-elevation-2dp;
+    }
+
+    paper-item {
+      cursor: pointer;
+    }
+    </style>
+    <h2>Application data</h2>
+    <div class="card">
+      <paper-item on-tap="open" data-target="preferences">
+        <paper-item-body two-line>
+          <div>Application preferences folder</div>
+          <div secondary>[[preferencesPath]]</div>
+        </paper-item-body>
+        <iron-icon icon="arc:open-in-new" class="nav-away-icon" item-icon></iron-icon>
+      </paper-item>
+      <paper-item on-tap="open" data-target="settings">
+        <paper-item-body two-line>
+          <div>Application settings file</div>
+          <div secondary>[[settingsPath]]</div>
+        </paper-item-body>
+        <iron-icon icon="arc:open-in-new" class="nav-away-icon" item-icon></iron-icon>
+      </paper-item>
+      <paper-item on-tap="open" data-target="meta-file">
+        <paper-item-body two-line>
+          <div>Application meta file</div>
+          <div secondary>[[metaFilePath]]</div>
+        </paper-item-body>
+        <iron-icon icon="arc:open-in-new" class="nav-away-icon" item-icon></iron-icon>
+      </paper-item>
+      <paper-item on-tap="open" data-target="sessions">
+        <paper-item-body two-line>
+          <div>Windows session settings</div>
+          <div secondary>[[sessionsPath]]</div>
+        </paper-item-body>
+        <iron-icon icon="arc:open-in-new" class="nav-away-icon" item-icon></iron-icon>
+      </paper-item>
+      <paper-item on-tap="open" data-target="workspace">
+        <paper-item-body two-line>
+          <div>Requests workspace state file</div>
+          <div secondary>[[workspaceStatePath]]</div>
+        </paper-item-body>
+        <iron-icon icon="arc:open-in-new" class="nav-away-icon" item-icon></iron-icon>
+      </paper-item>
+    </div>
+  </template>
+  <script>
+  (function() {
+    const {ArcSessionControl} = require('./scripts/main/session-control');
+    const {ArcMeta} = require('./scripts/main/arc-meta');
+    const {WorkspaceState} = require('./scripts/renderer/workspace-state.js');
+    const {shell} = require('electron');
+    Polymer({
+      is: 'app-paths-info',
+      properties: {
+        preferencesPath: String,
+        metaFilePath: String,
+        sessionsPath: String,
+        // settings file path
+        settingsPath: String,
+        // Path to the request workspace state file
+        workspaceStatePath: String
+      },
+
+      ready() {
+        this.setPaths();
+      },
+
+      setPaths: function() {
+        const meta = new ArcMeta();
+        const sessions = new ArcSessionControl(0);
+        const workspace = new WorkspaceState();
+
+        this.preferencesPath = meta.userSettingsDir;
+        this.settingsPath = meta.settingsFile;
+        this.metaFilePath = meta.metaFile;
+        this.sessionsPath = sessions.dataPath;
+        this.workspaceStatePath = workspace.dataFile;
+      },
+
+      open: function(e) {
+        var target;
+        for (let i = 0, len = e.path.length; i < len; i++) {
+          if (e.path[i].nodeName.toLowerCase() === 'paper-item') {
+            target = e.path[i].dataset.target;
+            break;
+          }
+        }
+
+        if (!target) {
+          throw new Error('Target not found');
+        }
+        var url;
+        switch (target) {
+          case 'preferences': url = this.preferencesPath; break;
+          case 'meta-file': url = this.metaFilePath; break;
+          case 'sessions': url = this.sessionsPath; break;
+          case 'settings': url = this.settingsPath; break;
+          case 'workspace': url = this.workspaceStatePath; break;
+          default: throw new Error('Unknown target');
+        }
+        shell.showItemInFolder(url);
+      }
+    });
+  })();
+  </script>
+</dom-module>
