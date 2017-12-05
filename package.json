@@ -14,7 +14,7 @@
   "scripts": {
     "start": "electron . --arg1 --arg2=\"some value\"",
     "postinstall": "electron-builder install-app-deps",
-    "test": "mocha test/*.test.js",
+    "test": "NODE_ENV=test mocha test/*.test.js",
     "build-l": "npx electron-builder -l",
     "build-w": "npx electron-builder -w",
     "build-m": "npx electron-builder -m"

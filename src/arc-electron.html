@@ -348,12 +348,18 @@
          * A workspace state file.
          * To be set to override default location.
          */
-        workspaceScript: String,
+        workspaceScript: {
+          type: String,
+          reflectToAttribute: true
+        },
         /**
          * The settings file location.
          * To be set to override default location.
          */
-        settingsScript: String,
+        settingsScript: {
+          type: String,
+          reflectToAttribute: true
+        },
         // True when the application has been initialized by the main script
         _appInitialized: Boolean
       },

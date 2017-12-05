@@ -1,36 +1,22 @@
 const path = require('path');
 const Application = require('spectron').Application;
 
-const getElectronPath = () => {
-  if (process.platform === 'win32') {
-    return path.resolve(__dirname, '../dist/win-unpacked/arc.exe');
-  } else if (process.platform === 'darwin') {
-    return path.resolve(__dirname, '../dist/mac/arc.app/Contents/MacOS/arc');
-  }
-  return path.resolve(__dirname, '../dist/linux-unpacked/arc');
-};
+var electronPath = path.join(__dirname, '..', 'node_modules', '.bin', 'electron');
+if (process.platform === 'win32') {
+  electronPath += '.cmd';
+}
+const appPath = path.join(__dirname, '..', 'main.js');
 
-module.exports.getApp = () => {
-  return new Application({
-    path: getElectronPath(),
-    args: ['./main.js'],
+module.exports.getApp = (opts) => {
+  opts = opts || {};
+  var options = {
+    path: electronPath,
     startTimeout: 50000,
     waitTimeout: 50000,
-  });
+    args: [appPath]
+  };
+  if (opts.args) {
+    options.args = options.args.concat(opts.args);
+  }
+  return new Application(options);
 };
-
-// function setupRequire(app) {
-//   const _orig = require;
-//   global.require = function(name) {
-//     switch (name) {
-//       case 'electron':
-//         console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
-//         return app.electron;
-//       default: return _orig(name);
-//     }
-//   };
-// }
-//
-// module.exports.setupApis = (app) => {
-//   setupRequire(app);
-// };

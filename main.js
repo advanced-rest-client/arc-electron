@@ -138,6 +138,12 @@ class Arc {
 const arcApp = new Arc();
 arcApp.attachListeners();
 
+// Unit testing
+if (process.env.NODE_ENV === 'test') {
+  const testInterface = require('./scripts/main/test-interface');
+  testInterface(app, arcApp);
+}
+
 // TODO: // move this to seperate file that is responsible for IPC
 ipc.on('save-dialog', function(event, args) {
   args = args || {};
