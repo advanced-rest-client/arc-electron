@@ -89,7 +89,7 @@
     "cookie-manager": "advanced-rest-client/cookie-manager#^0.1.1",
     "paper-tabs": "PolymerElements/paper-tabs#<2",
     "raml-js-parser": "advanced-rest-client/raml-js-parser#^2.0.5",
-    "raml-json-enhance": "advanced-rest-client/raml-json-enhance#^0.2.9",
+    "raml-json-enhance": "advanced-rest-client/raml-json-enhance#^0.3.0",
     "api-console": "mulesoft/api-console#^4.2.0",
     "rest-apis-list-panel": "advanced-rest-client/rest-apis-list-panel#^0.1.1"
   },
