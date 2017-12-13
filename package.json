@@ -104,7 +104,7 @@
         }
       ],
       "vendor": "Mulesoft",
-      "synopsis": "A developert tool to test a HTTP request"
+      "synopsis": "A developer tool to test a HTTP request"
     },
     "win": {
       "target": [
