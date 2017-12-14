@@ -33,7 +33,7 @@
     "request-panel": "advanced-rest-client/request-panel#^0.2.2",
     "request-saver": "advanced-rest-client/request-saver#^0.1.0",
     "variables-manager": "advanced-rest-client/variables-manager#^0.1.8",
-    "variables-evaluator": "advanced-rest-client/variables-evaluator#^0.1.5",
+    "variables-evaluator": "advanced-rest-client/variables-evaluator#^0.1.14",
     "cookie-exchange": "advanced-rest-client/cookie-exchange#^0.1.1",
     "cookie-jar": "advanced-rest-client/cookie-jar#^0.1.1",
     "chrome-xhr-request": "advanced-rest-client/chrome-xhr-request#^0.1.1",
@@ -89,10 +89,16 @@
     "cookie-manager": "advanced-rest-client/cookie-manager#^0.1.1",
     "paper-tabs": "PolymerElements/paper-tabs#<2",
     "raml-js-parser": "advanced-rest-client/raml-js-parser#^2.0.5",
-    "raml-json-enhance": "advanced-rest-client/raml-json-enhance#^0.3.0",
+    "raml-json-enhance": "advanced-rest-client/raml-json-enhance#^0.3.1",
     "api-console": "mulesoft/api-console#^4.2.0",
     "rest-apis-list-panel": "advanced-rest-client/rest-apis-list-panel#^0.1.1",
-    "variables-drawer-editor": "advanced-rest-client/variables-drawer-editor#^0.1.1"
+    "variables-drawer-editor": "advanced-rest-client/variables-drawer-editor#^0.1.1",
+    "raml-request-panel": "advanced-rest-client/raml-request-panel#^0.5.2",
+    "raml-path-selector": "advanced-rest-client/raml-path-selector#^1.0.34",
+    "raml-path-to-object": "advanced-rest-client/raml-path-to-object#^1.0.40",
+    "raml-documentation-panel": "advanced-rest-client/raml-documentation-panel#^2.0.21",
+    "iron-scroll-target-behavior": "PolymerElements/iron-scroll-target-behavior#<2",
+    "uuid-generator": "advanced-rest-client/uuid-generator#^1.0.4"
   },
   "devDependencies": {
     "web-component-tester": "*",
@@ -101,6 +107,10 @@
   "ignore": [],
   "main": "app/index.html",
   "resolutions": {
-    "fetch": "arc"
+    "fetch": "arc",
+    "raml-request-panel": "^0.5.2",
+    "raml-json-enhance": "^0.3.1",
+    "authorization-panel": "^0.6.3",
+    "oauth-authorization": "^0.2.3"
   }
 }
