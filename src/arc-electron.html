@@ -52,6 +52,7 @@
 <link rel="import" href="../bower_components/raml-json-enhance/raml-json-enhance.html">
 <link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
 <link rel="import" href="../bower_components/rest-apis-list-panel/rest-apis-list-panel.html">
+<link rel="import" href="../bower_components/variables-drawer-editor/variables-drawer-editor.html">
 <link rel="import" href="../styles/app-theme.html">
 <link rel="import" href="request-workspace/request-workspace.html">
 <link rel="import" href="file-export/file-export.html">
@@ -210,6 +211,7 @@
         </div>
       </app-drawer-layout>
     </app-header-layout>
+    <variables-drawer-editor id="environmentsDrawer" with-backdrop></variables-drawer-editor>
     <web-url-input id="webUrlInput" purpose="web-session" on-open-web-url="_openWebUrlHandler"></web-url-input>
     <app-location route="{{route}}" use-hash-as-path></app-location>
     <app-route route="{{route}}" pattern="/:base" data="{{routeData}}"></app-route>
@@ -375,7 +377,8 @@
         'open-drive-selector': 'openDrivePicker',
         'settings-changed': '_settingChanged',
         'open-external-url': '_openExternalHandler',
-        'app-version': '_appVersionRequestHandler'
+        'app-version': '_appVersionRequestHandler',
+        'open-variables-editor': '_variablesOpenRequest'
       },
 
       observers: [
@@ -1108,6 +1111,11 @@
         this.fire('navigate', {
           base: 'cookie-manager'
         });
+      },
+
+      _variablesOpenRequest: function(e) {
+        e.stopPropagation();
+        this.$.environmentsDrawer.opened = true;
       }
     });
   </script>

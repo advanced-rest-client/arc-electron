@@ -91,7 +91,8 @@
     "raml-js-parser": "advanced-rest-client/raml-js-parser#^2.0.5",
     "raml-json-enhance": "advanced-rest-client/raml-json-enhance#^0.3.0",
     "api-console": "mulesoft/api-console#^4.2.0",
-    "rest-apis-list-panel": "advanced-rest-client/rest-apis-list-panel#^0.1.1"
+    "rest-apis-list-panel": "advanced-rest-client/rest-apis-list-panel#^0.1.1",
+    "variables-drawer-editor": "advanced-rest-client/variables-drawer-editor#^0.1.1"
   },
   "devDependencies": {
     "web-component-tester": "*",
