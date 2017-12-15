@@ -1,3 +1,9 @@
 - 18-11-2017 - New: Added Task manager to display memory and CPU consumption. Access it via View > Developer > Task Manager
 - 21-11-2017 - New: Added support for RAML (RESTful API Modeling Language) - Drag and drop a RAML zip file (or RAML file if it's a single file definition) to read the documentation for the API and make test requests to API endpoints by the request panel powered by RAML data. This feature uses Mulesoft's API console to generate the documentation.
 - 3-12-2017 - New: Adding information about paths to settings files to the settings panel
+- 14-12-2017 - Updated headers status bar to include labels with description of icons.
+-- Added header values autofill suggestions
+-- Updated raw body editor to add linter for JSON type<
+-- Variables editor now is a part of the request panel general UI. It will be removed from the request panel in the future.
+-- Added option to the Raw JSON input field to format or minify JSON
+-- Clicking on a URL in the response will update currently opened request URL value
