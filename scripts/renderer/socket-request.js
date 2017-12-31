@@ -25,6 +25,8 @@ class SocketRequest extends EventEmitter {
    * @param {Object} opts Optional. Request configuration options
    * - `timeout` {Number} Request timeout. Default to 0 (no timeout)
    * - `followRedirects` {Boolean} Fllow request redirects. Default `true`.
+   * - `hosts` {Array} List of host rules to apply to the connection. Each
+   * rule must contain `from` and `to` properties to be applied.
    */
   constructor(request, opts) {
     super();
@@ -286,7 +288,9 @@ class SocketRequest extends EventEmitter {
     if (defaultPorts.indexOf(port) === -1) {
       hostValue += ':' + port;
     }
-    headers.push('Host: ' + hostValue);
+    if (this._hostRequired()) {
+      headers.push('Host: ' + hostValue);
+    }
     var str = headers.join('\r\n');
     if (this.arcRequest.headers) {
       str += '\r\n';
@@ -310,6 +314,20 @@ class SocketRequest extends EventEmitter {
       });
       reader.readAsArrayBuffer(body);
     });
+  }
+  /**
+   * Tests if current connection is required to add `host` header.
+   * It returns `false` only if `host` header has been already provided.
+   *
+   * @return {Boolean} True when the `host` header should be added to the
+   * headers list.
+   */
+  _hostRequired() {
+    var headers = this.arcRequest.headers;
+    if (typeof headers !== 'string') {
+      return true;
+    }
+    return headers.toLowerCase().indexOf('host:') === -1;
   }
   /**
    * Reads a port number for a connection.
