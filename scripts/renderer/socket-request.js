@@ -32,16 +32,19 @@ class SocketRequest extends EventEmitter {
     super();
     opts = opts || {};
     this.arcRequest = Object.assign({}, request);
-    this.uri = request.url;
     this.aborted = false;
     this.stats = {};
     this.state = 0;
     this.socket = undefined;
     this._timeout = opts.timeout || 0;
     this.followRedirects = opts.followRedirects === undefined ? true : opts.followRedirects;
+    this.hosts = opts.hosts;
+    this.uri = request.url;
+    this.hostHeader = this._getHostHeader(request.url);
   }
 
   set uri(value) {
+    value = this.applyHosts(value);
     this.__uri = url.parse(value);
   }
 
@@ -274,9 +277,6 @@ class SocketRequest extends EventEmitter {
     var path = this.uri.pathname;
     var search = this.uri.search;
     var hash = this.uri.hash;
-    var port = this._getPort(this.uri.port, this.uri.protocol);
-    var hostValue = this.uri.hostname;
-
     if (search) {
       path += search;
     }
@@ -284,12 +284,8 @@ class SocketRequest extends EventEmitter {
       path += hash;
     }
     headers.push(this.arcRequest.method + ' ' + path + ' HTTP/1.1');
-    var defaultPorts = [80, 443];
-    if (defaultPorts.indexOf(port) === -1) {
-      hostValue += ':' + port;
-    }
     if (this._hostRequired()) {
-      headers.push('Host: ' + hostValue);
+      headers.push('Host: ' + this.hostHeader);
     }
     var str = headers.join('\r\n');
     if (this.arcRequest.headers) {
@@ -1405,6 +1401,58 @@ class SocketRequest extends EventEmitter {
     var error = new Error(message);
     this.emit('error', error);
     this._cleanUp();
+  }
+  /**
+   * Applies `hosts` rules to an URL.
+   *
+   * @param {String} value An URL to apply the rules to
+   * @return {String} Evaluated URL with hosts rules.
+   */
+  applyHosts(value) {
+    var rules = this.hosts;
+    if (!rules || !rules.length) {
+      return value;
+    }
+    for (let i = 0; i < rules.length; i++) {
+      let rule = rules[i];
+      let result = this._evaluateRule(value, rule);
+      if (result) {
+        return result;
+      }
+    }
+    return value;
+  }
+
+  _evaluateRule(url, rule) {
+    if (!rule.from || !rule.to) {
+      return;
+    }
+    var re = this._createRuleRe(rule.from);
+    if (!re.test(url)) {
+      return;
+    }
+    return url.replace(re, rule.to);
+  }
+
+  _createRuleRe(input) {
+    input = input.replace(/\*/g, '(.*)');
+    return new RegExp(input, 'gi');
+  }
+  /**
+   * Creates a value for host header.
+   *
+   * @param {String} value An url to get the information from.
+   * @return {String} Value of the host header
+   */
+  _getHostHeader(value) {
+    var uri = url.parse(value);
+    var hostValue = uri.hostname;
+    var defaultPorts = [80, 443];
+    var port = this._getPort(uri.port, uri.protocol);
+    if (defaultPorts.indexOf(port) === -1) {
+      hostValue += ':' + port;
+    }
+    return hostValue;
   }
 
   getCodeMessage(code) {
