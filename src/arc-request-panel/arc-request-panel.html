@@ -90,6 +90,12 @@ the License.
         '_proxyRequestChanged(proxyRequest.*)',
         '_projectIdChanged(projectId)'
       ],
+      /**
+       * Allows to perform the same action as pressing on the "send" button
+       */
+      sendPanel: function() {
+        this.$$('request-panel').send();
+      },
 
       _getTabId: function(route) {
         var tab = route.tab;

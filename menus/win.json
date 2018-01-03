@@ -156,6 +156,12 @@
   }, {
     "label": "Request",
     "submenu": [{
+      "label": "Run current tab",
+      "command": "request:send-current",
+      "accelerator": "CommandOrControl+Shift+r"
+    }, {
+      "type": "separator"
+    }, {
       "label": "Web session",
       "submenu": [{
           "label": "Login to a web service",

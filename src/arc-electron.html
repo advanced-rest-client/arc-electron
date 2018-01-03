@@ -1001,8 +1001,7 @@
         if (this.routeData.base !== 'request') {
           return;
         }
-        var workspace = this.$$('request-workspace');
-        workspace.saveOpened(opts);
+        this.$$('request-workspace').saveOpened(opts);
       },
       /**
        * Opens new tab in the request workspace.
@@ -1014,6 +1013,15 @@
         var workspace = this.$$('request-workspace');
         let index = workspace.appendPanel();
         workspace.selected = index;
+      },
+      /**
+       * Sends currently opened request.
+       */
+      sendCurrentTab: function() {
+        if (this.routeData.base !== 'request') {
+          return;
+        }
+        this.$$('request-workspace').sendCurrent();
       },
 
       _googleOauthTokenRequested: function(e) {

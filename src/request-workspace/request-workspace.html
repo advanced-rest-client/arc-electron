@@ -458,6 +458,13 @@ the License.
         this.debounce('storing-workspace-data', function() {
           this.state.updateRequestsSate(this.activeRequests);
         }, 100);
+      },
+      /**
+       * Forces to send currently selected tab.
+       */
+      sendCurrent: function() {
+        var panel = this._getPanel(this.selected);
+        panel.sendPanel();
       }
     });
   </script>
