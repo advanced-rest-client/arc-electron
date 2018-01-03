@@ -29,6 +29,7 @@ class ArcInit {
     ipc.on('download-progress', updateHandler);
     ipc.on('update-downloaded', updateHandler);
     ipc.on('command', this.commandHandler.bind(this));
+    ipc.on('request-action', this.execRequestAction.bind(this));
   }
 
   initApp() {
@@ -101,6 +102,30 @@ class ArcInit {
       case 'login-external-webservice': app.openWebUrl(); break;
       case 'open-cookie-manager': app.openCookieManager(); break;
       case 'open-hosts-editor': app.openHostRules(); break;
+    }
+  }
+  /**
+   * Handles action performed in main thread (menu action) related to
+   * a request.
+   *
+   * @param {String} action Action name to perform.
+   */
+  execRequestAction(event, action) {
+    var app = this.app;
+    switch (action) {
+      case 'save':
+        app.saveOpened({
+          source: 'shortcut'
+        });
+      break;
+      case 'save-as':
+        app.saveOpened();
+      break;
+      case 'new-tab':
+        app.newRequestTab();
+      break;
+      default:
+        throw new Error('Unrecognized action ' + action);
     }
   }
 }

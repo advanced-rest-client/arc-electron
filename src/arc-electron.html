@@ -410,7 +410,6 @@
         this._refreshLayout();
         const {CookieBridge} = require('./scripts/renderer/cookie-brindge');
         this.cb = new CookieBridge(require('electron').ipcRenderer);
-        this._observeMainEvents();
         this._appInitialized = true;
         this.initRouting();
       },
@@ -682,16 +681,6 @@
       notifyError: function(message) {
         this.$.errorToast.text = message;
         this.$.errorToast.opened = true;
-      },
-
-      // Starts listening for main script events.
-      _observeMainEvents: function() {
-        if (!this.__ueh) {
-          this.__rah = this._requestActionHandler.bind(this);
-        }
-        const ipc = require('electron').ipcRenderer;
-        ipc.on('request-action', this.__rah);
-        this.cb.listen();
       },
 
       _unobserveMainEvents: function() {
@@ -1002,30 +991,29 @@
         e.preventDefault();
       },
       /**
-       * Handles action performed in main thread (menu action) related to
-       * a request.
+       * Saves currently opened requests.
        *
-       * @param {String} action Action name to perform.
+       * @param {?Object} opts Optional options object. It can contain `source`
+       * property with value of `shortcut` to indicate that the shortcut was
+       * used and the app can automatically save current request
        */
-      _requestActionHandler: function(event, action) {
+      saveOpened: function(opts) {
         if (this.routeData.base !== 'request') {
           return;
         }
         var workspace = this.$$('request-workspace');
-        switch (action) {
-          case 'save':
-            workspace.saveOpened({
-              source: 'shortcut'
-            });
-          break;
-          case 'save-as':
-            workspace.saveOpened();
-          break;
-          case 'new-tab':
-            let index = workspace.appendPanel();
-            workspace.selected = index;
-          break;
+        workspace.saveOpened(opts);
+      },
+      /**
+       * Opens new tab in the request workspace.
+       */
+      newRequestTab: function() {
+        if (this.routeData.base !== 'request') {
+          return;
         }
+        var workspace = this.$$('request-workspace');
+        let index = workspace.appendPanel();
+        workspace.selected = index;
       },
 
       _googleOauthTokenRequested: function(e) {
