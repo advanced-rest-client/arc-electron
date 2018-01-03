@@ -7,3 +7,4 @@
 -- Variables editor now is a part of the request panel general UI. It will be removed from the request panel in the future.
 -- Added option to the Raw JSON input field to format or minify JSON
 -- Clicking on a URL in the response will update currently opened request URL value
+- 3-01-2018 - Added support for internal hosts rules
