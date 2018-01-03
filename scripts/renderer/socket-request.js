@@ -162,12 +162,12 @@ class SocketRequest extends EventEmitter {
   /**
    * Sends a data to a socket.
    *
-   * @param {ArrayBuffer} message HTTP message to send
+   * @param {Buffer} message HTTP message to send
    * @return {[type]} [description]
    */
-  writeMessage(message) {
-    const buffer = Buffer.from(message);
-    this.arcRequest.messageSent = message;
+  writeMessage(buffer) {
+    // const buffer = Buffer.from(message);
+    this.arcRequest.messageSent = buffer;
     this.stats.messageSendStart = performance.now();
     return new Promise((resolve) => {
       this.socket.write(buffer, () => {
@@ -269,8 +269,8 @@ class SocketRequest extends EventEmitter {
   /**
    * Prepares a full HTTP message body
    *
-   * @param {?ArrayBuffer} buffer Optional, body `ArrayBuffer`
-   * @return {Promise} A promise resolved to an `ArrayBuffer` of a HTTP message
+   * @param {?Buffer} buffer Optional, body `Buffer`
+   * @return {Buffer} `Buffer` of a HTTP message
    */
   _prepareMessage(buffer) {
     var headers = [];
@@ -292,24 +292,17 @@ class SocketRequest extends EventEmitter {
       str += '\r\n';
       str += this._normalizeString(this.arcRequest.headers);
     }
-    var startbuffer = this.stringToArrayBuffer(str);
-    var endBuffer = new Uint8Array([13, 10, 13, 10]);
-    return new Promise((resolve, reject) => {
-      let body;
-      if (buffer) {
-        body = new Blob([startbuffer, endBuffer, buffer]);
-      } else {
-        body = new Blob([startbuffer, endBuffer]);
-      }
-      var reader = new FileReader();
-      reader.addEventListener('loadend', (e) => {
-        resolve(e.target.result);
-      });
-      reader.addEventListener('error', (e) => {
-        reject(e.message);
-      });
-      reader.readAsArrayBuffer(body);
-    });
+    var startbuffer = Buffer.from(str, 'utf8');
+    var endBuffer = Buffer.from(new Uint8Array([13, 10, 13, 10]));
+    var body;
+    var sum = startbuffer.length + endBuffer.length;
+    if (buffer) {
+      sum += buffer.length;
+      body = Buffer.concat([startbuffer, endBuffer, buffer], sum);
+    } else {
+      body = Buffer.concat([startbuffer, endBuffer], sum);
+    }
+    return body;
   }
   /**
    * Tests if current connection is required to add `host` header.
@@ -349,7 +342,7 @@ class SocketRequest extends EventEmitter {
    * Tranforms a payload message to an `ArrayBuffer`
    *
    * @param {String|Blob|ArrayBuffer|FormData} payload A payload message
-   * @return {Promise} A promise resolved to a buffer.
+   * @return {Promise} A promise resolved to a `Buffer`.
    */
   _payloadMessage(payload) {
     if (!payload) {
@@ -357,11 +350,12 @@ class SocketRequest extends EventEmitter {
     }
     if (typeof payload === 'string') {
       payload = this._normalizeString(payload);
-      var encoder = new TextEncoder();
-      var encoded = encoder.encode(payload);
-      return Promise.resolve(encoded.buffer);
+      return Promise.resolve(Buffer.from(payload, 'utf8'));
     }
     if (payload instanceof ArrayBuffer) {
+      return Promise.resolve(Buffer.from(payload));
+    }
+    if (payload instanceof Buffer) {
       return Promise.resolve(payload);
     }
     if (payload instanceof FormData) {
@@ -416,13 +410,13 @@ class SocketRequest extends EventEmitter {
    * Transfers blob to `ArrayBuffer`.
    *
    * @param {Blob} blob A blob object to transform
-   * @return {Promise} A promise resolved to an `ArrayBuffer`
+   * @return {Promise} A promise resolved to a `Buffer`
    */
   _blob2buffer(blob) {
     return new Promise((resolve, reject) => {
       var reader = new FileReader();
       reader.addEventListener('loadend', (e) => {
-        resolve(e.target.result);
+        resolve(Buffer.from(e.target.result));
       });
       reader.addEventListener('error', (e) => {
         reject(e.message);
@@ -513,7 +507,7 @@ class SocketRequest extends EventEmitter {
     if (this.arcRequest.method === 'GET') {
       return;
     }
-    var size = buffer ? buffer.byteLength : 0;
+    var size = buffer ? buffer.length : 0;
     var headers = this.arcRequest.headers;
     // HEAD must set content length header even if it's not carreing payload.
     if (headers) {
@@ -546,23 +540,20 @@ class SocketRequest extends EventEmitter {
       let b = buff.slice(0);
       buff = b.buffer;
     }
-    var decoder = new TextDecoder('utf-8');
-    var view = new DataView(buff);
-    return decoder.decode(view);
+    buff = Buffer.from(buff);
+    return buff.toString();
   }
   /**
    * Convert a string to an ArrayBuffer.
    * @param {string} string The string to convert.
-   * @return {ArrayBuffer} An array buffer whose bytes correspond to the string.
-   * @returns {ArrayBuffer}
+   * @return {Buffer} An array buffer whose bytes correspond to the string.
+   * @returns {Buffer}
    */
   stringToArrayBuffer(string) {
     if (this.aborted) {
       return new ArrayBuffer();
     }
-    var encoder = new TextEncoder();
-    var encoded = encoder.encode(string);
-    return encoded.buffer;
+    return Buffer.from(string, 'utf8');
   }
   /**
    * Add event listeners to existing socket.
