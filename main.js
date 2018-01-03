@@ -113,6 +113,7 @@ class Arc {
       case 'find':
       case 'login-external-webservice':
       case 'open-cookie-manager':
+      case 'open-hosts-editor':
         win.webContents.send(windowCommand, action);
       break;
       case 'new-window':

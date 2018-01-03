@@ -100,6 +100,7 @@ class ArcInit {
       case 'open-messages': app.openInfoCenter(); break;
       case 'login-external-webservice': app.openWebUrl(); break;
       case 'open-cookie-manager': app.openCookieManager(); break;
+      case 'open-hosts-editor': app.openHostRules(); break;
     }
   }
 }
