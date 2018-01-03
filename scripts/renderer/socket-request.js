@@ -533,6 +533,9 @@ class SocketRequest extends EventEmitter {
     if (this.aborted) {
       return '';
     }
+    if (buff instanceof Buffer) {
+      return buff.toString();
+    }
     if (!!buff.buffer) {
       // Not a ArrayBuffer, need and instance of AB
       // It can't just get buff.buffer because it will use original buffer if
