@@ -10,16 +10,16 @@
         "command": "application:new-window",
         "accelerator": "CommandOrControl+n"
       }, {
-          "label": "Open saved request",
-          "command": "application:open-saved",
-          "accelerator": "CommandOrControl+o"
+        "label": "Open saved request",
+        "command": "application:open-saved",
+        "accelerator": "CommandOrControl+o"
       }, {
-          "label": "Open history",
-          "command": "application:open-history",
-          "accelerator": "CommandOrControl+h"
+        "label": "Open history",
+        "command": "application:open-history",
+        "accelerator": "CommandOrControl+h"
       }, {
-          "label": "Open from Google Drive",
-          "command": "application:open-drive"
+        "label": "Open from Google Drive",
+        "command": "application:open-drive"
       }, {
         "type": "separator"
       },
@@ -113,7 +113,9 @@
           }
         ]
       },
-      {"type": "separator"},
+      {
+        "type": "separator"
+      },
       {
         "role": "resetzoom"
       },
@@ -123,12 +125,16 @@
       {
         "role": "zoomout"
       },
-      {"role": "minimize"},
-      {"type": "separator"},
       {
-          "label": "Find",
-          "command": "application:find",
-          "accelerator": "CommandOrControl+f"
+        "role": "minimize"
+      },
+      {
+        "type": "separator"
+      },
+      {
+        "label": "Find",
+        "command": "application:find",
+        "accelerator": "CommandOrControl+f"
       }
     ]
   }, {
@@ -148,18 +154,28 @@
       }
     ]
   }, {
-    "label": "Web session",
+    "label": "Request",
     "submenu": [{
-      "label": "Login to a web service",
-      "command": "application:login-external-webservice"
+      "label": "Web session",
+      "submenu": [{
+          "label": "Login to a web service",
+          "command": "application:login-external-webservice"
+        },
+        {
+          "label": "Cookie manager",
+          "command": "application:open-cookie-manager"
+        },
+        {
+          "type": "separator"
+        },
+        {
+          "label": "Learn more",
+          "command": "application:web-session-help"
+        }
+      ]
     }, {
-      "label": "Cookie manager",
-      "command": "application:open-cookie-manager"
-    }, {
-      "type": "separator"
-    }, {
-      "label": "Learn more",
-      "command": "application:web-session-help"
+      "label": "Hosts",
+      "command": "application:open-hosts-editor"
     }]
   }, {
     "label": "Help",
