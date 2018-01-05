@@ -40,6 +40,14 @@ class SocketRequest extends EventEmitter {
     this.followRedirects = opts.followRedirects === undefined ? true : opts.followRedirects;
     this.hosts = opts.hosts;
     this.uri = request.url;
+    /**
+     * Host header can be different than registered URL because of `hosts` rules.
+     * If a rule changes host value of the URL the original URL's host value
+     * is used when generating the request and not overriden one.
+     * This way virual hosts can be tested using hosts.
+     *
+     * @type {String}
+     */
     this.hostHeader = this._getHostHeader(request.url);
   }
 
@@ -339,7 +347,7 @@ class SocketRequest extends EventEmitter {
   }
 
   /**
-   * Tranforms a payload message to an `ArrayBuffer`
+   * Tranforms a payload message into `Buffer`
    *
    * @param {String|Blob|ArrayBuffer|FormData} payload A payload message
    * @return {Promise} A promise resolved to a `Buffer`.
@@ -509,7 +517,7 @@ class SocketRequest extends EventEmitter {
     }
     var size = buffer ? buffer.length : 0;
     var headers = this.arcRequest.headers;
-    // HEAD must set content length header even if it's not carreing payload.
+    // HEAD must set content length header even if it's not carrying payload.
     if (headers) {
       if (headers.toLowerCase().indexOf('content-length') === -1) {
         let header = 'Content-Length';
