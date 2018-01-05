@@ -1152,14 +1152,11 @@ class SocketRequest extends EventEmitter {
     if (this.aborted) {
       return {};
     }
-    if (!str || str.trim() === '') {
-      return {};
-    }
-    if (typeof str !== 'string') {
+    if (!str || typeof str !== 'string' || str.trim() === '') {
       return {};
     }
     const result = {};
-    const headers = str.split(/\n(?=[^ \t]+)/gim);
+    const headers = str.split(/\n(?=[^ \t]+)/gm);
 
     for (let i = 0, len = headers.length; i < len; i++) {
       let line = headers[i].trim();
