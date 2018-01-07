@@ -22,11 +22,13 @@
   "main": "main.js",
   "devDependencies": {
     "chai": "^4.1.2",
+    "chance": "^1.0.13",
     "electron": "~1.7.8",
     "electron-builder": "^19.47.1",
     "mocha": "^4.0.1",
     "node-fetch": "^1.7.3",
-    "spectron": "^3.7.2"
+    "spectron": "^3.7.2",
+    "ssl-root-cas": "^1.2.4"
   },
   "dependencies": {
     "electron-log": "^2.2.9",
