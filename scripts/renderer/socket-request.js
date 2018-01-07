@@ -17,6 +17,9 @@ const url = require('url');
 const zlib = require('zlib');
 const EventEmitter = require('events');
 
+const nlBuffer = Buffer.from([13, 10]);
+const nlNlBuffer = Buffer.from([13, 10, 13, 10]);
+
 class SocketRequest extends EventEmitter {
   /**
    * Constructs the request from ARC's request object
@@ -580,6 +583,7 @@ class SocketRequest extends EventEmitter {
         this.emit('firstbyte');
         received = true;
       }
+      data = Buffer.from(data);
       try {
         this._processSocketMessage(data);
       } catch (e) {
@@ -838,6 +842,8 @@ class SocketRequest extends EventEmitter {
    * Read status line from the response.
    * This function will set `status` and `statusMessage` fields
    * and then will set `state` to HEADERS.
+   *
+   * @param {Buffer} data Received data
    */
   _processStatus(data) {
     if (this.aborted) {
@@ -853,21 +859,9 @@ class SocketRequest extends EventEmitter {
     }
 
     console.log('Processing status');
-    var index = this.indexOfSubarray(data, [13, 10]);
-    var padding = 2;
-    if (index === -1) {
-      index = this.indexOfSubarray(data, [10]);
-      if (index === -1) {
-        this._errorRequest({
-          'message': 'Unknown server response.'
-        });
-        return;
-      }
-      padding = 1;
-    }
-    var statusArray = data.subarray(0, index);
-    data = data.subarray(index + padding);
-    var statusLine = this.arrayBufferToString(statusArray);
+    var index = data.indexOf(nlBuffer);
+    var statusLine = data.slice(0, index).toString();
+    data = data.slice(index + 2);
     statusLine = statusLine.replace(/HTTP\/\d(\.\d)?\s/, '');
     var delimPos = statusLine.indexOf(' ');
     var status;
@@ -894,6 +888,8 @@ class SocketRequest extends EventEmitter {
 
   /**
    * Read headers from the received data.
+   *
+   * @param {Buffer} data Received data
    */
   _processHeaders(data) {
     if (this.aborted) {
@@ -905,11 +901,11 @@ class SocketRequest extends EventEmitter {
     }
     console.log('Processing headers');
     // Looking for end of headers section
-    var index = this.indexOfSubarray(data, [13, 10, 13, 10]);
+    var index = data.indexOf(nlNlBuffer);
     var padding = 4;
     if (index === -1) {
       // It can also be 2x ASCII 10
-      let _index = this.indexOfSubarray(data, [10, 10]);
+      let _index = data.indexOf(nlBuffer);
       if (_index !== -1) {
         index = _index;
         padding = 2;
@@ -917,29 +913,25 @@ class SocketRequest extends EventEmitter {
     }
 
     // https://github.com/jarrodek/socket-fetch/issues/3
-    var enterIndex = this.indexOfSubarray(data, [13, 10]);
+    var enterIndex = data.indexOf(nlBuffer);
     if (index === -1 && enterIndex !== 0) {
       // end in next chunk
       // this._connection.headers += this.arrayBufferToString(data);
       if (!this._rawHeaders) {
         this._rawHeaders = data;
       } else {
-        let sum = new Int8Array(this._rawHeaders.length + data.length);
-        sum.set(this._rawHeaders);
-        sum.set(data, this._rawHeaders.length);
-        this._rawHeaders = sum;
+        let sum = this._rawHeaders.length + data.length;
+        this._rawHeaders = Buffer.concat([this._rawHeaders, data], sum);
       }
       return;
     }
     if (enterIndex !== 0) {
-      let headersArray = data.subarray(0, index);
+      let headersArray = data.slice(0, index);
       if (!this._rawHeaders) {
         this._rawHeaders = headersArray;
       } else {
-        let sum = new Int8Array(this._rawHeaders.length + headersArray.length);
-        sum.set(this._rawHeaders);
-        sum.set(headersArray, this._rawHeaders.length);
-        this._rawHeaders = sum;
+        let sum = this._rawHeaders.length + headersArray.length;
+        this._rawHeaders = Buffer.concat([this._rawHeaders, headersArray], sum);
       }
     }
     this._parseHeaders(this._rawHeaders);
@@ -947,7 +939,7 @@ class SocketRequest extends EventEmitter {
     this.state = SocketRequest.BODY;
     var start = index === -1 ? 0 : index;
     var move = (enterIndex === 0) ? 2 : padding;
-    data = data.subarray(start + move);
+    data = data.slice(start + move);
     return this._postHeaders(data);
   }
   // Check the response headers and end the request if nescesary.
@@ -986,7 +978,7 @@ class SocketRequest extends EventEmitter {
   _parseHeaders(array) {
     var raw = '';
     if (array) {
-      raw = this.arrayBufferToString(array);
+      raw = array.toString();
     }
     this._response.headersRaw = raw;
     var list = this.headersToObject(raw);
@@ -1015,7 +1007,7 @@ class SocketRequest extends EventEmitter {
   /**
    * Chunked body must be properly processed
    *
-   * @param {Uint8Array} data A data to process
+   * @param {Buffer} data A data to process
    */
   _processBody(data) {
     if (this.aborted) {
@@ -1024,49 +1016,36 @@ class SocketRequest extends EventEmitter {
     if (this._chunked) {
       return this._processBodyChunked(data);
     }
-    if (!this._rawBody) {
-      this._rawBody = new Uint8Array(data.length);
-      this._rawBody.set(data);
-      if (this._rawBody.length >= this._contentLength) {
-        this._reportResponse();
-      }
-    } else {
-      let len = this._rawBody.length;
-      let sumLength = len + data.length;
-      let newArray = new Uint8Array(sumLength);
-      newArray.set(this._rawBody);
-      newArray.set(data, len);
-      this._rawBody = newArray;
-      if (newArray.length >= this._contentLength) {
-        this._reportResponse();
-      }
-    }
-  }
 
-  __combineInt8Array(existing, newArray) {
-    if (!existing) {
-      return newArray;
+    if (!this._rawBody) {
+      this._rawBody = data;
+      if (this._rawBody.length >= this._contentLength) {
+        return this._reportResponse();
+      }
+      return;
     }
-    let sum = new Int8Array(existing.length + newArray.length);
-    sum.set(existing);
-    sum.set(newArray, existing.length);
-    return sum;
+    let sum = this._rawBody.length + data.length;
+    this._rawBody = Buffer.concat([this._rawBody, data], sum);
+    if (this._rawBody.length >= this._contentLength) {
+      return this._reportResponse();
+    }
   }
 
   _processBodyChunked(data) {
     if (this.__bodyChunk) {
-      data = this.__combineInt8Array(this.__bodyChunk, data);
+      data = Buffer.concat([this.__bodyChunk, data], this.__bodyChunk.length + data.length);
       this.__bodyChunk = undefined;
     }
     while (true) {
-      if (this._chunkSize === 0 && this.indexOfSubarray(data, [13, 10, 13, 10]) === 0) {
+      if (this._chunkSize === 0 && data.indexOf(nlNlBuffer) === 0) {
         this._reportResponse();
         return;
       }
       if (!this._chunkSize) {
         data = this.readChunkSize(data);
         if (!this._chunkSize && this._chunkSize !== 0) {
-          this.__bodyChunk = this.__combineInt8Array(this.__bodyChunk, data);
+          let sum = this.__bodyChunk.length + data.length;
+          this.__bodyChunk = Buffer.concat([this.__bodyChunk, data], sum);
           // It may happen that node's buffer cuts the data
           // just before the chunk size.
           // It should proceed it in next portion of the data.
@@ -1078,14 +1057,12 @@ class SocketRequest extends EventEmitter {
         }
       }
       let size = Math.min(this._chunkSize, data.length);
+      let sliced = data.slice(0, size);
       if (!this._rawBody) {
-        this._rawBody = new Uint8Array(data.subarray(0, size));
+        this._rawBody = sliced;
       } else {
-        let bodySize = size + this._rawBody.length;
-        let body = new Uint8Array(bodySize);
-        body.set(this._rawBody);
-        body.set(data.subarray(0, size), this._rawBody.length);
-        this._rawBody = body;
+        let sum = size + this._rawBody.length;
+        this._rawBody = Buffer.concat([this._rawBody, sliced], sum);
       }
 
       this._chunkSize -= size;
@@ -1093,7 +1070,7 @@ class SocketRequest extends EventEmitter {
         // console.warn('Next chunk will start with CRLF!');
         return;
       }
-      data = data.subarray(size + 2); // + CR
+      data = data.slice(size + 2); // + CR
       if (data.length === 0) {
         // console.log('No more data here. Waiting for new chunk');
         return;
@@ -1104,43 +1081,39 @@ class SocketRequest extends EventEmitter {
    * If response's Transfer-Encoding is 'chunked' read until next CR.
    * Everything before it is a chunk size.
    *
-   * @param {Uint8Array} array
-   * @returns {Object}
-   * - `array` {Uint8Array} Truncated response without chunk size line
-   * - `size` {Number|undefined} New size of chunk.
+   * @param {Buffer} array
+   * @returns {Buffer}
    */
   readChunkSize(array) {
     if (this.aborted) {
       return;
     }
-    var index = this.indexOfSubarray(array, [13, 10]);
+    var index = array.indexOf(nlBuffer);
     if (index === -1) {
       // not found in this portion of data.
       return array;
     }
     if (index === 0) {
-      // Node's buffer cut CRLF after the end of chunk data, without last CLCR,
+      // Node's buffer cuts CRLF after the end of chunk data, without last CLCR,
       // here's to fix it.
       // It can be either new line from the last chunk or end of the message where
       // the rest of the array is [13, 10, 48, 13, 10, 13, 10]
-      if (this.indexOfSubarray(array, [13, 10, 13, 10]) === 0) {
+      if (array.indexOf(nlNlBuffer) === 0) {
         this._chunkSize = 0;
-        return new Uint8Array();
+        return Buffer.alloc(0);
       } else {
-        array = array.subarray(index + 2);
-        index = this.indexOfSubarray(array, [13, 10]);
+        array = array.slice(index + 2);
+        index = array.indexOf(nlBuffer);
       }
     }
-    // this.log('Size index: ', index);
-    var sizeArray = array.subarray(0, index);
-    var sizeHex = this.arrayBufferToString(sizeArray);
-    var chunkSize = parseInt(sizeHex, 16);
-    if (!sizeHex || sizeHex === '' || chunkSize !== chunkSize) {
+    // console.log('Size index: ', index);
+    var chunkSize = parseInt(array.slice(0, index).toString(), 16);
+    if (chunkSize !== chunkSize) {
       this._chunkSize = undefined;
-      return array.subarray(index + 2);
+      return array.slice(index + 2);
     }
     this._chunkSize = chunkSize;
-    return array.subarray(index + 2);
+    return array.slice(index + 2);
   }
   /**
    * Parse headers string and receive an object.
@@ -1174,36 +1147,6 @@ class SocketRequest extends EventEmitter {
         result[name] += '; ' + value;
       } else {
         result[name] = value;
-      }
-    }
-    return result;
-  }
-  /**
-   * @return Returns an index of first occurance of subArray sequence in inputArray or -1 if not
-   * found.
-   */
-  indexOfSubarray(inputArray, subArray) {
-    if (this.aborted) {
-      return -1;
-    }
-    var result = -1;
-    var len = inputArray.length;
-    var subLen = subArray.length;
-    for (let i = 0; i < len; ++i) {
-      if (result !== -1) {
-        return result;
-      }
-      if (inputArray[i] !== subArray[0]) {
-        continue;
-      }
-      result = i;
-      for (let j = 1; j < subLen; j++) {
-        if (inputArray[i + j] === subArray[j]) {
-          result = i;
-        } else {
-          result = -1;
-          break;
-        }
       }
     }
     return result;
@@ -1275,7 +1218,11 @@ class SocketRequest extends EventEmitter {
     }
     return result;
   }
-
+  /**
+   * Decompresses received body if `content-encoding` header is set.
+   *
+   * @return {Promise} Promise resilved to parsed body
+   */
   _decompress() {
     if (this.aborted) {
       return Promise.resolve();
