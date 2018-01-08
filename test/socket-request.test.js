@@ -48,7 +48,7 @@ describe('Socket request basics', function() {
   }];
 
   const opts = [{
-    timeout: 1234,
+    timeout: 50000,
     followRedirects: false,
     hosts: [{
       from: 'domain.com',
@@ -203,12 +203,11 @@ describe('Socket request basics', function() {
       request = new SocketRequest(requests[0], opts[0]);
     });
 
-    afterEach(function(done) {
+    afterEach(function() {
       if (createdClient) {
-        createdClient.destroy(null, done);
+        createdClient.end();
+        createdClient.destroy();
         createdClient = undefined;
-      } else {
-        done();
       }
     });
 
@@ -404,12 +403,11 @@ describe('Socket request basics', function() {
       });
     });
 
-    afterEach(function(done) {
+    afterEach(function() {
       if (createdClient) {
-        createdClient.destroy(null, done);
+        createdClient.end();
+        createdClient.destroy();
         createdClient = undefined;
-      } else {
-        done();
       }
     });
 
