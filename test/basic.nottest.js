@@ -1,6 +1,11 @@
 const bootstrap = require('./test-bootstrap.js');
 const assert = require('assert');
 
+/**
+ * This test has been suspended because of different exectution
+ * on different environemnts.
+ * TODO: check what is happening.
+ */
 describe('Basic', function() {
   describe('application launch', function() {
     this.timeout(10000);

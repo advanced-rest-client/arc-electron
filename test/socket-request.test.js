@@ -12,6 +12,7 @@ global.Request = require('node-fetch').Request;
 global.Response = require('node-fetch').Response;
 
 describe('Socket request basics', function() {
+  this.timeout(10000);
   const httpPort = 8123;
   const sslPort = 8124;
 
