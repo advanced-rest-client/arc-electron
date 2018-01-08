@@ -12,6 +12,7 @@ global.Request = require('node-fetch').Request;
 global.Response = require('node-fetch').Response;
 
 describe('Socket request basics', function() {
+  this.timeout(10000);
   const httpPort = 8123;
   const sslPort = 8124;
 
@@ -385,6 +386,8 @@ describe('Socket request basics', function() {
     var message;
     var request;
     var createdClient;
+
+    this.timeout(20000);
 
     before(function() {
       var str = 'GET /api/endpoint?query=param HTTP/1.1\r\n';
