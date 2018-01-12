@@ -8,3 +8,4 @@
 -- Added option to the Raw JSON input field to format or minify JSON
 -- Clicking on a URL in the response will update currently opened request URL value
 - 3-01-2018 - Added support for internal hosts rules
+- 12-01-2018 - Added integration with Mulesoft Exchange to search for RAML assets

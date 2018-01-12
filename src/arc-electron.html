@@ -55,6 +55,7 @@
 <link rel="import" href="../bower_components/rest-apis-list-panel/rest-apis-list-panel.html">
 <link rel="import" href="../bower_components/variables-drawer-editor/variables-drawer-editor.html">
 <link rel="import" href="../bower_components/host-rules-editor/host-rules-editor.html">
+<link rel="import" href="../bower_components/exchange-search-panel/exchange-search-panel.html">
 <link rel="import" href="../styles/app-theme.html">
 <link rel="import" href="request-workspace/request-workspace.html">
 <link rel="import" href="file-export/file-export.html">
@@ -208,7 +209,8 @@
             <google-drive-browser mime-type="application/restclient+data" data-route="drive" attr-for-opened="opened" api-key="1076318174169-u4a5d3j2v0tbie1jnjgsluqk1ti7ged3.apps.googleusercontent.com" access-token="[[accessToken]]" on-drive-file-picker-data="_openDriveRequest"></google-drive-browser>
             <cookie-manager attr-for-opened="opened" data-route="cookie-manager"></cookie-manager>
             <api-console-panel attr-for-opened="opened" data-route="api-console" scroll-target="[[scrollTarget]]"></api-console-panel>
-            <rest-apis-list-panel attr-for-opened="opened" data-route="rest-projects"></rest-apis-list-panel>
+            <rest-apis-list-panel attr-for-opened="opened" data-route="rest-projects" render-explore></rest-apis-list-panel>
+            <exchange-search-panel attr-for-opened="opened" data-route="exchange-search"></exchange-search-panel>
             <host-rules-editor attr-for-opened="opened" data-route="hosts-rules"></host-rules-editor>
           </iron-pages>
         </div>
@@ -737,6 +739,7 @@
             url = '/api-console/' + acId;
           break;
           case 'rest-projects': url = '/rest-projects'; break;
+          case 'exchange-search': url = '/exchange-search'; break;
           case 'hosts-rules': url = '/hosts-rules'; break;
         }
         if (url) {
@@ -768,6 +771,7 @@
           case 'cookie-manager': screenName = 'Cookie manager'; break;
           case 'api-console':  screenName = 'API Console'; break;
           case 'rest-projects': screenName = 'REST APIs list'; break;
+          case 'exchange-search': screenName = 'Exchange search'; break;
           case 'hosts-rules': screenName = 'Hosts rules'; break;
         }
         this.fire('send-analytics', {
@@ -1121,6 +1125,12 @@
       openCookieManager: function() {
         this.fire('navigate', {
           base: 'cookie-manager'
+        });
+      },
+
+      openExchangeSearch: function() {
+        this.fire('navigate', {
+          base: 'exchange-search'
         });
       },
 

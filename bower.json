@@ -99,7 +99,8 @@
     "raml-documentation-panel": "advanced-rest-client/raml-documentation-panel#^2.0.21",
     "iron-scroll-target-behavior": "PolymerElements/iron-scroll-target-behavior#<2",
     "uuid-generator": "advanced-rest-client/uuid-generator#^1.0.4",
-    "host-rules-editor": "advanced-rest-client/host-rules-editor#^0.1.1"
+    "host-rules-editor": "advanced-rest-client/host-rules-editor#^0.1.1",
+    "exchange-search-panel": "advanced-rest-client/exchange-search-panel#^0.1.1"
   },
   "devDependencies": {
     "web-component-tester": "*",
