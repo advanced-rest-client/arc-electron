@@ -412,6 +412,7 @@
         this._refreshLayout();
         const {CookieBridge} = require('./scripts/renderer/cookie-brindge');
         this.cb = new CookieBridge(require('electron').ipcRenderer);
+        this.cb.listen();
         this._appInitialized = true;
         this.initRouting();
       },
