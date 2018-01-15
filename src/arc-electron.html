@@ -988,9 +988,7 @@
       },
 
       _copyContentHandler: function(e) {
-        const {
-          clipboard
-        } = require('electron');
+        const {clipboard} = require('electron');
         clipboard.writeText(e.detail.value);
         e.preventDefault();
       },
