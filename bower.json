@@ -48,7 +48,7 @@
     "arc-models": "advanced-rest-client/arc-models#^0.1.1",
     "arc-data-export": "advanced-rest-client/arc-data-export#^0.2.0",
     "project-details": "advanced-rest-client/project-details#^0.1.1",
-    "arc-menu": "advanced-rest-client/arc-menu#^0.2.0",
+    "arc-menu": "advanced-rest-client/arc-menu#^0.5.0",
     "openable-panel-behavior": "advanced-rest-client/openable-panel-behavior#^0.1.2",
     "websocket-panel": "advanced-rest-client/websocket-panel#^0.1.1",
     "chrome-file-export": "advanced-rest-client/chrome-file-export#^0.1.1",

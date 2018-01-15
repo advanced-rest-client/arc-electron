@@ -9,3 +9,4 @@
 -- Clicking on a URL in the response will update currently opened request URL value
 - 3-01-2018 - Added support for internal hosts rules
 - 12-01-2018 - Added integration with Mulesoft Exchange to search for RAML assets
+- 15-01-2018 - Updated menu to tabbed version.
