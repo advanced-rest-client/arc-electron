@@ -1,4 +1,5 @@
 const ipc = require('electron').ipcRenderer;
+const log = require('electron-log');
 /**
  * Class responsible for initializing the main ARC elements
  * and setup base options.
@@ -33,6 +34,7 @@ class ArcInit {
   }
 
   initApp() {
+    log.info('Initializing renderer window.');
     var app = document.createElement('arc-electron');
     app.id = 'app';
     this._setupApp(app);
@@ -41,16 +43,20 @@ class ArcInit {
   }
 
   setupWorkspaceFile(e, message) {
+    log.info('Setting up workspace file:', message);
     this.workspaceScript = message;
     if (!this.created) {
+      log.info('The app is not ready. Will set it later.');
       return;
     }
     this.app.workspaceScript = message;
   }
 
   setupSettingsFile(e, message) {
+    log.info('Setting up settings file:', message);
     this.settingsScript = message;
     if (!this.created) {
+      log.info('The app is not ready. Will set it later.');
       return;
     }
     this.app.settingsScript = message;
@@ -63,6 +69,7 @@ class ArcInit {
     if (this.settingsScript) {
       app.settingsScript = this.settingsScript;
     }
+    log.info('Initializing ARC app');
     app.initApplication();
   }
   /**
@@ -87,6 +94,7 @@ class ArcInit {
   }
 
   commandHandler(event, action) {
+    log.info('Renderer command handled: ', action);
     var app = this.app;
     switch (action) {
       case 'show-settings': app.openSettings(); break;
@@ -110,7 +118,8 @@ class ArcInit {
    *
    * @param {String} action Action name to perform.
    */
-  execRequestAction(event, action) {
+  execRequestAction(event, action, ...args) {
+    log.info('Renderer request command handled: ', action);
     var app = this.app;
     switch (action) {
       case 'save':

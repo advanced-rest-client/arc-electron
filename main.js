@@ -9,6 +9,7 @@ const {ArcIdentity} = require('./scripts/main/oauth2');
 const {DriveExport} = require('./scripts/main/drive-export');
 const {SessionManager} = require('./scripts/main/session-manager');
 const {AppOptions} = require('./scripts/main/app-options');
+const log = require('electron-log');
 
 class Arc {
   constructor() {
@@ -33,8 +34,10 @@ class Arc {
    * Google Drive menu.
    */
   _registerProtocols() {
+    log.info('Registering arc-file protocol');
     app.setAsDefaultProtocolClient('arc-file');
     app.on('open-url', (event, url) => {
+      log.info('arc-file protocol handles ', url);
       event.preventDefault();
       var fileData = url.substr(11);
       var parts = fileData.split('/');
@@ -55,6 +58,7 @@ class Arc {
   }
 
   _readyHandler() {
+    log.info('Application is now ready');
     this.wm.open();
     this.us.start();
     this.menu.build();
