@@ -166,6 +166,7 @@ class Arc {
    * @return {Promise} Promise resolved when the command was sent to the window.
    */
   updateRequest(requestObj, tab) {
+    console.log('Main script::updateRequest::', tab);
     return this.getActiveWindow()
     .then(win => {
       log.info('Updating request in active window. Update tab is', tab);
