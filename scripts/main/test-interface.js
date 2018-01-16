@@ -12,8 +12,6 @@ module.exports = function(app, arcApp) {
         return arcApp.remote.updateRequest(args[0], args[1]);
       case 'create-new-tab':
         return arcApp.remote.newTab();
-      case 'get-tabs-count':
-        return arcApp.remote.getTabsCount();
     }
   };
 };

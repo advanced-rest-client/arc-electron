@@ -137,15 +137,23 @@ describe('Workspace state test', function() {
     });
 
     it('Opens all requests from the workspace', function() {
-      // console.log(this.app.electron.remote.app.testApp())
-      // .then(app => {
-      //   console.log(app);
-      // });
-      // return this.app.electron.remote.app.arcApp.remote.getTabsCount()
-      // .then(count => {
-      //   console.log('aaaaaaaaaaaaaaaaaaaa', count);
-      //   assert.equal(count, 6);
-      // });
+      // There's no way to get and information from a function call that is
+      // async (with promise) so the test just checks if the `restore.rorkspace.json`
+      // content changed.
+      return fs.readJson(workspaceFilePath)
+      .then(data => {
+        var urls = [
+          'https://one.com',
+          'https://two.com',
+          'https://three.com',
+          'https://test.com',
+          'https://mulesoft.com',
+          'https://advancedrestclient.com'
+        ];
+        data.requests.forEach((r, i) => {
+          assert.equal(r.url, urls[i]);
+        });
+      });
     });
   });
 });
