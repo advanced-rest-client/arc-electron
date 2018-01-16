@@ -184,7 +184,7 @@
       </app-header>
       <app-drawer-layout id="drawerLayout" force-narrow="{{forceNarrowLayout}}" narrow="{{narrowLayout}}">
         <app-drawer id="mainDrawer" opened="{{drawerOpened}}">
-          <arc-menu selected-request="[[selectedRequest]]" route-base="[[routeData.base]]" rest-api></arc-menu>
+          <arc-menu rest-api></arc-menu>
           <div id="drawerResizer"></div>
         </app-drawer>
         <app-drawer id="newsDrawer" align="right" opened="[[messageCenterOpened]]">
