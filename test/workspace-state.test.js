@@ -3,16 +3,15 @@ const {assert} = require('chai');
 const fs = require('fs-extra');
 
 describe('Workspace state test', function() {
-  const workspaceFilePath = 'test/test-workspace.json';
-
-  const opts = {
-    args: [
-      '--workspace-file',
-      workspaceFilePath
-    ]
-  };
-
   describe('Stores requests state', function() {
+    const workspaceFilePath = 'test/test-workspace.json';
+    const opts = {
+      args: [
+        '--workspace-file',
+        workspaceFilePath
+      ]
+    };
+
     this.timeout(10000);
     before(function() {
       this.app = bootstrap.getApp(opts);
@@ -103,6 +102,50 @@ describe('Workspace state test', function() {
         assert.lengthOf(content.requests, 2, 'Requests contains two item');
         assert.equal(content.requests[0].url, 'https://third.com', 'Updates correct tab');
       });
+    });
+  });
+
+  describe('Restores requests state', function() {
+    this.timeout(10000);
+
+    const workspaceFilePath = 'test/restore.workspace.json';
+    const opts = {
+      args: [
+        '--workspace-file',
+        workspaceFilePath
+      ]
+    };
+    before(function() {
+      this.app = bootstrap.getApp(opts);
+      return this.app.start()
+      .then(() => this.app.client.waitUntilWindowLoaded(10000))
+      .then(() => {
+        return new Promise(function(resolve) {
+          // Wait untill ARC app loads.
+          // This time my be longer in Travis
+          setTimeout(function() {
+            resolve();
+          }, 2000);
+        });
+      });
+    });
+
+    after(function() {
+      if (this.app && this.app.isRunning()) {
+        return this.app.stop();
+      }
+    });
+
+    it('Opens all requests from the workspace', function() {
+      // console.log(this.app.electron.remote.app.testApp())
+      // .then(app => {
+      //   console.log(app);
+      // });
+      // return this.app.electron.remote.app.arcApp.remote.getTabsCount()
+      // .then(count => {
+      //   console.log('aaaaaaaaaaaaaaaaaaaa', count);
+      //   assert.equal(count, 6);
+      // });
     });
   });
 });

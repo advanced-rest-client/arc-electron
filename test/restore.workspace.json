@@ -1,0 +1,30 @@
+{
+  "requests": [
+    {
+      "headers": "Content-Type: application/json",
+      "method": "GET",
+      "url": "https://one.com"
+    },
+    {
+      "method": "GET",
+      "url": "https://two.com"
+    },
+    {
+      "method": "GET",
+      "url": "https://three.com"
+    },
+    {
+      "method": "GET",
+      "url": "https://test.com"
+    },
+    {
+      "method": "GET",
+      "url": "https://mulesoft.com"
+    },
+    {
+      "method": "GET",
+      "url": "https://advancedrestclient.com"
+    }
+  ],
+  "selected": 1
+}
