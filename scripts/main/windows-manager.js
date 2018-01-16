@@ -49,7 +49,8 @@ class ArcWindowsManager {
       // win.webContents.openDevTools();
       this.__attachListeners(win);
       this.windows.push(win);
-      return this.recorder.record();
+      return this.recorder.record()
+      .then(() => win);
     });
   }
 
