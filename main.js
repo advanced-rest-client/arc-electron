@@ -1,4 +1,4 @@
-const {ipcMain, dialog, app, BrowserWindow} = require('electron');
+const {ipcMain, dialog, app} = require('electron');
 const {ArcWindowsManager} = require('./scripts/main/windows-manager');
 const {UpdateStatus} = require('./scripts/main/update-status');
 const {ArcMainMenu} = require('./scripts/main/main-menu');
@@ -6,6 +6,7 @@ const {ArcIdentity} = require('./scripts/main/oauth2');
 const {DriveExport} = require('./scripts/main/drive-export');
 const {SessionManager} = require('./scripts/main/session-manager');
 const {AppOptions} = require('./scripts/main/app-options');
+const {RemoteApi} = require('./scripts/main/remote-api');
 const log = require('electron-log');
 
 class Arc {
@@ -16,6 +17,7 @@ class Arc {
     this.wm = new ArcWindowsManager(startupOptions.getOptions());
     this.us = new UpdateStatus(this.wm, this.menu);
     this.sm = new SessionManager(this.wm);
+    this.remote = new RemoteApi(this.wm);
     this._listenMenu(this.menu);
   }
 
@@ -57,7 +59,9 @@ class Arc {
   _readyHandler() {
     log.info('Application is now ready');
     this.wm.open();
-    this.us.start();
+    if (!this.isDebug()) {
+      this.us.start();
+    }
     this.menu.build();
     this.sm.start();
   }
@@ -136,55 +140,12 @@ class Arc {
     }
   }
   /**
-   * Returns focused, first available or newly created window (in that order).
-   * New window is started when there's no winow opened.
+   * Returns true if current instance is being debugged.
    *
-   * @return {Promise} Promise resolved to a BrowserWindow object.
+   * @return {Boolean} [description]
    */
-  getActiveWindow() {
-    log.info('Getting active window...');
-    var win = BrowserWindow.getFocusedWindow();
-    if (win) {
-      return Promise.resolve(win);
-    }
-    log.info('Focused window not found. Getting any first window.');
-    var wins = BrowserWindow.getAllWindows();
-    if (wins && wins.length) {
-      return Promise.resolve(wins[0]);
-    }
-    log.info('No windows found. Creating a window.');
-    return this.wm.open();
-  }
-  /**
-   * Allows to update a request object in active window and specific tab.
-   * By defaulty currently selected tab is used.
-   * If there's no winowd new one is be created. If any window isn't focused
-   * first window is used.
-   *
-   * @param {Object} requestObj ARC request object (url, method, headers, payload)
-   * @param {?Number} tab Tab index in the window.
-   * @return {Promise} Promise resolved when the command was sent to the window.
-   */
-  updateRequest(requestObj, tab) {
-    console.log('Main script::updateRequest::', tab);
-    return this.getActiveWindow()
-    .then(win => {
-      log.info('Updating request in active window. Update tab is', tab);
-      win.webContents.send('request-action', 'update-request', requestObj, tab);
-    });
-  }
-
-  /**
-   * Opens a new tab currently focused window or first window of the list of
-   * opened windows, or creates a new window if can't determine current window.
-   *
-   * @return {Promise} Promise resolved when command was sent to window
-   */
-  newTab() {
-    return this.getActiveWindow()
-    .then(win => {
-      win.webContents.send('request-action', 'new-tab');
-    });
+  isDebug() {
+    return !!process.argv.find(i => i.indexOf('--inspect') !== -1);
   }
 }
 
@@ -195,6 +156,10 @@ arcApp.attachListeners();
 if (process.env.NODE_ENV === 'test') {
   const testInterface = require('./scripts/main/test-interface');
   testInterface(app, arcApp);
+}
+
+if (arcApp.isDebug()) {
+  global.arcApp = arcApp;
 }
 
 // TODO: // move this to seperate file that is responsible for IPC

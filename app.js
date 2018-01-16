@@ -93,7 +93,7 @@ class ArcInit {
     }
   }
 
-  commandHandler(event, action) {
+  commandHandler(event, action, ...args) {
     log.info('Renderer command handled: ', action);
     var app = this.app;
     switch (action) {
@@ -110,7 +110,48 @@ class ArcInit {
       case 'login-external-webservice': app.openWebUrl(); break;
       case 'open-cookie-manager': app.openCookieManager(); break;
       case 'open-hosts-editor': app.openHostRules(); break;
+      case 'get-tabs-count': this.sendTabsCount(event, args[0]); break;
+      case 'activate-tab': this.activateTab(event, args[0], args[1]); break;
+      case 'get-request-data': this.getRequestData(event, args[0], args[1]); break;
     }
+  }
+  /**
+   * Remote API command.
+   * Sends number of tabs command to the main process.
+   *
+   * @param {EventEmitter} event
+   * @param {Number} callId
+   */
+  sendTabsCount(event, callId) {
+    var cnt = this.app.getTabsCount();
+    event.sender.send('current-tabs-count', callId, false, cnt);
+  }
+  /**
+   * Remote API command.
+   * Activates a tab in current window.
+   *
+   * @param {EventEmitter} event
+   * @param {Number} callId
+   * @param {Number} tabId ID of a tab
+   */
+  activateTab(event, callId, tabId) {
+    this.app.workspace.selected = tabId;
+    event.sender.send('tab-activated', callId, false);
+  }
+  /**
+   * Remote API command.
+   * Sends request data to the main process.
+   *
+   * Because of limitations of sending the data between renderer and main process
+   * objects like FormData of file data won't be sent.
+   *
+   * @param {EventEmitter} event
+   * @param {Number} callId
+   * @param {Number} tabId ID of a tab
+   */
+  getRequestData(event, callId, tabId) {
+    var request = this.app.workspace.activeRequests[tabId];
+    event.sender.send('request-data', callId, false, request);
   }
   /**
    * Handles action performed in main thread (menu action) related to

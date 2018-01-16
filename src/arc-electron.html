@@ -377,6 +377,14 @@
           value: function() {
             return require('electron-log');
           }
+        },
+        // A handler to the workspace object
+        workspace: {
+          type: Object,
+          value: function() {
+            return this.$$('request-workspace');
+          },
+          readOnly: true
         }
       },
 
@@ -1154,7 +1162,7 @@
        */
       updateRequestTab: function(request, tab) {
         this.log.info('Updating request object...');
-        var workspace = this.$$('request-workspace');
+        var workspace = this.workspace;
         if (typeof tab !== 'number') {
           this.log.info('Tab not provided. Using current selection...');
           tab = workspace.selected;
@@ -1166,6 +1174,18 @@
         }
         this.log.info('Updating request object on tab', tab);
         workspace.set(['activeRequests', tab], request);
+      },
+      /**
+       * Returns number of currently opened tabs
+       *
+       * @return {Number} Number of opened tabs in request workspace.
+       */
+      getTabsCount: function() {
+        var workspace = this.workspace;
+        if (!workspace || !workspace.activeRequests) {
+          return 0;
+        }
+        return workspace.activeRequests.length;
       }
     });
   </script>
