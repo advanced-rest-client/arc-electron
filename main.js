@@ -1,7 +1,4 @@
-const electron = require('electron');
-const app = electron.app;
-const ipc = require('electron').ipcMain;
-const dialog = require('electron').dialog;
+const {ipcMain, dialog, app, BrowserWindow} = require('electron');
 const {ArcWindowsManager} = require('./scripts/main/windows-manager');
 const {UpdateStatus} = require('./scripts/main/update-status');
 const {ArcMainMenu} = require('./scripts/main/main-menu');
@@ -150,7 +147,7 @@ if (process.env.NODE_ENV === 'test') {
 }
 
 // TODO: // move this to seperate file that is responsible for IPC
-ipc.on('save-dialog', function(event, args) {
+ipcMain.on('save-dialog', function(event, args) {
   args = args || {};
   const options = {
     title: 'Save to file'
@@ -163,15 +160,15 @@ ipc.on('save-dialog', function(event, args) {
   });
 });
 
-ipc.on('new-window', function() {
+ipcMain.on('new-window', function() {
   arcApp.wm.open();
 });
 
-ipc.on('toggle-devtools', (event) => {
+ipcMain.on('toggle-devtools', (event) => {
   event.sender.webContents.toggleDevTools();
 });
 
-ipc.on('oauth-2-get-token', (event, options) => {
+ipcMain.on('oauth-2-get-token', (event, options) => {
   ArcIdentity.getAuthToken(options)
   .then(token => {
     event.sender.send('oauth-2-token-ready', token);
@@ -180,7 +177,7 @@ ipc.on('oauth-2-get-token', (event, options) => {
     event.sender.send('oauth-2-token-error', cause);
   });
 });
-ipc.on('oauth-2-launch-web-flow', (event, options) => {
+ipcMain.on('oauth-2-launch-web-flow', (event, options) => {
   ArcIdentity.launchWebAuthFlow(options)
   .then(token => {
     event.sender.send('oauth-2-token-ready', token);
@@ -189,16 +186,16 @@ ipc.on('oauth-2-launch-web-flow', (event, options) => {
     event.sender.send('oauth-2-token-error', cause);
   });
 });
-ipc.on('check-for-update', () => {
+ipcMain.on('check-for-update', () => {
   arcApp.us.check({
     notify: false
   });
 });
-ipc.on('install-update', () => {
+ipcMain.on('install-update', () => {
   arcApp.us.installUpdate();
 });
 
-ipc.on('google-drive-data-save', (event, requestId, content, type, fileName) => {
+ipcMain.on('google-drive-data-save', (event, requestId, content, type, fileName) => {
   var config = {
     resource: {
       name: fileName,
@@ -219,7 +216,7 @@ ipc.on('google-drive-data-save', (event, requestId, content, type, fileName) => 
   });
 });
 
-ipc.on('drive-request-save', (event, requestId, request, fileName) => {
+ipcMain.on('drive-request-save', (event, requestId, request, fileName) => {
   var driveId;
   if (request.driveId) {
     driveId = request.driveId;
@@ -256,12 +253,19 @@ ipc.on('drive-request-save', (event, requestId, request, fileName) => {
   });
 });
 
-ipc.on('open-web-url', (event, url, purpose) => {
+ipcMain.on('open-web-url', (event, url, purpose) => {
   switch (purpose) {
     case 'web-session': arcApp.sm.openWebBrowser(url); break;
   }
 });
 
-ipc.on('cookies-session', (event, data) => {
+ipcMain.on('cookies-session', (event, data) => {
   arcApp.sm.handleRequest(event.sender, data);
+});
+
+ipcMain.on('test', (event) => {
+  arcApp.updateRequest({
+    url: 'http://test.com',
+    method: 'GET'
+  }, 1);
 });
