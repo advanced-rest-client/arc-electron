@@ -46,7 +46,7 @@ class ArcPreferences extends ArcBase {
    */
   restoreFile(file) {
     return fs.ensureFile(file)
-    .then(() => fs.readJson(file));
+    .then(() => fs.readJson(file, {throws: false}));
   }
   /**
    * Stores JSON `data` in `file`.
