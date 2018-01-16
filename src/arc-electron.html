@@ -369,7 +369,15 @@
           reflectToAttribute: true
         },
         // True when the application has been initialized by the main script
-        _appInitialized: Boolean
+        _appInitialized: Boolean,
+        // Electron log object
+        log: {
+          type: Object,
+          readOnly: true,
+          value: function() {
+            return require('electron-log');
+          }
+        }
       },
 
       listeners: {
@@ -1136,6 +1144,28 @@
       _variablesOpenRequest: function(e) {
         e.stopPropagation();
         this.$.environmentsDrawer.opened = true;
+      },
+      /**
+       * Updates a request object in this window for a specific tab.
+       *
+       * @param {Object} request ARC request obejct
+       * @param {?Number} tab Tab index to update. If not provided (or not a number)
+       * it uses current active tab.
+       */
+      updateRequestTab: function(request, tab) {
+        this.log.info('Updating request object...');
+        var workspace = this.$$('request-workspace');
+        if (typeof tab !== 'number') {
+          this.log.info('Tab not provided. Using current selection...');
+          tab = workspace.selected;
+        }
+
+        if (!workspace.activeRequests[tab]) {
+          this.log.error('Trying to update tab request but the tab does not exists.', tab);
+          throw new Error('Requested tab does not exists.');
+        }
+        this.log.info('Updating request object on tab', tab);
+        workspace.set(['activeRequests', tab], request);
       }
     });
   </script>

@@ -136,6 +136,9 @@ class ArcInit {
       case 'send-current':
         app.sendCurrentTab();
       break;
+      case 'update-request':
+        app.updateRequestTab(args[0], args[1]);
+      break;
       default:
         throw new Error('Unrecognized action ' + action);
     }
