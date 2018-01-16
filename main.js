@@ -312,10 +312,3 @@ ipcMain.on('open-web-url', (event, url, purpose) => {
 ipcMain.on('cookies-session', (event, data) => {
   arcApp.sm.handleRequest(event.sender, data);
 });
-
-ipcMain.on('test', (event) => {
-  arcApp.updateRequest({
-    url: 'http://test.com',
-    method: 'GET'
-  }, 1);
-});
