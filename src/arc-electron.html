@@ -56,7 +56,6 @@
 <link rel="import" href="../bower_components/variables-drawer-editor/variables-drawer-editor.html">
 <link rel="import" href="../bower_components/host-rules-editor/host-rules-editor.html">
 <link rel="import" href="../bower_components/exchange-search-panel/exchange-search-panel.html">
-<link rel="import" href="../styles/app-theme.html">
 <link rel="import" href="request-workspace/request-workspace.html">
 <link rel="import" href="file-export/file-export.html">
 <link rel="import" href="about-arc/about-arc.html">
@@ -421,7 +420,6 @@
         if (this._appInitialized) {
           return;
         }
-        this._setUpPreferences();
         this._requestAuthToken(false);
         this.listen(document.body, 'display-license', 'openLicense');
         this.async(() => this.setupAnalytics(), 1);
@@ -449,12 +447,6 @@
           this.$.scrollingRegion._updateContentPosition();
           this.$.drawerLayout.resetLayout();
         });
-      },
-
-      _setUpPreferences: function() {
-        const {ArcPreferences} = require('./scripts/main/arc-preferences');
-        this.__prefs = new ArcPreferences(this.settingsScript);
-        this.__prefs.observe();
       },
 
       _routeDataChanged: function(record) {

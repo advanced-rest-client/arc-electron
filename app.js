@@ -1,5 +1,7 @@
 const ipc = require('electron').ipcRenderer;
 const log = require('electron-log');
+const {ArcPreferences} = require('./scripts/main/arc-preferences');
+const {ThemeLoader} = require('./scripts/renderer/theme-loader');
 /**
  * Class responsible for initializing the main ARC elements
  * and setup base options.
@@ -34,12 +36,48 @@ class ArcInit {
   }
 
   initApp() {
-    log.info('Initializing renderer window.');
-    var app = document.createElement('arc-electron');
-    app.id = 'app';
-    this._setupApp(app);
-    document.body.appendChild(app);
-    this.created = true;
+    log.info('Initializing renderer window...');
+    return this.initPreferences()
+    .then(settings => this.themeApp(settings))
+    .then(() => {
+      log.info('Initializing arc-electron element...');
+      var app = document.createElement('arc-electron');
+      app.id = 'app';
+      this._setupApp(app);
+      document.body.appendChild(app);
+      this.created = true;
+    });
+  }
+
+  initPreferences() {
+    log.info('Initializing app preferences...');
+    this.__prefs = new ArcPreferences(this.settingsScript);
+    this.__prefs.observe();
+    return this.__prefs.loadSettings();
+  }
+
+  themeApp(settings) {
+    log.info('Initializing app theme.');
+    const loader = new ThemeLoader();
+    var p;
+    if (settings.theme) {
+      p = loader.getTheme(settings.theme);
+    } else {
+      p = loader.defaultTheme();
+    }
+    return p
+    .then(data => this.updateThemeData(data));
+  }
+
+  updateThemeData(data) {
+    var style = document.body.querySelector('style[is="custom-style"]');
+    if (style) {
+      document.body.removeChild(style);
+    }
+    var t = document.createElement('template');
+    t.innerHTML = data;
+    var clone = document.importNode(t.content, true);
+    document.body.appendChild(clone);
   }
 
   setupWorkspaceFile(e, message) {

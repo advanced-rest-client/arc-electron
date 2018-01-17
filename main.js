@@ -7,6 +7,7 @@ const {DriveExport} = require('./scripts/main/drive-export');
 const {SessionManager} = require('./scripts/main/session-manager');
 const {AppOptions} = require('./scripts/main/app-options');
 const {RemoteApi} = require('./scripts/main/remote-api');
+const {AppDefaults} = require('./scripts/main/app-defaults');
 const log = require('electron-log');
 
 class Arc {
@@ -57,13 +58,20 @@ class Arc {
   }
 
   _readyHandler() {
-    log.info('Application is now ready');
-    this.wm.open();
-    if (!this.isDebug()) {
-      this.us.start();
-    }
-    this.menu.build();
-    this.sm.start();
+    const defaults = new AppDefaults();
+    return defaults.prepareEnvironment()
+    .catch(cause => {
+      log.error('Unable to prepare the environment.', cause.message);
+    })
+    .then(() => {
+      log.info('Application is now ready');
+      this.wm.open();
+      if (!this.isDebug()) {
+        this.us.start();
+      }
+      this.menu.build();
+      this.sm.start();
+    });
   }
   // Quits when all windows are closed.
   _allClosedHandler() {
