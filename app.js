@@ -13,6 +13,7 @@ class ArcInit {
     this.created = false;
     this.workspaceScript = undefined;
     this.settingsScript = undefined;
+    this.themeLoader = new ThemeLoader();
   }
 
   get app() {
@@ -33,6 +34,7 @@ class ArcInit {
     ipc.on('update-downloaded', updateHandler);
     ipc.on('command', this.commandHandler.bind(this));
     ipc.on('request-action', this.execRequestAction.bind(this));
+    this.themeLoader.listen();
   }
 
   initApp() {
@@ -58,26 +60,14 @@ class ArcInit {
 
   themeApp(settings) {
     log.info('Initializing app theme.');
-    const loader = new ThemeLoader();
     var p;
     if (settings.theme) {
-      p = loader.getTheme(settings.theme);
+      p = this.themeLoader.getTheme(settings.theme);
     } else {
-      p = loader.defaultTheme();
+      p = this.themeLoader.defaultTheme();
     }
     return p
-    .then(data => this.updateThemeData(data));
-  }
-
-  updateThemeData(data) {
-    var style = document.body.querySelector('style[is="custom-style"]');
-    if (style) {
-      document.body.removeChild(style);
-    }
-    var t = document.createElement('template');
-    t.innerHTML = data;
-    var clone = document.importNode(t.content, true);
-    document.body.appendChild(clone);
+    .then(data => this.themeLoader.updateThemeData(data));
   }
 
   setupWorkspaceFile(e, message) {
@@ -98,6 +88,7 @@ class ArcInit {
       return;
     }
     this.app.settingsScript = message;
+    this.themeLoader.setupSettingsFile(message);
   }
 
   _setupApp(app) {
