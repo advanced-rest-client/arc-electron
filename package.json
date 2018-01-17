@@ -47,14 +47,16 @@
     "detectUpdateChannel": true,
     "files": [
       "app.html",
+      "app.js",
       "main.js",
+      "task-manager.html",
       "package.json",
       "assets/",
       "bower_components/",
       "menus/",
       "scripts/",
       "src/",
-      "styles/"
+      "appresources/"
     ],
     "mac": {
       "category": "public.app-category.developer-tools",

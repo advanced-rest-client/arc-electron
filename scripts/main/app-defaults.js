@@ -10,30 +10,48 @@ const log = require('electron-log');
  */
 class AppDefaults {
 
+  constructor() {
+    this.themePath = new ThemeLoader().basePath;
+  }
+
   prepareEnvironment() {
-    return this._setDefaultTheme();
+    return this._setDefaultTheme()
+    .then(() => this._setAnypointTheme());
   }
   /**
    * Copies the default theme data to themes folder if not created
    */
   _setDefaultTheme() {
-    const loader = new ThemeLoader();
-    const themesPath = loader.basePath;
-    const defaultTheme = path.join(themesPath, 'default-theme', 'app-theme.html');
-    return fs.ensureDir(themesPath)
+    const defaultTheme = path.join(this.themePath, 'default-theme', 'app-theme.html');
+    return fs.ensureDir(this.themePath)
     .then(() => fs.pathExists(defaultTheme))
     .then(exists => {
       if (exists) {
         return;
       }
-      return this._copyDefaultTheme(themesPath);
+      return this._copyThemeFiles('default-theme', this.themePath);
     });
   }
 
-  _copyDefaultTheme(themesLocation) {
-    const source = path.join(__dirname, '..', '..', 'appresources', 'default-theme');
-    const dest = path.join(themesLocation, 'default-theme');
-    return fs.copy(source, dest)
+  _setAnypointTheme() {
+    const file = path.join(this.themePath, 'anypoint-theme', 'app-theme.html');
+    return fs.pathExists(file)
+    .then(exists => {
+      if (exists) {
+        return;
+      }
+      return this._copyThemeFiles('anypoint-theme', this.themePath);
+    });
+  }
+
+  _copyThemeFiles(theme, themesLocation) {
+    const source = path.join(__dirname, '..', '..', 'appresources', theme);
+    const dest = path.join(themesLocation, theme);
+    const file = 'app-theme.html';
+    const pkg = 'package.json';
+    return fs.ensureDir(dest)
+    .then(() => fs.copy(path.join(source, file), path.join(dest, file)))
+    .then(() => fs.copy(path.join(source, pkg), path.join(dest, pkg)))
     .catch(cause => {
       log.error('Unable to copy default theme from ', source, 'to', dest, cause);
     });

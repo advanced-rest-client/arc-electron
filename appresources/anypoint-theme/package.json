@@ -1,0 +1,8 @@
+{
+  "name": "Anypoint theme",
+  "description": "Anypoint theme for Advanced REST Client",
+  "main": "app-theme.html",
+  "bowerDependencies": {
+    "anypoint-styles": "advanced-rest-client/anypoint-styles#^0.1.8"
+  }
+}

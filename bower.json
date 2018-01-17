@@ -100,7 +100,8 @@
     "iron-scroll-target-behavior": "PolymerElements/iron-scroll-target-behavior#<2",
     "uuid-generator": "advanced-rest-client/uuid-generator#^1.0.4",
     "host-rules-editor": "advanced-rest-client/host-rules-editor#^0.1.1",
-    "exchange-search-panel": "advanced-rest-client/exchange-search-panel#^0.1.1"
+    "exchange-search-panel": "advanced-rest-client/exchange-search-panel#^0.1.1",
+    "anypoint-styles": "advanced-rest-client/anypoint-styles#^0.1.9"
   },
   "devDependencies": {
     "web-component-tester": "*",
