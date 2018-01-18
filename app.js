@@ -60,14 +60,23 @@ class ArcInit {
 
   themeApp(settings) {
     log.info('Initializing app theme.');
-    var p;
+    var id;
     if (settings.theme) {
-      p = this.themeLoader.getTheme(settings.theme);
+      id = settings.theme;
     } else {
-      p = this.themeLoader.defaultTheme();
+      id = this.themeLoader.defaultTheme;
     }
-    return p
-    .then(data => this.themeLoader.updateThemeData(data));
+    return this.themeLoader.activateTheme(id)
+    .catch(cause => {
+      if (id === this.themeLoader.default) {
+        log.error('Unable to load theme file.', cause);
+        return;
+      }
+      return this.themeLoader.activateTheme(this.themeLoader.defaultTheme);
+    })
+    .catch(cause => {
+      log.error('Unable to load default theme file.', cause);
+    });
   }
 
   setupWorkspaceFile(e, message) {
