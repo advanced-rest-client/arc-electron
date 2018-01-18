@@ -43,6 +43,7 @@
     "productName": "arc",
     "artifactName": "arc.${ext}",
     "asar": true,
+    "asarUnpack": ["bower_components"],
     "copyright": "Copyright © 2017 Mulesoft",
     "detectUpdateChannel": true,
     "files": [

@@ -167,7 +167,8 @@ class ThemeLoader {
         name: data.name,
         main: main,
         path: path.join(path.dirname(file), main),
-        description: data.description
+        description: data.description,
+        bowerDependencies: data.bowerDependencies
       };
       return info;
     });
