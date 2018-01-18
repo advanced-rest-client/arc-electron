@@ -135,6 +135,13 @@
         "label": "Find",
         "command": "application:find",
         "accelerator": "CommandOrControl+f"
+      },
+      {
+        "type": "separator"
+      },
+      {
+        "label": "Themes",
+        "command": "application:open-themes"
       }
     ]
   }, {

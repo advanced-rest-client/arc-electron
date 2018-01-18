@@ -56,6 +56,7 @@
 <link rel="import" href="../bower_components/variables-drawer-editor/variables-drawer-editor.html">
 <link rel="import" href="../bower_components/host-rules-editor/host-rules-editor.html">
 <link rel="import" href="../bower_components/exchange-search-panel/exchange-search-panel.html">
+<link rel="import" href="../bower_components/themes-panel/themes-panel.html">
 <link rel="import" href="request-workspace/request-workspace.html">
 <link rel="import" href="file-export/file-export.html">
 <link rel="import" href="about-arc/about-arc.html">
@@ -211,6 +212,7 @@
             <rest-apis-list-panel attr-for-opened="opened" data-route="rest-projects" render-explore></rest-apis-list-panel>
             <exchange-search-panel attr-for-opened="opened" data-route="exchange-search"></exchange-search-panel>
             <host-rules-editor attr-for-opened="opened" data-route="hosts-rules"></host-rules-editor>
+            <themes-panel attr-for-opened="opened" data-route="themes-panel"></themes-panel>
           </iron-pages>
         </div>
       </app-drawer-layout>
@@ -750,6 +752,7 @@
           case 'rest-projects': url = '/rest-projects'; break;
           case 'exchange-search': url = '/exchange-search'; break;
           case 'hosts-rules': url = '/hosts-rules'; break;
+          case 'themes-panel': url = '/themes-panel'; break;
         }
         if (url) {
           this.set('route.path', url);
@@ -782,6 +785,7 @@
           case 'rest-projects': screenName = 'REST APIs list'; break;
           case 'exchange-search': screenName = 'Exchange search'; break;
           case 'hosts-rules': screenName = 'Hosts rules'; break;
+          case 'themes-panel': screenName = 'Themes panel'; break;
         }
         this.fire('send-analytics', {
           type: 'screenview',
@@ -1138,6 +1142,12 @@
       openExchangeSearch: function() {
         this.fire('navigate', {
           base: 'exchange-search'
+        });
+      },
+
+      openThemesPanel: function() {
+        this.fire('navigate', {
+          base: 'themes-panel'
         });
       },
 

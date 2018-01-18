@@ -142,6 +142,7 @@ class ArcInit {
       case 'get-tabs-count': this.sendTabsCount(event, args[0]); break;
       case 'activate-tab': this.activateTab(event, args[0], args[1]); break;
       case 'get-request-data': this.getRequestData(event, args[0], args[1]); break;
+      case 'open-themes': app.openThemesPanel(); break;
     }
   }
   /**

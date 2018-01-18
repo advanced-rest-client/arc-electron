@@ -127,6 +127,7 @@ class Arc {
       case 'login-external-webservice':
       case 'open-cookie-manager':
       case 'open-hosts-editor':
+      case 'open-themes':
         win.webContents.send(windowCommand, action);
       break;
       case 'new-window':

@@ -7,7 +7,7 @@ const {ArcPreferences} = require('../main/arc-preferences');
 class ThemeLoader {
   constructor() {
     // List of themes available in app
-    this.themes = [];
+    this.themes = undefined;
     this.basePath = path.join(app.getPath('userData'), 'themes');
     this.listThemesHandler = this.listThemesHandler.bind(this);
     this.activeThemeHandler = this.activeThemeHandler.bind(this);
@@ -108,7 +108,10 @@ class ThemeLoader {
     return fs.ensureDir(this.basePath)
     .then(() => fs.readdir(this.basePath))
     .then(files => this._processPackages(files))
-    .then(info => console.log(info));
+    .then(info => {
+      this.themes = info;
+      return info;
+    });
   }
 
   _processPackages(files) {
@@ -163,7 +166,8 @@ class ThemeLoader {
       let info = {
         name: data.name,
         main: main,
-        path: path.join(path.dirname(file), main)
+        path: path.join(path.dirname(file), main),
+        description: data.description
       };
       return info;
     });
