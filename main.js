@@ -62,6 +62,7 @@ class Arc {
     return defaults.prepareEnvironment()
     .catch(cause => {
       log.error('Unable to prepare the environment.', cause.message);
+      log.error(cause);
     })
     .then(() => {
       log.info('Application is now ready');

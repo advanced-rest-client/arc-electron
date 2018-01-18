@@ -1,0 +1,17 @@
+[{
+    "name": "Default theme",
+    "main": "default-theme.html",
+    "path": "default-theme",
+    "description": "Advanced REST Client default theme",
+    "version": "0.0.1",
+    "_id": "dd1b715f-af00-4ee8-8b0c-2a262b3cf0c8"
+  },
+  {
+    "name": "Anypoint theme",
+    "main": "anypoint-theme.html",
+    "path": "anypoint-theme",
+    "description": "Anypoint theme for Advanced REST Client",
+    "version": "0.0.1",
+    "_id": "859e0c71-ce8b-44df-843b-bca602c13d06"
+  }
+]

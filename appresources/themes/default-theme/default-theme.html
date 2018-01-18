@@ -1,0 +1,540 @@
+
+<dom-module id="arc-theme-default-theme">
+  <template>
+   <style>
+   :root {
+     font-family: Roboto, sans-serif;
+     --primary-color: #00A2DF;
+     --primary-text-color: rgba(0, 0, 0, 0.87);
+     --primary-background-color: #ffffff;
+     --secondary-text-color: #737373;
+     --disabled-text-color: #9b9b9b;
+     --divider-color: #dbdbdb;
+
+     --light-primary-color: var(--paper-indygo-100);
+     --dark-primary-color: var(--paper-blue-700);
+     --accent-color: var(--paper-red-a200);
+     --light-accent-color: #ff80ab;
+     --dark-accent-color: #f50057;
+
+     --paper-menu-background-color: #fff;
+     --menu-link-color: #111111;
+     --toolbar-color: #ffffff;
+     --toolbar-background-color: var(--primary-color);
+     --main-section-border-color: rgba(0, 0, 0, 0.12);
+
+     --hover-button-accent-color: #df0052;
+
+     --pages-fixed-height: calc(100vh - 64px);
+     --arc-menu-height: var(--pages-fixed-height);
+
+     --menu-selection-background-color: #00b9ff;
+     --arc-menu-selected-background-color: var(--menu-selection-background-color);
+     --saved-menu-selected-item-background-color: var(--menu-selection-background-color);
+     --history-menu-selected-item-background-color: var(--menu-selection-background-color);
+     --projects-menu-selected-item-background-color: var(--menu-selection-background-color);
+     --projects-menu-requests-selected-item-background-color: var(--menu-selection-background-color);
+     --rest-api-menu-selected-item-background-color:  var(--menu-selection-background-color);
+
+     --arc-font-common-base: {
+       @apply --paper-font-common-base;
+     };
+
+     --arc-font-common-code: {
+       @apply --paper-font-common-code;
+     };
+
+     --arc-font-common-expensive-kerning: {
+       @apply --paper-font-common-expensive-kerning;
+     };
+
+     --arc-font-common-nowrap: {
+       @apply --paper-font-common-nowrap;
+     };
+
+     --arc-font-display1: {
+       @apply --paper-font-display1;
+     };
+
+
+     --arc-font-title: {
+       @apply --paper-font-title;
+     };
+
+     --arc-font-headline: {
+       @apply --paper-font-headline;
+     };
+
+     --arc-font-subhead: {
+       @apply --paper-font-subhead;
+     };
+
+     --arc-font-body1: {
+       @apply --paper-font-body1;
+     };
+
+     --arc-font-body2: {
+       @apply --paper-font-body2;
+     };
+
+     --arc-font-caption: {
+       @apply --paper-font-caption;
+     };
+
+     /* buttons */
+     --paper-button: {
+       @apply --arc-font-common-base;
+       font-size: 14px;
+     };
+
+     --toggle-button: {
+       @apply --arc-font-body1;
+       color: #6B8A99;
+       margin-right: 0;
+       font-weight: normal;
+     };
+
+     --action-button: {
+       background-color: var(--primary-color);
+       background-image: none;
+       color: white;
+       transition: background-color 300ms linear;
+     };
+
+     --cookie-exchange-banner-button-background-color: var(--primary-color);
+
+     --action-button-hover: {
+       background-color: #04b3f5;
+       background-image: none;
+       color: white;
+     };
+
+     --action-button-disabled: {
+       background: #eaeaea;
+       color: #a8a8a8;
+       cursor: auto;
+       pointer-events: none;
+     };
+
+     --section-padding: {
+       padding-left: 24px;
+     };
+
+     --section-title: {
+       @apply(--paper-font-title);
+       color: rgba(0, 0, 0, 0.75);
+       padding-left: 24px;
+     };
+
+     --page-title-text: {
+       @apply(--paper-font-headline);
+       padding: 0 16px;
+     };
+
+     --paper-tab-ink: var(--primary-color);
+     --paper-tabs-selection-bar-color: var(--primary-color);
+
+     --tabs-selection-width: 2px;
+
+     --paper-tabs-selection-bar: {
+       border-width: var(--tabs-selection-width);
+       border-color: var(--arc-tabs-selection-bar-border-color, --primary-color);
+     };
+
+     --paper-tabs-content: {
+       @apply(--arc-font-common-base);
+       height: calc(100% - var(--tabs-selection-width));
+       border-bottom: var(--tabs-selection-width) solid rgba(39,47,51,.1);
+       font-style: normal;
+       color: rgba(0,0,0,0.87);
+     };
+
+     --paper-tab-content-unselected: {
+       color: rgba(0,0,0,0.78);
+     };
+
+     --paper-input-container-underline: {
+       /*background-color: rgba(0, 0, 0, 0.12);*/
+       border-color: rgba(0, 0, 0, 0.12);
+     };
+
+     --paper-icon-button: {
+       transition: color cubic-bezier(0.4, 0, 1, 1) 100ms;
+       color: var(--secondary-text-color);
+     };
+
+     --paper-icon-button-hover: {
+       color: var(--dark-primary-color);
+       color: var(--hover-button-accent-color);
+     };
+
+     input::-webkit-input-placeholder {
+       color: var(--paper-input-container-color, --secondary-text-color);
+     }
+
+     --tutorial-font: {
+       @apply(--paper-font-common-base);
+       color: rgba(0, 0, 0, 0.67);
+       font-size: 15px;
+     }
+
+     --select-text: {
+       -webkit-user-select: text;
+       cursor: text;
+     };
+
+     --paper-tab: {
+       border-bottom: 1px rgba(0, 0, 0, 0.12) solid;
+       position: relative;
+       bottom: 1px;
+     };
+
+     --select-text: {
+       @apply --arc-font-common-base;
+       -webkit-user-select: text;
+       cursor: text;
+     };
+
+     --arc-link: {
+       @apply --arc-font-common-base;
+       color: var(--arc-link-color, #00A1DF);
+     };
+
+     --arc-font-code1: {
+       @apply --paper-font-code1;
+     };
+
+     /* Tutorial elements */
+
+     --tutorial-toast-background-color: var(--primary-color);
+     --tutorial-toast-button-color: var(--primary-color);
+     --tutorial-toast-button-background-color: #fff;
+
+     --empty-info: {
+       @apply --arc-font-body1;
+       color: rgba(0, 0, 0, 0.74);
+       font-size: 16px;
+     };
+
+     --no-info-message: {
+       @apply --empty-info;
+     };
+
+     --form-label: {
+       font-weight: 500;
+     };
+
+     --input-line-color: var(--primary-color);
+
+     --code-block: {
+       @apply --arc-font-common-code;
+     };
+
+     --arc-code-mirror-background-color: var(--code-mirror-background-color, #f5f2f0);
+
+     --code-mirror: {
+       background-color: var(--arc-code-mirror-background-color, #f5f2f0);
+     };
+
+     --code-mirror-editor: {
+       background-color: var(--arc-code-mirror-background-color, #f5f2f0);
+       z-index: 0;
+       display: block;
+     };
+
+     --code-mirror-wrapper: {
+       display: block;
+       height: 100%;
+     };
+
+     /* Documentaion */
+     --raml-docs-main-content: {
+       margin-bottom: var(--raml-docs-main-content-margin-bottom, 20px);
+     };
+
+     --response-view: {
+       margin-bottom: 20px
+     };
+
+     --request-form-panels: {
+       margin: 0 0 12px 16px;
+     };
+
+     --response-error-view: {
+       margin-top: 24px;
+     };
+
+     --code-type-text-value-color: #0d47a1;
+     --code-type-number-value-color: #03a9f4;
+     --code-type-boolean-value-color: #0288d1;
+     --code-type-null-value-color: #0288d1;
+     --code-punctuation-value-color: #757575;
+     --code-type-link-color: #757575;
+     --code-array-index-color: rgba(1, 87, 155, 0.57);
+     --code-background-color: #F4F5F6;
+
+     --paper-checkbox-label: {
+       @apply --arc-font-body1;
+     };
+
+     --request-panel-main-content: {
+       overflow: inherit;
+       max-width: 1100px;
+     };
+
+     --request-panel-status-bar-left: 0px;
+
+     --request-panel-status-bar: {
+       position: fixed;
+       right: 0;
+       bottom: 0;
+     }
+
+     /* Projects panel */
+     --project-details: {
+       margin: 0px 24px;
+     }
+
+     /* Saved requests panel */
+     --saved-requests-panel: {
+       margin: 0px 24px;
+       height: var(--pages-fixed-height);
+     };
+
+     --saved-list-item-selected-background-color: #f1f1f1;
+
+     --saved-list-items-search-input: {
+       min-width: 200px;
+     };
+
+     --saved-list-items-body: {
+       margin-left: 12px;
+     };
+
+     --saved-list-items-method-label-container: {
+       display: block;
+       min-width: 90px;
+     };
+
+     --saved-list-items-selection-counter: {
+       margin-left: 30px;
+     };
+
+     --arc-menu: {
+       padding-top: 64px;
+     }
+
+     /* Import / Export panels */
+     --data-import-export-panel: {
+       margin: 0 24px;
+       height: var(--pages-fixed-height);
+     };
+     --import-panel: {
+       padding-bottom: 16px;
+       box-sizing: border-box;
+     };
+
+     /* History panel */
+     --history-panel: {
+       margin: 0px 24px;
+       height: var(--pages-fixed-height);
+     };
+
+     --history-list-item-selected-background-color: #f1f1f1;
+
+     --history-list-items-search-input: {
+       min-width: 200px;
+     };
+
+     --history-list-items-body: {
+       margin-left: 12px;
+     };
+
+     --history-list-items-method-label-container: {
+       display: block;
+       min-width: 90px;
+     };
+
+     --history-list-items-selection-counter: {
+       margin-left: 30px;
+     };
+
+     /* Websocket panel */
+     --websocket-panel: {
+       margin: 0px 24px;
+     };
+
+     /* Settings panel */
+     --arc-settings-panel: {
+       margin: 0px 24px;
+     };
+
+     --error-toast: {
+       background-color: var(--warning-primary-color, #FF7043);
+       color: var(--warning-contrast-color, #fff);
+     };
+
+     /* Request status bar */
+     --arc-status-bar: {
+       border-top: 1px #E0E0E0 solid;
+     };
+
+     --google-drive-browser: {
+       height: var(--pages-fixed-height);
+       margin: 0 24px;
+     }
+
+     --arc-info-messages: {
+       text-align: left;
+       margin: 64px 12px 0 12px;
+     }
+
+     --navigation-notification-button: {
+       background-color: #fff;
+       color: #008000;
+       border-radius: 50%;
+       margin-left: 12px;
+     }
+
+     --navigation-notification-button-active: {
+       background-color: #D9FFD9;
+     }
+
+     --request-save-bottom-sheet: {
+       @apply --shadow-elevation-24dp;
+     }
+
+     /* Cookies manager */
+     --cookie-manager: {
+       height: var(--pages-fixed-height);
+       margin: 0 0px;
+       padding-top: 24px;
+       box-sizing: border-box;
+     }
+
+     /* Inline docs */
+     --inline-docs-color: rgba(0, 0, 0, 0.32);
+     --raml-request-parameters-editor-docs-color: var(--inline-docs-color);
+     --raml-headers-form-docs-color: var(--inline-docs-color);
+
+     --raml-request-parameters-editor-subheader: {
+       @apply --arc-font-subhead;
+     };
+
+       /* Request panel */
+     --raml-request-panel: {
+       margin-bottom: 20px;
+       max-width: 900px;
+       margin-left: 16px;
+       margin-right: 12px;
+       @apply(--arc-request-panel);
+     };
+
+     --raml-request-url-editor: {
+       @apply --request-form-panels;
+     };
+
+     --raml-request-parameters-editor: {
+       @apply --request-form-panels;
+     };
+
+     --raml-body-editor-panel: {
+       @apply --request-form-panels;
+     };
+
+     --raml-docs-method-viewer: {
+       margin-right: 12px;
+     };
+
+     --raml-documentation-panel: {
+       padding: 0;
+     };
+
+     --raml-summary-view: {
+       @apply --request-form-panels;
+       margin-right: 12px;
+     };
+
+     --raml-path-selector: {
+       overflow: auto;
+       background-color: transparent;
+       @apply --layout-flex;
+     };
+
+     --raml-docs-tree-item-selected-background: rgb(3, 169, 244);
+     --raml-docs-tree-item-selected-color: #fff;
+     --raml-path-selector-background-color: #eee;
+
+     --raml-docs-response-panel-docs-content: {
+       padding: 8px;
+       margin-left: 0px;
+     };
+
+     /* Documentation panels */
+     --params-table-header-background-color: #616161;
+     --params-table-subheader-background-color: #EEEEEE;
+     --params-table-row-border-color: #e0e0e0;
+     --params-table-row-subproperty-border-color: #e0e0e0;
+     --params-table-header-color: #FAFAFA;
+
+     --inline-documentation-color: #1a237e;
+     --raml-headers-form-docs-color: #1a237e;
+     /* max width of the documentation main panel */
+     --raml-docs-main-content-width: 1200px;
+
+     --paper-checkbox-label: {
+       @apply --arc-font-body1;
+     };
+
+     /* Label of the Type name in the body parameters list view */
+     --docs-body-parameters-table-type-name: {
+       @apply --arc-font-common-base;
+       font-size: 16px;
+       font-weight: 100;
+       margin: 0;
+       padding: 0;
+     };
+
+     /* Applied to links in RAML docs */
+     --raml-docs-link: {
+       @apply --arc-font-body1;
+       @apply --arc-link;
+     };
+
+     --auth-button: {
+       @apply --arc-font-body1ą;
+       background-color: #D1344E;
+       color: #fff;
+     };
+
+     --raml-docs-resource-viewer-navigation-wide-layout: {
+       background-color: #F4F5F6;
+       margin: 0;
+       border-left: 0;
+     };
+
+     --sidebar-list-link: {
+       @apply --arc-font-body1;
+       padding: 10px 12px;
+       @apply --arc-link;
+     };
+
+     --rest-apis-list-panel: {
+       max-width: 1100px;
+       margin: 0px 24px;
+     };
+
+     --variables-drawer-editor-background-color: #ECEFF1;
+     --variables-preview-overlay-background-color: #fff;
+     --body-json-editor-action-button: {
+       margin-top: 32px;
+     };
+
+     --host-rules-editor: {
+       margin: 0px 24px;
+       height: var(--pages-fixed-height);
+     };
+   }
+  </style>
+ </template>
+</dom-module>
