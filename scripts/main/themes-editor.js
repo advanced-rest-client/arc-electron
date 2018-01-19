@@ -43,10 +43,11 @@ class ThemesEditor {
       if (!this.initParams.styles) {
         return;
       }
-      let script = 'ThemeEditor.initStyles(';
-      script += JSON.stringify(this.initParams.styles);
-      script += ');';
-      win.webContents.executeJavaScript(script);
+      if (!opts.theme) {
+        this._initStyles(win);
+        return;
+      }
+      this._initTheme(win, opts);
     });
     var dest = path.join(__dirname, '..', '..', 'src', 'theme-editor.html');
     var full = url.format({
@@ -64,6 +65,54 @@ class ThemesEditor {
       theme: theme,
       content: content
     }));
+  }
+
+  _initStyles(win) {
+    let script = 'ThemeEditor.initStyles(';
+    script += JSON.stringify(this.initParams.styles);
+    script += ');';
+    win.webContents.executeJavaScript(script);
+  }
+
+  _initTheme(win, opts) {
+    // const startPath = process.cwd();
+    // process.chdir(opts.theme.path);
+    const {Analyzer, FSUrlLoader} = require('polymer-analyzer');
+    let analyzer = new Analyzer({
+      urlLoader: new FSUrlLoader(opts.theme.path),
+    });
+    const parse5 = require('parse5');
+    const PolymerBundler = require('polymer-bundler');
+    const bundler = new PolymerBundler.Bundler({
+      analyzer: analyzer,
+      inlineScripts: true,
+      inlineCss: true,
+    });
+    bundler.generateManifest([opts.theme.main]).then((manifest) => {
+      bundler.bundle(manifest).then((result) => {
+        const css = parse5.serialize(result.documents.get(opts.theme.main).ast);
+        const shadyCss = require('shady-css-parser');
+        const parser = new shadyCss.Parser();
+        const rules = parser.parse(css);
+        console.log(rules);
+        debugger;
+      });
+    });
+    // analyzer.analyze(['./' + opts.theme.main])
+    // .then(analysis => {
+    //
+    //
+    // })
+    // .catch(cause => {
+    //   debugger;
+    // });
+
+    // debugger;
+    // this._createValuesList(rules);
+  }
+
+  _createValuesList(rules) {
+
   }
 }
 exports.ThemesEditor = ThemesEditor;
