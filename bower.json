@@ -102,7 +102,9 @@
     "host-rules-editor": "advanced-rest-client/host-rules-editor#^0.1.1",
     "exchange-search-panel": "advanced-rest-client/exchange-search-panel#^0.1.1",
     "anypoint-styles": "advanced-rest-client/anypoint-styles#^0.1.9",
-    "themes-panel": "advanced-rest-client/themes-panel#^0.1.1"
+    "themes-panel": "advanced-rest-client/themes-panel#^0.1.1",
+    "polymer-styles-analyzer": "advanced-rest-client/polymer-styles-analyzer#^0.1.5",
+    "polymer-styles-editor": "advanced-rest-client/polymer-styles-editor#^0.1.1"
   },
   "devDependencies": {
     "web-component-tester": "*",

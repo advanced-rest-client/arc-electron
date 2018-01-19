@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <title>Theme editor</title>
+  <script>
+    /* this script must run before Polymer is imported */
+    window.Polymer = {
+      dom: 'shadow',
+      lazyRegister: true
+    };
+  </script>
+  <style is="custom-style">
+  body {
+    font-family: Roboto, sans-serif;
+    color: #333;
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  html, body {
+    height: 100%;
+    margin: 0;
+    background-color: #fff;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1 {
+    font-size: 24px;
+    font-weight: 400;
+    letter-spacing: -.012em;
+    line-height: 32px;
+  }
+
+  :root {
+    --polymer-styles-editor-element-title: {
+      font-size: 20px;
+      font-weight: 500;
+      line-height: 28px;
+    };
+
+    --polymer-styles-editor-section-title: {
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 24px;
+    };
+  }
+  </style>
+</head>
+<body>
+  <link rel="import" href="../bower_components/polymer/polymer.html">
+  <link rel="import" href="../bower_components/font-roboto-local/roboto.html">
+  <link rel="import" href="../bower_components/polymer-styles-editor/polymer-styles-editor.html">
+  <h1>Theme editor</h1>
+  <polymer-styles-editor id="editor"></polymer-styles-editor>
+  <script src="theme-editor.js"></script>
+</body>
+</html>

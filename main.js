@@ -288,3 +288,11 @@ ipcMain.on('open-web-url', (event, url, purpose) => {
 ipcMain.on('cookies-session', (event, data) => {
   arcApp.sm.handleRequest(event.sender, data);
 });
+
+ipcMain.on('open-theme-editor', (event, data) => {
+  log.info('Starting theme editor');
+  const windowId = event.sender.id;
+  const {ThemesEditor} = require('./scripts/main/themes-editor.js');
+  const editor = new ThemesEditor(windowId, data);
+  editor.run();
+});
