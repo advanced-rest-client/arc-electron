@@ -21,9 +21,6 @@ class ThemesEditor {
   }
 
   run() {
-    if (this.initParams.themeId) {
-      return this.restoreTheme();
-    }
     return this.runEditor();
   }
   // Runs the editor window
@@ -43,7 +40,7 @@ class ThemesEditor {
       if (!this.initParams.styles) {
         return;
       }
-      if (!opts.theme) {
+      if (!this.initParams.theme) {
         this._initStyles(win);
         return;
       }
@@ -57,62 +54,116 @@ class ThemesEditor {
     });
     win.loadURL(full);
   }
-
-  restoreTheme() {
-    var theme = this.initParams.theme;
-    return fs.readFile(theme.fileLocation, 'utf8')
-    .then(content => this.runEditor({
-      theme: theme,
-      content: content
-    }));
-  }
-
+  /**
+   * Inits the theme editor as a new theme (without reading theme file contents)
+   *
+   * @param {BrowserWindow} win Created windown.
+   */
   _initStyles(win) {
     let script = 'ThemeEditor.initStyles(';
     script += JSON.stringify(this.initParams.styles);
     script += ');';
     win.webContents.executeJavaScript(script);
   }
+  /**
+   * Initializes the editor as a existing theme.
+   * It reads theme file content, parses CSS and updates variables model.
+   *
+   * @param {BrowserWindow} win Created windown.
+   */
+  _initTheme(win) {
+    var theme = this.initParams.theme;
+    this._processThemeFile(theme.path, theme.main)
+    .then(styles => this._updateStylesModel(this.initParams.styles, styles))
+    .then(() => this._initStyles(win));
+  }
 
-  _initTheme(win, opts) {
-    // const startPath = process.cwd();
-    // process.chdir(opts.theme.path);
+  _processThemeFile(themeLocation, themeFile) {
     const {Analyzer, FSUrlLoader} = require('polymer-analyzer');
-    let analyzer = new Analyzer({
-      urlLoader: new FSUrlLoader(opts.theme.path),
-    });
-    const parse5 = require('parse5');
     const PolymerBundler = require('polymer-bundler');
+    let analyzer = new Analyzer({
+      urlLoader: new FSUrlLoader(themeLocation),
+    });
     const bundler = new PolymerBundler.Bundler({
       analyzer: analyzer,
       inlineScripts: true,
       inlineCss: true,
     });
-    bundler.generateManifest([opts.theme.main]).then((manifest) => {
-      bundler.bundle(manifest).then((result) => {
-        const css = parse5.serialize(result.documents.get(opts.theme.main).ast);
-        const shadyCss = require('shady-css-parser');
-        const parser = new shadyCss.Parser();
-        const rules = parser.parse(css);
-        console.log(rules);
-        debugger;
-      });
-    });
-    // analyzer.analyze(['./' + opts.theme.main])
-    // .then(analysis => {
-    //
-    //
-    // })
-    // .catch(cause => {
-    //   debugger;
-    // });
-
-    // debugger;
-    // this._createValuesList(rules);
+    return bundler.generateManifest([themeFile])
+    .then(manifest => bundler.bundle(manifest))
+    .then(result => this._parseStyles(result.documents.get(themeFile).ast))
+    .then(cssRules => this._cssRulesToList(cssRules));
   }
 
-  _createValuesList(rules) {
+  _parseStyles(ast) {
+    const parse5 = require('parse5');
+    const css = parse5.serialize(ast);
+    const shadyCss = require('shady-css-parser');
+    const parser = new shadyCss.Parser();
+    return parser.parse(css);
+  }
 
+  _cssRulesToList(cssRules, result) {
+    result = result || {};
+    cssRules.rules.forEach(rule => this._parseCss(rule, result));
+    return result;
+  }
+
+  _parseCss(rule, result) {
+    switch (rule.type) {
+      case 'ruleset': this._parseCss(rule.rulelist, result); break;
+      case 'rulelist': this._cssRulesToList(rule, result); break;
+      case 'declaration': this._processCssDeclaration(rule, result); break;
+    }
+  }
+
+  _processCssDeclaration(declaration, result) {
+    var name = declaration.name;
+    if (!name) {
+      return;
+    }
+    // if (name[0] !== '-' && name[1] !== '-') {
+    //   return;
+    // }
+    var value = declaration.value;
+    if (!value) {
+      return;
+    }
+    switch (value.type) {
+      case 'expression':
+        result[name] = value.text;
+        return;
+      case 'rulelist':
+        let values = {};
+        this._cssRulesToList(value, values);
+        let style = Object.keys(values).map(key => {
+          return key + ': ' + values[key] + ';';
+        }).join('\n');
+        result[name] = style;
+        return;
+    }
+  }
+
+  _updateStylesModel(model, styles) {
+    for (let i = 0, len = model.length; i < len; i++) {
+      if (model[i].hasMixins) {
+        for (let j = 0, len2 = model[i].mixins.length; j < len2; j++) {
+          let name = model[i].mixins[j].name;
+          if (styles[name]) {
+            model[i].mixins[j].value = styles[name];
+          }
+        }
+      }
+
+      if (model[i].hasVariables) {
+        for (let j = 0, len2 = model[i].variables.length; j < len2; j++) {
+          let name = model[i].variables[j].name;
+          if (styles[name]) {
+            model[i].variables[j].value = styles[name];
+          }
+        }
+      }
+    }
   }
 }
 exports.ThemesEditor = ThemesEditor;
