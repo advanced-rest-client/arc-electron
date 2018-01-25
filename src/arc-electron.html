@@ -122,8 +122,8 @@
     }
 
     #drawerResizer:hover {
-      background-color: #BDBDBD;
-      width: 6px;
+      background-color: var(--drawer-resizer-color-hover, #BDBDBD);
+      width: var(--drawer-resizer-width-hover, 6px);
     }
 
     .app-name {
@@ -141,6 +141,7 @@
     .drawer-pin {
       display: none;
     }
+    
     .drawer-pin.visible {
       display: inline-block;
     }

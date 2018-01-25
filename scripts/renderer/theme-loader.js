@@ -72,9 +72,12 @@ class ThemeLoader {
   activateTheme(id) {
     var model;
     var themes;
-    this.removeCustomStyle();
-    this.activeTheme = id;
-    return this.loadThemes()
+
+    return this.unactivateTheme(this.activeTheme)
+    .then(() => {
+      this.activeTheme = id;
+      return this.loadThemes();
+    })
     .then(data => {
       themes = data;
       return this.getThemeInfo(id, data);
@@ -90,10 +93,90 @@ class ThemeLoader {
     .then(info => this._fillThemeInfo(info))
     .then(info => {
       model = info;
-      return info;
+      return this._storeThemeFiles(info)
+      .then(() => info);
+      // return info;
     })
     .then(info => this._loadWebComponent(info.fileLocation))
+    // .then(() => this._loadThemeDependencies(model.bowerDependencies))
     .then(() => this.includeCustomStyle(model.themeName));
+  }
+
+  unactivateTheme(id) {
+    this.removeCustomStyle();
+    if (!id) {
+      return Promise.resolve();
+    }
+    const cmps = path.join(this.basePath, '.cache', id, 'bower_components');
+    return fs.pathExists(cmps)
+    .then(exists => {
+      if (!exists) {
+        return;
+      }
+      return this._restoreThemeFiles(cmps);
+    });
+  }
+
+  _storeThemeFiles(themeInfo) {
+    const cmps = path.join(this.basePath, '.cache', themeInfo._id, 'bower_components');
+    return fs.pathExists(cmps)
+    .then(exists => {
+      if (!exists) {
+        return;
+      }
+      return fs.readdir(cmps)
+      .then(list => this.__storeFiles(cmps, list));
+    });
+  }
+
+  __storeFiles(basePath, files) {
+    var file = files.shift();
+    if (!file) {
+      return Promise.resolve();
+    }
+    const origFile = path.join('bower_components', file);
+    return fs.pathExists(origFile)
+    .then(exists => {
+      if (!exists) {
+        return;
+      }
+      // Copy existing fi
+      const cacheLocation = path.join('bower_components', '.backup', file);
+      return fs.copy(origFile, cacheLocation);
+    });
+  }
+
+  _restoreThemeFiles(basePath) {
+    return fs.readdir(basePath)
+    .then(list => this.__restoreFiles(basePath, list));
+  }
+
+  __restoreFiles(basePath, files) {
+    var file = files.shift();
+    if (!file) {
+      return Promise.resolve();
+    }
+    const localFileBackup = path.join('bower_components', '.backup', file);
+    const remote = path.join('bower_components', file);
+    return fs.pathExists(localFileBackup)
+    .then(exists => {
+      if (!exists) {
+        throw new Error('Cached theme file does not exists, ' + localFileBackup);
+      }
+      return fs.remove(remote)
+      .catch(() => {});
+    })
+    .then(() => {
+      const source = path.join(basePath, file);
+      return fs.copy(source, remote);
+    })
+    .then(() => {
+      return this.__restoreFiles(basePath, files);
+    })
+    .catch(cause => {
+      console.error(cause);
+      return this.__restoreFiles(basePath, files);
+    });
   }
   /**
    * Removes pre-existing custom style module with theme definition.
@@ -155,7 +238,22 @@ class ThemeLoader {
     name += info.main.replace('.html', '');
     info.themeName  = name;
     info.fileLocation = path.join(info.path, info.main);
-    return info;
+    const packageFile = path.join(info.path, 'package.json');
+    return fs.pathExists(packageFile)
+    .then(exists => {
+      if (!exists) {
+        return;
+      }
+      return fs.readJson(packageFile, {throws: false});
+    })
+    .then(packageData => {
+      if (packageData && packageData.bowerDependencies) {
+        info.bowerDependencies = Object.keys(packageData.bowerDependencies).map(item => {
+          return path.join(info.path, 'bower_components', item, item + '.html');
+        });
+      }
+      return info;
+    });
   }
 
   /**
@@ -261,14 +359,52 @@ class ThemeLoader {
     });
   }
 
-  _loadWebComponent(file) {
+  _loadThemeDependencies(dependencies) {
+    if (!dependencies) {
+      return Promise.resolve();
+    }
+    const dep = dependencies.shift();
+    if (!dep) {
+      return Promise.resolve();
+    }
+    return this._loadWebComponent(dep)
+    .then(() => this._loadThemeDependencies(dependencies))
+    .catch(() => this._loadThemeDependencies(dependencies));
+  }
+
+  _loadWebComponent(href) {
     return new Promise((resolve, reject) => {
-      Polymer.Base.importHref(file, () => {
+      console.log('Loading component file, ', href);
+      var link = document.createElement('link');
+      link.rel = 'import';
+      link.href = href;
+      var loadListener;
+      var errorListener;
+      loadListener = function(e) {
+        e.target.__firedLoad = true;
+        e.target.removeEventListener('load', loadListener);
+        e.target.removeEventListener('error', errorListener);
         resolve();
-      }, () => {
-        reject(new Error('Unable to load file', file));
-      });
+      };
+      errorListener = function(e) {
+        e.target.__firedError = true;
+        e.target.removeEventListener('load', loadListener);
+        e.target.removeEventListener('error', errorListener);
+        reject();
+      };
+      link.addEventListener('load', loadListener);
+      link.addEventListener('error', errorListener);
+      document.head.appendChild(link);
+      // Polymer.Base.importHref(href, () => {
+      //   resolve();
+      // }, () => {
+      //   reject(new Error('Unable to load file', href));
+      // });
     });
+  }
+
+  previewThemes(stylesMap) {
+    Polymer.updateStyles(stylesMap);
   }
 }
 exports.ThemeLoader = ThemeLoader;
