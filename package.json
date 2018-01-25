@@ -30,6 +30,7 @@
     "ssl-root-cas": "^1.2.4"
   },
   "dependencies": {
+    "archiver": "^2.1.1",
     "electron-log": "^2.2.9",
     "electron-updater": "^2.18.2",
     "form-data": "^2.3.1",
