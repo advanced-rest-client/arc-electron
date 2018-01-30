@@ -179,6 +179,31 @@
         --history-menu-background-color: var(--anypoint-color-robustBlue4);
         --accent-color: var(--anypoint-color-steel4, #cc143c);
         --arc-menu-selected-color: #fff;
+        --arc-menu-panels-theme: {
+          background-color: var(--anypoint-color-robustBlue4);
+          color: var(--anypoint-color-tertiary);
+        };
+        --projects-menu: {
+          @apply --arc-menu-panels-theme;
+        };
+        --rest-api-menu: {
+          @apply --arc-menu-panels-theme;
+        };
+        --saved-menu: {
+          @apply --arc-menu-panels-theme;
+        };
+        --history-menu: {
+          @apply --arc-menu-panels-theme;
+        };
+        --arc-menu-bottom-actions: {
+          background-color: var(--anypoint-color-robustBlue5);
+          color: var(--anypoint-color-tertiary);
+        };
+        --arc-menu-tabs-color: var(--anypoint-color-tertiary);
+        --arc-menu-tabs-color-unselected: var(--anypoint-color-tertiary);
+        --history-menu-group-header-color: var(--anypoint-color-tertiary);
+        --arc-menu-empty-info-color: var(--anypoint-color-tertiary);
+        --projects-menu-project-icon-color: var(--anypoint-color-robustBlue1);
 
         /*app-toolbar*/
         --app-toolbar-font-size: 20px;
@@ -620,7 +645,7 @@
         --paper-tabs-content: {
           height: calc(100% - 3px);
           border-bottom: 3px solid rgba(39, 47, 51, .1);
-          @apply(--anypoint-font-common-base);
+          @apply --anypoint-font-common-base;
           font-style: normal;
           color: var(--anypoint-color-steel3);
         };
@@ -932,7 +957,25 @@
           position: fixed;
           right: 0;
           bottom: 0;
-        }
+        };
+
+        --request-editor-method-selector-mini: {
+          margin-right: 8px;
+          margin-top: 5px;
+        };
+
+        --request-editor-main-action-buttons: {
+            margin-top: 7px;
+            margin-left: 0px;
+        };
+
+        --request-editor-main-action-button: {
+          height: 40px;
+        };
+
+        --request-editor-context-menu: {
+          margin-top: 0px;
+        };
 
         /* Projects panel */
         --project-details: {
@@ -1037,7 +1080,7 @@
           margin: 64px 12px 0 12px;
         }
 
-        --navigation-notification-button: {
+        /* --navigation-notification-button: {
           background-color: #fff;
           color: #008000;
           border-radius: 50%;
@@ -1046,7 +1089,7 @@
 
         --navigation-notification-button-active: {
           background-color: #D9FFD9;
-        }
+        } */
 
         --request-save-bottom-sheet: {
           @apply --shadow-elevation-24dp;
@@ -1075,6 +1118,22 @@
           margin: 0px 24px;
           height: var(--pages-fixed-height);
         };
+
+        /* HTTP methods labels */
+        --http-method-label-get-color: rgb(255, 255, 255);
+        --http-method-label-get-background-color: rgb(0, 128, 0);
+
+        --http-method-label-post-color: rgb(255, 255, 255);
+        --http-method-label-post-background-color: rgb(33, 150, 243);
+
+        --http-method-label-put-color: rgb(255, 255, 255);
+        --http-method-label-put-background-color: rgb(255, 165, 0);
+
+        --http-method-label-delete-color: rgb(255, 255, 255);
+        --http-method-label-delete-background-color: rgb(244, 67, 54);
+
+        --http-method-label-patch-color: rgb(255, 255, 255);
+        --http-method-label-patch-background-color: rgb(156, 39, 176);
       }
     </style>
   </template>
