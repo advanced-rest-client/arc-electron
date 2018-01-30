@@ -1,5 +1,4 @@
-<link rel="import" href="bower_components/anypoint-styles/colors.html">
-<link rel="import" href="bower_components/anypoint-styles/typography.html">
+
 
 <style is="custom-style">
   body {
@@ -159,6 +158,12 @@
           -webkit-user-select: text;
           cursor: text;
         };
+
+        --section-padding: {
+          padding-left: 24px;
+        };
+
+        --arc-status-bar-env-selector-max-width: auto;
         --menu-selection-background-color: #00b9ff;
         --arc-menu-selected-background-color: var(--menu-selection-background-color);
         --saved-menu-selected-item-background-color: var(--menu-selection-background-color);
@@ -169,8 +174,9 @@
 
         /*arc-menu*/
         /* --arc-menu-height: 100vh; */
-        --arc-menu-background-color: #ffffff;
-        --arc-menu-item-background-color: #ffffff;
+        --arc-menu-background-color: var(--anypoint-color-robustBlue4);
+        --arc-menu-item-background-color: var(--anypoint-color-robustBlue4);
+        --history-menu-background-color: var(--anypoint-color-robustBlue4);
         --accent-color: var(--anypoint-color-steel4, #cc143c);
         --arc-menu-selected-color: #fff;
 
@@ -180,10 +186,13 @@
         --app-drawer-layout-content-transition: none;
 
         /*app-drawer*/
-        --app-drawer-width: 256px;
         --app-drawer-scrim-background: rgba(0, 0, 0, 0.5);
         --app-drawer-content-container: {
-          background-color: var(--anypoint-color-aluminum2, #eee);
+          background-color: var(--anypoint-color-robustBlue4, #eee);
+        };
+
+        --app-header-shadow: {
+          box-shadow: none;
         };
 
         /* Tutorial elements */
@@ -322,15 +331,15 @@
         };
         --raml-request-url-editor: {
           @apply --request-form-panels;
-          overflow-x: hidden;
+          /* overflow-x: hidden;
           overflow-y: visible;
-          min-height: 100px;
+          min-height: 100px; */
         };
         --raml-request-url-editor-input: {
-          border-left: 2px solid var(--anypoint-color-aluminum4) !important;
-          border-right: 2px solid var(--anypoint-color-aluminum4) !important;
-          width: calc(100% - 34px) !important;
-          padding: 10px 15px !important;
+          /* border-left: 2px solid var(--anypoint-color-aluminum4) !important;
+          border-right: 2px solid var(--anypoint-color-aluminum4) !important; */
+          /* width: calc(100% - 34px) !important; */
+          padding: 10px 15px;
         };
         /*paper-icon-item*/
         --paper-item-min-height: 40px;
@@ -364,13 +373,14 @@
         };
 
         --paper-dropdown-menu: {
-          width: 100%;
+          /* width: 100%; */
+          /* min-width: 200px; */
           background-color: #fff;
           border-left: 2px solid var(--anypoint-color-aluminum4) !important;
           border-right: 2px solid var(--anypoint-color-aluminum4) !important;
-          border-bottom: 0px;
-          border-top: 0px;
-          margin: 5px 0;
+          /* border-bottom: 0px; */
+          /* border-top: 0px; */
+          /* margin: 5px 0; */
           box-sizing: border-box;
         };
 
@@ -388,15 +398,20 @@
           padding: 0;
         };
 
-        --raml-request-panel-popup: {
-          z-index: 1030;
-        };
-
         --paper-dropdown-menu-icon: {
           margin-right: 10px;
           width: 20px;
           height: 20px;
           color: var(--anypoint-color-steel2);
+        };
+
+        --payload-editor-dropdown-type: {
+          padding: 0;
+          margin-left: 10px;
+        };
+
+        --raml-request-panel-popup: {
+          z-index: 1030;
         };
 
         --raml-request-panel-popup-header: {
@@ -951,6 +966,8 @@
 
         --arc-menu: {
           padding-top: 64px;
+          background-color: var(--anypoint-color-robustBlue4);
+          color: #fff;
         }
 
         /* Import / Export panels */
@@ -1006,7 +1023,8 @@
 
         /* Request status bar */
         --arc-status-bar: {
-          border-top: 1px #E0E0E0 solid;
+          border-top: 1px var(--anypoint-color-aluminum3) solid;
+          height: 44px;
         };
 
         --google-drive-browser: {

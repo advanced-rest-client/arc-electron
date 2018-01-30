@@ -13,6 +13,7 @@ class ThemeLoader {
     this.activateHandler = this.activateHandler.bind(this);
     this.editCurrentHandler = this.editCurrentHandler.bind(this);
     this.defaultTheme = 'dd1b715f-af00-4ee8-8b0c-2a262b3cf0c8';
+    this.anypointTheme = '859e0c71-ce8b-44df-843b-bca602c13d06';
     this.activeTheme = undefined;
   }
 
@@ -93,90 +94,16 @@ class ThemeLoader {
     .then(info => this._fillThemeInfo(info))
     .then(info => {
       model = info;
-      return this._storeThemeFiles(info)
-      .then(() => info);
-      // return info;
+      return info;
     })
     .then(info => this._loadWebComponent(info.fileLocation))
-    // .then(() => this._loadThemeDependencies(model.bowerDependencies))
+    .then(() => this._loadAppComponents(id))
     .then(() => this.includeCustomStyle(model.themeName));
   }
 
   unactivateTheme(id) {
     this.removeCustomStyle();
-    if (!id) {
-      return Promise.resolve();
-    }
-    const cmps = path.join(this.basePath, '.cache', id, 'bower_components');
-    return fs.pathExists(cmps)
-    .then(exists => {
-      if (!exists) {
-        return;
-      }
-      return this._restoreThemeFiles(cmps);
-    });
-  }
-
-  _storeThemeFiles(themeInfo) {
-    const cmps = path.join(this.basePath, '.cache', themeInfo._id, 'bower_components');
-    return fs.pathExists(cmps)
-    .then(exists => {
-      if (!exists) {
-        return;
-      }
-      return fs.readdir(cmps)
-      .then(list => this.__storeFiles(cmps, list));
-    });
-  }
-
-  __storeFiles(basePath, files) {
-    var file = files.shift();
-    if (!file) {
-      return Promise.resolve();
-    }
-    const origFile = path.join('bower_components', file);
-    return fs.pathExists(origFile)
-    .then(exists => {
-      if (!exists) {
-        return;
-      }
-      // Copy existing fi
-      const cacheLocation = path.join('bower_components', '.backup', file);
-      return fs.copy(origFile, cacheLocation);
-    });
-  }
-
-  _restoreThemeFiles(basePath) {
-    return fs.readdir(basePath)
-    .then(list => this.__restoreFiles(basePath, list));
-  }
-
-  __restoreFiles(basePath, files) {
-    var file = files.shift();
-    if (!file) {
-      return Promise.resolve();
-    }
-    const localFileBackup = path.join('bower_components', '.backup', file);
-    const remote = path.join('bower_components', file);
-    return fs.pathExists(localFileBackup)
-    .then(exists => {
-      if (!exists) {
-        throw new Error('Cached theme file does not exists, ' + localFileBackup);
-      }
-      return fs.remove(remote)
-      .catch(() => {});
-    })
-    .then(() => {
-      const source = path.join(basePath, file);
-      return fs.copy(source, remote);
-    })
-    .then(() => {
-      return this.__restoreFiles(basePath, files);
-    })
-    .catch(cause => {
-      console.error(cause);
-      return this.__restoreFiles(basePath, files);
-    });
+    return Promise.resolve();
   }
   /**
    * Removes pre-existing custom style module with theme definition.
@@ -359,17 +286,14 @@ class ThemeLoader {
     });
   }
 
-  _loadThemeDependencies(dependencies) {
-    if (!dependencies) {
-      return Promise.resolve();
+  _loadAppComponents(id) {
+    var file;
+    if (id === this.anypointTheme) {
+      file = 'src/import-anypoint.html';
+    } else {
+      file = 'src/import.html';
     }
-    const dep = dependencies.shift();
-    if (!dep) {
-      return Promise.resolve();
-    }
-    return this._loadWebComponent(dep)
-    .then(() => this._loadThemeDependencies(dependencies))
-    .catch(() => this._loadThemeDependencies(dependencies));
+    return this._loadWebComponent(file);
   }
 
   _loadWebComponent(href) {

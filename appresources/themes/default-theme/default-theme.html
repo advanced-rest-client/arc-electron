@@ -36,6 +36,10 @@
      --projects-menu-requests-selected-item-background-color: var(--menu-selection-background-color);
      --rest-api-menu-selected-item-background-color:  var(--menu-selection-background-color);
 
+     --app-drawer-content-container: {
+       @apply --shadow-elevation-6dp;
+     };
+
      --arc-font-common-base: {
        @apply --paper-font-common-base;
      };
@@ -177,11 +181,6 @@
        color: rgba(0, 0, 0, 0.67);
        font-size: 15px;
      }
-
-     --select-text: {
-       -webkit-user-select: text;
-       cursor: text;
-     };
 
      --paper-tab: {
        border-bottom: 1px rgba(0, 0, 0, 0.12) solid;
