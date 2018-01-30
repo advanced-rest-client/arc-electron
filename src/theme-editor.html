@@ -31,6 +31,11 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  body {
+    margin: 0;
+    @apply --layout-vertical;
+  }
+
   h1 {
     font-size: 24px;
     font-weight: 400;
@@ -51,14 +56,44 @@
       line-height: 24px;
     };
   }
+
+  polymer-styles-editor {
+    @apply --layout-flex;
+    overflow: auto;
+  }
+
+  header,
+  footer,
+  polymer-styles-editor {
+    margin: 0 24px;
+  }
+
+  footer {
+    padding: 8px 0;
+  }
+
+  .main-action {
+    color: #fff;
+    background-color: #00A2DF;
+  }
   </style>
 </head>
 <body>
   <link rel="import" href="../bower_components/polymer/polymer.html">
   <link rel="import" href="../bower_components/font-roboto-local/roboto.html">
+  <link rel="import" href="../bower_components/paper-button/paper-button.html">
   <link rel="import" href="../bower_components/polymer-styles-editor/polymer-styles-editor.html">
-  <h1>Theme editor</h1>
-  <polymer-styles-editor id="editor"></polymer-styles-editor>
+  <template is="dom-bind" id="app">
+    <header>
+      <h1>ARC theme editor</h1>
+    </header>
+    <polymer-styles-editor id="editor"></polymer-styles-editor>
+    <footer>
+      <paper-button on-tap="cancelEdit">Cancel</paper-button>
+      <paper-button raised on-tap="saveEdit">Save</paper-button>
+      <paper-button raised class="main-action" on-tap="updatePreview">Update view</paper-button>
+    </footer>
+  </template>
   <script src="theme-editor.js"></script>
 </body>
 </html>

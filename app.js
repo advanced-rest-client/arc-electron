@@ -34,6 +34,7 @@ class ArcInit {
     ipc.on('update-downloaded', updateHandler);
     ipc.on('command', this.commandHandler.bind(this));
     ipc.on('request-action', this.execRequestAction.bind(this));
+    ipc.on('theme-editor-preview', this._themePreviewHandler.bind(this));
     this.themeLoader.listen();
   }
 
@@ -41,6 +42,17 @@ class ArcInit {
     log.info('Initializing renderer window...');
     return this.initPreferences()
     .then(settings => this.themeApp(settings))
+    .then(() => this._createApp());
+  }
+
+  _createApp() {
+    return new Promise((resolve, reject) => {
+      Polymer.Base.importHref('src/arc-electron.html', () => {
+        resolve();
+      }, () => {
+        reject(new Error('Unable to load ARC app'));
+      });
+    })
     .then(() => {
       log.info('Initializing arc-electron element...');
       var app = document.createElement('arc-electron');
@@ -222,6 +234,10 @@ class ArcInit {
       default:
         throw new Error('Unrecognized action ' + action);
     }
+  }
+
+  _themePreviewHandler(event, stylesMap) {
+    this.themeLoader.previewThemes(stylesMap);
   }
 }
 

@@ -1,62 +1,3 @@
-<link rel="import" href="../bower_components/polymer/polymer.html">
-<link rel="import" href="../bower_components/font-roboto-local/roboto.html">
-<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
-<link rel="import" href="../bower_components/arc-icons/arc-icons.html">
-<link rel="import" href="../bower_components/arc-menu/arc-menu.html">
-<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
-<link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
-<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
-<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
-<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
-<link rel="import" href="../bower_components/app-route/app-location.html">
-<link rel="import" href="../bower_components/app-route/app-route.html">
-<link rel="import" href="../bower_components/websocket-panel/websocket-panel.html">
-<link rel="import" href="../bower_components/arc-settings-panel/arc-settings-panel.html">
-<link rel="import" href="../bower_components/saved-requests-panel/saved-requests-panel.html">
-<link rel="import" href="../bower_components/history-panel/history-panel.html">
-<link rel="import" href="../bower_components/google-drive-browser/google-drive-browser.html">
-<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
-<link rel="import" href="../bower_components/arc-data-import/arc-data-import.html">
-<link rel="import" href="../bower_components/arc-data-export/arc-data-export.html">
-<link rel="import" href="../bower_components/data-import-export-panel/data-import-export-panel.html">
-<link rel="import" href="../bower_components/search-bar/search-bar.html">
-<link rel="import" href="../bower_components/drop-file-importer/drop-file-importer.html">
-<link rel="import" href="../bower_components/authorization-data-saver/authorization-data-saver.html">
-<link rel="import" href="../bower_components/cookie-jar/cookie-jar.html">
-<link rel="import" href="../bower_components/response-history-saver/response-history-saver.html">
-<link rel="import" href="../bower_components/url-history-saver/url-history-saver.html">
-<link rel="import" href="../bower_components/variables-manager/variables-manager.html">
-<link rel="import" href="../bower_components/variables-evaluator/variables-evaluator.html">
-<link rel="import" href="../bower_components/request-saver/request-saver.html">
-<link rel="import" href="../bower_components/arc-definitions/arc-definitions.html">
-<link rel="import" href="../bower_components/arc-license-dialog/arc-license-dialog.html">
-<link rel="import" href="../bower_components/arc-models/project-model.html">
-<link rel="import" href="../bower_components/arc-models/rest-api-model.html">
-<link rel="import" href="../bower_components/arc-models/host-rules-model.html">
-<link rel="import" href="../bower_components/arc-onboarding/arc-onboarding.html">
-<link rel="import" href="../bower_components/app-analytics/app-analytics.html">
-<link rel="import" href="../bower_components/app-analytics/app-analytics-custom.html">
-<link rel="import" href="../bower_components/app-logger/app-logger.html">
-<link rel="import" href="../bower_components/project-details/project-details.html">
-<link rel="import" href="../bower_components/app-layout/app-header-layout/app-header-layout.html">
-<link rel="import" href="../bower_components/app-layout/app-header/app-header.html">
-<link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
-<link rel="import" href="../bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
-<link rel="import" href="../bower_components/app-layout/app-drawer/app-drawer.html">
-<link rel="import" href="../bower_components/paper-styles/shadow.html">
-<link rel="import" href="../bower_components/arc-messages-service/arc-messages-service.html">
-<link rel="import" href="../bower_components/arc-info-messages/arc-info-messages.html">
-<link rel="import" href="../bower_components/arc-title/arc-title.html">
-<link rel="import" href="../bower_components/web-url-input/web-url-input.html">
-<link rel="import" href="../bower_components/cookie-manager/cookie-manager.html">
-<link rel="import" href="../bower_components/raml-js-parser/raml-js-parser.html">
-<link rel="import" href="../bower_components/raml-json-enhance/raml-json-enhance.html">
-<link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
-<link rel="import" href="../bower_components/rest-apis-list-panel/rest-apis-list-panel.html">
-<link rel="import" href="../bower_components/variables-drawer-editor/variables-drawer-editor.html">
-<link rel="import" href="../bower_components/host-rules-editor/host-rules-editor.html">
-<link rel="import" href="../bower_components/exchange-search-panel/exchange-search-panel.html">
-<link rel="import" href="../bower_components/themes-panel/themes-panel.html">
 <link rel="import" href="request-workspace/request-workspace.html">
 <link rel="import" href="file-export/file-export.html">
 <link rel="import" href="about-arc/about-arc.html">
@@ -106,10 +47,6 @@
       color: var(--hover-button-accent-color);
     }
 
-    app-drawer {
-      @apply --shadow-elevation-6dp;
-    }
-
     #drawerResizer {
       position: absolute;
       bottom: 0;
@@ -122,8 +59,8 @@
     }
 
     #drawerResizer:hover {
-      background-color: #BDBDBD;
-      width: 6px;
+      background-color: var(--drawer-resizer-color-hover, #BDBDBD);
+      width: var(--drawer-resizer-width-hover, 6px);
     }
 
     .app-name {
@@ -141,6 +78,7 @@
     .drawer-pin {
       display: none;
     }
+
     .drawer-pin.visible {
       display: inline-block;
     }

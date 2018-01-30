@@ -1,5 +1,6 @@
 const fs = require('fs-extra');
 const electron = require('electron');
+const ipc = electron.ipcRenderer;
 const path = require('path');
 const app = (electron.app || electron.remote.app);
 const {ArcPreferences} = require('../main/arc-preferences');
@@ -13,6 +14,7 @@ class ThemeLoader {
     this.activateHandler = this.activateHandler.bind(this);
     this.editCurrentHandler = this.editCurrentHandler.bind(this);
     this.defaultTheme = 'dd1b715f-af00-4ee8-8b0c-2a262b3cf0c8';
+    this.anypointTheme = '859e0c71-ce8b-44df-843b-bca602c13d06';
     this.activeTheme = undefined;
   }
 
@@ -54,11 +56,28 @@ class ThemeLoader {
   }
   /**
    * Activates a theme selected by the user.
+   *
+   * Anypoint theme is a special case when the window has to be reloaded when
+   * switching from / to the theme. It loads different components definitions
+   * which cannot be updated once an element has been already registered.
    */
   activateHandler(e) {
     const id = e.detail.theme;
-    return this.activateTheme(id)
-    .then(() => this.updateThemeSettings(id));
+    var p;
+    var reload = false;
+    if (id === this.anypointTheme || this.activeTheme === this.anypointTheme) {
+      p = Promise.resolve();
+      reload = true;
+    } else {
+      p = this.activateTheme(id);
+    }
+    return p
+    .then(() => this.updateThemeSettings(id))
+    .then(() => {
+      if (reload) {
+        this.requireReload();
+      }
+    });
   }
   /**
    * Activates theme for given ID.
@@ -72,9 +91,12 @@ class ThemeLoader {
   activateTheme(id) {
     var model;
     var themes;
-    this.removeCustomStyle();
-    this.activeTheme = id;
-    return this.loadThemes()
+
+    return this.unactivateTheme(this.activeTheme)
+    .then(() => {
+      this.activeTheme = id;
+      return this.loadThemes();
+    })
     .then(data => {
       themes = data;
       return this.getThemeInfo(id, data);
@@ -93,7 +115,15 @@ class ThemeLoader {
       return info;
     })
     .then(info => this._loadWebComponent(info.fileLocation))
+    .then(() => this._loadAppComponents(id))
     .then(() => this.includeCustomStyle(model.themeName));
+  }
+
+  unactivateTheme() {
+    if (this.activeTheme) {
+      this.removeCustomStyle();
+    }
+    return Promise.resolve();
   }
   /**
    * Removes pre-existing custom style module with theme definition.
@@ -155,7 +185,22 @@ class ThemeLoader {
     name += info.main.replace('.html', '');
     info.themeName  = name;
     info.fileLocation = path.join(info.path, info.main);
-    return info;
+    const packageFile = path.join(info.path, 'package.json');
+    return fs.pathExists(packageFile)
+    .then(exists => {
+      if (!exists) {
+        return;
+      }
+      return fs.readJson(packageFile, {throws: false});
+    })
+    .then(packageData => {
+      if (packageData && packageData.bowerDependencies) {
+        info.bowerDependencies = Object.keys(packageData.bowerDependencies).map(item => {
+          return path.join(info.path, 'bower_components', item, item + '.html');
+        });
+      }
+      return info;
+    });
   }
 
   /**
@@ -261,14 +306,56 @@ class ThemeLoader {
     });
   }
 
-  _loadWebComponent(file) {
+  _loadAppComponents(id) {
+    var file;
+    if (id === this.anypointTheme) {
+      file = 'src/import-anypoint.html';
+    } else {
+      file = 'src/import.html';
+    }
+    return this._loadWebComponent(file);
+  }
+
+  _loadWebComponent(href) {
     return new Promise((resolve, reject) => {
-      Polymer.Base.importHref(file, () => {
+      console.log('Loading component file, ', href);
+      var link = document.createElement('link');
+      link.rel = 'import';
+      link.href = href;
+      var loadListener;
+      var errorListener;
+      loadListener = function(e) {
+        e.target.__firedLoad = true;
+        e.target.removeEventListener('load', loadListener);
+        e.target.removeEventListener('error', errorListener);
         resolve();
-      }, () => {
-        reject(new Error('Unable to load file', file));
-      });
+      };
+      errorListener = function(e) {
+        e.target.__firedError = true;
+        e.target.removeEventListener('load', loadListener);
+        e.target.removeEventListener('error', errorListener);
+        reject();
+      };
+      link.addEventListener('load', loadListener);
+      link.addEventListener('error', errorListener);
+      document.head.appendChild(link);
     });
+  }
+
+  previewThemes(stylesMap) {
+    Polymer.updateStyles(stylesMap);
+  }
+
+  requireReload() {
+    // var ev = new CustomEvent('reload-app-required', {
+    //   bubbles: true,
+    //   cancelable: true,
+    //   detail: {
+    //     message: 'Reload the app to apply new theme.'
+    //   }
+    // });
+    // document.body.dispatchEvent(ev);
+    ipc.send('reload-app-required');
   }
 }
 exports.ThemeLoader = ThemeLoader;

@@ -1,4 +1,4 @@
-const {ipcMain, dialog, app} = require('electron');
+const {ipcMain, dialog, app, BrowserWindow} = require('electron');
 const {ArcWindowsManager} = require('./scripts/main/windows-manager');
 const {UpdateStatus} = require('./scripts/main/update-status');
 const {ArcMainMenu} = require('./scripts/main/main-menu');
@@ -295,4 +295,21 @@ ipcMain.on('open-theme-editor', (event, data) => {
   const {ThemesEditor} = require('./scripts/main/themes-editor.js');
   const editor = new ThemesEditor(windowId, data);
   editor.run();
+});
+
+ipcMain.on('reload-app-required', (event, message) => {
+  message = message || 'To complete the action reload the application.';
+  const win = BrowserWindow.fromWebContents(event.sender);
+  dialog.showMessageBox(win, {
+    type: 'info',
+    buttons: ['Reload', 'Later'],
+    defaultId: 0,
+    cancelId: 1,
+    title: 'Reload Advanced REST Client?',
+    message: message,
+  }, (response) => {
+    if (response === 0) {
+      arcApp.wm.reloadWindows();
+    }
+  });
 });

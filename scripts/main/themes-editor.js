@@ -2,6 +2,7 @@ const fs = require('fs-extra');
 const {BrowserWindow} = require('electron');
 const path = require('path');
 const url = require('url');
+const {ipcMain} = require('electron');
 /**
  * A class responsible for running the theme editor and communicating with
  * sender window to apply the theme.
@@ -18,6 +19,7 @@ class ThemesEditor {
   constructor(windowId, params) {
     this.senderId = windowId;
     this.initParams = params || {};
+    this._previewHandler = this._previewHandler.bind(this);
   }
 
   run() {
@@ -25,6 +27,9 @@ class ThemesEditor {
   }
   // Runs the editor window
   runEditor(opts) {
+    if (this.__win) {
+      return;
+    }
     opts = opts || {};
     const parent = BrowserWindow.fromId(this.senderId);
     const win = new BrowserWindow({
@@ -53,6 +58,20 @@ class ThemesEditor {
       slashes: true
     });
     win.loadURL(full);
+    this._addWindowListeners(win);
+    this.__win = win;
+  }
+
+  _addWindowListeners(win) {
+    ipcMain.on('theme-editor-preview', this._previewHandler);
+    // win.on('theme-editor-save', this._saveHandler);
+    // win.on('theme-editor-cancel', this._cancelHandler);
+    win.once('close', () => {
+      ipcMain.removeAllListeners('theme-editor-preview');
+    });
+    win.once('closed', () => {
+      this.__win = undefined;
+    });
   }
   /**
    * Inits the theme editor as a new theme (without reading theme file contents)
@@ -122,9 +141,6 @@ class ThemesEditor {
     if (!name) {
       return;
     }
-    // if (name[0] !== '-' && name[1] !== '-') {
-    //   return;
-    // }
     var value = declaration.value;
     if (!value) {
       return;
@@ -159,11 +175,25 @@ class ThemesEditor {
         for (let j = 0, len2 = model[i].variables.length; j < len2; j++) {
           let name = model[i].variables[j].name;
           if (styles[name]) {
-            model[i].variables[j].value = styles[name];
+            model[i].variables[j].value = this._processVariableName(styles[name]);
           }
         }
       }
     }
+  }
+
+  _processVariableName(name) {
+    if (!name || name[0] !== '#') {
+      return name;
+    }
+    if (name.length === 4) {
+      return name + 'fff';
+    }
+  }
+
+  _previewHandler(event, stylesMap) {
+    var win = BrowserWindow.fromId(this.senderId);
+    win.send('theme-editor-preview', stylesMap);
   }
 }
 exports.ThemesEditor = ThemesEditor;
