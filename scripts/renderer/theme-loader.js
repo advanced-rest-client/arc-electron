@@ -1,5 +1,6 @@
 const fs = require('fs-extra');
 const electron = require('electron');
+const ipc = electron.ipcRenderer;
 const path = require('path');
 const app = (electron.app || electron.remote.app);
 const {ArcPreferences} = require('../main/arc-preferences');
@@ -55,11 +56,28 @@ class ThemeLoader {
   }
   /**
    * Activates a theme selected by the user.
+   *
+   * Anypoint theme is a special case when the window has to be reloaded when
+   * switching from / to the theme. It loads different components definitions
+   * which cannot be updated once an element has been already registered.
    */
   activateHandler(e) {
     const id = e.detail.theme;
-    return this.activateTheme(id)
-    .then(() => this.updateThemeSettings(id));
+    var p;
+    var reload = false;
+    if (id === this.anypointTheme || this.activeTheme === this.anypointTheme) {
+      p = Promise.resolve();
+      reload = true;
+    } else {
+      p = this.activateTheme(id);
+    }
+    return p
+    .then(() => this.updateThemeSettings(id))
+    .then(() => {
+      if (reload) {
+        this.requireReload();
+      }
+    });
   }
   /**
    * Activates theme for given ID.
@@ -101,8 +119,10 @@ class ThemeLoader {
     .then(() => this.includeCustomStyle(model.themeName));
   }
 
-  unactivateTheme(id) {
-    this.removeCustomStyle();
+  unactivateTheme() {
+    if (this.activeTheme) {
+      this.removeCustomStyle();
+    }
     return Promise.resolve();
   }
   /**
@@ -319,16 +339,23 @@ class ThemeLoader {
       link.addEventListener('load', loadListener);
       link.addEventListener('error', errorListener);
       document.head.appendChild(link);
-      // Polymer.Base.importHref(href, () => {
-      //   resolve();
-      // }, () => {
-      //   reject(new Error('Unable to load file', href));
-      // });
     });
   }
 
   previewThemes(stylesMap) {
     Polymer.updateStyles(stylesMap);
+  }
+
+  requireReload() {
+    // var ev = new CustomEvent('reload-app-required', {
+    //   bubbles: true,
+    //   cancelable: true,
+    //   detail: {
+    //     message: 'Reload the app to apply new theme.'
+    //   }
+    // });
+    // document.body.dispatchEvent(ev);
+    ipc.send('reload-app-required');
   }
 }
 exports.ThemeLoader = ThemeLoader;
