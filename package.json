@@ -14,10 +14,11 @@
   "scripts": {
     "start": "electron --inspect=5858 .",
     "postinstall": "electron-builder install-app-deps",
-    "test": "NODE_ENV=test mocha test/*.test.js",
+    "test": "npm run bower && NODE_ENV=test mocha test/*.test.js",
     "build-l": "npx electron-builder -l",
     "build-w": "npx electron-builder -w",
-    "build-m": "npx electron-builder -m"
+    "build-m": "npx electron-builder -m",
+    "bower": "node tasks/bower.js"
   },
   "main": "main.js",
   "devDependencies": {
@@ -25,12 +26,12 @@
     "chance": "^1.0.13",
     "electron": "~1.7.11",
     "electron-builder": "^19.55.3",
+    "glob": "^7.1.2",
     "mocha": "^4.0.1",
     "spectron": "^3.7.2",
     "ssl-root-cas": "^1.2.4"
   },
   "dependencies": {
-    "archiver": "^2.1.1",
     "electron-log": "^2.2.9",
     "electron-updater": "^2.18.2",
     "form-data": "^2.3.1",

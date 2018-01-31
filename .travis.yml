@@ -12,3 +12,5 @@ script: ./test/travis-build.sh
 cache:
   directories:
     - node_modules
+    - components/anypoint/bower_components
+    - components/default/bower_components
