@@ -185,22 +185,7 @@ class ThemeLoader {
     name += info.main.replace('.html', '');
     info.themeName  = name;
     info.fileLocation = path.join(info.path, info.main);
-    const packageFile = path.join(info.path, 'package.json');
-    return fs.pathExists(packageFile)
-    .then(exists => {
-      if (!exists) {
-        return;
-      }
-      return fs.readJson(packageFile, {throws: false});
-    })
-    .then(packageData => {
-      if (packageData && packageData.bowerDependencies) {
-        info.bowerDependencies = Object.keys(packageData.bowerDependencies).map(item => {
-          return path.join(info.path, 'bower_components', item, item + '.html');
-        });
-      }
-      return info;
-    });
+    return info;
   }
 
   /**
@@ -307,18 +292,18 @@ class ThemeLoader {
   }
 
   _loadAppComponents(id) {
-    var file;
+    var packageName;
     if (id === this.anypointTheme) {
-      file = 'src/import-anypoint.html';
+      packageName = 'anypoint';
     } else {
-      file = 'src/import.html';
+      packageName = 'default';
     }
+    const file = path.join('components', packageName, 'import.html');
     return this._loadWebComponent(file);
   }
 
   _loadWebComponent(href) {
     return new Promise((resolve, reject) => {
-      console.log('Loading component file, ', href);
       var link = document.createElement('link');
       link.rel = 'import';
       link.href = href;
