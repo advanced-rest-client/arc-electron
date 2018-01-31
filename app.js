@@ -1,5 +1,7 @@
 const ipc = require('electron').ipcRenderer;
 const log = require('electron-log');
+const {ArcPreferences} = require('./scripts/main/arc-preferences');
+const {ThemeLoader} = require('./scripts/renderer/theme-loader');
 /**
  * Class responsible for initializing the main ARC elements
  * and setup base options.
@@ -11,6 +13,7 @@ class ArcInit {
     this.created = false;
     this.workspaceScript = undefined;
     this.settingsScript = undefined;
+    this.themeLoader = new ThemeLoader();
   }
 
   get app() {
@@ -31,15 +34,61 @@ class ArcInit {
     ipc.on('update-downloaded', updateHandler);
     ipc.on('command', this.commandHandler.bind(this));
     ipc.on('request-action', this.execRequestAction.bind(this));
+    ipc.on('theme-editor-preview', this._themePreviewHandler.bind(this));
+    this.themeLoader.listen();
   }
 
   initApp() {
-    log.info('Initializing renderer window.');
-    var app = document.createElement('arc-electron');
-    app.id = 'app';
-    this._setupApp(app);
-    document.body.appendChild(app);
-    this.created = true;
+    log.info('Initializing renderer window...');
+    return this.initPreferences()
+    .then(settings => this.themeApp(settings))
+    .then(() => this._createApp());
+  }
+
+  _createApp() {
+    return new Promise((resolve, reject) => {
+      Polymer.Base.importHref('src/arc-electron.html', () => {
+        resolve();
+      }, () => {
+        reject(new Error('Unable to load ARC app'));
+      });
+    })
+    .then(() => {
+      log.info('Initializing arc-electron element...');
+      var app = document.createElement('arc-electron');
+      app.id = 'app';
+      this._setupApp(app);
+      document.body.appendChild(app);
+      this.created = true;
+    });
+  }
+
+  initPreferences() {
+    log.info('Initializing app preferences...');
+    this.__prefs = new ArcPreferences(this.settingsScript);
+    this.__prefs.observe();
+    return this.__prefs.loadSettings();
+  }
+
+  themeApp(settings) {
+    log.info('Initializing app theme.');
+    var id;
+    if (settings.theme) {
+      id = settings.theme;
+    } else {
+      id = this.themeLoader.defaultTheme;
+    }
+    return this.themeLoader.activateTheme(id)
+    .catch(cause => {
+      if (id === this.themeLoader.default) {
+        log.error('Unable to load theme file.', cause);
+        return;
+      }
+      return this.themeLoader.activateTheme(this.themeLoader.defaultTheme);
+    })
+    .catch(cause => {
+      log.error('Unable to load default theme file.', cause);
+    });
   }
 
   setupWorkspaceFile(e, message) {
@@ -60,6 +109,7 @@ class ArcInit {
       return;
     }
     this.app.settingsScript = message;
+    this.themeLoader.setupSettingsFile(message);
   }
 
   _setupApp(app) {
@@ -113,6 +163,7 @@ class ArcInit {
       case 'get-tabs-count': this.sendTabsCount(event, args[0]); break;
       case 'activate-tab': this.activateTab(event, args[0], args[1]); break;
       case 'get-request-data': this.getRequestData(event, args[0], args[1]); break;
+      case 'open-themes': app.openThemesPanel(); break;
     }
   }
   /**
@@ -183,6 +234,10 @@ class ArcInit {
       default:
         throw new Error('Unrecognized action ' + action);
     }
+  }
+
+  _themePreviewHandler(event, stylesMap) {
+    this.themeLoader.previewThemes(stylesMap);
   }
 }
 

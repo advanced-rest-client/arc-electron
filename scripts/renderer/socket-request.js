@@ -1044,8 +1044,6 @@ class SocketRequest extends EventEmitter {
       if (!this._chunkSize) {
         data = this.readChunkSize(data);
         if (!this._chunkSize && this._chunkSize !== 0) {
-          let sum = this.__bodyChunk.length + data.length;
-          this.__bodyChunk = Buffer.concat([this.__bodyChunk, data], sum);
           // It may happen that node's buffer cuts the data
           // just before the chunk size.
           // It should proceed it in next portion of the data.

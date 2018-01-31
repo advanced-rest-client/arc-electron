@@ -186,6 +186,12 @@ class ArcWindowsManager {
     });
     event.newGuest = new BrowserWindow(options);
   }
+
+  reloadWindows() {
+    this.windows.forEach(win => {
+      win.reload();
+    });
+  }
 }
 
 exports.ArcWindowsManager = ArcWindowsManager;
