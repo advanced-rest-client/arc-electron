@@ -24,7 +24,7 @@
     "chai": "^4.1.2",
     "chance": "^1.0.13",
     "electron": "~1.7.11",
-    "electron-builder": "^19.55.1",
+    "electron-builder": "^19.55.3",
     "mocha": "^4.0.1",
     "spectron": "^3.7.2",
     "ssl-root-cas": "^1.2.4"
