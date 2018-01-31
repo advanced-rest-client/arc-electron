@@ -18,11 +18,12 @@ the License.
     <style>
     :host {
       display: block;
+      @apply --request-workspace;
     }
 
     .tabs-row {
-      background-color: rgba(0, 0, 0, 0.05);
-      border-bottom: 1px #e5e5e5 solid;
+      background-color: var(--request-workspace-tabs-backgroud-color, rgba(0, 0, 0, 0.05));
+      border-bottom: 1px var(--request-workspace-tabs-border-color, #e5e5e5) solid;
     }
 
     .tabs-row paper-tabs {
@@ -31,7 +32,7 @@ the License.
         height: 100%;
         border-bottom: 0 solid transparent;
         font-style: normal;
-        color: rgba(0,0,0,0.87);
+        color: var(--request-workspace-tabs-color, rgba(0,0,0,0.87));
       };
     }
 
@@ -63,7 +64,7 @@ the License.
     }
 
     paper-tab.iron-selected {
-      background-color: rgba(255, 138, 101, 0.08);
+      background-color: var(--request-workspace-tabs-selected-background-color, rgba(255, 138, 101, 0.08));
     }
     </style>
     <app-route route="{{route}}" pattern="/request/:type/:id/:tab" data="{{requestRoute}}"></app-route>
@@ -83,7 +84,6 @@ the License.
         <arc-request-panel request-panel-id="[[index]]" class="panel" request="{{item}}"></arc-request-panel>
       </template>
     </iron-pages>
-
     <paper-toast text="Can't restore request data. The type is unknown." id="typeMissingToast"></paper-toast>
     <paper-toast text="Request do not exists in local database." id="missingRequestToast"></paper-toast>
   </template>

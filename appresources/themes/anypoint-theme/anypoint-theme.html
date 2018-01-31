@@ -1,5 +1,3 @@
-
-
 <style is="custom-style">
   body {
     @apply --anypoint-font-body;
@@ -12,7 +10,7 @@
         /*arc-electron*/
         --primary-color: var(--anypoint-color-primary, #00a2df);
         --secondary-color: var(--anypoint-color-secondary, #506773);
-        --primary-background-color: #fff;
+        --primary-background-color: var(--anypoint-color-aluminum2);
         --toolbar-background-color: #262728;
         --toolbar-color: #ffffff;
         --accent-color: var(--anypoint-color-steel4, #cc143c);
@@ -164,13 +162,24 @@
         };
 
         --arc-status-bar-env-selector-max-width: auto;
-        --menu-selection-background-color: #00b9ff;
+        --menu-selection-background-color: var(--anypoint-color-aluminum1);
         --arc-menu-selected-background-color: var(--menu-selection-background-color);
         --saved-menu-selected-item-background-color: var(--menu-selection-background-color);
         --history-menu-selected-item-background-color: var(--menu-selection-background-color);
         --projects-menu-selected-item-background-color: var(--menu-selection-background-color);
         --projects-menu-requests-selected-item-background-color: var(--menu-selection-background-color);
         --rest-api-menu-selected-item-background-color:  var(--menu-selection-background-color);
+        --projects-menu-requests-selected-item-color: var(--anypoint-color-steel2);
+
+        --projects-menu-list-item: {};
+        --projects-menu-requests: {
+          background-color: inherit;
+          color: #fff
+        };
+        --projects-menu-requests-list-item: {
+          color: #fff;
+        };
+        --projects-menu-open-icon-color: var(--anypoint-color-robustBlue1);
 
         /*arc-menu*/
         /* --arc-menu-height: 100vh; */
@@ -178,7 +187,7 @@
         --arc-menu-item-background-color: var(--anypoint-color-robustBlue4);
         --history-menu-background-color: var(--anypoint-color-robustBlue4);
         --accent-color: var(--anypoint-color-steel4, #cc143c);
-        --arc-menu-selected-color: #fff;
+        --arc-menu-selected-color: var(--anypoint-color-steel2);
         --arc-menu-panels-theme: {
           background-color: var(--anypoint-color-robustBlue4);
           color: var(--anypoint-color-tertiary);
@@ -348,7 +357,6 @@
         };
         --response-view: {
           margin-bottom: 20px;
-          max-width: 900px;
         };
         --request-form-panels: {
           margin: 0;
@@ -959,6 +967,10 @@
           bottom: 0;
         };
 
+        --request-editor: {
+          padding-top: 10px;
+        };
+
         --request-editor-method-selector-mini: {
           margin-right: 8px;
           margin-top: 5px;
@@ -975,6 +987,15 @@
 
         --request-editor-context-menu: {
           margin-top: 0px;
+        };
+
+        --request-editor-tabs-container: {
+          background-color: #fff;
+          padding: 15px 10px;
+        };
+
+        --request-editor-tab-selected: {
+          background-color: #fff;
         };
 
         /* Projects panel */
@@ -1134,6 +1155,19 @@
 
         --http-method-label-patch-color: rgb(255, 255, 255);
         --http-method-label-patch-background-color: rgb(156, 39, 176);
+
+        /* Request workspace */
+        --request-workspace-tabs-backgroud-color: var(--anypoint-color-aluminum3);
+
+        /* request timings */
+        --request-timings: {
+          background-color: #fff;
+          padding: 10px 5px;
+        };
+
+        --themes-panel: {
+          padding: 0 24px;
+        }
       }
     </style>
   </template>
