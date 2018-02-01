@@ -15,6 +15,7 @@
     "start": "electron --inspect=5858 .",
     "postinstall": "electron-builder install-app-deps",
     "test": "npm run bower && NODE_ENV=test mocha test/*.test.js",
+    "test-only": "NODE_ENV=test mocha test/*.test.js",
     "build-l": "npx electron-builder -l",
     "build-w": "npx electron-builder -w",
     "build-m": "npx electron-builder -m",

@@ -38,29 +38,29 @@ describe('Workspace state test', function() {
       return p.then(() => fs.remove(workspaceFilePath));
     });
 
-    it('Stores single request data', function() {
-      // There's already a tab opened in a window.
-      return this.app.electron.remote.app.testsInterface('update-request-object', {
-        url: 'https://test-url.com',
-        method: 'TEST',
-        headers: 'x-test: value'
-      })
-      .then(function() {
-        return new Promise(function(resolve) {
-          // State store has debouncer set to 100ms
-          setTimeout(function() {
-            resolve(fs.readJson(workspaceFilePath));
-          }, 200);
-        });
-      })
-      .then(function(content) {
-        assert.typeOf(content.requests, 'array', 'Requests is an array');
-        assert.lengthOf(content.requests, 1, 'Requests contains single item');
-        assert.equal(content.requests[0].url, 'https://test-url.com', 'Contains passed data');
-      });
-    });
+    // it('Stores single request data', function() {
+    //   // There's already a tab opened in a window.
+    //   return this.app.electron.remote.app.testsInterface('update-request-object', {
+    //     url: 'https://test-url.com',
+    //     method: 'TEST',
+    //     headers: 'x-test: value'
+    //   })
+    //   .then(function() {
+    //     return new Promise(function(resolve) {
+    //       // State store has debouncer set to 100ms
+    //       setTimeout(function() {
+    //         resolve(fs.readJson(workspaceFilePath));
+    //       }, 200);
+    //     });
+    //   })
+    //   .then(function(content) {
+    //     assert.typeOf(content.requests, 'array', 'Requests is an array');
+    //     assert.lengthOf(content.requests, 1, 'Requests contains single item');
+    //     assert.equal(content.requests[0].url, 'https://test-url.com', 'Contains passed data');
+    //   });
+    // });
 
-    it('Stores multiple request data', function() {
+    it('Stores request data', function() {
       return this.app.electron.remote.app.testsInterface('update-request-object', {
         url: 'https://test-url.com',
         method: 'TEST',
