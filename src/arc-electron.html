@@ -98,8 +98,11 @@
     .nav-notification-button[active] {
       @apply --navigation-notification-button-active;
     }
-    </style>
 
+    search-bar {
+      top: 64px;
+    }
+    </style>
     <app-header-layout has-scrolling-region id="scrollingRegion">
       <app-header fixed shadow scroll-target="scrollingRegion">
         <app-toolbar>
@@ -170,7 +173,7 @@
     </paper-toast>
     <paper-toast id="processingRamlErrorToast" class="error-toast"></paper-toast>
     <paper-toast id="errorToast" duration="5000"></paper-toast>
-    <search-bar id="content-search-bar" on-iron-overlay-opened="textSearchBarOpened"></search-bar>
+    <search-bar id="content-search-bar"></search-bar>
     <template is="dom-if" if="[[telemetry]]" restamp="true">
       <app-analytics tracking-id="UA-18021184-6" app-name="ARC-electon" app-id="[[appId]]" app-version="[[appVersion]]" data-source="electron-app">
         <template is="dom-repeat" items="[[gaCustomMetrics]]">
