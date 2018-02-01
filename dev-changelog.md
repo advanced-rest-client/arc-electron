@@ -10,3 +10,5 @@
 - 3-01-2018 - Added support for internal hosts rules
 - 12-01-2018 - Added integration with Mulesoft Exchange to search for RAML assets
 - 15-01-2018 - Updated menu to tabbed version.
+- 31-01-2018 - Added themes to the application
+- 31-01-2018 - Fixed Google Drive Browser when it repeated results when there were not more results
