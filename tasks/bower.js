@@ -54,7 +54,7 @@ function clearPattern(pattern) {
 
 function clear() {
   const root = 'components/{anypoint,default}/bower_components/**/';
-  return clearPattern(root + '{demo,test,docs}*')
+  return clearPattern(root + '{demo,test,docs}/*')
   .then(() => clearPattern(root + '*.md'))
   .then(() => clearPattern(root + '.travis/*'));
 }
