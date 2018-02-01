@@ -373,6 +373,9 @@
         this.cb.listen();
         this._appInitialized = true;
         this.initRouting();
+        const {WindowSearchHelper} = require('./scripts/renderer/window-search.js');
+        this.windowSearch = new WindowSearchHelper();
+        this.windowSearch.listen();
       },
 
       initRouting: function() {
