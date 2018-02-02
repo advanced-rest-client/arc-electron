@@ -74,7 +74,7 @@
     "paper-toast": "PolymerElements/paper-toast#<2",
     "arc-license-dialog": "advanced-rest-client/arc-license-dialog#^0.1.1",
     "cookie-exchange-banner": "advanced-rest-client/cookie-exchange-banner#^0.1.0",
-    "arc-onboarding": "advanced-rest-client/arc-onboarding#^0.1.1",
+    "arc-onboarding": "advanced-rest-client/arc-onboarding#^0.2.1",
     "paper-dialog-behavior": "PolymerElements/paper-dialog-behavior#<2",
     "arc-icons": "advanced-rest-client/arc-icons#^1.0.23",
     "iron-flex-layout": "PolymerElements/iron-flex-layout#<2",
