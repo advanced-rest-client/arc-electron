@@ -59,7 +59,6 @@
     "arc-data-import": "advanced-rest-client/arc-data-import#^0.1.1",
     "data-import-export-panel": "advanced-rest-client/data-import-export-panel#^0.1.1",
     "history-panel": "advanced-rest-client/history-panel#^0.1.1",
-    "search-bar": "advanced-rest-client/search-bar#^0.1.1",
     "bottom-sheet": "advanced-rest-client/bottom-sheet#^1.0.4",
     "saved-request-detail": "advanced-rest-client/saved-request-detail#^0.1.1",
     "drop-file-importer": "advanced-rest-client/drop-file-importer#^0.2.0",

@@ -16,6 +16,8 @@ class ThemeLoader {
     this.defaultTheme = 'dd1b715f-af00-4ee8-8b0c-2a262b3cf0c8';
     this.anypointTheme = '859e0c71-ce8b-44df-843b-bca602c13d06';
     this.activeTheme = undefined;
+    this.importFileName = 'import.html';
+    this.componentsBasePath = path.join('./', 'components');
   }
 
   listen() {
@@ -298,7 +300,7 @@ class ThemeLoader {
     } else {
       packageName = 'default';
     }
-    const file = path.join('components', packageName, 'import.html');
+    const file = path.join(this.componentsBasePath, packageName, this.importFileName);
     return this._loadWebComponent(file);
   }
 
@@ -332,14 +334,6 @@ class ThemeLoader {
   }
 
   requireReload() {
-    // var ev = new CustomEvent('reload-app-required', {
-    //   bubbles: true,
-    //   cancelable: true,
-    //   detail: {
-    //     message: 'Reload the app to apply new theme.'
-    //   }
-    // });
-    // document.body.dispatchEvent(ev);
     ipc.send('reload-app-required');
   }
 }

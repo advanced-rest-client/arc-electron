@@ -120,6 +120,9 @@ class ArcWindowsManager {
   }
 
   _findWindowImdex(win) {
+    if (win.isDestroyed()) {
+      return -1;
+    }
     return this.windows.findIndex(item => {
       if (item.isDestroyed()) {
         return win === win;

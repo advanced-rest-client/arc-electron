@@ -155,7 +155,6 @@ class ArcInit {
       case 'open-saved': app.openSaved(); break;
       case 'open-history': app.openHistory(); break;
       case 'open-drive': app.openDrivePicker(); break;
-      case 'find': app.handleFindOpen(); break;
       case 'open-messages': app.openInfoCenter(); break;
       case 'login-external-webservice': app.openWebUrl(); break;
       case 'open-cookie-manager': app.openCookieManager(); break;
