@@ -76,7 +76,7 @@ describe('Workspace state test', function() {
         return new Promise(function(resolve) {
           setTimeout(function() {
             resolve(fs.readJson(workspaceFilePath));
-          }, 200);
+          }, 250);
         });
       })
       .then(function(content) {
@@ -95,7 +95,7 @@ describe('Workspace state test', function() {
         return new Promise(function(resolve) {
           setTimeout(function() {
             resolve(fs.readJson(workspaceFilePath));
-          }, 200);
+          }, 250);
         });
       })
       .then(function(content) {
