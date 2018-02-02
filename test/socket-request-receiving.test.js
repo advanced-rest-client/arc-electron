@@ -35,7 +35,7 @@ describe('Socket request - receiving data', function() {
   });
 
   describe('Chunked responses', function() {
-    var request;
+    let request;
 
     this.timeout(10000);
 
@@ -45,22 +45,22 @@ describe('Socket request - receiving data', function() {
         assert.isTrue(response.ok);
         assert.ok(request);
         response.text()
-        .then(body => {
+        .then((body) => {
           let parts = body.split('\n');
           assert.lengthOf(parts, 6);
-          for (var i = 0; i < 5; i++) {
+          for (let i = 0; i < 5; i++) {
             assert.equal(parts[i].length, 128);
           }
           done();
         })
-        .catch(cause => done(cause));
+        .catch((cause) => done(cause));
       });
       request.send();
     });
   });
 
   describe('readChunkSize()', function() {
-    var request;
+    let request;
     before(function() {
       request = new SocketRequest(requests[0], opts[0]);
     });
@@ -78,7 +78,7 @@ describe('Socket request - receiving data', function() {
     });
 
     it('Parses chunk size', function() {
-      var chunk = Number(128).toString(16);
+      let chunk = Number(128).toString(16);
       chunk += '\r\ntest';
       const b = Buffer.from(chunk);
       request.readChunkSize(b);
@@ -86,7 +86,7 @@ describe('Socket request - receiving data', function() {
     });
 
     it('Buffer is truncated', function() {
-      var chunk = Number(128).toString(16);
+      let chunk = Number(128).toString(16);
       chunk += '\r\ntest';
       const b = Buffer.from(chunk);
       const result = request.readChunkSize(b);
@@ -95,14 +95,14 @@ describe('Socket request - receiving data', function() {
   });
 
   describe('_processBodyChunked()', function() {
-    var request;
+    let request;
     beforeEach(function() {
       request = new SocketRequest(requests[0], opts[0]);
       request._reportResponse = function() {};
     });
 
     it('Reads body chunk', function() {
-      var chunk = Number(4).toString(16);
+      let chunk = Number(4).toString(16);
       chunk += '\r\ntest\r\n0\r\n';
       const b = Buffer.from(chunk);
       request._processBodyChunked(b);
@@ -111,7 +111,7 @@ describe('Socket request - receiving data', function() {
     });
 
     it('Reads multi chunks', function() {
-      var chunk = Number(6).toString(16);
+      let chunk = Number(6).toString(16);
       chunk += '\r\ntest\r\n\r\n';
       chunk += Number(8).toString(16);
       chunk += '\r\ntest1234\r\n';
@@ -123,7 +123,7 @@ describe('Socket request - receiving data', function() {
     });
 
     it('Reads multi chunks with partial buffor', function() {
-      var chunk = Number(6).toString(16);
+      let chunk = Number(6).toString(16);
       chunk += '\r\nte';
       request._processBodyChunked(Buffer.from(chunk));
       chunk = 'st\r\n\r\n';
@@ -139,7 +139,7 @@ describe('Socket request - receiving data', function() {
   });
 
   describe('_processBody()', function() {
-    var request;
+    let request;
     const testData = Buffer.from('abcdefghijklmn');
     const testLength = testData.length;
 
@@ -154,9 +154,10 @@ describe('Socket request - receiving data', function() {
       assert.isTrue(request._rawBody === testData);
     });
 
-    it('Does not call _reportResponse when length is higher than data', function() {
+    it('Does not call _reportResponse when length is higher than data',
+      function() {
       request._contentLength = testLength + 1;
-      var called = false;
+      let called = false;
       request._reportResponse = function() {
         called = true;
       };
@@ -164,9 +165,10 @@ describe('Socket request - receiving data', function() {
       assert.isFalse(called);
     });
 
-    it('Reports response when the data is read as whole on one socket buffer', function() {
+    it('Reports response when the data is read as whole on one socket buffer',
+      function() {
       request._contentLength = testLength;
-      var called = false;
+      let called = false;
       request._reportResponse = function() {
         called = true;
       };
@@ -176,7 +178,7 @@ describe('Socket request - receiving data', function() {
 
     it('Reports response after more calls', function() {
       request._contentLength = testLength;
-      var called = false;
+      let called = false;
       request._reportResponse = function() {
         called = true;
       };

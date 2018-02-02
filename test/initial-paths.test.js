@@ -21,8 +21,9 @@ describe('Initial paths', function() {
     });
 
     it('Should not set settings file location', function() {
-      return this.app.electron.remote.app.testsInterface('get-application-settings-file-location')
-      .then(location => {
+      return this.app.electron.remote.app.
+      testsInterface('get-application-settings-file-location')
+      .then((location) => {
         assert.equal(location, undefined);
       });
     });
@@ -30,20 +31,20 @@ describe('Initial paths', function() {
     it('Should not set workspace file location', function() {
       return this.app.electron.remote.app
       .testsInterface('get-application-workspace-state-file-location')
-      .then(location => {
+      .then((location) => {
         assert.equal(location, undefined);
       });
     });
 
     it('Should set settings default file location', function() {
-      var fileLocation;
+      let fileLocation;
       return this.app.electron.remote.app
       .testsInterface('get-preferences-settings-location')
-      .then(location => {
+      .then((location) => {
         fileLocation = location;
         return this.app.electron.remote.app.getPath('userData');
       })
-      .then(settingsPath => {
+      .then((settingsPath) => {
         let finalLocation = settingsPath + '/settings.json';
         assert.equal(fileLocation, finalLocation);
       });
@@ -69,7 +70,7 @@ describe('Initial paths', function() {
     });
 
     after(function() {
-      var promise;
+      let promise;
       if (this.app && this.app.isRunning()) {
         promise = this.app.stop();
       } else {
@@ -81,8 +82,9 @@ describe('Initial paths', function() {
     });
 
     it('Should set settings file location', function() {
-      return this.app.electron.remote.app.testsInterface('get-application-settings-file-location')
-      .then(location => {
+      return this.app.electron.remote.app.
+      testsInterface('get-application-settings-file-location')
+      .then((location) => {
         assert.equal(location, settingsFilePath);
       });
     });
@@ -90,7 +92,7 @@ describe('Initial paths', function() {
     it('Should set workspace file location', function() {
       return this.app.electron.remote.app
       .testsInterface('get-application-workspace-state-file-location')
-      .then(location => {
+      .then((location) => {
         assert.equal(location, workspaceFilePath);
       });
     });
@@ -103,7 +105,8 @@ describe('Initial paths', function() {
     //
     // it('Application receives workspace-script attribute', function() {
     //   return waitFor(1000)
-    //   .then(() => this.app.client.getAttribute('arc-electron', 'workspace-script'))
+    //   .then(() => this.app.client.getAttribute('arc-electron',
+    //   'workspace-script'))
     //   .then(value => {
     //     assert.equal(value, workspaceFilePath);
     //   });
@@ -111,7 +114,8 @@ describe('Initial paths', function() {
     //
     // it('Application receives settings-script attribute', function() {
     //   return waitFor(1000)
-    //   .then(() => this.app.client.getAttribute('arc-electron', 'settings-script'))
+    //   .then(() => this.app.client.getAttribute('arc-electron',
+    //   'settings-script'))
     //   .then(value => {
     //     assert.equal(value, settingsFilePath);
     //   });

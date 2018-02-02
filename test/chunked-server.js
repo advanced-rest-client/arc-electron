@@ -6,25 +6,35 @@ const fs = require('fs');
 const Chance = require('chance');
 const chance = new Chance();
 
-var srv;
-var ssl;
+const srvs = {
+  srv: undefined,
+  ssl: undefined
+};
 
 require('ssl-root-cas')
 .inject()
 .addFile(path.join('test', 'certs', 'ca.cert.pem'));
-
+/**
+ * Writes a chaunk of data to the response.
+ *
+ * @param {Object} res Node's response object
+ */
 function writeChunk(res) {
   res.write(chance.word({length: 128}) + '\n');
 }
-
+/**
+ * Writes chunk type response to the client.
+ *
+ * @param {Object} res Node's response object
+ */
 function writeChunkedResponse(res) {
   res.writeHead(200, {
     'Content-Type': 'text/plain; charset=UTF-8',
     'Transfer-Encoding': 'chunked'
   });
   writeChunk(res);
-  var time = 0;
-  for (var i = 0; i < 4; i++) {
+  let time = 0;
+  for (let i = 0; i < 4; i++) {
     let timeout = chance.integer({min: 1, max: 10});
     time += timeout;
     setTimeout(writeChunk.bind(this, res), timeout);
@@ -34,29 +44,37 @@ function writeChunkedResponse(res) {
     res.end('END');
   }, time);
 }
-
+/**
+ * Callback for client connection.
+ *
+ * @param {[type]} req Node's request object
+ * @param {Object} res Node's response object
+ */
 function connectedCallback(req, res) {
   writeChunkedResponse(res);
-  console.log('Responding to a request.');
 }
-
+/**
+ * Callback for client connection over SSL.
+ *
+ * @param {[type]} req Node's request object
+ * @param {Object} res Node's response object
+ */
 function connectedSslCallback(req, res) {
   writeChunkedResponse(res);
-  console.log('Responding to an SSL request.');
 }
 
 exports.startServer = function(httpPort, sslPort) {
-  srv = http.createServer(connectedCallback);
-  srv.listen(httpPort);
-  var options = {
+  srvs.srv = http.createServer(connectedCallback);
+  srvs.srv.listen(httpPort);
+  let options = {
     key: fs.readFileSync(path.join('test', 'certs', 'privkey.pem')),
     cert: fs.readFileSync(path.join('test', 'certs', 'fullchain.pem'))
   };
-  ssl = https.createServer(options, connectedSslCallback);
-  ssl.listen(sslPort);
+  srvs.ssl = https.createServer(options, connectedSslCallback);
+  srvs.ssl.listen(sslPort);
 };
 
 exports.stopServer = function() {
-  srv.close();
-  ssl.close();
+  srvs.srv.close();
+  srvs.ssl.close();
 };

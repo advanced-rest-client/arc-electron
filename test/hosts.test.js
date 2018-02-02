@@ -48,14 +48,12 @@ describe('Hosts', function() {
     const request = new SocketRequest(requests[0], {
       hosts: hosts
     });
-    var message = request._prepareMessage().toString();
+    let message = request._prepareMessage().toString();
     assert.isAbove(message.indexOf('Host: domain.com'), 1);
   });
 
   it('Should redirect the request', function(done) {
-    var called = false;
     const server = http.createServer(function(req, res) {
-      called = true;
       res.writeHead(200, {
         'Content-Type': 'text/plain'
       });
@@ -68,9 +66,9 @@ describe('Hosts', function() {
     const request = new SocketRequest(requests[0], {
       hosts: hosts
     });
-    var errorReported;
+    let errorReported;
     request.send()
-    .catch(error => errorReported = error)
+    .catch((error) => errorReported = error)
     .then(function() {
       if (errorReported) {
         server.close(function() {

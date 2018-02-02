@@ -64,7 +64,7 @@ describe('Socket request basics', function() {
   });
 
   describe('Constructor', function() {
-    var request;
+    let request;
     before(function() {
       request = new SocketRequest(requests[0], opts[0]);
     });
@@ -111,7 +111,7 @@ describe('Socket request basics', function() {
   });
 
   describe('_getPort()', function() {
-    var request;
+    let request;
     before(function() {
       request = new SocketRequest(requests[0], opts[0]);
     });
@@ -137,7 +137,7 @@ describe('Socket request basics', function() {
   });
 
   describe('_connect()', function() {
-    var request;
+    let request;
     const host = 'localhost';
 
     before(function() {
@@ -151,7 +151,7 @@ describe('Socket request basics', function() {
 
     it('Resolved promise returns HTTP server client', function() {
       return request._connect(httpPort, host)
-      .then(client => {
+      .then((client) => {
         assert.typeOf(client, 'object');
       });
     });
@@ -166,7 +166,7 @@ describe('Socket request basics', function() {
   });
 
   describe('_connectTls()', function() {
-    var request;
+    let request;
     const host = 'localhost';
 
     before(function() {
@@ -180,7 +180,7 @@ describe('Socket request basics', function() {
 
     it('Resolved promise returns HTTP server client', function() {
       return request._connectTls(sslPort, host)
-      .then(client => {
+      .then((client) => {
         assert.typeOf(client, 'object');
       });
     });
@@ -196,8 +196,8 @@ describe('Socket request basics', function() {
   });
 
   describe('connect()', function() {
-    var request;
-    var createdClient;
+    let request;
+    let createdClient;
 
     before(function() {
       request = new SocketRequest(requests[0], opts[0]);
@@ -218,7 +218,7 @@ describe('Socket request basics', function() {
 
     it('Resolved promise returns HTTP server client', function() {
       return request.connect()
-      .then(client => {
+      .then((client) => {
         assert.typeOf(client, 'object');
         createdClient = client;
       });
@@ -226,7 +226,7 @@ describe('Socket request basics', function() {
 
     it('Sets socket propery', function() {
       return request.connect()
-      .then(client => {
+      .then((client) => {
         assert.isTrue(request.socket === client);
         createdClient = client;
       });
@@ -234,7 +234,7 @@ describe('Socket request basics', function() {
 
     it('Sets socket timeout', function() {
       return request.connect()
-      .then(client => {
+      .then((client) => {
         assert.isTrue(client._idleTimeout === opts[0].timeout);
         createdClient = client;
       });
@@ -242,68 +242,84 @@ describe('Socket request basics', function() {
   });
 
   describe('_payloadMessage()', function() {
-    var request;
+    let request;
     before(function() {
       request = new SocketRequest(requests[0], opts[0]);
     });
 
     it('Resolves to promise', function() {
-      var result = request._payloadMessage();
+      let result = request._payloadMessage();
       assert.typeOf(result, 'promise');
     });
 
     it('Returns undefined for missing argument', function() {
       return request._payloadMessage()
-      .then(result => assert.isUndefined(result));
+      .then((result) => assert.isUndefined(result));
     });
 
     it('Transforms string', function() {
-      var compare = Buffer.from([0x74, 0x65, 0x73, 0x74, 0x0d, 0x0a, 0x74, 0x65, 0x73, 0x74]);
+      let compare = Buffer.from([
+        0x74, 0x65, 0x73, 0x74, 0x0d, 0x0a, 0x74, 0x65, 0x73, 0x74
+      ]);
       return request._payloadMessage('test\ntest')
-      .then(result => assert.isTrue(result.equals(compare)));
+      .then((result) => assert.isTrue(result.equals(compare)));
     });
 
     it('Transforms ArrayBuffer', function() {
-      var compare = Buffer.from([0x74, 0x65, 0x73, 0x74, 0x0a, 0x74, 0x65, 0x73, 0x74]);
-      var payload = new Uint8Array([116, 101, 115, 116, 10, 116, 101, 115, 116]).buffer;
+      let compare = Buffer.from([
+        0x74, 0x65, 0x73, 0x74, 0x0a, 0x74, 0x65, 0x73, 0x74
+      ]);
+      let payload = new Uint8Array([
+        116, 101, 115, 116, 10, 116, 101, 115, 116
+      ]).buffer;
       return request._payloadMessage(payload)
-      .then(result => {
+      .then((result) => {
         assert.isTrue(result.equals(compare));
       });
     });
 
     it('Returns the same Buffer', function() {
-      var compare = Buffer.from([0x74, 0x65, 0x73, 0x74, 0x0a, 0x74, 0x65, 0x73, 0x74]);
+      let compare = Buffer.from([
+        0x74, 0x65, 0x73, 0x74, 0x0a, 0x74, 0x65, 0x73, 0x74
+      ]);
       return request._payloadMessage(compare)
-      .then(result => {
+      .then((result) => {
         assert.isTrue(result === compare);
       });
     });
   });
 
   describe('_addContentLength()', function() {
-
     it('Adds content length header', function() {
       const request = new SocketRequest(requests[1], opts[0]);
       request._addContentLength(requests[1].payload);
-      assert.isAbove(request.arcRequest.headers.toLowerCase().indexOf('content-length: 9'), 0);
+      assert.isAbove(
+        request.arcRequest.headers.toLowerCase().indexOf('content-length: 9'),
+        0
+      );
     });
 
     it('Do not replace content length header if already exists', function() {
       const request = new SocketRequest(requests[2], opts[0]);
       request._addContentLength(requests[2].payload);
-      assert.equal(request.arcRequest.headers.toLowerCase().indexOf('content-length: 9'), -1);
+      assert.equal(
+        request.arcRequest.headers.toLowerCase().indexOf('content-length: 9'),
+        -1
+      );
     });
 
     it('Do nothing for GET requests', function() {
       const request = new SocketRequest(requests[3], opts[0]);
       request._addContentLength(requests[2].payload);
-      assert.equal(request.arcRequest.headers.toLowerCase().indexOf('content-length'), -1);
+      assert.equal(
+        request.arcRequest.headers.toLowerCase().indexOf('content-length'),
+        -1
+      );
     });
   });
 
   describe('_authorizeNtlm()', function() {
-    var request;
+    let request;
     before(function() {
       request = new SocketRequest(requests[4], opts[0]);
     });
@@ -320,7 +336,7 @@ describe('Socket request basics', function() {
   });
 
   describe('_prepareMessage()', function() {
-    var request;
+    let request;
     before(function() {
       request = new SocketRequest(requests[1], opts[0]);
     });
@@ -332,7 +348,8 @@ describe('Socket request basics', function() {
 
     it('Contains status message', function() {
       const result = request._prepareMessage().toString();
-      assert.equal(result.split('\n')[0], 'POST /api/endpoint?query=param HTTP/1.1\r');
+      assert.equal(result.split('\n')[0],
+        'POST /api/endpoint?query=param HTTP/1.1\r');
     });
 
     it('Adds Host header', function() {
@@ -361,13 +378,13 @@ describe('Socket request basics', function() {
     it('Returns promise resolved to a Buffer', function() {
       const request = new SocketRequest(requests[0], opts[0]);
       return request.prepareMessage()
-      .then(result => assert.isTrue(result instanceof Buffer));
+      .then((result) => assert.isTrue(result instanceof Buffer));
     });
 
     it('Ignores payload for GET requests', function() {
       const request = new SocketRequest(requests[0], opts[0]);
       return request.prepareMessage()
-      .then(result => {
+      .then((result) => {
         assert.lengthOf(result.toString().split('\n'), 5);
       });
     });
@@ -375,21 +392,21 @@ describe('Socket request basics', function() {
     it('Creates message with payload', function() {
       const request = new SocketRequest(requests[1], opts[0]);
       return request.prepareMessage()
-      .then(result => {
+      .then((result) => {
         assert.lengthOf(result.toString().split('\n'), 7);
       });
     });
   });
 
   describe('writeMessage()', function() {
-    var message;
-    var request;
-    var createdClient;
+    let message;
+    let request;
+    let createdClient;
 
     this.timeout(20000);
 
     before(function() {
-      var str = 'GET /api/endpoint?query=param HTTP/1.1\r\n';
+      let str = 'GET /api/endpoint?query=param HTTP/1.1\r\n';
       str += 'Host: localhost:8123\r\n';
       str += '\r\n';
       message = Buffer.from(str);
@@ -398,7 +415,7 @@ describe('Socket request basics', function() {
     beforeEach(function() {
       request = new SocketRequest(requests[0], opts[0]);
       return request.connect()
-      .then(client => {
+      .then((client) => {
         createdClient = client;
       });
     });
@@ -412,9 +429,10 @@ describe('Socket request basics', function() {
     });
 
     it('Returns promise', function() {
-      var result = request.writeMessage(message);
+      let result = request.writeMessage(message);
       assert.typeOf(result, 'promise', 'Returns a promise object');
-      return result.then(data => assert.isUndefined(data, 'Promise resolves nothing'));
+      return result.then((data) => assert.isUndefined(data,
+        'Promise resolves nothing'));
     });
 
     it('Sets messageSent property on arcRequest', function() {
@@ -450,7 +468,7 @@ describe('Socket request basics', function() {
   });
 
   describe('headersToObject()', function() {
-    var request;
+    let request;
     before(function() {
       request = new SocketRequest(requests[1], opts[0]);
     });
@@ -472,7 +490,7 @@ describe('Socket request basics', function() {
     });
 
     it('Parses header string', function() {
-      var headers = 'Content-Type: test/plain\n';
+      let headers = 'Content-Type: test/plain\n';
       headers += 'x-header: x-value';
       const result = request.headersToObject(headers);
       const keys = Object.keys(result);
@@ -482,7 +500,7 @@ describe('Socket request basics', function() {
     });
 
     it('Ignores empty lines', function() {
-      var headers = 'Content-Type: test/plain\n';
+      let headers = 'Content-Type: test/plain\n';
       headers += '\n';
       headers += 'x-header: x-value';
       const result = request.headersToObject(headers);
@@ -493,7 +511,7 @@ describe('Socket request basics', function() {
     });
 
     it('Accepts empty values', function() {
-      var headers = 'Content-Type: \n';
+      let headers = 'Content-Type: \n';
       headers += 'x-header: x-value';
       const result = request.headersToObject(headers);
       const keys = Object.keys(result);
@@ -504,9 +522,9 @@ describe('Socket request basics', function() {
   });
 
   describe('_parseHeaders()', function() {
-    var request;
-    var headersStr;
-    var headersBuf;
+    let request;
+    let headersStr;
+    let headersBuf;
     before(function() {
       request = new SocketRequest(requests[1], opts[0]);
       request._response = {};
@@ -529,7 +547,7 @@ describe('Socket request basics', function() {
 
     it('Headers contains 3 headers', function() {
       request._parseHeaders(headersBuf);
-      var list = {};
+      let list = {};
       request._response.headers.forEach((value, name) => {
         list[name] = value;
       });

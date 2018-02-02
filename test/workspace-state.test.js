@@ -29,7 +29,7 @@ describe('Workspace state test', function() {
     });
 
     after(function() {
-      var p;
+      let p;
       if (this.app && this.app.isRunning()) {
         p = this.app.stop();
       } else {
@@ -40,7 +40,8 @@ describe('Workspace state test', function() {
 
     // it('Stores single request data', function() {
     //   // There's already a tab opened in a window.
-    //   return this.app.electron.remote.app.testsInterface('update-request-object', {
+    //   return this.app.electron.remote.app.
+    //   testsInterface('update-request-object', {
     //     url: 'https://test-url.com',
     //     method: 'TEST',
     //     headers: 'x-test: value'
@@ -55,19 +56,22 @@ describe('Workspace state test', function() {
     //   })
     //   .then(function(content) {
     //     assert.typeOf(content.requests, 'array', 'Requests is an array');
-    //     assert.lengthOf(content.requests, 1, 'Requests contains single item');
+    //     assert.lengthOf(content.requests, 1,
+    //      'Requests contains single item');
     //     assert.equal(content.requests[0].url, 'https://test-url.com', 'Contains passed data');
     //   });
     // });
 
     it('Stores request data', function() {
-      return this.app.electron.remote.app.testsInterface('update-request-object', {
+      return this.app.electron.remote.app.
+      testsInterface('update-request-object', {
         url: 'https://test-url.com',
         method: 'TEST',
         headers: 'x-test: value'
       })
       .then(() => this.app.electron.remote.app.testsInterface('create-new-tab'))
-      .then(() => this.app.electron.remote.app.testsInterface('update-request-object', {
+      .then(() => this.app.electron.remote.app.
+      testsInterface('update-request-object', {
         url: 'https://second.com',
         method: 'TEST2',
         headers: 'x-test: two'
@@ -86,7 +90,8 @@ describe('Workspace state test', function() {
     });
 
     it('Updates data on not focused tab', function() {
-      return this.app.electron.remote.app.testsInterface('update-request-object', {
+      return this.app.electron.remote.app.
+      testsInterface('update-request-object', {
         url: 'https://third.com',
         method: 'TEST2',
         headers: 'x-test: two'
@@ -138,11 +143,11 @@ describe('Workspace state test', function() {
 
     it('Opens all requests from the workspace', function() {
       // There's no way to get and information from a function call that is
-      // async (with promise) so the test just checks if the `restore.rorkspace.json`
-      // content changed.
+      // async (with promise) so the test just checks if the
+      // `restore.rorkspace.json` content changed.
       return fs.readJson(workspaceFilePath)
-      .then(data => {
-        var urls = [
+      .then((data) => {
+        let urls = [
           'https://one.com',
           'https://two.com',
           'https://three.com',
