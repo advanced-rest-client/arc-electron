@@ -11,7 +11,8 @@ const windowParams = {
   title: 'OAuth2 login',
   frame: true,
   webPreferences: {
-    nodeIntegration: false
+    nodeIntegration: false,
+    partition: 'persist:arc-window'
   }
 };
 /**
@@ -23,7 +24,17 @@ const windowParams = {
  * - `scopes` {Array<String>} List of scopes for this token.
  */
 class IdentityProvider {
+  /**
+   *
+   * @param {String} id ID of the provider.
+   * @param {Object} oauthConfig OAuth2 configuration.
+   */
   constructor(id, oauthConfig) {
+    /**
+     * Generated ID of the provider.
+     *
+     * @type {String}
+     */
     this.id = id;
     this.oauthConfig = oauthConfig;
     // Cached token data
@@ -35,9 +46,10 @@ class IdentityProvider {
   /**
    * Gets either cached authorization token or request for new one.
    *
-   * If the `interactive` flag is false the authorization prompt window will never
-   * be opened and if the authorization scope had changed or user did not
-   * authorizaed the application this will result in Promise error.
+   * If the `interactive` flag is false the authorization prompt
+   * window will never be opened and if the authorization scope had
+   * changed or user did not authorizaed the application this will
+   * result in Promise error.
    *
    * @param {Object} opts Authorization options
    * - `interactive` {Boolean} If the interactive flag is `true`, `getAuthToken`
@@ -50,19 +62,20 @@ class IdentityProvider {
    */
   getAuthToken(opts) {
     return this.getTokenInfo()
-    .then(info => {
-      if (info && this.isTokenAuthorized(info, opts.scopes || this.oauthConfig.scopes)) {
+    .then((info) => {
+      if (info && this.isTokenAuthorized(info, opts.scopes ||
+        this.oauthConfig.scopes)) {
         return info;
       }
       this.requestOptions = opts;
       return this.launchWebAuthFlow(opts);
     })
-    .then(tokenInfo => tokenInfo.access_token)
-    .catch(cause => {
+    .then((tokenInfo) => tokenInfo.access_token)
+    .catch((cause) => {
       if (!opts.interactive) {
         return;
       }
-      var err = new Error(cause.message);
+      let err = new Error(cause.message);
       err.code = cause.code;
       throw err;
     });
@@ -70,12 +83,14 @@ class IdentityProvider {
   /**
    * Runs the web authorization flow.
    * @param {Object} opts Authorization options
-   * - `interactive` {Boolean} If the interactive flag is `true`, `launchWebAuthFlow`
-   * will prompt the user as necessary. When the flag is `false` or omitted,
-   * `launchWebAuthFlow` will return failure any time a prompt would be required.
+   * - `interactive` {Boolean} If the interactive flag is `true`,
+   * `launchWebAuthFlow` will prompt the user as necessary.
+   * When the flag is `false` or omitted, `launchWebAuthFlow`
+   * will return failure any time a prompt would be required.
    * - `scopes` {Array<String>} List of scopes to authorize
-   * - `login_hint` -  If your application knows which user is trying to authenticate,
-   * it can use this parameter to provide a hint to the Authentication Server.
+   * - `login_hint` -  If your application knows which user is trying
+   * to authenticate, it can use this parameter to provide
+   * a hint to the Authentication Server.
    * The server uses the hint to simplify the login flow either by prefilling
    * the email field in the sign-in form or by selecting the appropriate
    * multi-login session. Set the parameter value to an email address or `sub`
@@ -157,35 +172,40 @@ class IdentityProvider {
    */
   _reportOAuthResult(url) {
     this.unobserveAuthWindow();
-    var params = '';
+    let params = '';
     if (this.oauthConfig.response_type === 'token') {
       params = url.substr(url.indexOf('#') + 1);
     } else {
       params = url.substr(url.indexOf('?') + 1);
     }
-    var oauthParams = new URLSearchParams(params);
+    let oauthParams = new URLSearchParams(params);
     if (oauthParams.has('error')) {
-      return this._reportOAuthError(this._createResponseError(oauthParams));
+      this._reportOAuthError(this._createResponseError(oauthParams));
+      return;
     }
     const state = oauthParams.get('state');
     if (state !== this.lastState) {
-      return this._reportOAuthError({
+      this._reportOAuthError({
         code: 'invalid_state',
-        message: 'The state value returned by the authorization server is invalid'
+        message:
+          'The state value returned by the authorization server is invalid'
       });
+      return;
     }
-    var tokenInfo = {
+    let tokenInfo = {
       access_token: oauthParams.get('access_token'),
       token_type: oauthParams.get('token_type'),
       expires_in: oauthParams.get('expires_in')
     };
-    var scope = oauthParams.get('scope');
-    var requestedScopes = this.requestOptions.scopes || this.oauthConfig.scopes;
+    let scope = oauthParams.get('scope');
+    let requestedScopes = this.requestOptions.scopes || this.oauthConfig.scopes;
     if (scope) {
       scope = scope.split(' ');
-      scope = requestedScopes.concat(scope);
-    } else {
-      scope = requestedScopes.scopes;
+      if (requestedScopes) {
+        scope = requestedScopes.concat(scope);
+      }
+    } else if (requestedScopes) {
+      scope = requestedScopes;
     }
     tokenInfo.scopes = scope;
     tokenInfo.expires_at = this.computeExpires(tokenInfo);
@@ -197,7 +217,13 @@ class IdentityProvider {
     this.__lastPromise.resolve(Object.assign({}, tokenInfo));
     delete this.__lastPromise;
   }
-
+  /**
+   * Creates an error object to be reported back to the app.
+   * @param {Object} oauthParams Map of oauth response parameteres
+   * @return {Object} Error message:
+   * - code {String} - The `error` property returned by the server.
+   * - message {String} - Error message returned by the server.
+   */
   _createResponseError(oauthParams) {
     let detail = {
       code: oauthParams.get('error')
@@ -218,9 +244,9 @@ class IdentityProvider {
           break;
         case 'invalid_grant':
           message = 'The provided authorization grant or refresh token is';
-          message += ' invalid, expired, revoked, does not match the redirection';
-          message += 'URI used in the authorization request, or was issued to';
-          message += 'another client.';
+          message += ' invalid, expired, revoked, does not match the ';
+          message += 'redirection URI used in the authorization request, ';
+          message += 'or was issued to another client.';
           break;
         case 'unauthorized_client':
           message = 'The authenticated client is not authorized to use this';
@@ -239,8 +265,16 @@ class IdentityProvider {
     detail.message = message;
     return detail;
   }
-
-  _authWindowFailLoadHandler(event, errorCode, errorDescription, validatedURL, isMainFrame) {
+  /**
+   * Handler for the BrowserWindow load error.
+   * @param {Event} event
+   * @param {Number} errorCode
+   * @param {String} errorDescription
+   * @param {String} validatedURL
+   * @param {Boolean} isMainFrame
+   */
+  _authWindowFailLoadHandler(event, errorCode, errorDescription,
+    validatedURL, isMainFrame) {
     if (!isMainFrame) {
       return;
     }
@@ -249,11 +283,15 @@ class IdentityProvider {
     } else {
       this._reportOAuthError({
         code: 'auth_error',
-        message: 'Unexpected auth response. Make sure the OAuth2 config is valid'
+        message:
+          'Unexpected auth response. Make sure the OAuth2 config is valid'
       });
     }
   }
-
+  /**
+   * Handler for the auth window close event.
+   * If the response wasn't reported so far it reports error.
+   */
   _authWindowCloseHandler() {
     if (this.__lastPromise) {
       this._reportOAuthError({
@@ -262,7 +300,19 @@ class IdentityProvider {
       });
     }
   }
-
+  /**
+   * Handler for the `did-get-response-details` event fired by the auth window.
+   *
+   * @param {Event} event
+   * @param {Number} status
+   * @param {String} newURL
+   * @param {String} originalURL
+   * @param {Number} httpResponseCode
+   * @param {String} requestMethod
+   * @param {String} referrer
+   * @param {Object} headers
+   * @param {String} resourceType
+   */
   _authWindowResponseDetailHandler(event, status, newURL, originalURL,
     httpResponseCode, requestMethod, referrer, headers, resourceType) {
     if (resourceType !== 'mainFrame') {
@@ -272,9 +322,11 @@ class IdentityProvider {
       // This is an error. Redirect URL can be fake and this should catch
       // valid response in 400 status code.
       if (newURL.indexOf(this.oauthConfig.redirect_uri) !== 0) {
+        let msg = 'Unable to run authorization flow. Make sure the OAuth2 ';
+        msg += 'config is valid.';
         this._reportOAuthError({
           code: 'url_error',
-          message: 'Unable to run authorization flow. Make sure the OAuth2 config is valid'
+          message: msg
         });
         return;
       }
@@ -290,12 +342,15 @@ class IdentityProvider {
    * @return {String} Complete authorization URL.
    */
   computeAuthorizationUrl(opts) {
-    var cnf = this.oauthConfig;
-    var url = cnf.auth_uri + '?';
+    let cnf = this.oauthConfig;
+    let url = cnf.auth_uri + '?';
     url += 'client_id=' + encodeURIComponent(cnf.client_id);
     url += '&redirect_uri=' + encodeURIComponent(cnf.redirect_uri);
     url += '&response_type=' + cnf.response_type;
-    url += '&scope=' + this.computeScope(opts.scopes || this.oauthConfig.scopes);
+    let scopes = opts.scopes || this.oauthConfig.scopes;
+    if (scopes) {
+      url += '&scope=' + this.computeScope(scopes);
+    }
     url += '&state=' + this.setStateParameter();
     if (cnf.include_granted_scopes) {
       url += '&include_granted_scopes=true';
@@ -316,24 +371,22 @@ class IdentityProvider {
    * @return {String} Computed scope value.
    */
   computeScope(scopes) {
-    var scope = scopes.join(' ');
+    if (!scopes) {
+      return '';
+    }
+    let scope = scopes.join(' ');
     return encodeURIComponent(scope);
   }
   /**
    * Asserts that the OAuth configuration is valid.
    *
    * This throws an error when configuration is invalid with error message.
-   *
-   * @param {Object} opts Request object
    */
-  assertOAuthOptions(opts) {
-    var cnf = this.oauthConfig;
-    var messages = [];
+  assertOAuthOptions() {
+    let cnf = this.oauthConfig;
+    let messages = [];
     if (!cnf.client_id) {
       messages.push('"client_id" is required but is missing.');
-    }
-    if (!(opts.scopes && opts.scopes.length) && !(cnf.scopes && cnf.scopes.length)) {
-      messages.push('"scopes" is required but is missing.');
     }
     if (!cnf.auth_uri) {
       messages.push('"auth_uri" is required but is missing.');
@@ -343,7 +396,9 @@ class IdentityProvider {
     }
     if (cnf.response_type === 'code') {
       if (!cnf.client_secret) {
-        messages.push('"code" response type requires "client_secret" to be set.');
+        messages.push(
+          '"code" response type requires "client_secret" to be set.'
+        );
       }
       if (!cnf.token_uri) {
         messages.push('"code" response type requires "token_uri" to be set.');
@@ -356,16 +411,22 @@ class IdentityProvider {
   /**
    * Checks if current token is authorized for given list of scopes.
    *
-   * @param {Object} tokenInfo A token info object. Must contain `scopes` property.
+   * @param {Object} tokenInfo A token info object.
    * @param {Array<String>} scopes List of scopes to authorize.
    * @return {Boolean} True if requested scope is already authorized with this
    * token.
    */
   isTokenAuthorized(tokenInfo, scopes) {
-    var grantedScopes = tokenInfo.scopes;
-    grantedScopes = grantedScopes.map(scope => scope.trim());
-    scopes = scopes.map(scope => scope.trim());
-    var missing = scopes.find(scope => {
+    let grantedScopes = tokenInfo.scopes;
+    if (!grantedScopes || !grantedScopes.length) {
+      return true;
+    }
+    if (!scopes || !scopes.length) {
+      return true;
+    }
+    grantedScopes = grantedScopes.map((scope) => scope.trim());
+    scopes = scopes.map((scope) => scope.trim());
+    let missing = scopes.find((scope) => {
       return grantedScopes.indexOf(scope) === -1;
     });
     return !missing;
@@ -378,14 +439,14 @@ class IdentityProvider {
    * or cached token expired.
    */
   getTokenInfo() {
-    var promise;
+    let promise;
     if (!this.tokenInfo) {
       promise = this.restoreTokenInfo();
     } else {
       promise = Promise.resolve(this.tokenInfo);
     }
     return promise
-    .then(info => {
+    .then((info) => {
       this.tokenInfo = info;
       if (!this.tokenInfo) {
         return;
@@ -403,10 +464,10 @@ class IdentityProvider {
    * @return {Object} Token info object or undefined if not set or expired.
    */
   restoreTokenInfo() {
-    var bw = BrowserWindow.getAllWindows()[0]; // All schare the same session.
-    var str = `localStorage.getItem('${this.cacheKey}')`;
+    let bw = BrowserWindow.getAllWindows()[0]; // All schare the same session.
+    let str = `localStorage.getItem('${this.cacheKey}')`;
     return bw.webContents.executeJavaScript(str)
-    .then(data => {
+    .then((data) => {
       if (!data) {
         return;
       }
@@ -424,10 +485,11 @@ class IdentityProvider {
    * Casches token data in local storage.
    *
    * @param {Object} tokenInfo
+   * @return {Promise} Resolved promise when code is executed
    */
   storeToken(tokenInfo) {
-    var bw = BrowserWindow.getAllWindows()[0];
-    var str = `localStorage.setItem('${this.cacheKey}','`;
+    let bw = BrowserWindow.getAllWindows()[0];
+    let str = `localStorage.setItem('${this.cacheKey}','`;
     str += JSON.stringify(tokenInfo);
     str += '\')';
     return bw.webContents.executeJavaScript(str);
@@ -436,7 +498,8 @@ class IdentityProvider {
    * Checks if the token already expired.
    *
    * @param {Object} tokenInfo Token info object
-   * @return {Boolean} True if the token is already expired and should be reneved.
+   * @return {Boolean} True if the token is already expired and should be
+   * reneved.
    */
   isExpired(tokenInfo) {
     if (!tokenInfo || !tokenInfo.expires_at) {
@@ -454,7 +517,7 @@ class IdentityProvider {
    * @return {Number} Time in the future when when the token expires.
    */
   computeExpires(tokenInfo) {
-    var expiresIn = tokenInfo.expires_in || 3600;
+    let expiresIn = tokenInfo.expires_in || 3600;
     if (typeof expiresIn !== 'number') {
       expiresIn = Number(expiresIn);
       if (expiresIn !== expiresIn) {
@@ -467,10 +530,12 @@ class IdentityProvider {
   /**
    * Generates a random string to be used as a `state` parameter, sets the
    * `lastState` property to generated text and returns the value.
+   * @return {String} Generated state parameter.
    */
   setStateParameter() {
-    var text = '';
-    var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let text = '';
+    let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    possible += '0123456789';
     for (let i = 0; i < 12; i++) {
       text += possible.charAt(Math.floor(Math.random() * possible.length));
     }
@@ -478,11 +543,25 @@ class IdentityProvider {
     return text;
   }
 }
-
+/**
+ * Class that manages OAuth2 identities.
+ */
 class ArcIdentity {
+  /**
+   * Generates a provider ID as an identifier for an identity
+   *
+   * @param {String} authUrl User authorization URI
+   * @param {String} clientId Client ID
+   * @return {String} An ID to be used to identity a provider.
+   */
   static _generateProviderId(authUrl, clientId) {
     return encodeURIComponent(authUrl) + '/' + encodeURIComponent(clientId);
   }
+  /**
+   * Adds a provider to the list of existing (cached) providers.
+   *
+   * @param {IdentityProvider} provider Provider to cache.
+   */
   static _setProvider(provider) {
     if (!ArcIdentity.__providers) {
       ArcIdentity.__providers = [];
@@ -494,21 +573,24 @@ class ArcIdentity {
    *
    * @param {String} authUrl Authorization URL
    * @param {String} clientId Client ID used to authenticate.
-   * @return {IdentityProvider} An identity provider or `undefined` if not exists.
+   * @return {IdentityProvider} An identity provider or `undefined` if
+   * not exists.
    */
   static _getProvider(authUrl, clientId) {
     if (!ArcIdentity.__providers) {
       return;
     }
     const id = ArcIdentity._generateProviderId(authUrl, clientId);
-    return ArcIdentity.__providers.find(item => item.id === id);
+    return ArcIdentity.__providers.find((item) => item.id === id);
   }
   /**
    * Runs the web authorization flow.
    * @param {Object} opts Authorization options
-   * - `interactive` {Boolean} If the interactive flag is `true`, `launchWebAuthFlow`
-   * will prompt the user as necessary. When the flag is `false` or omitted,
-   * `launchWebAuthFlow` will return failure any time a prompt would be required.
+   * - `interactive` {Boolean} If the interactive flag is `true`,
+   * `launchWebAuthFlow` will prompt the user as necessary. When the flag
+   * is `false` or omitted,
+   * `launchWebAuthFlow` will return failure any time a prompt would be
+   * required.
    * - `response_type` {String} `code` or `token`.
    * - `scopes` {Array<String>} List of scopes to authorize
    * - `client_id` {String} The client ID used for authorization
@@ -521,7 +603,7 @@ class ArcIdentity {
    * @return {Promise} A promise with auth result.
    */
   static launchWebAuthFlow(opts) {
-    var provider = ArcIdentity._getOrCreateProvider(opts);
+    let provider = ArcIdentity._getOrCreateProvider(opts);
     return provider.launchWebAuthFlow(opts);
   }
   /**
@@ -536,8 +618,8 @@ class ArcIdentity {
    */
   static getAuthToken(opts) {
     return ArcIdentity.getOAuthConfig()
-    .then(config => ArcIdentity._getOrCreateProvider(config))
-    .then(provider => provider.getAuthToken(opts));
+    .then((config) => ArcIdentity._getOrCreateProvider(config))
+    .then((provider) => provider.getAuthToken(opts));
   }
   /**
    * Reads the default OAuth configuration for the app from package file.
@@ -549,8 +631,8 @@ class ArcIdentity {
       return Promise.resolve(ArcIdentity.__oauthConfig);
     }
     return fs.readJson(path.join(__dirname, '..', '..', 'package.json'))
-    .then(packageInfo => packageInfo.oauth2)
-    .then(config => {
+    .then((packageInfo) => packageInfo.oauth2)
+    .then((config) => {
       ArcIdentity.__oauthConfig = config;
       return config;
     });
@@ -560,11 +642,14 @@ class ArcIdentity {
    * configuration.
    *
    * @param {Object} oauthConfig OAuth2 configuration object.
+   * @return {IdentityProvider} Identity provider for given config.
    */
   static _getOrCreateProvider(oauthConfig) {
-    var provider = ArcIdentity._getProvider(oauthConfig.auth_uri, oauthConfig.client_id);
+    let provider = ArcIdentity._getProvider(
+      oauthConfig.auth_uri, oauthConfig.client_id);
     if (!provider) {
-      const id = ArcIdentity._generateProviderId(oauthConfig.auth_uri, oauthConfig.client_id);
+      const id = ArcIdentity._generateProviderId(oauthConfig.auth_uri,
+        oauthConfig.client_id);
       const cnf = Object.assign({}, oauthConfig);
       if (!cnf.response_type) {
         cnf.response_type = 'token';
