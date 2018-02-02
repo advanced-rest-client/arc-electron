@@ -98,10 +98,6 @@
     .nav-notification-button[active] {
       @apply --navigation-notification-button-active;
     }
-
-    search-bar {
-      top: 64px;
-    }
     </style>
     <app-header-layout has-scrolling-region id="scrollingRegion">
       <app-header fixed shadow scroll-target="scrollingRegion">
@@ -173,7 +169,6 @@
     </paper-toast>
     <paper-toast id="processingRamlErrorToast" class="error-toast"></paper-toast>
     <paper-toast id="errorToast" duration="5000"></paper-toast>
-    <search-bar id="content-search-bar"></search-bar>
     <template is="dom-if" if="[[telemetry]]" restamp="true">
       <app-analytics tracking-id="UA-18021184-6" app-name="ARC-electon" app-id="[[appId]]" app-version="[[appVersion]]" data-source="electron-app">
         <template is="dom-repeat" items="[[gaCustomMetrics]]">
@@ -373,6 +368,9 @@
         this.cb.listen();
         this._appInitialized = true;
         this.initRouting();
+        const {WindowSearchHelper} = require('./scripts/renderer/window-search.js');
+        this.windowSearch = new WindowSearchHelper();
+        this.windowSearch.listen();
       },
 
       initRouting: function() {
@@ -917,29 +915,6 @@
         this.fire('navigate', {
           base: 'history'
         });
-      },
-      /**
-       * Handles "find" action depending on the context.
-       *
-       * Currently it can only be request panel context.
-       */
-      handleFindOpen: function() {
-        if (this.routeData.base !== 'request') {
-          return;
-        }
-        var searchBar = this.$['content-search-bar'];
-        if (searchBar.opened) {
-          searchBar.focusInput();
-        } else {
-          // searchBar.style.top = app.mainHeaderTop;
-          searchBar.opened = true;
-          this.fire('send-analytics', {
-            type: 'event',
-            category: 'Shortcats usage',
-            action: 'Called',
-            label: 'Search'
-          });
-        }
       },
 
       _copyContentHandler: function(e) {

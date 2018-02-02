@@ -8,8 +8,12 @@ const {SessionManager} = require('./scripts/main/session-manager');
 const {AppOptions} = require('./scripts/main/app-options');
 const {RemoteApi} = require('./scripts/main/remote-api');
 const {AppDefaults} = require('./scripts/main/app-defaults');
+const {ContentSearchService} = require('./scripts/main/search-service');
 const log = require('electron-log');
 
+/**
+ * Main application object controling app's lifecycle.
+ */
 class Arc {
   constructor() {
     this._registerProtocols();
@@ -39,8 +43,8 @@ class Arc {
     app.on('open-url', (event, url) => {
       log.info('arc-file protocol handles ', url);
       event.preventDefault();
-      var fileData = url.substr(11);
-      var parts = fileData.split('/');
+      let fileData = url.substr(11);
+      let parts = fileData.split('/');
       switch (parts[0]) {
         case 'drive':
           // arc-file://drive/open/file-id
@@ -60,7 +64,7 @@ class Arc {
   _readyHandler() {
     const defaults = new AppDefaults();
     return defaults.prepareEnvironment()
-    .catch(cause => {
+    .catch((cause) => {
       log.error('Unable to prepare the environment.', cause.message);
       log.error(cause);
     })
@@ -102,7 +106,7 @@ class Arc {
   }
 
   _handleApplicationAction(action, win) {
-    var windowCommand = 'command';
+    let windowCommand = 'command';
     switch (action) {
       case 'install-update':
         this.us.installUpdate();
@@ -124,7 +128,6 @@ class Arc {
       case 'open-license':
       case 'import-data':
       case 'export-data':
-      case 'find':
       case 'login-external-webservice':
       case 'open-cookie-manager':
       case 'open-hosts-editor':
@@ -147,6 +150,21 @@ class Arc {
       case 'task-manager':
         this.wm.openTaskManager();
       break;
+      case 'find':
+        if (win.webContents.getURL().indexOf('search-bar') !== -1) {
+          // ctrl+f from search bar.
+          return;
+        }
+        let srv = ContentSearchService.getService(win);
+        if (srv && srv.isOpened()) {
+          srv.focus();
+          return;
+        }
+        if (!srv) {
+          srv = new ContentSearchService(win);
+        }
+        srv.open();
+      break;
     }
   }
   /**
@@ -155,7 +173,7 @@ class Arc {
    * @return {Boolean} [description]
    */
   isDebug() {
-    return !!process.argv.find(i => i.indexOf('--inspect') !== -1);
+    return !!process.argv.find((i) => i.indexOf('--inspect') !== -1);
   }
 }
 
@@ -196,19 +214,19 @@ ipcMain.on('toggle-devtools', (event) => {
 
 ipcMain.on('oauth-2-get-token', (event, options) => {
   ArcIdentity.getAuthToken(options)
-  .then(token => {
+  .then((token) => {
     event.sender.send('oauth-2-token-ready', token);
   })
-  .catch(cause => {
+  .catch((cause) => {
     event.sender.send('oauth-2-token-error', cause);
   });
 });
 ipcMain.on('oauth-2-launch-web-flow', (event, options) => {
   ArcIdentity.launchWebAuthFlow(options)
-  .then(token => {
+  .then((token) => {
     event.sender.send('oauth-2-token-ready', token);
   })
-  .catch(cause => {
+  .catch((cause) => {
     event.sender.send('oauth-2-token-error', cause);
   });
 });
@@ -221,8 +239,9 @@ ipcMain.on('install-update', () => {
   arcApp.us.installUpdate();
 });
 
-ipcMain.on('google-drive-data-save', (event, requestId, content, type, fileName) => {
-  var config = {
+ipcMain.on('google-drive-data-save', (event, requestId,
+  content, type, fileName) => {
+  let config = {
     resource: {
       name: fileName,
       description: 'Advanced REST client data export file.'
@@ -234,21 +253,21 @@ ipcMain.on('google-drive-data-save', (event, requestId, content, type, fileName)
   };
   const drive = new DriveExport();
   drive.create(config)
-  .then(result => {
+  .then((result) => {
     event.sender.send('google-drive-data-save-result', requestId, result);
   })
-  .catch(cause => {
+  .catch((cause) => {
     event.sender.send('google-drive-data-save-error', requestId, cause);
   });
 });
 
 ipcMain.on('drive-request-save', (event, requestId, request, fileName) => {
-  var driveId;
+  let driveId;
   if (request.driveId) {
     driveId = request.driveId;
     delete request.driveId;
   }
-  var config = {
+  let config = {
     resource: {
       name: fileName + '.arc',
     },
@@ -258,20 +277,21 @@ ipcMain.on('drive-request-save', (event, requestId, request, fileName) => {
     }
   };
   const drive = new DriveExport();
-  var promise;
+  let promise;
   if (driveId) {
     promise = drive.update(driveId, config);
   } else {
-    config.resource.description = request.description || 'Advanced REST client export file.';
+    config.resource.description = request.description ||
+      'Advanced REST client export file.';
     promise = drive.create(config);
   }
 
   promise
-  .then(result => {
+  .then((result) => {
     event.sender.send('drive-request-save-result', requestId, result);
   })
-  .catch(cause => {
-    var result = {
+  .catch((cause) => {
+    let result = {
       message: cause.message || 'Unknown Goodle Drive save error',
       stack: cause.stack || ''
     };
