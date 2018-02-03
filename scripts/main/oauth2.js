@@ -2,6 +2,7 @@ const {BrowserWindow} = require('electron');
 const fs = require('fs-extra');
 const path = require('path');
 const {URLSearchParams} = require('url');
+const _fetch = require('node-fetch');
 // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
 const windowParams = {
   width: 640,
@@ -70,7 +71,6 @@ class IdentityProvider {
       this.requestOptions = opts;
       return this.launchWebAuthFlow(opts);
     })
-    .then((tokenInfo) => tokenInfo.access_token)
     .catch((cause) => {
       if (!opts.interactive) {
         return;
@@ -183,13 +183,27 @@ class IdentityProvider {
       this._reportOAuthError(this._createResponseError(oauthParams));
       return;
     }
+    this._processResponseData(oauthParams);
+  }
+  /**
+   * Processes OAuth2 server query string response.
+   *
+   * @param {URLSearchParams} oauthParams Created from parameters params.
+   */
+  _processResponseData(oauthParams) {
     const state = oauthParams.get('state');
     if (state !== this.lastState) {
       this._reportOAuthError({
+        state: this.requestOptions.state,
         code: 'invalid_state',
         message:
           'The state value returned by the authorization server is invalid'
       });
+      return;
+    }
+    if (this.oauthConfig.response_type === 'code') {
+      this._exchangeCodeValue = oauthParams.get('code');
+      this._exchangeCode(this._exchangeCodeValue);
       return;
     }
     let tokenInfo = {
@@ -197,6 +211,12 @@ class IdentityProvider {
       token_type: oauthParams.get('token_type'),
       expires_in: oauthParams.get('expires_in')
     };
+    Object.keys(tokenInfo).forEach((key) => {
+      let camelName = this._camel(key);
+      if (camelName) {
+        tokenInfo[camelName] = tokenInfo[key];
+      }
+    });
     let scope = oauthParams.get('scope');
     let requestedScopes = this.requestOptions.scopes || this.oauthConfig.scopes;
     if (scope) {
@@ -211,11 +231,163 @@ class IdentityProvider {
     tokenInfo.expires_at = this.computeExpires(tokenInfo);
     this.tokenInfo = tokenInfo;
     this.storeToken(this.tokenInfo);
+    tokenInfo.state = this.requestOptions.state;
     if (!this.__lastPromise) {
       return;
     }
     this.__lastPromise.resolve(Object.assign({}, tokenInfo));
     delete this.__lastPromise;
+  }
+  /**
+   * Exchange code for token.
+   *
+   * @param {String} code Returned code from the authorization endpoint.
+   */
+  _exchangeCode(code) {
+    const url = this.requestOptions.token_uri;
+    const body = this._getCodeEchangeBody(this.requestOptions, code);
+    this._tokenCodeRequest(url, body)
+    .then((tokenInfo) => {
+      this._exchangeCodeValue = undefined;
+      this.tokenInfo = tokenInfo;
+      this.storeToken(this.tokenInfo);
+      if (!this.__lastPromise) {
+        return;
+      }
+      this.__lastPromise.resolve(Object.assign({}, tokenInfo));
+      delete this.__lastPromise;
+    })
+    .catch((cause) => {
+      this._exchangeCodeValue = undefined;
+      const detail = {
+        message: cause.message,
+        code: cause.code || 'unknown_error',
+        state: this.requestOptions.state
+      };
+      this._reportOAuthError(detail);
+    });
+  }
+  /**
+   * Creates code exchange request body.
+   *
+   * @param {Object} settings Initial settings
+   * @param {String} code The code to exchange
+   * @return {String} Body to send to the server.
+   */
+  _getCodeEchangeBody(settings, code) {
+    let url = 'grant_type=authorization_code&';
+    url += 'client_id=' + encodeURIComponent(settings.client_id) + '&';
+    if (settings.redirect_uri) {
+      url += 'redirect_uri=' + encodeURIComponent(settings.redirect_uri) + '&';
+    }
+    url += 'code=' + encodeURIComponent(code) + '&';
+    url += 'client_secret=' + settings.client_secret;
+    return url;
+  }
+  /**
+   * Camel case given name.
+   *
+   * @param {String} name Value to camel case.
+   * @return {String} Camel cased name
+   */
+  _camel(name) {
+    let i = 0;
+    let l;
+    let changed = false;
+    while ((l = name[i])) {
+      if ((l === '_' || l === '-') && i + 1 < name.length) {
+        name = name.substr(0, i) + name[i + 1].toUpperCase() +
+          name.substr(i + 2);
+        changed = true;
+      }
+      i++;
+    }
+    return changed ? name : undefined;
+  }
+  /**
+   * Makes a request to authorization server to exchange code to access token.
+   *
+   * @param {String} url Token exchange URL
+   * @param {String} body Payload to send to the server.
+   * @return {Promise} Promise resolved when the response is received and
+   * processed.
+   */
+  _tokenCodeRequest(url, body) {
+    const init = {
+      method: 'POST',
+      body: body,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    };
+    let responseContentType;
+    return _fetch(url, init)
+    .then((response) => {
+      let status = response.status;
+      if (status === 404) {
+        let err = new Error('Authorization URI is invalid (Error 404).');
+        err.code = 'invalid_uri';
+        throw err;
+      } else if (status >= 400 && status < 500) {
+        let err = new Error('Server does not support this method. ' +
+          'Response code is ' + status);
+        err.code = 'method_not_supported';
+        throw err;
+      } else if (status >= 500) {
+        let err = new Error('Authorization server error. Response code is ' +
+          status);
+        err.code = 'server_error';
+        throw err;
+      }
+      responseContentType = response.headers.get('content-type');
+      return response.text();
+    })
+    .then((text) => this._processTokenCodeResponse(text, responseContentType));
+  }
+  /**
+   * Processes code exchange data.
+   *
+   * @param {String} data Data returned from the auth server.
+   * @param {String} contentType Response content type.
+   * @return {Object} tokenInfo object
+   */
+  _processTokenCodeResponse(data, contentType) {
+    contentType = contentType || '';
+    let tokenInfo;
+    if (contentType.indexOf('json') !== -1) {
+      try {
+        tokenInfo = JSON.parse(data);
+        Object.keys(tokenInfo).forEach((key) => {
+          let camelName = this._camel(key);
+          if (camelName) {
+            tokenInfo[camelName] = tokenInfo[key];
+          }
+        });
+      } catch (e) {
+        let err = new Error('The response could not be parsed. ' + e.message);
+        err.code = 'response_parse';
+        throw err;
+      }
+    } else {
+      tokenInfo = {};
+      data.split('&').forEach((p) => {
+        let item = p.split('=');
+        let name = item[0];
+        let camelName = this._camel(name);
+        let value = decodeURIComponent(item[1]);
+        tokenInfo[name] = value;
+        tokenInfo[camelName] = value;
+      });
+    }
+    if ('error' in tokenInfo) {
+      let err = new Error(tokenInfo.errorDescription ||
+        'The request is invalid.');
+      err.code = tokenInfo.error;
+      throw err;
+    }
+    tokenInfo.scopes = this.requestOptions.scopes;
+    tokenInfo.expires_at = this.computeExpires(tokenInfo);
+    return tokenInfo;
   }
   /**
    * Creates an error object to be reported back to the app.
@@ -226,6 +398,7 @@ class IdentityProvider {
    */
   _createResponseError(oauthParams) {
     let detail = {
+      state: this.requestOptions.state,
       code: oauthParams.get('error')
     };
     let message;
@@ -282,6 +455,7 @@ class IdentityProvider {
       this._reportOAuthResult(validatedURL);
     } else {
       this._reportOAuthError({
+        state: this.requestOptions.state,
         code: 'auth_error',
         message:
           'Unexpected auth response. Make sure the OAuth2 config is valid'
@@ -295,6 +469,7 @@ class IdentityProvider {
   _authWindowCloseHandler() {
     if (this.__lastPromise) {
       this._reportOAuthError({
+        state: this.requestOptions.state,
         code: 'user_interrupted',
         message: 'The request has been canceled by the user.'
       });
@@ -325,6 +500,7 @@ class IdentityProvider {
         let msg = 'Unable to run authorization flow. Make sure the OAuth2 ';
         msg += 'config is valid.';
         this._reportOAuthError({
+          state: this.requestOptions.state,
           code: 'url_error',
           message: msg
         });
@@ -351,7 +527,7 @@ class IdentityProvider {
     if (scopes) {
       url += '&scope=' + this.computeScope(scopes);
     }
-    url += '&state=' + this.setStateParameter();
+    url += '&state=' + this.setStateParameter(opts.state);
     if (cnf.include_granted_scopes) {
       url += '&include_granted_scopes=true';
     }
@@ -530,17 +706,20 @@ class IdentityProvider {
   /**
    * Generates a random string to be used as a `state` parameter, sets the
    * `lastState` property to generated text and returns the value.
+   * @param {?String} state A state property if set.
    * @return {String} Generated state parameter.
    */
-  setStateParameter() {
-    let text = '';
-    let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-    possible += '0123456789';
-    for (let i = 0; i < 12; i++) {
-      text += possible.charAt(Math.floor(Math.random() * possible.length));
+  setStateParameter(state) {
+    if (!state) {
+      state = '';
+      let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+      possible += '0123456789';
+      for (let i = 0; i < 12; i++) {
+        state += possible.charAt(Math.floor(Math.random() * possible.length));
+      }
     }
-    this.lastState = text;
-    return text;
+    this.lastState = state;
+    return state;
   }
 }
 /**
