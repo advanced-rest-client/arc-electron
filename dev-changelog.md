@@ -12,3 +12,4 @@
 - 15-01-2018 - Updated menu to tabbed version.
 - 31-01-2018 - Added themes to the application
 - 31-01-2018 - Fixed Google Drive Browser when it repeated results when there were not more results
+- 02-02-2018 - Added OAuth2 integration with the exchange
