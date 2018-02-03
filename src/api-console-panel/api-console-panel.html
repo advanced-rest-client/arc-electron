@@ -132,8 +132,7 @@ Main panel to display the API console.
             no-extension-banner
             name="request"
             scroll-target="[[scrollTarget]]"
-            selected-object="[[selectedObject]]"
-            on-oauth2-token-requested="_oauth2TokenRequested"></api-console-request>
+            selected-object="[[selectedObject]]"></api-console-request>
         </iron-pages>
       </div>
     </div>
@@ -425,47 +424,6 @@ Main panel to display the API console.
           redirects: e.detail.redirects,
           sourceMessage: e.detail.sourceMessage
         });
-      },
-
-      _oauth2TokenRequested: function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        var rt = e.detail.type === 'implicit' ? 'token' : 'code';
-        const opts = {
-          interactive: true,
-          // jscs:disable
-          response_type: rt,
-          client_id: e.detail.clientId,
-          auth_uri: e.detail.authorizationUrl,
-          token_uri: e.detail.accessTokenUrl,
-          client_secret: e.detail.clientSecret,
-          redirect_uri: e.detail.redirectUrl,
-          // jscs:enable
-          scopes: e.detail.scopes
-        };
-
-        const ipc = require('electron').ipcRenderer;
-        ipc.send('oauth-2-launch-web-flow', opts);
-        const context = this;
-        var rejected;
-        function resolved(sender, token) {
-          ipc.removeListener('oauth-2-token-ready', resolved);
-          ipc.removeListener('oauth-2-token-error', rejected);
-          context.fire('oauth2-token-response', {
-            // jscs:disable
-            accessToken: token.access_token
-            // jscs:enable
-          });
-        }
-        rejected = function(sender, cause) {
-          ipc.removeListener('oauth-2-token-ready', resolved);
-          ipc.removeListener('oauth-2-token-error', rejected);
-          context.fire('oauth2-error', {
-            message: cause.message || cause || 'Unknown error'
-          });
-        };
-        ipc.on('oauth-2-token-ready', resolved);
-        ipc.on('oauth-2-token-error', rejected);
       },
 
       /**

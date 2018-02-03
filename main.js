@@ -221,13 +221,13 @@ ipcMain.on('oauth-2-get-token', (event, options) => {
     event.sender.send('oauth-2-token-error', cause);
   });
 });
-ipcMain.on('oauth-2-launch-web-flow', (event, options) => {
+ipcMain.on('oauth-2-launch-web-flow', (event, options, id) => {
   ArcIdentity.launchWebAuthFlow(options)
   .then((token) => {
-    event.sender.send('oauth-2-token-ready', token);
+    event.sender.send('oauth-2-token-ready', token, id);
   })
   .catch((cause) => {
-    event.sender.send('oauth-2-token-error', cause);
+    event.sender.send('oauth-2-token-error', cause, id);
   });
 });
 ipcMain.on('check-for-update', () => {
