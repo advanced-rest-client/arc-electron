@@ -112,7 +112,7 @@
           ]
         },
         {
-          "target": "rpm",
+          "target": "tar.gz",
           "arch": [
             "x64",
             "ia32"
