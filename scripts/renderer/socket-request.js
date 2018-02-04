@@ -795,6 +795,7 @@ class SocketRequest extends EventEmitter {
         this.arcRequest.method = 'GET';
       }
       this.uri = location;
+      this.hostHeader = this._getHostHeader(location);
       // No idea why but without setTimeout the program loses it's scope after calling
       // the function.
       window.setTimeout(() => {
