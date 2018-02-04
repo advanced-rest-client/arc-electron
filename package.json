@@ -63,7 +63,7 @@
       "task-manager.html",
       "package.json",
       "assets/",
-      "bower_components/",
+      "components/",
       "menus/",
       "scripts/",
       "src/",
