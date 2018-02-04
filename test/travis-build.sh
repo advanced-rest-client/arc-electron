@@ -12,4 +12,5 @@ npm --version
 export PATH=$PATH:./node_modules/.bin/
 
 npm install
+npm run bower
 npm test

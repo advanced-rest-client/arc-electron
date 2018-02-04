@@ -14,7 +14,7 @@
   "scripts": {
     "start": "electron --inspect=5858 --enable-logging .",
     "postinstall": "electron-builder install-app-deps",
-    "test": "npm run bower && NODE_ENV=test mocha test/*.test.js",
+    "test": "NODE_ENV=test mocha test/*.test.js",
     "test-only": "NODE_ENV=test mocha test/*.test.js",
     "build-l": "npx electron-builder -l",
     "build-w": "npx electron-builder -w",
