@@ -52,7 +52,7 @@
   "build": {
     "appId": "com.mulesoft.arc",
     "productName": "arc",
-    "artifactName": "arc.${ext}",
+    "artifactName": "arc-${version}-${arch}.${ext}",
     "asar": true,
     "copyright": "Copyright © 2018 Mulesoft",
     "detectUpdateChannel": true,
@@ -120,7 +120,8 @@
         }
       ],
       "vendor": "Mulesoft",
-      "synopsis": "A developert tool to test a HTTP request"
+      "synopsis": "A developert tool to test HTTP requests",
+      "artifactName": "arc-linux-${version}-${arch}.${ext}"
     },
     "win": {
       "target": [
@@ -149,7 +150,7 @@
     "nsis": {
       "installerIcon": "build/icon.ico",
       "uninstallerIcon": "build/icon.ico",
-      "artifactName": "arc-setup.${ext}",
+      "artifactName": "arc-setup-${arch}.${ext}",
       "shortcutName": "ARC"
     }
   },
