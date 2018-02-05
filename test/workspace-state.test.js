@@ -12,9 +12,9 @@ describe('Workspace state test', function() {
       ]
     };
 
-    this.timeout(10000);
+    this.timeout(15000);
     before(function() {
-      return bootstrap.runAppDeffered(4000, opts)
+      return bootstrap.runAppDeffered(10000, opts)
       .then((app) => {
         this.app = app;
       });

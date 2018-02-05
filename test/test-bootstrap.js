@@ -23,6 +23,7 @@ function getApp(opts) {
 }
 
 function deffer(timeout) {
+  console.log('Deffering init script for ', timeout, ' ms');
   return new Promise(function(resolve) {
     setTimeout(function() {
       resolve();
