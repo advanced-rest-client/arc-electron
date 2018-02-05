@@ -39,6 +39,14 @@
       },
       {
         "type": "separator"
+      }, {
+        "role": "hide"
+      }, {
+        "role": "hideothers"
+      }, {
+        "role": "unhide"
+      }, {
+        "type": "separator"
       },
       {
         "label": "Quit",
@@ -49,29 +57,29 @@
   }, {
     "label": "File",
     "submenu": [{
-      "label": "New tab",
-      "command": "request:new-tab",
-      "accelerator": "CommandOrControl+t"
-    }, {
-      "label": "New window",
-      "command": "application:new-window",
-      "accelerator": "CommandOrControl+n"
-    }, {
-      "label": "Open saved request",
-      "command": "application:open-saved",
-      "accelerator": "CommandOrControl+o"
-    }, {
-      "label": "Open history",
-      "command": "application:open-history",
-      "accelerator": "CommandOrControl+h"
-    }, {
-      "label": "Open from Google Drive",
-      "command": "application:open-drive"
-    },
-    {
-      "type": "separator"
-    },
-    {
+        "label": "New tab",
+        "command": "request:new-tab",
+        "accelerator": "CommandOrControl+t"
+      }, {
+        "label": "New window",
+        "command": "application:new-window",
+        "accelerator": "CommandOrControl+n"
+      }, {
+        "label": "Open saved request",
+        "command": "application:open-saved",
+        "accelerator": "CommandOrControl+o"
+      }, {
+        "label": "Open history",
+        "command": "application:open-history",
+        "accelerator": "CommandOrControl+Shift+h"
+      }, {
+        "label": "Open from Google Drive",
+        "command": "application:open-drive"
+      },
+      {
+        "type": "separator"
+      },
+      {
         "label": "Save",
         "command": "request:save",
         "accelerator": "CommandOrControl+s"
@@ -139,6 +147,10 @@
           },
           {
             "role": "toggledevtools"
+          },
+          {
+            "label": "Task Manager",
+            "command": "application:task-manager"
           }
         ]
       },
@@ -155,9 +167,6 @@
         "role": "zoomout"
       },
       {
-        "role": "close"
-      },
-      {
         "role": "minimize"
       },
       {
@@ -170,12 +179,21 @@
         "label": "Find",
         "command": "application:find",
         "accelerator": "CommandOrControl+f"
+      },
+      {
+        "type": "separator"
+      },
+      {
+        "label": "Themes",
+        "command": "application:open-themes"
       }
     ]
   }, {
     "label": "Window",
     "role": "window",
     "submenu": [{
+        "role": "close"
+      }, {
         "role": "minimize"
       },
       {
@@ -189,18 +207,34 @@
       }
     ]
   }, {
-    "label": "Web session",
+    "label": "Request",
     "submenu": [{
-      "label": "Login to a web service",
-      "command": "application:login-external-webservice"
-    }, {
-      "label": "Cookie manager",
-      "command": "application:open-cookie-manager"
+      "label": "Run current tab",
+      "command": "request:send-current",
+      "accelerator": "CommandOrControl+Shift+r"
     }, {
       "type": "separator"
     }, {
-      "label": "Learn more",
-      "command": "application:web-session-help"
+      "label": "Web session",
+      "submenu": [{
+          "label": "Login to a web service",
+          "command": "application:login-external-webservice"
+        },
+        {
+          "label": "Cookie manager",
+          "command": "application:open-cookie-manager"
+        },
+        {
+          "type": "separator"
+        },
+        {
+          "label": "Learn more",
+          "command": "application:web-session-help"
+        }
+      ]
+    }, {
+      "label": "Hosts",
+      "command": "application:open-hosts-editor"
     }]
   }, {
     "label": "Help",

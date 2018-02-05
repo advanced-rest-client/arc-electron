@@ -1,57 +1,9 @@
-<link rel="import" href="../bower_components/polymer/polymer.html">
-<link rel="import" href="../bower_components/font-roboto-local/roboto.html">
-<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
-<link rel="import" href="../bower_components/arc-icons/arc-icons.html">
-<link rel="import" href="../bower_components/arc-menu/arc-menu.html">
-<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
-<link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
-<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
-<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
-<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
-<link rel="import" href="../bower_components/app-route/app-location.html">
-<link rel="import" href="../bower_components/app-route/app-route.html">
-<link rel="import" href="../bower_components/websocket-panel/websocket-panel.html">
-<link rel="import" href="../bower_components/arc-settings-panel/arc-settings-panel.html">
-<link rel="import" href="../bower_components/saved-requests-panel/saved-requests-panel.html">
-<link rel="import" href="../bower_components/history-panel/history-panel.html">
-<link rel="import" href="../bower_components/google-drive-browser/google-drive-browser.html">
-<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
-<link rel="import" href="../bower_components/arc-data-import/arc-data-import.html">
-<link rel="import" href="../bower_components/arc-data-export/arc-data-export.html">
-<link rel="import" href="../bower_components/data-import-export-panel/data-import-export-panel.html">
-<link rel="import" href="../bower_components/search-bar/search-bar.html">
-<link rel="import" href="../bower_components/drop-file-importer/drop-file-importer.html">
-<link rel="import" href="../bower_components/authorization-data-saver/authorization-data-saver.html">
-<link rel="import" href="../bower_components/cookie-jar/cookie-jar.html">
-<link rel="import" href="../bower_components/response-history-saver/response-history-saver.html">
-<link rel="import" href="../bower_components/url-history-saver/url-history-saver.html">
-<link rel="import" href="../bower_components/variables-manager/variables-manager.html">
-<link rel="import" href="../bower_components/variables-evaluator/variables-evaluator.html">
-<link rel="import" href="../bower_components/request-saver/request-saver.html">
-<link rel="import" href="../bower_components/arc-definitions/arc-definitions.html">
-<link rel="import" href="../bower_components/arc-license-dialog/arc-license-dialog.html">
-<link rel="import" href="../bower_components/arc-models/project-model.html">
-<link rel="import" href="../bower_components/arc-onboarding/arc-onboarding.html">
-<link rel="import" href="../bower_components/app-analytics/app-analytics.html">
-<link rel="import" href="../bower_components/app-analytics/app-analytics-custom.html">
-<link rel="import" href="../bower_components/app-logger/app-logger.html">
-<link rel="import" href="../bower_components/project-details/project-details.html">
-<link rel="import" href="../bower_components/app-layout/app-header-layout/app-header-layout.html">
-<link rel="import" href="../bower_components/app-layout/app-header/app-header.html">
-<link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
-<link rel="import" href="../bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
-<link rel="import" href="../bower_components/app-layout/app-drawer/app-drawer.html">
-<link rel="import" href="../bower_components/paper-styles/shadow.html">
-<link rel="import" href="../bower_components/arc-messages-service/arc-messages-service.html">
-<link rel="import" href="../bower_components/arc-info-messages/arc-info-messages.html">
-<link rel="import" href="../bower_components/arc-title/arc-title.html">
-<link rel="import" href="../bower_components/web-url-input/web-url-input.html">
-<link rel="import" href="../bower_components/cookie-manager/cookie-manager.html">
-<link rel="import" href="../styles/app-theme.html">
 <link rel="import" href="request-workspace/request-workspace.html">
 <link rel="import" href="file-export/file-export.html">
 <link rel="import" href="about-arc/about-arc.html">
 <link rel="import" href="electron-drive/electron-drive.html">
+<link rel="import" href="api-console-panel/api-console-panel.html">
+<link rel="import" href="app-paths-info/app-paths-info.html">
 
 <dom-module id="arc-electron">
   <template>
@@ -74,7 +26,7 @@
       right: 0;
       bottom: 0;
       left: 0;
-      background-color: #fff;
+      background-color: var(--primary-background-color);
     }
 
     app-header {
@@ -95,10 +47,6 @@
       color: var(--hover-button-accent-color);
     }
 
-    app-drawer {
-      @apply --shadow-elevation-6dp;
-    }
-
     #drawerResizer {
       position: absolute;
       bottom: 0;
@@ -111,8 +59,8 @@
     }
 
     #drawerResizer:hover {
-      background-color: #BDBDBD;
-      width: 6px;
+      background-color: var(--drawer-resizer-color-hover, #BDBDBD);
+      width: var(--drawer-resizer-width-hover, 6px);
     }
 
     .app-name {
@@ -130,12 +78,13 @@
     .drawer-pin {
       display: none;
     }
+
     .drawer-pin.visible {
       display: inline-block;
     }
 
     .content {
-      @apply(--layout-flex);
+      @apply --layout-flex;
     }
 
     .nav-notification-button {
@@ -150,7 +99,6 @@
       @apply --navigation-notification-button-active;
     }
     </style>
-
     <app-header-layout has-scrolling-region id="scrollingRegion">
       <app-header fixed shadow scroll-target="scrollingRegion">
         <app-toolbar>
@@ -173,7 +121,7 @@
       </app-header>
       <app-drawer-layout id="drawerLayout" force-narrow="{{forceNarrowLayout}}" narrow="{{narrowLayout}}">
         <app-drawer id="mainDrawer" opened="{{drawerOpened}}">
-          <arc-menu selected-request="[[selectedRequest]]" route-base="[[routeData.base]]"></arc-menu>
+          <arc-menu rest-api></arc-menu>
           <div id="drawerResizer"></div>
         </app-drawer>
         <app-drawer id="newsDrawer" align="right" opened="[[messageCenterOpened]]">
@@ -185,20 +133,28 @@
             attr-for-selected="data-route"
             selected-attribute="opened"
             selected="[[routeData.base]]">
-            <request-workspace attr-for-opened="opened" data-route="request" route="{{route}}"></request-workspace>
+            <request-workspace attr-for-opened="opened" data-route="request" route="{{route}}" workspace-script="[[workspaceScript]]"></request-workspace>
             <websocket-panel attr-for-opened="opened" data-route="socket"></websocket-panel>
             <history-panel attr-for-opened="opened" data-route="history"></history-panel>
             <saved-requests-panel attr-for-opened="opened" data-route="saved"></saved-requests-panel>
             <data-import-export-panel data-route="dataimport" api-key="1076318174169-u4a5d3j2v0tbie1jnjgsluqk1ti7ged3.apps.googleusercontent.com"></data-import-export-panel>
-            <arc-settings-panel data-route="settings"></arc-settings-panel>
-            <about-arc data-route="about" update-state="[[updateState]]"></about-arc>
+            <arc-settings-panel data-route="settings" attr-for-opened="opened">
+              <app-paths-info></app-paths-info>
+            </arc-settings-panel>
+            <about-arc attr-for-opened="opened" data-route="about" update-state="[[updateState]]"></about-arc>
             <project-details attr-for-opened="opened" data-route="project" project-id="[[projectRoute.id]]" attr-for-opened="opened"></project-details>
             <google-drive-browser mime-type="application/restclient+data" data-route="drive" attr-for-opened="opened" api-key="1076318174169-u4a5d3j2v0tbie1jnjgsluqk1ti7ged3.apps.googleusercontent.com" access-token="[[accessToken]]" on-drive-file-picker-data="_openDriveRequest"></google-drive-browser>
             <cookie-manager attr-for-opened="opened" data-route="cookie-manager"></cookie-manager>
+            <api-console-panel attr-for-opened="opened" data-route="api-console" scroll-target="[[scrollTarget]]"></api-console-panel>
+            <rest-apis-list-panel attr-for-opened="opened" data-route="rest-projects" render-explore></rest-apis-list-panel>
+            <exchange-search-panel attr-for-opened="opened" data-route="exchange-search" scroll-target="[[scrollTarget]]" allow-auth exchange-redirect-uri="https://auth.advancedrestclient.com/oauth-popup.html" exchange-client-id="59KaqF90hLgZMJec"></exchange-search-panel>
+            <host-rules-editor attr-for-opened="opened" data-route="hosts-rules"></host-rules-editor>
+            <themes-panel attr-for-opened="opened" data-route="themes-panel"></themes-panel>
           </iron-pages>
         </div>
       </app-drawer-layout>
     </app-header-layout>
+    <variables-drawer-editor id="environmentsDrawer" with-backdrop></variables-drawer-editor>
     <web-url-input id="webUrlInput" purpose="web-session" on-open-web-url="_openWebUrlHandler"></web-url-input>
     <app-location route="{{route}}" use-hash-as-path></app-location>
     <app-route route="{{route}}" pattern="/:base" data="{{routeData}}"></app-route>
@@ -208,9 +164,11 @@
     <drop-file-importer></drop-file-importer>
     <arc-license-dialog></arc-license-dialog>
     <arc-onboarding></arc-onboarding>
+    <paper-toast id="processingRamlToast" duration="0">
+      Processing RAML data. Please wait. <paper-spinner active></paper-spinner>
+    </paper-toast>
+    <paper-toast id="processingRamlErrorToast" class="error-toast"></paper-toast>
     <paper-toast id="errorToast" duration="5000"></paper-toast>
-    <paper-toast id="offlineToast" class="offline-toast" text="You are now offline. Can't make new requests."></paper-toast>
-    <search-bar id="content-search-bar" on-iron-overlay-opened="textSearchBarOpened"></search-bar>
     <template is="dom-if" if="[[telemetry]]" restamp="true">
       <app-analytics tracking-id="UA-18021184-6" app-name="ARC-electon" app-id="[[appId]]" app-version="[[appVersion]]" data-source="electron-app">
         <template is="dom-repeat" items="[[gaCustomMetrics]]">
@@ -249,15 +207,16 @@
     <arc-data-import></arc-data-import>
     <authorization-data-saver></authorization-data-saver>
     <project-model></project-model>
+    <rest-api-model></rest-api-model>
+    <host-rules-model></host-rules-model>
+    <request-model></request-model>
     <file-export></file-export>
     <electron-drive></electron-drive>
     <arc-messages-service platform="electron" on-unread-changed="_unreadMessagesChanged" messages="{{appMessages}}"></arc-messages-service>
+    <raml-js-parser json latest-json="{{plainRaml}}"></raml-js-parser>
+    <raml-json-enhance json="[[plainRaml.specification]]" on-raml-json-enhance-ready="_ramlEnhanced" on-error="_ramlEnhanceError"></raml-json-enhance>
   </template>
   <script>
-    const {ArcPreferences} = require('./scripts/main/arc-preferences');
-    const {CookieBridge} = require('./scripts/renderer/cookie-brindge');
-    const ipc = require('electron').ipcRenderer;
-    const {app} = require('electron').remote;
     Polymer({
       is: 'arc-electron',
 
@@ -281,6 +240,7 @@
         appVersion: {
           type: String,
           value: function() {
+            const {app} = require('electron').remote;
             return app.getVersion();
           }
         },
@@ -320,7 +280,50 @@
         // List of cached messages from app developer.
         appMessages: Array,
         // If true, messages center is opened.
-        messageCenterOpened: Boolean
+        messageCenterOpened: Boolean,
+        // Last parsed RAML output from the parser.
+        plainRaml: Object,
+        // Scroll target for the application.
+        scrollTarget: {
+          type: Object,
+          value: function() {
+            return this.$.scrollingRegion.$$('#contentContainer');
+          }
+        },
+        /**
+         * A workspace state file.
+         * To be set to override default location.
+         */
+        workspaceScript: {
+          type: String,
+          reflectToAttribute: true
+        },
+        /**
+         * The settings file location.
+         * To be set to override default location.
+         */
+        settingsScript: {
+          type: String,
+          reflectToAttribute: true
+        },
+        // True when the application has been initialized by the main script
+        _appInitialized: Boolean,
+        // Electron log object
+        log: {
+          type: Object,
+          readOnly: true,
+          value: function() {
+            return require('electron-log');
+          }
+        },
+        // A handler to the workspace object
+        workspace: {
+          type: Object,
+          value: function() {
+            return this.$$('request-workspace');
+          },
+          readOnly: true
+        }
       },
 
       listeners: {
@@ -334,41 +337,49 @@
         'open-drive-selector': 'openDrivePicker',
         'settings-changed': '_settingChanged',
         'open-external-url': '_openExternalHandler',
-        'app-version': '_appVersionRequestHandler'
+        'app-version': '_appVersionRequestHandler',
+        'open-variables-editor': '_variablesOpenRequest'
       },
 
       observers: [
-        '_setupRequestRoute(requestRoute.*)',
-        '_driveFileRouteChanged(driveFileRoute.*)',
+        '_setupRequestRoute(_appInitialized, requestRoute.*)',
+        '_driveFileRouteChanged(_appInitialized, driveFileRoute.*)',
         '_notifyRequestPanelResize(narrowLayout)'
       ],
-
-      ready: function() {
-        // sets a default path of not initialized with path
-        if (!this.route.path) {
-          this.set('route.path', '/request/latest/0');
-        }
-        this._requestAuthToken(false);
-        this.setupAnalytics();
-        this._refreshLayout();
-        this.cb = new CookieBridge(ipc);
-      },
-
-      created: function() {
-        this.__prefs = new ArcPreferences();
-        this.__prefs.observe();
-      },
-
-      attached: function() {
-        Polymer.RenderStatus.afterNextRender(this, function() {
-          this.listen(document.body, 'display-license', 'openLicense');
-          this._observeMainEvents();
-        });
-      },
 
       detacheded: function() {
         this.unlisten(document.body, 'display-license', 'openLicense');
         this._unobserveMainEvents();
+      },
+      /**
+       * Called by the application window main script when all
+       * setup is ready and the application can be initialized.
+       */
+      initApplication: function() {
+        if (this._appInitialized) {
+          return;
+        }
+        this._requestAuthToken(false);
+        this.listen(document.body, 'display-license', 'openLicense');
+        this.async(() => this.setupAnalytics(), 1);
+        this._refreshLayout();
+        const {CookieBridge} = require('./scripts/renderer/cookie-brindge');
+        this.cb = new CookieBridge(require('electron').ipcRenderer);
+        this.cb.listen();
+        this._appInitialized = true;
+        this.initRouting();
+        const {WindowSearchHelper} = require('./scripts/renderer/window-search.js');
+        this.windowSearch = new WindowSearchHelper();
+        this.windowSearch.listen();
+        const {OAuth2Handler} =  require('./scripts/renderer/oauth2-handler.js');
+        this.oa2handler = new OAuth2Handler();
+        this.oa2handler.listen();
+      },
+
+      initRouting: function() {
+        if (!this.route.path) {
+          this.set('route.path', '/request/latest/0');
+        }
       },
 
       _refreshLayout() {
@@ -387,7 +398,7 @@
         var params = record && record.base;
         switch (params.base) {
           case 'request':
-            return this._setupRequestRoute(params);
+            return this._setupRequestRoute(this._appInitialized, params);
         }
       },
 
@@ -408,6 +419,9 @@
             this._analyticsDisabled();
           } else {
             this._analyticsEnabled();
+            this.async(function() {
+              this._telemetryScreen();
+            }, 20);
           }
         });
       },
@@ -466,7 +480,10 @@
         }
       },
 
-      _setupRequestRoute: function(record) {
+      _setupRequestRoute: function(initialized, record) {
+        if (!initialized) {
+          return;
+        }
         var params = record && record.base;
         if (!params || !params.type) {
           return;
@@ -492,7 +509,10 @@
         this.selectedRequest = decodeURIComponent(id);
       },
 
-      _driveFileRouteChanged: function(record) {
+      _driveFileRouteChanged: function(initialized, record) {
+        if (!initialized) {
+          return;
+        }
         var params = record && record.base;
         if (!params || !params.action || !params.id) {
           return;
@@ -551,7 +571,32 @@
       },
 
       _processIcomingDataHandler: function(e) {
-        this._processIcomingData(e.detail.data);
+        if (e.detail.type === 'json') {
+          this._processIcomingData(e.detail.data);
+        } else if (e.detail.type === 'raml') {
+          this.$.processingRamlToast.opened = true;
+          let parser = this.$$('raml-js-parser');
+          if (e.detail.filesystem) {
+            parser.files = e.detail.filesystem;
+          }
+          parser.loadFiles(e.detail.file);
+        }
+      },
+
+      _ramlEnhanced: function(e) {
+        this.$.processingRamlToast.opened = false;
+        var raml = e.detail.json;
+        this.$$('api-console-panel').raml = raml;
+        this.fire('navigate', {
+          base: 'api-console'
+        });
+      },
+
+      _ramlEnhanceError: function(e) {
+        this.$.processingRamlToast.opened = false;
+        var message = 'Unable to parse JSON data: ' + e.detail.message;
+        this.$.processingRamlErrorToast.text = message;
+        this.$.processingRamlErrorToast.opened = true;
       },
 
       _processIcomingData: function(data, opts) {
@@ -594,24 +639,6 @@
         this.$.errorToast.opened = true;
       },
 
-      // Starts listening for main script events.
-      _observeMainEvents: function() {
-        if (!this.__ueh) {
-          this.__ueh = this._updateEventHandler.bind(this);
-          this.__rah = this._requestActionHandler.bind(this);
-          this.__ch = this._commandHandler.bind(this);
-        }
-        ipc.on('checking-for-update', this.__ueh);
-        ipc.on('update-available', this.__ueh);
-        ipc.on('update-not-available', this.__ueh);
-        ipc.on('autoupdate-error', this.__ueh);
-        ipc.on('download-progress', this.__ueh);
-        ipc.on('update-downloaded', this.__ueh);
-        ipc.on('request-action', this.__rah);
-        ipc.on('command', this.__ch);
-        this.cb.listen();
-      },
-
       _unobserveMainEvents: function() {
         if (this.cb) {
           this.cb.unlisten();
@@ -619,12 +646,7 @@
         if (!this.__ueh) {
           return;
         }
-        ipc.removeListener('checking-for-update', this.__ueh);
-        ipc.removeListener('update-available', this.__ueh);
-        ipc.removeListener('update-not-available', this.__ueh);
-        ipc.removeListener('autoupdate-error', this.__ueh);
-        ipc.removeListener('download-progress', this.__ueh);
-        ipc.removeListener('update-downloaded', this.__ueh);
+        const ipc = require('electron').ipcRenderer;
         ipc.removeListener('request-action', this.__rah);
         ipc.removeListener('command', this.__ch);
       },
@@ -636,47 +658,22 @@
       _navigateHandler: function(e) {
         var params = e.detail;
         var url;
-        var screenName = '[unknown]';
         switch (params.base) {
-          case 'default':
-            url = '/request/latest/0/new';
-            screenName = 'Request - latest';
-          break;
-          case 'history':
-            url = '/history';
-            screenName = 'History';
-          break;
-          case 'settings':
-            url = '/settings';
-            screenName = 'Settings';
-          break;
-          case 'about':
-            url = '/about';
-            screenName = 'About';
-          break;
-          case 'socket':
-            url = '/socket';
-            screenName = 'Socket';
-          break;
-          case 'saved':
-            url = '/saved';
-            screenName = 'Saved';
-          break;
-          case 'dataimport':
-            url = '/dataimport';
-            screenName = 'Data import / export';
-          break;
+          case 'default': url = '/request/latest/0/new'; break;
+          case 'history': url = '/history'; break;
+          case 'settings': url = '/settings'; break;
+          case 'about': url = '/about'; break;
+          case 'socket': url = '/socket'; break;
+          case 'saved': url = '/saved'; break;
+          case 'dataimport': url = '/dataimport'; break;
           case 'project':
             if (params.id) {
               url = '/project/' + params.id;
-              screenName = 'Project details';
             }
           break;
           case 'request':
-            screenName = 'Request - ';
             let type = params.type || 'latest';
             let id = params.id || '0';
-            screenName += type;
             url = '/request/' + type + '/' + encodeURIComponent(id) + '/';
             if (e.detail.tab !== undefined) {
               url += e.detail.tab;
@@ -684,21 +681,25 @@
               url += 'new';
             }
           break;
-          case 'drive':
-            url = '/drive';
-            screenName = 'Drive selector';
+          case 'drive': url = '/drive'; break;
+          case 'cookie-manager': url = '/cookie-manager'; break;
+          case 'api-console':
+            let acId;
+            if (params.id) {
+              acId = encodeURIComponent(params.id);
+            } else {
+              acId = 'current';
+            }
+            url = '/api-console/' + acId;
           break;
-          case 'cookie-manager':
-            url = '/cookie-manager';
-            screenName = 'Cookie manager';
-          break;
+          case 'rest-projects': url = '/rest-projects'; break;
+          case 'exchange-search': url = '/exchange-search'; break;
+          case 'hosts-rules': url = '/hosts-rules'; break;
+          case 'themes-panel': url = '/themes-panel'; break;
         }
         if (url) {
           this.set('route.path', url);
-          this.fire('send-analytics', {
-            type: 'screenview',
-            name: screenName
-          });
+          this._telemetryScreen();
         } else {
           this.fire('send-analytics', {
             type: 'exception',
@@ -707,6 +708,32 @@
           });
           throw new Error('The route is not handled correctly', params);
         }
+      },
+
+      _telemetryScreen: function() {
+        var screenName = '[unknown]';
+        switch (this.routeData.base) {
+          case 'history': screenName = 'History'; break;
+          case 'settings': screenName = 'Settings'; break;
+          case 'about': screenName = 'About'; break;
+          case 'socket': screenName = 'Socket'; break;
+          case 'saved': screenName = 'Saved'; break;
+          case 'dataimport': screenName = 'Data import / export'; break;
+          case 'project': screenName = 'Project details';  break;
+          case 'default':
+          case 'request': screenName = 'Request panel'; break;
+          case 'drive': screenName = 'Drive selector'; break;
+          case 'cookie-manager': screenName = 'Cookie manager'; break;
+          case 'api-console':  screenName = 'API Console'; break;
+          case 'rest-projects': screenName = 'REST APIs list'; break;
+          case 'exchange-search': screenName = 'Exchange search'; break;
+          case 'hosts-rules': screenName = 'Hosts rules'; break;
+          case 'themes-panel': screenName = 'Themes panel'; break;
+        }
+        this.fire('send-analytics', {
+          type: 'screenview',
+          name: screenName
+        });
       },
 
       toggleDrawer: function() {
@@ -759,6 +786,15 @@
       openSettings: function() {
         this.fire('navigate', {
           base: 'settings'
+        });
+      },
+
+      /**
+       * Opens the host rules editor.
+       */
+      openHostRules: function() {
+        this.fire('navigate', {
+          base: 'hosts-rules'
         });
       },
 
@@ -845,10 +881,12 @@
       },
 
       onNewWindow: function() {
+        const ipc = require('electron').ipcRenderer;
         ipc.send('new-window');
       },
 
       openLogs: function() {
+        const ipc = require('electron').ipcRenderer;
         ipc.send('toggle-devtools');
       },
 
@@ -872,103 +910,53 @@
 
       openSaved: function() {
         this.fire('navigate', {
-          base: '/saved'
+          base: 'saved'
         });
       },
 
       openHistory: function() {
         this.fire('navigate', {
-          base: '/history'
+          base: 'history'
         });
-      },
-      /**
-       * Handles "find" action depending on the context.
-       *
-       * Currently it can only be request panel context.
-       */
-      handleFindOpen: function() {
-        if (this.routeData.base !== 'request') {
-          return;
-        }
-        var searchBar = this.$['content-search-bar'];
-        if (searchBar.opened) {
-          searchBar.focusInput();
-        } else {
-          // searchBar.style.top = app.mainHeaderTop;
-          searchBar.opened = true;
-          this.fire('send-analytics', {
-            type: 'event',
-            category: 'Shortcats usage',
-            action: 'Called',
-            label: 'Search'
-          });
-        }
       },
 
       _copyContentHandler: function(e) {
-        const {
-          clipboard
-        } = require('electron');
+        const {clipboard} = require('electron');
         clipboard.writeText(e.detail.value);
         e.preventDefault();
       },
       /**
-       * Handler for update app events sent from main process.
-       * Sets the `updateState` property that is passed to the about page.
+       * Saves currently opened requests.
+       *
+       * @param {?Object} opts Optional options object. It can contain `source`
+       * property with value of `shortcut` to indicate that the shortcut was
+       * used and the app can automatically save current request
        */
-      _updateEventHandler: function(...args) {
-        this.updateState = args[1];
-        if (args[1] && args[1][0] === 'update-available') {
-          this.hasAppUpdate = true;
+      saveOpened: function(opts) {
+        if (this.routeData.base !== 'request') {
+          return;
         }
+        this.$$('request-workspace').saveOpened(opts);
       },
       /**
-       * Handles action performed in main thread (menu action) related to
-       * a request.
-       *
-       * @param {String} action Action name to perform.
+       * Opens new tab in the request workspace.
        */
-      _requestActionHandler: function(event, action) {
+      newRequestTab: function() {
         if (this.routeData.base !== 'request') {
           return;
         }
         var workspace = this.$$('request-workspace');
-        switch (action) {
-          case 'save':
-            workspace.saveOpened({
-              source: 'shortcut'
-            });
-          break;
-          case 'save-as':
-            workspace.saveOpened();
-          break;
-          case 'new-tab':
-            let index = workspace.appendPanel();
-            workspace.selected = index;
-          break;
-        }
+        let index = workspace.appendPanel();
+        workspace.selected = index;
       },
       /**
-       * Handles action performed in main thread (menu action) related to
-       * an application.
-       *
-       * @param {String} action Action name to perform.
+       * Sends currently opened request.
        */
-      _commandHandler: function(event, action) {
-        switch (action) {
-          case 'show-settings': this.openSettings(); break;
-          case 'about': this.openAbout(); break;
-          case 'open-license': this.openLicense(); break;
-          case 'import-data': this.openImport(); break;
-          case 'export-data': this.openExport(); break;
-          case 'open-saved': this.openSaved(); break;
-          case 'open-history': this.openHistory(); break;
-          case 'open-drive': this.openDrivePicker(); break;
-          case 'find': this.handleFindOpen(); break;
-          case 'open-messages': this.openInfoCenter(); break;
-          case 'login-external-webservice': this.openWebUrl(); break;
-          case 'open-cookie-manager': this.openCookieManager(); break;
+      sendCurrentTab: function() {
+        if (this.routeData.base !== 'request') {
+          return;
         }
+        this.$$('request-workspace').sendCurrent();
       },
 
       _googleOauthTokenRequested: function(e) {
@@ -981,6 +969,7 @@
           return;
         }
         this.__requestingToken = true;
+        var ipc = require('electron').ipcRenderer;
         ipc.send('oauth-2-get-token', {
           interactive: interactive,
           scopes: scope
@@ -996,6 +985,7 @@
             token: token
           });
           context.accessToken = token;
+          ipc = null;
         }
         rejected = function() {
           context.__requestingToken = false;
@@ -1004,6 +994,7 @@
           context.fire('google-signout', {
             scope: scope
           });
+          ipc = null;
         };
         ipc.on('oauth-2-token-ready', resolved);
         ipc.on('oauth-2-token-error', rejected);
@@ -1014,6 +1005,7 @@
       },
 
       updateInstall: function() {
+        const ipc = require('electron').ipcRenderer;
         ipc.send('install-update');
       },
 
@@ -1057,6 +1049,7 @@
       },
 
       _openWebUrlHandler: function(e) {
+        var ipc = require('electron').ipcRenderer;
         ipc.send('open-web-url', e.detail.url, e.detail.purpose);
       },
       // Navigate to the cookie manager
@@ -1064,6 +1057,60 @@
         this.fire('navigate', {
           base: 'cookie-manager'
         });
+      },
+
+      openExchangeSearch: function() {
+        this.fire('navigate', {
+          base: 'exchange-search'
+        });
+      },
+
+      openThemesPanel: function() {
+        this.fire('navigate', {
+          base: 'themes-panel'
+        });
+      },
+
+      _variablesOpenRequest: function(e) {
+        e.stopPropagation();
+        this.$.environmentsDrawer.opened = true;
+      },
+      /**
+       * Updates a request object in this window for a specific tab.
+       *
+       * @param {Object} request ARC request obejct
+       * @param {?Number} tab Tab index to update. If not provided (or not a number)
+       * it uses current active tab.
+       */
+      updateRequestTab: function(request, tab) {
+        this.log.info('Updating request object...');
+        var workspace = this.workspace;
+        if (!workspace) {
+          throw new Error('Workspace is not ready.');
+        }
+        if (typeof tab !== 'number') {
+          this.log.info('Tab not provided. Using current selection...');
+          tab = workspace.selected;
+        }
+
+        if (!workspace.activeRequests[tab]) {
+          this.log.error('Trying to update tab request but the tab does not exists.', tab);
+          throw new Error('Requested tab does not exists.');
+        }
+        this.log.info('Updating request object on tab', tab);
+        workspace.set(['activeRequests', tab], request);
+      },
+      /**
+       * Returns number of currently opened tabs
+       *
+       * @return {Number} Number of opened tabs in request workspace.
+       */
+      getTabsCount: function() {
+        var workspace = this.workspace;
+        if (!workspace || !workspace.activeRequests) {
+          return 0;
+        }
+        return workspace.activeRequests.length;
       }
     });
   </script>

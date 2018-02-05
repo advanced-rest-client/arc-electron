@@ -2,7 +2,7 @@ const {ArcBase} = require('../scripts/main/arc-base');
 const assert = require('assert');
 
 describe('ArcBase class', function() {
-  var base;
+  let base;
   describe('Debounce', function() {
     this.timeout(10000);
 
@@ -18,7 +18,7 @@ describe('ArcBase class', function() {
     });
 
     it('Execute tasks only once', function(done) {
-      var called = 0;
+      let called = 0;
       const fn = function() {
         called++;
       };
@@ -41,7 +41,7 @@ describe('ArcBase class', function() {
     });
 
     it('Does not execute tasks', function(done) {
-      var called = 0;
+      let called = 0;
       const fn = function() {
         called++;
       };

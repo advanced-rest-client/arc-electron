@@ -46,10 +46,8 @@ function _getData() {
       if (!result) {
         result = data;
       } else {
-        let sum = new Int8Array(result.length + data.length);
-        sum.set(result);
-        sum.set(data, result.length);
-        result = sum;
+        let sum = result.length + data.length;
+        result = Buffer.concat([result, data], sum);
       }
     });
     target.on('error', err => reject(err));

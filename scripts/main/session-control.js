@@ -22,7 +22,8 @@ class ArcSessionControl extends ArcPreferences {
   constructor(windowNumber) {
     super();
     this.id = windowNumber;
-    this._file = path.join(this.userSettingsDir, 'sessions', windowNumber + '.json');
+    this.dataPath = path.join(this.userSettingsDir, 'sessions');
+    this._file = path.join(this.dataPath, windowNumber + '.json');
     // Session data
     this.data = undefined;
 

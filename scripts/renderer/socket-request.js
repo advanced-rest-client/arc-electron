@@ -17,6 +17,9 @@ const url = require('url');
 const zlib = require('zlib');
 const EventEmitter = require('events');
 
+const nlBuffer = Buffer.from([13, 10]);
+const nlNlBuffer = Buffer.from([13, 10, 13, 10]);
+
 class SocketRequest extends EventEmitter {
   /**
    * Constructs the request from ARC's request object
@@ -25,21 +28,34 @@ class SocketRequest extends EventEmitter {
    * @param {Object} opts Optional. Request configuration options
    * - `timeout` {Number} Request timeout. Default to 0 (no timeout)
    * - `followRedirects` {Boolean} Fllow request redirects. Default `true`.
+   * - `hosts` {Array} List of host rules to apply to the connection. Each
+   * rule must contain `from` and `to` properties to be applied.
    */
   constructor(request, opts) {
     super();
     opts = opts || {};
     this.arcRequest = Object.assign({}, request);
-    this.uri = request.url;
     this.aborted = false;
     this.stats = {};
     this.state = 0;
     this.socket = undefined;
     this._timeout = opts.timeout || 0;
     this.followRedirects = opts.followRedirects === undefined ? true : opts.followRedirects;
+    this.hosts = opts.hosts;
+    this.uri = request.url;
+    /**
+     * Host header can be different than registered URL because of `hosts` rules.
+     * If a rule changes host value of the URL the original URL's host value
+     * is used when generating the request and not overriden one.
+     * This way virual hosts can be tested using hosts.
+     *
+     * @type {String}
+     */
+    this.hostHeader = this._getHostHeader(request.url);
   }
 
   set uri(value) {
+    value = this.applyHosts(value);
     this.__uri = url.parse(value);
   }
 
@@ -157,12 +173,12 @@ class SocketRequest extends EventEmitter {
   /**
    * Sends a data to a socket.
    *
-   * @param {ArrayBuffer} message HTTP message to send
+   * @param {Buffer} message HTTP message to send
    * @return {[type]} [description]
    */
-  writeMessage(message) {
-    const buffer = Buffer.from(message);
-    this.arcRequest.messageSent = message;
+  writeMessage(buffer) {
+    // const buffer = Buffer.from(message);
+    this.arcRequest.messageSent = buffer;
     this.stats.messageSendStart = performance.now();
     return new Promise((resolve) => {
       this.socket.write(buffer, () => {
@@ -264,17 +280,14 @@ class SocketRequest extends EventEmitter {
   /**
    * Prepares a full HTTP message body
    *
-   * @param {?ArrayBuffer} buffer Optional, body `ArrayBuffer`
-   * @return {Promise} A promise resolved to an `ArrayBuffer` of a HTTP message
+   * @param {?Buffer} buffer Optional, body `Buffer`
+   * @return {Buffer} `Buffer` of a HTTP message
    */
   _prepareMessage(buffer) {
     var headers = [];
     var path = this.uri.pathname;
     var search = this.uri.search;
     var hash = this.uri.hash;
-    var port = this._getPort(this.uri.port, this.uri.protocol);
-    var hostValue = this.uri.hostname;
-
     if (search) {
       path += search;
     }
@@ -282,34 +295,39 @@ class SocketRequest extends EventEmitter {
       path += hash;
     }
     headers.push(this.arcRequest.method + ' ' + path + ' HTTP/1.1');
-    var defaultPorts = [80, 443];
-    if (defaultPorts.indexOf(port) === -1) {
-      hostValue += ':' + port;
+    if (this._hostRequired()) {
+      headers.push('Host: ' + this.hostHeader);
     }
-    headers.push('Host: ' + hostValue);
     var str = headers.join('\r\n');
     if (this.arcRequest.headers) {
       str += '\r\n';
       str += this._normalizeString(this.arcRequest.headers);
     }
-    var startbuffer = this.stringToArrayBuffer(str);
-    var endBuffer = new Uint8Array([13, 10, 13, 10]);
-    return new Promise((resolve, reject) => {
-      let body;
-      if (buffer) {
-        body = new Blob([startbuffer, endBuffer, buffer]);
-      } else {
-        body = new Blob([startbuffer, endBuffer]);
-      }
-      var reader = new FileReader();
-      reader.addEventListener('loadend', (e) => {
-        resolve(e.target.result);
-      });
-      reader.addEventListener('error', (e) => {
-        reject(e.message);
-      });
-      reader.readAsArrayBuffer(body);
-    });
+    var startbuffer = Buffer.from(str, 'utf8');
+    var endBuffer = Buffer.from(new Uint8Array([13, 10, 13, 10]));
+    var body;
+    var sum = startbuffer.length + endBuffer.length;
+    if (buffer) {
+      sum += buffer.length;
+      body = Buffer.concat([startbuffer, endBuffer, buffer], sum);
+    } else {
+      body = Buffer.concat([startbuffer, endBuffer], sum);
+    }
+    return body;
+  }
+  /**
+   * Tests if current connection is required to add `host` header.
+   * It returns `false` only if `host` header has been already provided.
+   *
+   * @return {Boolean} True when the `host` header should be added to the
+   * headers list.
+   */
+  _hostRequired() {
+    var headers = this.arcRequest.headers;
+    if (typeof headers !== 'string') {
+      return true;
+    }
+    return headers.toLowerCase().indexOf('host:') === -1;
   }
   /**
    * Reads a port number for a connection.
@@ -332,10 +350,10 @@ class SocketRequest extends EventEmitter {
   }
 
   /**
-   * Tranforms a payload message to an `ArrayBuffer`
+   * Tranforms a payload message into `Buffer`
    *
    * @param {String|Blob|ArrayBuffer|FormData} payload A payload message
-   * @return {Promise} A promise resolved to a buffer.
+   * @return {Promise} A promise resolved to a `Buffer`.
    */
   _payloadMessage(payload) {
     if (!payload) {
@@ -343,11 +361,12 @@ class SocketRequest extends EventEmitter {
     }
     if (typeof payload === 'string') {
       payload = this._normalizeString(payload);
-      var encoder = new TextEncoder();
-      var encoded = encoder.encode(payload);
-      return Promise.resolve(encoded.buffer);
+      return Promise.resolve(Buffer.from(payload, 'utf8'));
     }
     if (payload instanceof ArrayBuffer) {
+      return Promise.resolve(Buffer.from(payload));
+    }
+    if (payload instanceof Buffer) {
       return Promise.resolve(payload);
     }
     if (payload instanceof FormData) {
@@ -402,13 +421,13 @@ class SocketRequest extends EventEmitter {
    * Transfers blob to `ArrayBuffer`.
    *
    * @param {Blob} blob A blob object to transform
-   * @return {Promise} A promise resolved to an `ArrayBuffer`
+   * @return {Promise} A promise resolved to a `Buffer`
    */
   _blob2buffer(blob) {
     return new Promise((resolve, reject) => {
       var reader = new FileReader();
       reader.addEventListener('loadend', (e) => {
-        resolve(e.target.result);
+        resolve(Buffer.from(e.target.result));
       });
       reader.addEventListener('error', (e) => {
         reject(e.message);
@@ -499,9 +518,9 @@ class SocketRequest extends EventEmitter {
     if (this.arcRequest.method === 'GET') {
       return;
     }
-    var size = buffer ? buffer.byteLength : 0;
+    var size = buffer ? buffer.length : 0;
     var headers = this.arcRequest.headers;
-    // HEAD must set content length header even if it's not carreing payload.
+    // HEAD must set content length header even if it's not carrying payload.
     if (headers) {
       if (headers.toLowerCase().indexOf('content-length') === -1) {
         let header = 'Content-Length';
@@ -525,6 +544,9 @@ class SocketRequest extends EventEmitter {
     if (this.aborted) {
       return '';
     }
+    if (buff instanceof Buffer) {
+      return buff.toString();
+    }
     if (!!buff.buffer) {
       // Not a ArrayBuffer, need and instance of AB
       // It can't just get buff.buffer because it will use original buffer if
@@ -532,23 +554,20 @@ class SocketRequest extends EventEmitter {
       let b = buff.slice(0);
       buff = b.buffer;
     }
-    var decoder = new TextDecoder('utf-8');
-    var view = new DataView(buff);
-    return decoder.decode(view);
+    buff = Buffer.from(buff);
+    return buff.toString();
   }
   /**
    * Convert a string to an ArrayBuffer.
    * @param {string} string The string to convert.
-   * @return {ArrayBuffer} An array buffer whose bytes correspond to the string.
-   * @returns {ArrayBuffer}
+   * @return {Buffer} An array buffer whose bytes correspond to the string.
+   * @returns {Buffer}
    */
   stringToArrayBuffer(string) {
     if (this.aborted) {
       return new ArrayBuffer();
     }
-    var encoder = new TextEncoder();
-    var encoded = encoder.encode(string);
-    return encoded.buffer;
+    return Buffer.from(string, 'utf8');
   }
   /**
    * Add event listeners to existing socket.
@@ -564,6 +583,7 @@ class SocketRequest extends EventEmitter {
         this.emit('firstbyte');
         received = true;
       }
+      data = Buffer.from(data);
       try {
         this._processSocketMessage(data);
       } catch (e) {
@@ -775,6 +795,7 @@ class SocketRequest extends EventEmitter {
         this.arcRequest.method = 'GET';
       }
       this.uri = location;
+      this.hostHeader = this._getHostHeader(location);
       // No idea why but without setTimeout the program loses it's scope after calling
       // the function.
       window.setTimeout(() => {
@@ -822,6 +843,8 @@ class SocketRequest extends EventEmitter {
    * Read status line from the response.
    * This function will set `status` and `statusMessage` fields
    * and then will set `state` to HEADERS.
+   *
+   * @param {Buffer} data Received data
    */
   _processStatus(data) {
     if (this.aborted) {
@@ -837,21 +860,9 @@ class SocketRequest extends EventEmitter {
     }
 
     console.log('Processing status');
-    var index = this.indexOfSubarray(data, [13, 10]);
-    var padding = 2;
-    if (index === -1) {
-      index = this.indexOfSubarray(data, [10]);
-      if (index === -1) {
-        this._errorRequest({
-          'message': 'Unknown server response.'
-        });
-        return;
-      }
-      padding = 1;
-    }
-    var statusArray = data.subarray(0, index);
-    data = data.subarray(index + padding);
-    var statusLine = this.arrayBufferToString(statusArray);
+    var index = data.indexOf(nlBuffer);
+    var statusLine = data.slice(0, index).toString();
+    data = data.slice(index + 2);
     statusLine = statusLine.replace(/HTTP\/\d(\.\d)?\s/, '');
     var delimPos = statusLine.indexOf(' ');
     var status;
@@ -878,6 +889,8 @@ class SocketRequest extends EventEmitter {
 
   /**
    * Read headers from the received data.
+   *
+   * @param {Buffer} data Received data
    */
   _processHeaders(data) {
     if (this.aborted) {
@@ -889,11 +902,11 @@ class SocketRequest extends EventEmitter {
     }
     console.log('Processing headers');
     // Looking for end of headers section
-    var index = this.indexOfSubarray(data, [13, 10, 13, 10]);
+    var index = data.indexOf(nlNlBuffer);
     var padding = 4;
     if (index === -1) {
       // It can also be 2x ASCII 10
-      let _index = this.indexOfSubarray(data, [10, 10]);
+      let _index = data.indexOf(nlBuffer);
       if (_index !== -1) {
         index = _index;
         padding = 2;
@@ -901,29 +914,25 @@ class SocketRequest extends EventEmitter {
     }
 
     // https://github.com/jarrodek/socket-fetch/issues/3
-    var enterIndex = this.indexOfSubarray(data, [13, 10]);
+    var enterIndex = data.indexOf(nlBuffer);
     if (index === -1 && enterIndex !== 0) {
       // end in next chunk
       // this._connection.headers += this.arrayBufferToString(data);
       if (!this._rawHeaders) {
         this._rawHeaders = data;
       } else {
-        let sum = new Int8Array(this._rawHeaders.length + data.length);
-        sum.set(this._rawHeaders);
-        sum.set(data, this._rawHeaders.length);
-        this._rawHeaders = sum;
+        let sum = this._rawHeaders.length + data.length;
+        this._rawHeaders = Buffer.concat([this._rawHeaders, data], sum);
       }
       return;
     }
     if (enterIndex !== 0) {
-      let headersArray = data.subarray(0, index);
+      let headersArray = data.slice(0, index);
       if (!this._rawHeaders) {
         this._rawHeaders = headersArray;
       } else {
-        let sum = new Int8Array(this._rawHeaders.length + headersArray.length);
-        sum.set(this._rawHeaders);
-        sum.set(headersArray, this._rawHeaders.length);
-        this._rawHeaders = sum;
+        let sum = this._rawHeaders.length + headersArray.length;
+        this._rawHeaders = Buffer.concat([this._rawHeaders, headersArray], sum);
       }
     }
     this._parseHeaders(this._rawHeaders);
@@ -931,7 +940,7 @@ class SocketRequest extends EventEmitter {
     this.state = SocketRequest.BODY;
     var start = index === -1 ? 0 : index;
     var move = (enterIndex === 0) ? 2 : padding;
-    data = data.subarray(start + move);
+    data = data.slice(start + move);
     return this._postHeaders(data);
   }
   // Check the response headers and end the request if nescesary.
@@ -970,7 +979,7 @@ class SocketRequest extends EventEmitter {
   _parseHeaders(array) {
     var raw = '';
     if (array) {
-      raw = this.arrayBufferToString(array);
+      raw = array.toString();
     }
     this._response.headersRaw = raw;
     var list = this.headersToObject(raw);
@@ -999,7 +1008,7 @@ class SocketRequest extends EventEmitter {
   /**
    * Chunked body must be properly processed
    *
-   * @param {Uint8Array} data A data to process
+   * @param {Buffer} data A data to process
    */
   _processBody(data) {
     if (this.aborted) {
@@ -1008,49 +1017,34 @@ class SocketRequest extends EventEmitter {
     if (this._chunked) {
       return this._processBodyChunked(data);
     }
-    if (!this._rawBody) {
-      this._rawBody = new Uint8Array(data.length);
-      this._rawBody.set(data);
-      if (this._rawBody.length >= this._contentLength) {
-        this._reportResponse();
-      }
-    } else {
-      let len = this._rawBody.length;
-      let sumLength = len + data.length;
-      let newArray = new Uint8Array(sumLength);
-      newArray.set(this._rawBody);
-      newArray.set(data, len);
-      this._rawBody = newArray;
-      if (newArray.length >= this._contentLength) {
-        this._reportResponse();
-      }
-    }
-  }
 
-  __combineInt8Array(existing, newArray) {
-    if (!existing) {
-      return newArray;
+    if (!this._rawBody) {
+      this._rawBody = data;
+      if (this._rawBody.length >= this._contentLength) {
+        return this._reportResponse();
+      }
+      return;
     }
-    let sum = new Int8Array(existing.length + newArray.length);
-    sum.set(existing);
-    sum.set(newArray, existing.length);
-    return sum;
+    let sum = this._rawBody.length + data.length;
+    this._rawBody = Buffer.concat([this._rawBody, data], sum);
+    if (this._rawBody.length >= this._contentLength) {
+      return this._reportResponse();
+    }
   }
 
   _processBodyChunked(data) {
     if (this.__bodyChunk) {
-      data = this.__combineInt8Array(this.__bodyChunk, data);
+      data = Buffer.concat([this.__bodyChunk, data], this.__bodyChunk.length + data.length);
       this.__bodyChunk = undefined;
     }
     while (true) {
-      if (this._chunkSize === 0 && this.indexOfSubarray(data, [13, 10, 13, 10]) === 0) {
+      if (this._chunkSize === 0 && data.indexOf(nlNlBuffer) === 0) {
         this._reportResponse();
         return;
       }
       if (!this._chunkSize) {
         data = this.readChunkSize(data);
         if (!this._chunkSize && this._chunkSize !== 0) {
-          this.__bodyChunk = this.__combineInt8Array(this.__bodyChunk, data);
           // It may happen that node's buffer cuts the data
           // just before the chunk size.
           // It should proceed it in next portion of the data.
@@ -1062,14 +1056,12 @@ class SocketRequest extends EventEmitter {
         }
       }
       let size = Math.min(this._chunkSize, data.length);
+      let sliced = data.slice(0, size);
       if (!this._rawBody) {
-        this._rawBody = new Uint8Array(data.subarray(0, size));
+        this._rawBody = sliced;
       } else {
-        let bodySize = size + this._rawBody.length;
-        let body = new Uint8Array(bodySize);
-        body.set(this._rawBody);
-        body.set(data.subarray(0, size), this._rawBody.length);
-        this._rawBody = body;
+        let sum = size + this._rawBody.length;
+        this._rawBody = Buffer.concat([this._rawBody, sliced], sum);
       }
 
       this._chunkSize -= size;
@@ -1077,7 +1069,7 @@ class SocketRequest extends EventEmitter {
         // console.warn('Next chunk will start with CRLF!');
         return;
       }
-      data = data.subarray(size + 2); // + CR
+      data = data.slice(size + 2); // + CR
       if (data.length === 0) {
         // console.log('No more data here. Waiting for new chunk');
         return;
@@ -1088,43 +1080,39 @@ class SocketRequest extends EventEmitter {
    * If response's Transfer-Encoding is 'chunked' read until next CR.
    * Everything before it is a chunk size.
    *
-   * @param {Uint8Array} array
-   * @returns {Object}
-   * - `array` {Uint8Array} Truncated response without chunk size line
-   * - `size` {Number|undefined} New size of chunk.
+   * @param {Buffer} array
+   * @returns {Buffer}
    */
   readChunkSize(array) {
     if (this.aborted) {
       return;
     }
-    var index = this.indexOfSubarray(array, [13, 10]);
+    var index = array.indexOf(nlBuffer);
     if (index === -1) {
       // not found in this portion of data.
       return array;
     }
     if (index === 0) {
-      // Node's buffer cut CRLF after the end of chunk data, without last CLCR,
+      // Node's buffer cuts CRLF after the end of chunk data, without last CLCR,
       // here's to fix it.
       // It can be either new line from the last chunk or end of the message where
       // the rest of the array is [13, 10, 48, 13, 10, 13, 10]
-      if (this.indexOfSubarray(array, [13, 10, 13, 10]) === 0) {
+      if (array.indexOf(nlNlBuffer) === 0) {
         this._chunkSize = 0;
-        return new Uint8Array();
+        return Buffer.alloc(0);
       } else {
-        array = array.subarray(index + 2);
-        index = this.indexOfSubarray(array, [13, 10]);
+        array = array.slice(index + 2);
+        index = array.indexOf(nlBuffer);
       }
     }
-    // this.log('Size index: ', index);
-    var sizeArray = array.subarray(0, index);
-    var sizeHex = this.arrayBufferToString(sizeArray);
-    var chunkSize = parseInt(sizeHex, 16);
-    if (!sizeHex || sizeHex === '' || chunkSize !== chunkSize) {
+    // console.log('Size index: ', index);
+    var chunkSize = parseInt(array.slice(0, index).toString(), 16);
+    if (chunkSize !== chunkSize) {
       this._chunkSize = undefined;
-      return array.subarray(index + 2);
+      return array.slice(index + 2);
     }
     this._chunkSize = chunkSize;
-    return array.subarray(index + 2);
+    return array.slice(index + 2);
   }
   /**
    * Parse headers string and receive an object.
@@ -1136,14 +1124,11 @@ class SocketRequest extends EventEmitter {
     if (this.aborted) {
       return {};
     }
-    if (!str || str.trim() === '') {
-      return {};
-    }
-    if (typeof str !== 'string') {
+    if (!str || typeof str !== 'string' || str.trim() === '') {
       return {};
     }
     const result = {};
-    const headers = str.split(/\n(?=[^ \t]+)/gim);
+    const headers = str.split(/\n(?=[^ \t]+)/gm);
 
     for (let i = 0, len = headers.length; i < len; i++) {
       let line = headers[i].trim();
@@ -1161,36 +1146,6 @@ class SocketRequest extends EventEmitter {
         result[name] += '; ' + value;
       } else {
         result[name] = value;
-      }
-    }
-    return result;
-  }
-  /**
-   * @return Returns an index of first occurance of subArray sequence in inputArray or -1 if not
-   * found.
-   */
-  indexOfSubarray(inputArray, subArray) {
-    if (this.aborted) {
-      return -1;
-    }
-    var result = -1;
-    var len = inputArray.length;
-    var subLen = subArray.length;
-    for (let i = 0; i < len; ++i) {
-      if (result !== -1) {
-        return result;
-      }
-      if (inputArray[i] !== subArray[0]) {
-        continue;
-      }
-      result = i;
-      for (let j = 1; j < subLen; j++) {
-        if (inputArray[i + j] === subArray[j]) {
-          result = i;
-        } else {
-          result = -1;
-          break;
-        }
       }
     }
     return result;
@@ -1262,7 +1217,11 @@ class SocketRequest extends EventEmitter {
     }
     return result;
   }
-
+  /**
+   * Decompresses received body if `content-encoding` header is set.
+   *
+   * @return {Promise} Promise resilved to parsed body
+   */
   _decompress() {
     if (this.aborted) {
       return Promise.resolve();
@@ -1387,6 +1346,58 @@ class SocketRequest extends EventEmitter {
     var error = new Error(message);
     this.emit('error', error);
     this._cleanUp();
+  }
+  /**
+   * Applies `hosts` rules to an URL.
+   *
+   * @param {String} value An URL to apply the rules to
+   * @return {String} Evaluated URL with hosts rules.
+   */
+  applyHosts(value) {
+    var rules = this.hosts;
+    if (!rules || !rules.length) {
+      return value;
+    }
+    for (let i = 0; i < rules.length; i++) {
+      let rule = rules[i];
+      let result = this._evaluateRule(value, rule);
+      if (result) {
+        return result;
+      }
+    }
+    return value;
+  }
+
+  _evaluateRule(url, rule) {
+    if (!rule.from || !rule.to) {
+      return;
+    }
+    var re = this._createRuleRe(rule.from);
+    if (!re.test(url)) {
+      return;
+    }
+    return url.replace(re, rule.to);
+  }
+
+  _createRuleRe(input) {
+    input = input.replace(/\*/g, '(.*)');
+    return new RegExp(input, 'gi');
+  }
+  /**
+   * Creates a value for host header.
+   *
+   * @param {String} value An url to get the information from.
+   * @return {String} Value of the host header
+   */
+  _getHostHeader(value) {
+    var uri = url.parse(value);
+    var hostValue = uri.hostname;
+    var defaultPorts = [80, 443];
+    var port = this._getPort(uri.port, uri.protocol);
+    if (defaultPorts.indexOf(port) === -1) {
+      hostValue += ':' + port;
+    }
+    return hostValue;
   }
 
   getCodeMessage(code) {

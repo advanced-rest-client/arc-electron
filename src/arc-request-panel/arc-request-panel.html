@@ -11,13 +11,7 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 -->
-<link rel="import" href="../../bower_components/polymer/polymer.html">
-<link rel="import" href="../../bower_components/request-panel/request-panel.html">
-<link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
-<link rel="import" href="../../bower_components/saved-request-editor/saved-request-editor.html">
-<link rel="import" href="../../bower_components/bottom-sheet/bottom-sheet.html">
-<link rel="import" href="../../bower_components/openable-panel-behavior/openable-panel-behavior.html">
-<link rel="import" href="../../bower_components/app-route/app-route.html">
+
 <link rel="import" href="socket-request.html">
 
 <dom-module id="arc-request-panel">
@@ -41,7 +35,6 @@ the License.
     .error-toast {
       @apply --error-toast;
     }
-
     </style>
     <request-panel events-target="[[eventsTarget]]" request="{{request}}" on-request-clear-state="clearRequest" on-request-save-state="_saveHandler"></request-panel>
     <bottom-sheet id="requestEditorContainer" on-iron-overlay-opened="_resizeEditorSheetContent">
@@ -92,6 +85,12 @@ the License.
         '_proxyRequestChanged(proxyRequest.*)',
         '_projectIdChanged(projectId)'
       ],
+      /**
+       * Allows to perform the same action as pressing on the "send" button
+       */
+      sendPanel: function() {
+        this.$$('request-panel').send();
+      },
 
       _getTabId: function(route) {
         var tab = route.tab;

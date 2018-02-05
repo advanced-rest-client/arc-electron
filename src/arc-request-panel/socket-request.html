@@ -11,8 +11,6 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 -->
-<link rel="import" href="../../bower_components/polymer/polymer.html">
-<link rel="import" href="../../bower_components/headers-parser-behavior/headers-parser-behavior.html">
 
 <script>
   const {SocketRequest} = require('./scripts/renderer/socket-request.js');
@@ -40,7 +38,19 @@ the License.
       latestRequest: {
         type: Request,
         readOnly: true
-      }
+      },
+      // List of currently set of hosts rules
+      hosts: Array
+    },
+
+    attached: function() {
+      this.listen(window, 'host-rules-changed', '_ruleUpdated');
+      this.listen(window, 'host-rules-deleted', '_ruleDeleted');
+    },
+
+    detached: function() {
+      this.unlisten(window, 'host-rules-changed', '_ruleUpdated');
+      this.unlisten(window, 'host-rules-deleted', '_ruleDeleted');
     },
 
     /**
@@ -66,6 +76,10 @@ the License.
       return this._readTimeout(opts)
       .then(timeout => {
         opts.timeout = timeout;
+        return this._readHosts();
+      })
+      .then(hosts => {
+        opts.hosts = hosts;
         return this._prepareRequest(request, opts);
       })
       .then(connection => this._makeConnection(connection));
@@ -103,6 +117,65 @@ the License.
         let result = t * 1000; //to miliseconds.
         return result;
       });
+    },
+
+    _readHosts: function() {
+      if (this.hosts !== undefined) {
+        return Promise.resolve(this.hosts);
+      }
+      var ev = this.fire('host-rules-list', {}, {
+        cancelable: true
+      });
+      if (!ev.defaultPrevented) {
+        this.hosts = [];
+        return Promise.resolve(this.hosts);
+      }
+      return ev.detail.result
+      .then(rules => {
+        this.hosts = rules || [];
+        return rules;
+      });
+    },
+
+    /**
+     * Updates a rule from the `host-rules-changed` custom event.
+     * The event should contain `rule` property on the event's detail object
+     * containing the rule object.
+     */
+    _ruleUpdated: function(e) {
+      if (e.cancelable) {
+        return;
+      }
+      var updatedValue = e.detail.rule;
+      if (!this.hosts) {
+        this.set('hosts', [updatedValue]);
+        return;
+      }
+      var index = this.hosts.findIndex(item => item._id === updatedValue._id);
+      if (index === -1) {
+        this.push('hosts', updatedValue);
+      } else {
+        this.set(['hosts', index], updatedValue);
+      }
+    },
+    /**
+     * Deletes the rule from the `host-rules-deleted` custom event.
+     * The event should contain `rule` property on the event's detail object
+     * containing the rule object.
+     */
+    _ruleDeleted: function(e) {
+      if (e.cancelable) {
+        return;
+      }
+      if (!this.hosts || !this.hosts.length) {
+        return;
+      }
+      var id = e.detail.id;
+      var index = this.hosts.findIndex(item => item._id === id);
+      if (index === -1) {
+        return;
+      }
+      this.splice('hosts', index, 1);
     },
 
     _prepareRequest: function(request, opts) {

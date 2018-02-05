@@ -446,7 +446,7 @@ class NtlmMessage {
 
     toBase64() {
         var str = String.fromCharCode.apply(null, this.data);
-        return btoa(str).replace(/.{76}(?=.)/g, '$&');
+        return new Buffer(str).toString('base64').replace(/.{76}(?=.)/g, '$&');
     }
 
 }

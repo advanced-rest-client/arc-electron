@@ -6,16 +6,33 @@ const {ArcBase} = require('./arc-base');
  * A module responsible for storing / restoring user settings.
  */
 class ArcPreferences extends ArcBase {
-  constructor() {
+  constructor(settingsFile) {
     super();
-    const app = (electron.app || electron.remote.app);
-    this.userSettingsDir = app.getPath('userData');
-    this.applicationSettingsDir = app.getPath('appData');
-    this.settingsFile = path.join(this.userSettingsDir, 'settings.json');
+    this._setupPaths(settingsFile);
     // Current read settings.
     this.__settings = undefined;
     this._settingsReadHandler = this._settingsReadHandler.bind(this);
     this._settingsChangeHandler = this._settingsChangeHandler.bind(this);
+  }
+
+  _setupPaths(settingsFile) {
+    const app = (electron.app || electron.remote.app);
+    this.userSettingsDir = app.getPath('userData');
+    this.applicationSettingsDir = app.getPath('appData');
+    if (settingsFile) {
+      settingsFile = this._resolvePath(settingsFile);
+      this.settingsFile = settingsFile;
+    } else {
+      this.settingsFile = path.join(this.userSettingsDir, 'settings.json');
+    }
+  }
+
+  _resolvePath(file) {
+    const app = (electron.app || electron.remote.app);
+    if (file[0] === '~') {
+      file = app.getPath('home') + file.substr(1);
+    }
+    return file;
   }
 
   observe() {
@@ -29,7 +46,7 @@ class ArcPreferences extends ArcBase {
    */
   restoreFile(file) {
     return fs.ensureFile(file)
-    .then(() => fs.readJson(file));
+    .then(() => fs.readJson(file, {throws: false}));
   }
   /**
    * Stores JSON `data` in `file`.
@@ -39,7 +56,9 @@ class ArcPreferences extends ArcBase {
    * @return {Promise} Promise resolved when the `file` is updated.
    */
   storeFile(file, data) {
-    return fs.outputJson(file, data);
+    return fs.outputJson(file, data, {
+      spaces: 2
+    });
   }
 
   loadSettings() {

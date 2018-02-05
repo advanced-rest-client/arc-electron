@@ -1,36 +1,44 @@
 const path = require('path');
 const Application = require('spectron').Application;
 
-const getElectronPath = () => {
-  if (process.platform === 'win32') {
-    return path.resolve(__dirname, '../dist/win-unpacked/Advanced REST Client.exe');
-  } else if (process.platform === 'darwin') {
-    return path.resolve(__dirname, '../dist/mac/WebCatalog.app/Contents/MacOS/Advanced REST Client');
-  }
-  return path.resolve(__dirname, '../dist/linux-unpacked/Advanced REST Client');
-};
+let electronPath = path.join(__dirname, '..', 'node_modules', '.bin',
+  'electron');
+if (process.platform === 'win32') {
+  electronPath += '.cmd';
+}
+const appPath = path.join(__dirname, '..', 'main.js');
 
-module.exports.getApp = () => {
-  return new Application({
-    path: getElectronPath(),
-    args: ['./main.js'],
+function getApp(opts) {
+  opts = opts || {};
+  let options = {
+    path: electronPath,
     startTimeout: 50000,
     waitTimeout: 50000,
-  });
-};
+    args: [appPath]
+  };
+  if (opts.args) {
+    options.args = options.args.concat(opts.args);
+  }
+  return new Application(options);
+}
 
-// function setupRequire(app) {
-//   const _orig = require;
-//   global.require = function(name) {
-//     switch (name) {
-//       case 'electron':
-//         console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
-//         return app.electron;
-//       default: return _orig(name);
-//     }
-//   };
-// }
-//
-// module.exports.setupApis = (app) => {
-//   setupRequire(app);
-// };
+function deffer(timeout) {
+  console.log('Deffering init script for ', timeout, ' ms');
+  return new Promise(function(resolve) {
+    setTimeout(function() {
+      resolve();
+    }, timeout);
+  });
+}
+
+function runAppDeffered(timeout, opts) {
+  const app = getApp(opts);
+  timeout = timeout || 5000;
+  return app.start()
+  .then(() => app.client.waitUntilWindowLoaded(10000))
+  .then(() => deffer(timeout))
+  .then(() => app);
+}
+
+module.exports.getApp = getApp;
+module.exports.runAppDeffered = runAppDeffered;

@@ -1,21 +1,28 @@
-const electron = require('electron');
-const app = electron.app;
-const ipc = require('electron').ipcMain;
-const dialog = require('electron').dialog;
+const {ipcMain, dialog, app, BrowserWindow} = require('electron');
 const {ArcWindowsManager} = require('./scripts/main/windows-manager');
 const {UpdateStatus} = require('./scripts/main/update-status');
 const {ArcMainMenu} = require('./scripts/main/main-menu');
 const {ArcIdentity} = require('./scripts/main/oauth2');
 const {DriveExport} = require('./scripts/main/drive-export');
 const {SessionManager} = require('./scripts/main/session-manager');
+const {AppOptions} = require('./scripts/main/app-options');
+const {RemoteApi} = require('./scripts/main/remote-api');
+const {AppDefaults} = require('./scripts/main/app-defaults');
+const {ContentSearchService} = require('./scripts/main/search-service');
+const log = require('electron-log');
 
+/**
+ * Main application object controling app's lifecycle.
+ */
 class Arc {
   constructor() {
     this._registerProtocols();
+    const startupOptions = this._processArguments();
     this.menu = new ArcMainMenu();
-    this.wm = new ArcWindowsManager();
+    this.wm = new ArcWindowsManager(startupOptions.getOptions());
     this.us = new UpdateStatus(this.wm, this.menu);
     this.sm = new SessionManager(this.wm);
+    this.remote = new RemoteApi(this.wm);
     this._listenMenu(this.menu);
   }
 
@@ -31,11 +38,13 @@ class Arc {
    * Google Drive menu.
    */
   _registerProtocols() {
+    log.info('Registering arc-file protocol');
     app.setAsDefaultProtocolClient('arc-file');
     app.on('open-url', (event, url) => {
+      log.info('arc-file protocol handles ', url);
       event.preventDefault();
-      var fileData = url.substr(11);
-      var parts = fileData.split('/');
+      let fileData = url.substr(11);
+      let parts = fileData.split('/');
       switch (parts[0]) {
         case 'drive':
           // arc-file://drive/open/file-id
@@ -45,12 +54,29 @@ class Arc {
       }
     });
   }
+  // processes start arguments
+  _processArguments() {
+    const startupOptions = new AppOptions();
+    startupOptions.parse();
+    return startupOptions;
+  }
 
   _readyHandler() {
-    this.wm.open();
-    this.us.start();
-    this.menu.build();
-    this.sm.start();
+    const defaults = new AppDefaults();
+    return defaults.prepareEnvironment()
+    .catch((cause) => {
+      log.error('Unable to prepare the environment.', cause.message);
+      log.error(cause);
+    })
+    .then(() => {
+      log.info('Application is now ready');
+      this.wm.open();
+      if (!this.isDebug()) {
+        this.us.start();
+      }
+      this.menu.build();
+      this.sm.start();
+    });
   }
   // Quits when all windows are closed.
   _allClosedHandler() {
@@ -80,7 +106,7 @@ class Arc {
   }
 
   _handleApplicationAction(action, win) {
-    var windowCommand = 'command';
+    let windowCommand = 'command';
     switch (action) {
       case 'install-update':
         this.us.installUpdate();
@@ -102,9 +128,10 @@ class Arc {
       case 'open-license':
       case 'import-data':
       case 'export-data':
-      case 'find':
       case 'login-external-webservice':
       case 'open-cookie-manager':
+      case 'open-hosts-editor':
+      case 'open-themes':
         win.webContents.send(windowCommand, action);
       break;
       case 'new-window':
@@ -120,15 +147,51 @@ class Arc {
         let {HelpManager} = require('./scripts/main/help-manager');
         HelpManager.helpWith(action);
       break;
+      case 'task-manager':
+        this.wm.openTaskManager();
+      break;
+      case 'find':
+        if (win.webContents.getURL().indexOf('search-bar') !== -1) {
+          // ctrl+f from search bar.
+          return;
+        }
+        let srv = ContentSearchService.getService(win);
+        if (srv && srv.isOpened()) {
+          srv.focus();
+          return;
+        }
+        if (!srv) {
+          srv = new ContentSearchService(win);
+        }
+        srv.open();
+      break;
     }
+  }
+  /**
+   * Returns true if current instance is being debugged.
+   *
+   * @return {Boolean} [description]
+   */
+  isDebug() {
+    return !!process.argv.find((i) => i.indexOf('--inspect') !== -1);
   }
 }
 
 const arcApp = new Arc();
 arcApp.attachListeners();
 
+// Unit testing
+if (process.env.NODE_ENV === 'test') {
+  const testInterface = require('./scripts/main/test-interface');
+  testInterface(app, arcApp);
+}
+
+if (arcApp.isDebug()) {
+  global.arcApp = arcApp;
+}
+
 // TODO: // move this to seperate file that is responsible for IPC
-ipc.on('save-dialog', function(event, args) {
+ipcMain.on('save-dialog', function(event, args) {
   args = args || {};
   const options = {
     title: 'Save to file'
@@ -141,34 +204,44 @@ ipc.on('save-dialog', function(event, args) {
   });
 });
 
-ipc.on('new-window', function() {
+ipcMain.on('new-window', function() {
   arcApp.wm.open();
 });
 
-ipc.on('toggle-devtools', (event) => {
+ipcMain.on('toggle-devtools', (event) => {
   event.sender.webContents.toggleDevTools();
 });
 
-ipc.on('oauth-2-get-token', (event, options) => {
+ipcMain.on('oauth-2-get-token', (event, options) => {
   ArcIdentity.getAuthToken(options)
-  .then(token => {
+  .then((token) => {
     event.sender.send('oauth-2-token-ready', token);
   })
-  .catch(cause => {
+  .catch((cause) => {
     event.sender.send('oauth-2-token-error', cause);
   });
 });
-ipc.on('check-for-update', () => {
+ipcMain.on('oauth-2-launch-web-flow', (event, options, id) => {
+  ArcIdentity.launchWebAuthFlow(options)
+  .then((token) => {
+    event.sender.send('oauth-2-token-ready', token, id);
+  })
+  .catch((cause) => {
+    event.sender.send('oauth-2-token-error', cause, id);
+  });
+});
+ipcMain.on('check-for-update', () => {
   arcApp.us.check({
     notify: false
   });
 });
-ipc.on('install-update', () => {
+ipcMain.on('install-update', () => {
   arcApp.us.installUpdate();
 });
 
-ipc.on('google-drive-data-save', (event, requestId, content, type, fileName) => {
-  var config = {
+ipcMain.on('google-drive-data-save', (event, requestId,
+  content, type, fileName) => {
+  let config = {
     resource: {
       name: fileName,
       description: 'Advanced REST client data export file.'
@@ -180,21 +253,21 @@ ipc.on('google-drive-data-save', (event, requestId, content, type, fileName) => 
   };
   const drive = new DriveExport();
   drive.create(config)
-  .then(result => {
+  .then((result) => {
     event.sender.send('google-drive-data-save-result', requestId, result);
   })
-  .catch(cause => {
+  .catch((cause) => {
     event.sender.send('google-drive-data-save-error', requestId, cause);
   });
 });
 
-ipc.on('drive-request-save', (event, requestId, request, fileName) => {
-  var driveId;
+ipcMain.on('drive-request-save', (event, requestId, request, fileName) => {
+  let driveId;
   if (request.driveId) {
     driveId = request.driveId;
     delete request.driveId;
   }
-  var config = {
+  let config = {
     resource: {
       name: fileName + '.arc',
     },
@@ -204,20 +277,21 @@ ipc.on('drive-request-save', (event, requestId, request, fileName) => {
     }
   };
   const drive = new DriveExport();
-  var promise;
+  let promise;
   if (driveId) {
     promise = drive.update(driveId, config);
   } else {
-    config.resource.description = request.description || 'Advanced REST client export file.';
+    config.resource.description = request.description ||
+      'Advanced REST client export file.';
     promise = drive.create(config);
   }
 
   promise
-  .then(result => {
+  .then((result) => {
     event.sender.send('drive-request-save-result', requestId, result);
   })
-  .catch(cause => {
-    var result = {
+  .catch((cause) => {
+    let result = {
       message: cause.message || 'Unknown Goodle Drive save error',
       stack: cause.stack || ''
     };
@@ -225,12 +299,37 @@ ipc.on('drive-request-save', (event, requestId, request, fileName) => {
   });
 });
 
-ipc.on('open-web-url', (event, url, purpose) => {
+ipcMain.on('open-web-url', (event, url, purpose) => {
   switch (purpose) {
     case 'web-session': arcApp.sm.openWebBrowser(url); break;
   }
 });
 
-ipc.on('cookies-session', (event, data) => {
+ipcMain.on('cookies-session', (event, data) => {
   arcApp.sm.handleRequest(event.sender, data);
+});
+
+ipcMain.on('open-theme-editor', (event, data) => {
+  log.info('Starting theme editor');
+  const windowId = event.sender.id;
+  const {ThemesEditor} = require('./scripts/main/themes-editor.js');
+  const editor = new ThemesEditor(windowId, data);
+  editor.run();
+});
+
+ipcMain.on('reload-app-required', (event, message) => {
+  message = message || 'To complete the action reload the application.';
+  const win = BrowserWindow.fromWebContents(event.sender);
+  dialog.showMessageBox(win, {
+    type: 'info',
+    buttons: ['Reload', 'Later'],
+    defaultId: 0,
+    cancelId: 1,
+    title: 'Reload Advanced REST Client?',
+    message: message,
+  }, (response) => {
+    if (response === 0) {
+      arcApp.wm.reloadWindows();
+    }
+  });
 });
