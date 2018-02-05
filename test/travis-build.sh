@@ -15,6 +15,6 @@ export PATH=$PATH:./node_modules/.bin/
 cd components/anypoint
 ../../node_modules/.bin/bower update
 cd ../default
-bower update
+../../node_modules/.bin/bower update
 cd ../../
 npm test
