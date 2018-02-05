@@ -11,6 +11,10 @@ npm --version
 
 export PATH=$PATH:./node_modules/.bin/
 
-npm install
-tasks/bower.sh
+# npm install
+cd components/anypoint
+../../node_modules/.bin/bower update
+cd ../default
+bower update
+cd ../../
 npm test
