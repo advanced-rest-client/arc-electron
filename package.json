@@ -25,6 +25,7 @@
   },
   "main": "main.js",
   "devDependencies": {
+    "bower": "^1.8.2",
     "chai": "^4.1.2",
     "chance": "^1.0.13",
     "electron": "~1.7.11",
