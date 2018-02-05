@@ -44,7 +44,7 @@ class RemoteApi extends ArcBase {
    * @return {Promise} Promise resolved when the command was sent to the window.
    */
   updateRequest(requestObj, tab) {
-    log.log('RemoteApi::updateRequest::', tab);
+    log.log('RemoteApi::updateRequest::tab:', tab);
     return this.getActiveWindow()
     .then(win => {
       log.info('Updating request in active window. Update tab is', tab);

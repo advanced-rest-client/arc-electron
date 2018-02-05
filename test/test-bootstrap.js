@@ -8,7 +8,7 @@ if (process.platform === 'win32') {
 }
 const appPath = path.join(__dirname, '..', 'main.js');
 
-module.exports.getApp = (opts) => {
+function getApp(opts) {
   opts = opts || {};
   let options = {
     path: electronPath,
@@ -20,4 +20,24 @@ module.exports.getApp = (opts) => {
     options.args = options.args.concat(opts.args);
   }
   return new Application(options);
-};
+}
+
+function deffer(timeout) {
+  return new Promise(function(resolve) {
+    setTimeout(function() {
+      resolve();
+    }, timeout);
+  });
+}
+
+function runAppDeffered(timeout, opts) {
+  const app = getApp(opts);
+  timeout = timeout || 5000;
+  return app.start()
+  .then(() => app.client.waitUntilWindowLoaded(10000))
+  .then(() => deffer(timeout))
+  .then(() => app);
+}
+
+module.exports.getApp = getApp;
+module.exports.runAppDeffered = runAppDeffered;
