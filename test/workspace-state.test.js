@@ -32,7 +32,7 @@ describe('Workspace state test', function() {
 
     it('Stores single request data', function() {
       // There's already a tab opened in a window.
-      const context = this;
+      // const context = this;
       return this.app.electron.remote.app.
       testsInterface('update-request-object', {
         url: 'https://test-url.com',
@@ -43,14 +43,14 @@ describe('Workspace state test', function() {
         return new Promise(function(resolve) {
           // State store has debouncer set to 100ms
           setTimeout(function() {
-            context.app.client.getRenderProcessLogs().then(function(logs) {
-              console.log('LOG DUMP');
-              logs.forEach(function(log) {
-                console.log(log.message);
-                console.log(log.source);
-                console.log(log.level);
-              });
-            });
+            // context.app.client.getRenderProcessLogs().then(function(logs) {
+            //   console.log('LOG DUMP');
+            //   logs.forEach(function(log) {
+            //     console.log(log.message);
+            //     console.log(log.source);
+            //     console.log(log.level);
+            //   });
+            // });
             resolve(fs.readJson(workspaceFilePath));
           }, 500);
         });
