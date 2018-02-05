@@ -12,19 +12,11 @@ describe('Workspace state test', function() {
       ]
     };
 
-    this.timeout(10000);
+    this.timeout(15000);
     before(function() {
-      this.app = bootstrap.getApp(opts);
-      return this.app.start()
-      .then(() => this.app.client.waitUntilWindowLoaded(10000))
-      .then(() => {
-        return new Promise(function(resolve) {
-          // Wait untill ARC app loads.
-          // This time my be longer in Travis
-          setTimeout(function() {
-            resolve();
-          }, 2000);
-        });
+      return bootstrap.runAppDeffered(10000, opts)
+      .then((app) => {
+        this.app = app;
       });
     });
 
@@ -38,29 +30,38 @@ describe('Workspace state test', function() {
       return p.then(() => fs.remove(workspaceFilePath));
     });
 
-    // it('Stores single request data', function() {
-    //   // There's already a tab opened in a window.
-    //   return this.app.electron.remote.app.
-    //   testsInterface('update-request-object', {
-    //     url: 'https://test-url.com',
-    //     method: 'TEST',
-    //     headers: 'x-test: value'
-    //   })
-    //   .then(function() {
-    //     return new Promise(function(resolve) {
-    //       // State store has debouncer set to 100ms
-    //       setTimeout(function() {
-    //         resolve(fs.readJson(workspaceFilePath));
-    //       }, 200);
-    //     });
-    //   })
-    //   .then(function(content) {
-    //     assert.typeOf(content.requests, 'array', 'Requests is an array');
-    //     assert.lengthOf(content.requests, 1,
-    //      'Requests contains single item');
-    //     assert.equal(content.requests[0].url, 'https://test-url.com', 'Contains passed data');
-    //   });
-    // });
+    it('Stores single request data', function() {
+      // There's already a tab opened in a window.
+      // const context = this;
+      return this.app.electron.remote.app.
+      testsInterface('update-request-object', {
+        url: 'https://test-url.com',
+        method: 'TEST',
+        headers: 'x-test: value'
+      })
+      .then(function() {
+        return new Promise(function(resolve) {
+          // State store has debouncer set to 100ms
+          setTimeout(function() {
+            // context.app.client.getRenderProcessLogs().then(function(logs) {
+            //   console.log('LOG DUMP');
+            //   logs.forEach(function(log) {
+            //     console.log(log.message);
+            //     console.log(log.source);
+            //     console.log(log.level);
+            //   });
+            // });
+            resolve(fs.readJson(workspaceFilePath));
+          }, 500);
+        });
+      })
+      .then(function(content) {
+        assert.typeOf(content.requests, 'array', 'Requests is an array');
+        assert.lengthOf(content.requests, 1,
+         'Requests contains single item');
+        assert.equal(content.requests[0].url, 'https://test-url.com', 'Contains passed data');
+      });
+    });
 
     it('Stores request data', function() {
       return this.app.electron.remote.app.
@@ -121,17 +122,9 @@ describe('Workspace state test', function() {
       ]
     };
     before(function() {
-      this.app = bootstrap.getApp(opts);
-      return this.app.start()
-      .then(() => this.app.client.waitUntilWindowLoaded(10000))
-      .then(() => {
-        return new Promise(function(resolve) {
-          // Wait untill ARC app loads.
-          // This time my be longer in Travis
-          setTimeout(function() {
-            resolve();
-          }, 2000);
-        });
+      return bootstrap.runAppDeffered(4000, opts)
+      .then((app) => {
+        this.app = app;
       });
     });
 

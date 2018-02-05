@@ -1085,6 +1085,9 @@
       updateRequestTab: function(request, tab) {
         this.log.info('Updating request object...');
         var workspace = this.workspace;
+        if (!workspace) {
+          throw new Error('Workspace is not ready.');
+        }
         if (typeof tab !== 'number') {
           this.log.info('Tab not provided. Using current selection...');
           tab = workspace.selected;

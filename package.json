@@ -1,7 +1,7 @@
 {
   "name": "advanced-rest-client",
   "description": "The Advanced REST Client desktop application.",
-  "version": "11.0.31",
+  "version": "12.0.0",
   "homepage": "https://advancedrestclient.com/",
   "license": "LICENSE.md",
   "author": {
@@ -12,21 +12,24 @@
     "url": "https://github.com/advanced-rest-client/arc-electron"
   },
   "scripts": {
-    "start": "electron --inspect=5858 .",
+    "start": "electron --inspect=5858 --enable-logging .",
     "postinstall": "electron-builder install-app-deps",
-    "test": "npm run bower && NODE_ENV=test mocha test/*.test.js",
+    "test": "NODE_ENV=test mocha test/*.test.js",
     "test-only": "NODE_ENV=test mocha test/*.test.js",
     "build-l": "npx electron-builder -l",
     "build-w": "npx electron-builder -w",
     "build-m": "npx electron-builder -m",
-    "bower": "node tasks/bower.js"
+    "bower": "node tasks/bower.js",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
   },
   "main": "main.js",
   "devDependencies": {
+    "bower": "^1.8.2",
     "chai": "^4.1.2",
     "chance": "^1.0.13",
     "electron": "~1.7.11",
-    "electron-builder": "^19.55.3",
+    "electron-builder": "^19.56.2",
     "eslint": "^4.16.0",
     "eslint-config-google": "^0.9.1",
     "glob": "^7.1.2",
@@ -50,7 +53,7 @@
   "build": {
     "appId": "com.mulesoft.arc",
     "productName": "arc",
-    "artifactName": "arc.${ext}",
+    "artifactName": "arc-${version}-${arch}.${ext}",
     "asar": true,
     "copyright": "Copyright © 2018 Mulesoft",
     "detectUpdateChannel": true,
@@ -61,7 +64,7 @@
       "task-manager.html",
       "package.json",
       "assets/",
-      "bower_components/",
+      "components/",
       "menus/",
       "scripts/",
       "src/",
@@ -110,7 +113,7 @@
           ]
         },
         {
-          "target": "rpm",
+          "target": "tar.gz",
           "arch": [
             "x64",
             "ia32"
@@ -118,7 +121,8 @@
         }
       ],
       "vendor": "Mulesoft",
-      "synopsis": "A developert tool to test a HTTP request"
+      "synopsis": "A developert tool to test HTTP requests",
+      "artifactName": "arc-linux-${version}-${arch}.${ext}"
     },
     "win": {
       "target": [
@@ -147,7 +151,7 @@
     "nsis": {
       "installerIcon": "build/icon.ico",
       "uninstallerIcon": "build/icon.ico",
-      "artifactName": "arc-setup.${ext}",
+      "artifactName": "arc-setup-${arch}.${ext}",
       "shortcutName": "ARC"
     }
   },
