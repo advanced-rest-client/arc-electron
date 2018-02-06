@@ -52,7 +52,7 @@ class SocketRequest extends EventEmitter {
      * @type {String}
      */
     this.hostHeader = this._getHostHeader(request.url);
-    this._hostTestReg = /^(\s+)?host(\s+)?:/im;
+    this._hostTestReg = /^\s*host\s*:/im;
   }
 
   set uri(value) {
