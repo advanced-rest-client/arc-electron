@@ -137,6 +137,7 @@ class ArcInit {
    */
   updateEventHandler(sender, message) {
     var app = this.app;
+    console.log('updateEventHandler', message);
     app.updateState = message;
     if (message[0] === 'update-available') {
       app.hasAppUpdate = true;
