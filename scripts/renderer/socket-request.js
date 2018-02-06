@@ -52,6 +52,7 @@ class SocketRequest extends EventEmitter {
      * @type {String}
      */
     this.hostHeader = this._getHostHeader(request.url);
+    this._hostTestReg = /^\s*host\s*:/im;
   }
 
   set uri(value) {
@@ -327,7 +328,7 @@ class SocketRequest extends EventEmitter {
     if (typeof headers !== 'string') {
       return true;
     }
-    return headers.toLowerCase().indexOf('host:') === -1;
+    return !this._hostTestReg.test(headers);
   }
   /**
    * Reads a port number for a connection.
