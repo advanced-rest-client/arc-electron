@@ -30,7 +30,7 @@
     "network-state": "advanced-rest-client/network-state#^0.1.1",
     "arc-loader-screen": "advanced-rest-client/arc-loader-screen#^0.1.1",
     "response-view": "advanced-rest-client/response-view#^0.1.10",
-    "request-panel": "advanced-rest-client/request-panel#^0.2.2",
+    "request-panel": "advanced-rest-client/request-panel#^0.3.0",
     "request-saver": "advanced-rest-client/request-saver#^0.1.0",
     "variables-manager": "advanced-rest-client/variables-manager#^0.1.8",
     "variables-evaluator": "advanced-rest-client/variables-evaluator#^0.1.14",
@@ -103,7 +103,8 @@
     "anypoint-styles": "advanced-rest-client/anypoint-styles#^0.1.9",
     "themes-panel": "advanced-rest-client/themes-panel#^0.1.1",
     "polymer-styles-analyzer": "advanced-rest-client/polymer-styles-analyzer#^0.1.5",
-    "polymer-styles-editor": "advanced-rest-client/polymer-styles-editor#^0.1.1"
+    "polymer-styles-editor": "advanced-rest-client/polymer-styles-editor#^0.1.1",
+    "request-hooks-logic": "advanced-rest-client/request-hooks-logic#^0.1.1"
   },
   "devDependencies": {
     "web-component-tester": "*",
