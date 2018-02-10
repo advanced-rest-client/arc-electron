@@ -977,14 +977,15 @@
         var context = this;
         var rejected;
         function resolved(sender, token) {
+          let tokenValue = token ? token.accessToken : undefined;
           context.__requestingToken = false;
           ipc.removeListener('oauth-2-token-ready', resolved);
           ipc.removeListener('oauth-2-token-error', rejected);
           context.fire('google-signin-success', {
             scope: scope,
-            token: token.accessToken
+            token: tokenValue
           });
-          context.accessToken = token.accessToken;
+          context.accessToken = tokenValue;
           ipc = null;
         }
         rejected = function() {
