@@ -982,9 +982,9 @@
           ipc.removeListener('oauth-2-token-error', rejected);
           context.fire('google-signin-success', {
             scope: scope,
-            token: token
+            token: token.accessToken
           });
-          context.accessToken = token;
+          context.accessToken = token.accessToken;
           ipc = null;
         }
         rejected = function() {
