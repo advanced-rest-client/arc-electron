@@ -1,6 +1,6 @@
 const {ArcBase} = require('./arc-base');
 const {autoUpdater} = require('electron-updater');
-const {dialog, nativeImage} = require('electron');
+const {dialog, nativeImage, ipcMain} = require('electron');
 const {ArcPreferences} = require('./arc-preferences');
 const log = require('electron-log');
 const path = require('path');
@@ -20,6 +20,18 @@ class UpdateStatus extends ArcBase {
     this._ensureScope();
     this._addListeners();
   }
+
+  listen() {
+    ipcMain.on('check-for-update', this._checkUpdateHandler.bind(this));
+    ipcMain.on('install-update', this.installUpdate);
+  }
+
+  _checkUpdateHandler() {
+    this.check({
+      notify: false
+    });
+  }
+
   /**
    * Checks for app update.
    * This function **must** be called after the app ready event.

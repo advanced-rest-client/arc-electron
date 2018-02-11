@@ -1,8 +1,9 @@
-const {BrowserWindow} = require('electron');
+const {BrowserWindow, ipcMain} = require('electron');
 const fs = require('fs-extra');
 const path = require('path');
 const {URLSearchParams} = require('url');
 const _fetch = require('node-fetch');
+const PERSISTNAME = 'persist:web-session';
 // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
 const windowParams = {
   width: 640,
@@ -13,7 +14,7 @@ const windowParams = {
   frame: true,
   webPreferences: {
     nodeIntegration: false,
-    partition: 'persist:arc-window'
+    partition: PERSISTNAME
   }
 };
 /**
@@ -726,6 +727,48 @@ class IdentityProvider {
  * Class that manages OAuth2 identities.
  */
 class ArcIdentity {
+  /**
+   * Listens for the renderer process events related to OAuth provider.
+   */
+  static listen() {
+    ipcMain.on('oauth-2-get-token', ArcIdentity._getTokenHandler);
+    ipcMain.on('oauth-2-launch-web-flow', ArcIdentity._launchWebFlowHandler);
+  }
+  /**
+   * Handler for the `oauth-2-get-token` event from the render process.
+   * Lunches the default OAuth flow with properties read from the manifest file.
+   *
+   * @param {Object} event
+   * @param {Object} options Oauth options. See `ArcIdentity.getAuthToken`
+   * for description
+   */
+  static _getTokenHandler(event, options) {
+    ArcIdentity.getAuthToken(options)
+    .then((token) => {
+      event.sender.send('oauth-2-token-ready', token);
+    })
+    .catch((cause) => {
+      event.sender.send('oauth-2-token-error', cause);
+    });
+  }
+  /**
+   * Handler for the `oauth-2-launch-web-flow` event from the render process.
+   * Lunches OAuth flow in browser window.
+   *
+   * @param {Object} event
+   * @param {Object} options Oauth options. See `ArcIdentity.launchWebAuthFlow`
+   * for description
+   * @param {String} id Id generated in the renderer to recognize the request.
+   */
+  static _launchWebFlowHandler(event, options, id) {
+    ArcIdentity.launchWebAuthFlow(options)
+    .then((token) => {
+      event.sender.send('oauth-2-token-ready', token, id);
+    })
+    .catch((cause) => {
+      event.sender.send('oauth-2-token-error', cause, id);
+    });
+  }
   /**
    * Generates a provider ID as an identifier for an identity
    *

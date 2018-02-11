@@ -1178,6 +1178,15 @@ class SocketRequest extends EventEmitter {
       return Promise.reject(new Error(`The response status is empty.
       It means that the successful connection wasn't made. Check your request parameters.`));
     }
+    let responseUrl;
+    if (this.redirects) {
+      for (let item of this.redirects) {
+        responseUrl = item.requestUrl;
+      }
+    }
+    if (!responseUrl) {
+      responseUrl = this.arcRequest.url;
+    }
     return this._decompress()
     .then(body => {
       let options = {
