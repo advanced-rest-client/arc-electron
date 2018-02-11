@@ -30,7 +30,7 @@
     "network-state": "advanced-rest-client/network-state#^0.1.1",
     "arc-loader-screen": "advanced-rest-client/arc-loader-screen#^0.1.1",
     "response-view": "advanced-rest-client/response-view#^0.1.10",
-    "request-panel": "advanced-rest-client/request-panel#^0.2.2",
+    "request-panel": "advanced-rest-client/request-panel#^0.3.0",
     "request-saver": "advanced-rest-client/request-saver#^0.1.0",
     "variables-manager": "advanced-rest-client/variables-manager#^0.1.8",
     "variables-evaluator": "advanced-rest-client/variables-evaluator#^0.1.14",
@@ -108,7 +108,8 @@
     "paper-dropdown-menu": "mulesoft/paper-dropdown-menu#^1.5.3",
     "iron-validatable-behavior": "advanced-rest-client/iron-validatable-behavior#^1.9.0",
     "iron-validator-behavior": "advanced-rest-client/iron-validator-behavior#^1.9.0",
-    "raml-path-selector": "advanced-rest-client/raml-path-selector#anypoint"
+    "raml-path-selector": "advanced-rest-client/raml-path-selector#anypoint",
+    "request-hooks-logic": "advanced-rest-client/request-hooks-logic#^0.1.1"
   },
   "devDependencies": {
     "web-component-tester": "*",

@@ -1183,7 +1183,8 @@ class SocketRequest extends EventEmitter {
       let options = {
         status: status,
         statusText: this._response.statusMessage,
-        headers: this._response.headers
+        headers: this._response.headers,
+        url: this.arcRequest.url
       };
       let response = new Response(body, options);
       response.stats = this.stats;

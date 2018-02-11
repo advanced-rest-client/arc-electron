@@ -78,7 +78,7 @@ the License.
         'request-is-payload-changed': '_stopEvent',
         'content-type-changed': '_stopEvent',
         'request-clear-state': '_clearRequest',
-        'report-response': '_stopEvent'
+        'report-response': '_onResponseReceived'
       },
 
       observers: [
@@ -104,7 +104,7 @@ the License.
       _onTransportRequested: function(e) {
         e.preventDefault();
         e.stopPropagation();
-
+        this._latestActions = e.detail.actions;
         this.fire('url-history-store', {
           value: this.request.url
         }, {
@@ -138,7 +138,8 @@ the License.
           name: data.name,
           payload: data.payload,
           url: data.url,
-          description: data.description
+          description: data.description,
+          actions: data.actions
         };
         if (data.legacyProject !== this.projectId) {
           this.set('projectId', data.legacyProject);
@@ -325,6 +326,16 @@ the License.
           method: 'GET',
           url: ''
         });
+      },
+
+      _onResponseReceived: function(e) {
+        this._stopEvent(e);
+        if (!this._latestActions || !this._latestActions.length) {
+          return;
+        }
+        /* global RequestLogicRunner */
+        const runner = new RequestLogicRunner(this._latestActions);
+        runner.run(e.detail.request, e.detail.response);
       }
     });
   </script>
