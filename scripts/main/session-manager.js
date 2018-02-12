@@ -1,4 +1,4 @@
-const {session, BrowserWindow, app} = require('electron');
+const {session, BrowserWindow, app, ipcMain} = require('electron');
 const PERSISTNAME = 'persist:web-session';
 /**
  * A class responsible for managing chrome web session.
@@ -13,6 +13,18 @@ class SessionManager {
     this._session = this.getSessionCookies();
     this._session.on('changed', this._cookieChanged.bind(this));
     app.on('certificate-error', this._handleCertIssue.bind(this));
+    ipcMain.on('open-web-url', this._handleOpenSessionWindow.bind(this));
+    ipcMain.on('cookies-session', this._handleCookiesSessionRequest.bind(this));
+  }
+
+  _handleOpenSessionWindow(event, url, purpose) {
+    switch (purpose) {
+      case 'web-session': this.openWebBrowser(url); break;
+    }
+  }
+
+  _handleCookiesSessionRequest(event, data) {
+    this.handleRequest(event.sender, data);
   }
 
   _cookieChanged(event, cookie, cause, removed) {

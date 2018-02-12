@@ -1,10 +1,8 @@
-const electron = require('electron');
-const BrowserWindow = electron.BrowserWindow;
+const {BrowserWindow, dialog, ipcMain} = require('electron');
 const path = require('path');
 const url = require('url');
 const {ArcSessionControl} = require('./session-control');
 const {ArcSessionRecorder} = require('./arc-session-recorder');
-const ipc = require('electron').ipcMain;
 /**
  * A class that manages opened app windows.
  */
@@ -19,11 +17,42 @@ class ArcWindowsManager {
     this.__windowResized = this.__windowResized.bind(this);
     this.__windowOpenedPopup = this.__windowOpenedPopup.bind(this);
     this.recorder = new ArcSessionRecorder();
-    ipc.on('window-reloading', this.__windowReloading.bind(this));
   }
   // True if has at leas one window.
   get hasWindow() {
     return this.windows.length > 0;
+  }
+
+  listen() {
+    ipcMain.on('window-reloading', this.__windowReloading.bind(this));
+    ipcMain.on('new-window', this._windowOpenHandler.bind(this));
+    ipcMain.on('toggle-devtools', this._toggleDevToolsHandler.bind(this));
+    ipcMain.on('reload-app-required', this._reloadRequiredHandler.bind(this));
+  }
+
+  _windowOpenHandler() {
+    this.open();
+  }
+
+  _toggleDevToolsHandler(event) {
+    event.sender.webContents.toggleDevTools();
+  }
+
+  _reloadRequiredHandler(event, message) {
+    message = message || 'To complete this action reload the application.';
+    const win = BrowserWindow.fromWebContents(event.sender);
+    dialog.showMessageBox(win, {
+      type: 'info',
+      buttons: ['Reload', 'Later'],
+      defaultId: 0,
+      cancelId: 1,
+      title: 'Reload Advanced REST Client?',
+      message: message,
+    }, (response) => {
+      if (response === 0) {
+        this.reloadWindows();
+      }
+    });
   }
   /**
    * Notifies all opened windows with event data.

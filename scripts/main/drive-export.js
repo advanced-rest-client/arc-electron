@@ -17,7 +17,8 @@
 const {ArcIdentity} = require('./oauth2');
 const fs = require('fs-extra');
 const path = require('path');
-const fetch = require('node-fetch');
+const _fetch = require('node-fetch');
+const {ipcMain} = require('electron');
 // const URLSafeBase64 = require('urlsafe-base64');
 
 class DriveExport {
@@ -48,6 +49,69 @@ class DriveExport {
       'mimeType', 'modifiedTime', 'name', 'parents', 'properties', 'starred', 'viewedByMeTime',
       'viewersCanCopyContent', 'writersCanShare'
     ];
+  }
+
+  listen() {
+    ipcMain.on('google-drive-data-save', this._dataSaveHandler.bind(this));
+    ipcMain.on('drive-request-save', this._requestSaveHandler.bind(this));
+  }
+
+  _dataSaveHandler(event, requestId, content, type, fileName) {
+    let config = {
+      resource: {
+        name: fileName,
+        description: 'Advanced REST client data export file.'
+      },
+      media: {
+        mimeType: type || 'application/json',
+        body: content
+      }
+    };
+
+    this.create(config)
+    .then((result) => {
+      event.sender.send('google-drive-data-save-result', requestId, result);
+    })
+    .catch((cause) => {
+      event.sender.send('google-drive-data-save-error', requestId, cause);
+    });
+  }
+
+  _requestSaveHandler(event, requestId, request, fileName) {
+    let driveId;
+    if (request.driveId) {
+      driveId = request.driveId;
+      delete request.driveId;
+    }
+    let config = {
+      resource: {
+        name: fileName + '.arc',
+      },
+      media: {
+        mimeType: 'application/json',
+        body: request
+      }
+    };
+    let promise;
+    if (driveId) {
+      promise = this.update(driveId, config);
+    } else {
+      config.resource.description = request.description ||
+        'Advanced REST client export file.';
+      promise = this.create(config);
+    }
+
+    promise
+    .then((result) => {
+      event.sender.send('drive-request-save-result', requestId, result);
+    })
+    .catch((cause) => {
+      let result = {
+        message: cause.message || 'Unknown Goodle Drive save error',
+        stack: cause.stack || ''
+      };
+      event.sender.send('drive-request-save-error', requestId, result);
+    });
   }
 
   auth() {
@@ -95,7 +159,7 @@ class DriveExport {
     // }
     return promise
     .then(() => this.auth())
-    .then(at => this._uploadFile(at, config));
+    .then(tokenInfo => this._uploadFile(tokenInfo.accessToken, config));
   }
   /**
    * Update a file on Google Drive.
@@ -111,7 +175,7 @@ class DriveExport {
       return Promise.reject(e);
     }
     return this.auth()
-    .then(at => this._uploadUpdate(fileId, at, config));
+    .then(tokenInfo => this._uploadUpdate(fileId, tokenInfo.accessToken, config));
   }
   /**
    * Ensure that the file has correct configuration and throw an error if not.
@@ -160,7 +224,7 @@ class DriveExport {
       body: this._getPayload(options),
       headers: this._getUploadHeaders(accessToken),
     };
-    return fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', init)
+    return _fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', init)
     .then((response) => {
       if (!response.ok) {
         return Promise.reject(response.json());
@@ -176,7 +240,7 @@ class DriveExport {
       headers: this._getUploadHeaders(accessToken),
     };
     var url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`;
-    return fetch(url, init)
+    return _fetch(url, init)
     .then(response => {
       if (!response.ok) {
         return Promise.reject(response.json());
