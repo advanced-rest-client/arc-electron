@@ -52,7 +52,7 @@
   },
   "build": {
     "appId": "com.mulesoft.arc",
-    "productName": "arc",
+    "productName": "AdvancedRestClient",
     "artifactName": "arc-${version}-${arch}.${ext}",
     "asar": true,
     "copyright": "Copyright © 2018 Mulesoft",
