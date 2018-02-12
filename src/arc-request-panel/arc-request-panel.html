@@ -36,7 +36,12 @@ the License.
       @apply --error-toast;
     }
     </style>
-    <request-panel events-target="[[eventsTarget]]" request="{{request}}" on-request-clear-state="clearRequest" on-request-save-state="_saveHandler"></request-panel>
+    <request-panel
+      events-target="[[eventsTarget]]"
+      request="{{request}}"
+      oauth2-redirect-uri="https://auth.advancedrestclient.com/oauth-popup.html"
+      on-request-clear-state="clearRequest"
+      on-request-save-state="_saveHandler"></request-panel>
     <bottom-sheet id="requestEditorContainer" on-iron-overlay-opened="_resizeEditorSheetContent">
       <saved-request-editor id="requestEditor" on-cancel-request-edit="_cancelRequestEdit" on-save-request="_saveRequestEdit"></saved-request-detail>
     </bottom-sheet>
@@ -139,7 +144,8 @@ the License.
           payload: data.payload,
           url: data.url,
           description: data.description,
-          actions: data.actions
+          actions: data.actions,
+          auth: data.auth
         };
         if (data.legacyProject !== this.projectId) {
           this.set('projectId', data.legacyProject);
