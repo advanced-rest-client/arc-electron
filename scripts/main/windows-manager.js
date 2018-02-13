@@ -61,7 +61,11 @@ class ArcWindowsManager {
    * @param {?Array} args List of arguments.
    */
   notifyAll(type, args) {
-    this.windows.forEach(win => {
+    this.windows.forEach((win, index) => {
+      if (win.isDestroyed()) {
+        this.windows.splice(index, 1);
+        return;
+      }
       win.webContents.send(type, args);
     });
   }
@@ -220,7 +224,11 @@ class ArcWindowsManager {
   }
 
   reloadWindows() {
-    this.windows.forEach(win => {
+    this.windows.forEach((win, index) => {
+      if (win.isDestroyed()) {
+        this.windows.splice(index, 1);
+        return;
+      }
       win.reload();
     });
   }
