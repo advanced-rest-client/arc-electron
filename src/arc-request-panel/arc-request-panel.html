@@ -151,6 +151,10 @@ the License.
           this.set('projectId', data.legacyProject);
         }
         this.set('request', base);
+        if (data.multiparzt) {
+          let payload = this._restoreMultipart(data.multipart);
+          this.set('request.payload', payload);
+        }
       },
       /**
        * Handler for the save event from the request editor.
@@ -342,6 +346,42 @@ the License.
         /* global RequestLogicRunner */
         const runner = new RequestLogicRunner(this._latestActions);
         runner.run(e.detail.request, e.detail.response);
+      },
+
+      /**
+       * Restores a multipart object.
+       *
+       * @param {Array} data Multipart data
+       */
+      _restoreMultipart: function(data) {
+        var fd = new FormData();
+        data.forEach(part => {
+          let name = part.name;
+          let value;
+          if (part.isFile) {
+            try {
+              value = this._dataURLtoBlob(part.value);
+            } catch (e) {
+              value = '';
+            }
+          } else {
+            value = part.value;
+          }
+          fd.append(name, value);
+        });
+        return fd;
+      },
+
+      _dataURLtoBlob: function(dataurl) {
+        var arr = dataurl.split(',');
+        var mime = arr[0].match(/:(.*?);/)[1];
+        var bstr = atob(arr[1]);
+        var n = bstr.length;
+        var u8arr = new Uint8Array(n);
+        while (n--) {
+          u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new Blob([u8arr], {type: mime});
       }
     });
   </script>
