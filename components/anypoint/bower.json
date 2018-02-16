@@ -33,7 +33,7 @@
     "request-panel": "advanced-rest-client/request-panel#^0.4.0",
     "request-saver": "advanced-rest-client/request-saver#^0.1.0",
     "variables-manager": "advanced-rest-client/variables-manager#^0.1.8",
-    "variables-evaluator": "advanced-rest-client/variables-evaluator#^0.1.14",
+    "variables-evaluator": "advanced-rest-client/variables-evaluator#^0.2.0",
     "cookie-exchange": "advanced-rest-client/cookie-exchange#^0.1.1",
     "cookie-jar": "advanced-rest-client/cookie-jar#^0.1.1",
     "chrome-xhr-request": "advanced-rest-client/chrome-xhr-request#^0.1.1",
