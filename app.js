@@ -139,7 +139,7 @@ class ArcInit {
     var app = this.app;
     console.log('updateEventHandler', message);
     app.updateState = message;
-    if (message[0] === 'update-available') {
+    if (message[0] === 'update-downloaded') {
       app.hasAppUpdate = true;
     }
   }

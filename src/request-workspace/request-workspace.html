@@ -137,8 +137,13 @@ the License.
         'update-tabs': '_updateTabs'
       },
 
+      created: function() {
+        this._restoringWorkspace = true;
+      },
+
       ready: function() {
         this._setState(new WorkspaceState(this.workspaceScript));
+        this.listen(window, 'selected-environment-changed', '_envChanged');
         this.__ready = true;
       },
 
@@ -202,6 +207,7 @@ the License.
       },
 
       _worspaceStateRestored: function(data) {
+        this._restoreWorkspaceEnvironment(data);
         if (!data || !data.requests) {
           return this.appendPanel();
         }
@@ -455,6 +461,42 @@ the License.
       sendCurrent: function() {
         var panel = this._getPanel(this.selected);
         panel.sendPanel();
+      },
+      /**
+       * Updates environment value in the state file when it's value change.
+       */
+      _envChanged: function(e) {
+        if (e.target === this || !this.state || this._restoringWorkspace) {
+          return;
+        }
+        const value = e.detail.value;
+        this._storeEnvironmentSelection(value);
+      },
+      /**
+       * Stores information about selected environment in the workspace
+       * settings file. This is made in debouncer set to 150 ms.
+       *
+       * @param {String} value Environment name
+       */
+      _storeEnvironmentSelection: function(value) {
+        this.debounce('env-store-workspace', function() {
+          this.state.restore()
+          .then((data) => {
+            if (data.environment !== value) {
+              data.environment = value;
+              return this.state.store(data);
+            }
+          });
+        }, 150);
+      },
+
+      _restoreWorkspaceEnvironment: function(data) {
+        if (!data || !data.environment) {
+          return;
+        }
+        this.fire('selected-environment-changed', {
+          value: data.environment
+        });
       }
     });
   </script>

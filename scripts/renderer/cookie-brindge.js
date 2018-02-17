@@ -13,6 +13,7 @@ class CookieBridge {
     this._onCookieChanged = this._onCookieChanged.bind(this);
     this._onRemoveCookies = this._onRemoveCookies.bind(this);
     this._beforeRequestHandler = this._beforeRequestHandler.bind(this);
+    this._afterRequestHandler = this._afterRequestHandler.bind(this);
   }
 
   listen() {
@@ -21,6 +22,7 @@ class CookieBridge {
     window.addEventListener('session-cookie-remove', this._onRemoveCookies);
     window.addEventListener('session-cookie-udpate', this._onUpdateCookie);
     window.addEventListener('before-request', this._beforeRequestHandler);
+    window.addEventListener('response-ready', this._afterRequestHandler);
     this.ipc.on('cookie-session-response', this._onCookieSessionResponse);
     this.ipc.on('cookie-changed', this._onCookieChanged);
   }
@@ -31,6 +33,7 @@ class CookieBridge {
     window.removeEventListener('session-cookie-remove', this._onRemoveCookies);
     window.removeEventListener('session-cookie-udpate', this._onUpdateCookie);
     window.removeEventListener('before-request', this._beforeRequestHandler);
+    window.removeEventListener('response-ready', this._afterRequestHandler);
     this.ipc.removeListener('cookie-session-response', this._onCookieSessionResponse);
     this.ipc.removeListener('cookie-changed', this._onCookieChanged);
   }
@@ -86,6 +89,10 @@ class CookieBridge {
     if (cookie.expires) {
       cookie.expirationDate = Math.round(cookie.expires / 1000);
       delete cookie.expires;
+    }
+    if (cookie.httponly) {
+      cookie.httpOnly = cookie.httponly;
+      delete cookie.httponly;
     }
     return cookie;
   }
@@ -267,6 +274,117 @@ class CookieBridge {
       });
     }
     request.headers = behavior.headersToString.apply(behavior, [headers]);
+  }
+
+  /**
+   * Handler to the `response-ready` event.
+   * Stores cookies in the datastore.
+   */
+  _afterRequestHandler(e) {
+    var request = e.detail.request;
+    var response = e.detail.response;
+    var redirects = e.detail.redirects;
+    process.nextTick(() => {
+      this._processResponse(request, response, redirects);
+    });
+  }
+
+  /**
+   * Extracts cookies from `this.responseHeaders` and if any cookies are there it stores them
+   * in the datastore.
+   */
+  _processResponse(request, response, redirects) {
+    if (!response || !response.ok || !request || !request.url) {
+      return;
+    }
+    var result = this.extract(response, request.url, redirects);
+    return this._store(result.cookies);
+    // .then(function() {
+    //   return this._removeExpired(result.expired);
+    // }.bind(this));
+  }
+
+  /**
+   * Extracts cookies from the `response` object and returns an object with
+   * `cookies` and `expired` properties containing array of cookies, each.
+   *
+   * @param {Response} response The response object. This chould be altered
+   * request object
+   * @param {String} url The request URL.
+   * @param {?Array<Object>} redirects List of redirect responses (Response
+   * type). Each object is expected to have `headers` and `requestUrl`
+   * properties.
+   * @return {Object<String, Array>} An object with `cookies` and `expired`
+   * arrays of cookies.
+   */
+  extract(response, url, redirects) {
+    var expired = [];
+    var parser;
+    var exp;
+    var parsers = [];
+    if (redirects && redirects.length) {
+      redirects.forEach(function(r) {
+        if (r.headers && r.headers.has && r.headers.has('set-cookie')) {
+          parser = new Cookies(r.headers.get('set-cookie'), r.requestUrl);
+          parser.filter();
+          exp = parser.clearExpired();
+          if (exp && exp.length) {
+            expired = expired.concat(exp);
+          }
+          parsers.push(parser);
+        }
+      });
+    }
+    if (response.headers && response.headers.has && response.headers.has('set-cookie')) {
+      parser = new Cookies(response.headers.get('set-cookie'), url);
+      parser.filter();
+      exp = parser.clearExpired();
+      if (exp && exp.length) {
+        expired = expired.concat(exp);
+      }
+      parsers.push(parser);
+    }
+    var mainParser = null;
+    parsers.forEach(function(parser) {
+      if (!mainParser) {
+        mainParser = parser;
+        return;
+      }
+      mainParser.merge(parser);
+    });
+    return {
+      cookies: mainParser ? mainParser.cookies : [],
+      expired: expired
+    };
+  }
+
+  /**
+   * Stores received cookies in the datastore.
+   *
+   * @param {Array} cookies List of cookies to store
+   * @return {Promise} Resolved promise when all cookies are stored.
+   */
+  _store(cookies) {
+    if (!cookies || !cookies.length) {
+      return;
+    }
+    cookies = cookies.map((item) => {
+      item = item.toJSON();
+      item = this._translateCookieForElectron(item);
+      return item;
+    });
+    var id = ++this._requestId;
+    this.ipc.send('cookies-session', {
+      action: 'set',
+      type: 'multiple',
+      cookies: cookies,
+      id: id
+    });
+    return this._appendPromise(id)
+    .then(() => {
+
+    })
+    .catch((cause) => console.error(cause));
   }
 }
 exports.CookieBridge = CookieBridge;
