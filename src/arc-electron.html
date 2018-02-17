@@ -113,7 +113,7 @@
           </template>
           <template is="dom-if" if="[[hasAppUpdate]]">
             <span>
-              <paper-icon-button icon="arc:update-install" class="nav-notification-button" on-tap="updateInstall"></paper-icon-button>
+              <paper-icon-button icon="arc:file-download" class="nav-notification-button" on-tap="updateInstall"></paper-icon-button>
               <paper-tooltip animation-delay="200">Restart and install update</paper-tooltip>
             </span>
           </template>
@@ -200,7 +200,6 @@
     <variables-evaluator no-before-request></variables-evaluator>
     <variables-manager></variables-manager>
     <request-saver></request-saver>
-    <cookie-jar></cookie-jar>
     <response-history-saver></response-history-saver>
     <url-history-saver></url-history-saver>
     <arc-data-export></arc-data-export>

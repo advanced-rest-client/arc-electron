@@ -83,7 +83,7 @@ the License.
         'request-is-payload-changed': '_stopEvent',
         'content-type-changed': '_stopEvent',
         'request-clear-state': '_clearRequest',
-        'report-response': '_onResponseReceived'
+        'report-response': '_stopEvent'
       },
 
       observers: [
@@ -109,7 +109,6 @@ the License.
       _onTransportRequested: function(e) {
         e.preventDefault();
         e.stopPropagation();
-        this._latestActions = e.detail.actions;
         this.fire('url-history-store', {
           value: this.request.url
         }, {
@@ -144,13 +143,18 @@ the License.
           payload: data.payload,
           url: data.url,
           description: data.description,
-          actions: data.actions,
+          responseActions: data.responseActions,
+          requestActions: data.requestActions,
           auth: data.auth
         };
         if (data.legacyProject !== this.projectId) {
           this.set('projectId', data.legacyProject);
         }
         this.set('request', base);
+        if (data.multipart) {
+          let payload = this._restoreMultipart(data.multipart);
+          this.set('request.payload', payload);
+        }
       },
       /**
        * Handler for the save event from the request editor.
@@ -333,15 +337,40 @@ the License.
           url: ''
         });
       },
+      /**
+       * Restores a multipart object.
+       *
+       * @param {Array} data Multipart data
+       */
+      _restoreMultipart: function(data) {
+        var fd = new FormData();
+        data.forEach(part => {
+          let name = part.name;
+          let value;
+          if (part.isFile) {
+            try {
+              value = this._dataURLtoBlob(part.value);
+            } catch (e) {
+              value = '';
+            }
+          } else {
+            value = part.value;
+          }
+          fd.append(name, value);
+        });
+        return fd;
+      },
 
-      _onResponseReceived: function(e) {
-        this._stopEvent(e);
-        if (!this._latestActions || !this._latestActions.length) {
-          return;
+      _dataURLtoBlob: function(dataurl) {
+        var arr = dataurl.split(',');
+        var mime = arr[0].match(/:(.*?);/)[1];
+        var bstr = atob(arr[1]);
+        var n = bstr.length;
+        var u8arr = new Uint8Array(n);
+        while (n--) {
+          u8arr[n] = bstr.charCodeAt(n);
         }
-        /* global RequestLogicRunner */
-        const runner = new RequestLogicRunner(this._latestActions);
-        runner.run(e.detail.request, e.detail.response);
+        return new Blob([u8arr], {type: mime});
       }
     });
   </script>

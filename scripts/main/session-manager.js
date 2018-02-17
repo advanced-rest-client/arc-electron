@@ -102,6 +102,7 @@ class SessionManager {
         if (error) {
           reject(error);
         } else {
+          this._session.flushStore(() => {});
           resolve();
         }
       });
@@ -113,6 +114,7 @@ class SessionManager {
       let name = cookie.name;
       let url = cookie.url || this._computeCookieUrl(cookie);
       this._session.remove(url, name, () => {
+        this._session.flushStore(() => {});
         resolve();
       });
     });
@@ -145,7 +147,11 @@ class SessionManager {
         }
       break;
       case 'set':
-        this._handleSetCookie(win, data.id, data.cookie);
+        if (data.type === 'multiple') {
+          this._handleSetCookies(win, data.id, data.cookies);
+        } else {
+          this._handleSetCookie(win, data.id, data.cookie);
+        }
       break;
       case 'remove':
         if (data.type === 'single') {
@@ -188,6 +194,13 @@ class SessionManager {
 
   _handleSetCookie(win, id, cookie) {
     this.setCookie(cookie)
+    .then(() => this._sendResponse(win, id))
+    .catch(cause => this._sendResponseError(win, id, cause));
+  }
+
+  _handleSetCookies(win, id, cookies) {
+    const p = cookies.map((cookie) => this.setCookie(cookie));
+    Promise.all(p)
     .then(() => this._sendResponse(win, id))
     .catch(cause => this._sendResponseError(win, id, cause));
   }
