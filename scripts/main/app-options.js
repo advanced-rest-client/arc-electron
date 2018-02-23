@@ -1,8 +1,15 @@
 const log = require('electron-log');
 log.transports.file.level = 'info';
 
+/**
+ * A class describing and processing application initial options.
+ */
 class AppOptions {
-
+  /**
+   * List of command line options with mapping to properties.
+   *
+   * @return {Array<Object>} List of app config options
+   */
   get availableOptions() {
     return [{
       // Path to the settings file. Overrides default location.
@@ -18,7 +25,10 @@ class AppOptions {
       property: 'workspaceFile'
     }];
   }
-
+  /**
+   * Produces list of startup options.
+   * @return {Object} Map of configured options.
+   */
   getOptions() {
     var result = {};
     for (let prop in this) {
@@ -26,7 +36,9 @@ class AppOptions {
     }
     return result;
   }
-
+  /**
+   * Parses startup options.
+   */
   parse() {
     for (var i = 0; i < process.argv.length; i++) {
       if (i === 0) {
@@ -46,7 +58,12 @@ class AppOptions {
       this.setProperty(def);
     }
   }
-
+  /**
+   * Finds an option definition from an argument.
+   *
+   * @param {String} arg Argument passed to the application.
+   * @return {Object} Option definition or undefined if not found.
+   */
   findDefinnition(arg) {
     var eqIndex = arg.indexOf('=');
     if (eqIndex !== -1) {
