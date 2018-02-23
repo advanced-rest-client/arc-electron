@@ -42,6 +42,7 @@ class ArcWindowsManager {
     ipcMain.on('toggle-devtools', this._toggleDevToolsHandler.bind(this));
     ipcMain.on('reload-app-required', this._reloadRequiredHandler.bind(this));
     ipcMain.on('settings-changed', this._settingChangedHandler);
+    ipcMain.on('window-state-request', this._winStateRequestHandler.bind(this));
   }
   /**
    * A handler for new window open event. Calls `open()` function.
@@ -201,6 +202,7 @@ class ArcWindowsManager {
     if (appPath[0] === '/') {
       appPath = '#' + appPath;
     }
+    win._startPath = appPath;
     let dest = path.join(__dirname, '..', '..', 'app.html');
     let full = url.format({
       pathname: dest,
@@ -208,6 +210,26 @@ class ArcWindowsManager {
       slashes: true
     }) + appPath;
     win.loadURL(full);
+  }
+  /**
+   * Creates a startup options info object to be passed to
+   * starting application window.
+   *
+   * @param {Event} ev
+   */
+  _winStateRequestHandler(ev) {
+    let contents = ev.sender;
+    let opts = Object.assign({}, this.startupOptions);
+    let win = this.windows.find((item) => {
+      if (item.isDestroyed()) {
+        return false;
+      }
+      return item.id === contents.id;
+    });
+    if (win) {
+      opts.startPath = win._startPath;
+    }
+    contents.send('window-state-info', opts);
   }
   /**
    * Attaches listeners to the window object.
@@ -233,7 +255,7 @@ class ArcWindowsManager {
     }
     return this.windows.findIndex((item) => {
       if (item.isDestroyed()) {
-        return win === win;
+        return win === item;
       }
       return item.id === win.id;
     });
@@ -281,7 +303,6 @@ class ArcWindowsManager {
    */
   __readyShowHandler(e) {
     e.sender.show();
-    this._setupWindow(e.sender);
   }
   /**
    * Adds the `did-finish-load` event to reset the window when it's reloaded.
@@ -289,23 +310,16 @@ class ArcWindowsManager {
    * @param {Event} e Event emitted by the window.
    */
   __windowReloading(e) {
-    e.sender.webContents.once('did-finish-load', () => {
-      this._setupWindow(e.sender);
+    let contents = e.sender;
+    let win = this.windows.find((item) => {
+      if (item.isDestroyed()) {
+        return false;
+      }
+      return item.id === contents.id;
     });
-  }
-  /**
-   * Informs the window that it is ready to render the application.
-   *
-   * @param {BrowserWindow} win
-   */
-  _setupWindow(win) {
-    if (this.startupOptions.workspaceFile) {
-      win.send('set-workspace-file', this.startupOptions.workspaceFile);
+    if (win) {
+      delete win._startPath;
     }
-    if (this.startupOptions.settingsFile) {
-      win.send('set-settings-file', this.startupOptions.settingsFile);
-    }
-    win.send('window-rendered');
   }
   /**
    * Handler for the `new-window` event emitted by the window object.

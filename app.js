@@ -22,9 +22,6 @@ class ArcInit {
 
   listen() {
     ipc.on('window-state-info', this._stateInfoHandler.bind(this));
-    ipc.on('window-rendered', this.initApp.bind(this));
-    ipc.on('set-workspace-file', this.setupWorkspaceFile.bind(this));
-    ipc.on('set-settings-file', this.setupSettingsFile.bind(this));
     window.onbeforeunload = this.beforeUnloadWindow.bind(this);
     var updateHandler = this.updateEventHandler.bind(this);
     ipc.on('checking-for-update', updateHandler);
@@ -65,7 +62,6 @@ class ArcInit {
       this.workspaceScript = info.workspaceFile;
       this.themeLoader.setupSettingsFile(this.workspaceScript);
     }
-
     this.initApp();
   }
 
@@ -73,10 +69,22 @@ class ArcInit {
     log.info('Initializing renderer window...');
     return this.initPreferences()
     .then(settings => this.themeApp(settings))
-    .then(() => this._createApp());
+    .then(() => this._createApp())
+    .catch((cause) => this.reportFatalError(cause));
+  }
+  /**
+   * Reports fatal application error.
+   *
+   * @param {Error} err Error object
+   */
+  reportFatalError(err) {
+    ipc.send('fatal-error', err.message);
   }
 
   _createApp() {
+    if (this.created) {
+      return Promise.resolve();
+    }
     return new Promise((resolve, reject) => {
       Polymer.Base.importHref('src/arc-electron.html', () => {
         resolve();
@@ -93,14 +101,24 @@ class ArcInit {
       this.created = true;
     });
   }
-
+  /**
+   * Initializes and reads application settings.
+   *
+   * @return {Promise} Promise resolved to current settings.
+   */
   initPreferences() {
     log.info('Initializing app preferences...');
     this.__prefs = new ArcPreferencesRenderer(this.settingsScript);
     this.__prefs.observe();
     return this.__prefs.loadSettings();
   }
-
+  /**
+   * Sets up application theme.
+   *
+   * @param {String} settings Current application settings.
+   * @return {Promise} Promise resolved when the application theme is
+   * set and ready.
+   */
   themeApp(settings) {
     log.info('Initializing app theme.');
     var id;
@@ -121,28 +139,11 @@ class ArcInit {
       log.error('Unable to load default theme file.', cause);
     });
   }
-
-  setupWorkspaceFile(e, message) {
-    log.info('Setting up workspace file:', message);
-    this.workspaceScript = message;
-    if (!this.created) {
-      log.info('The app is not ready. Will set it later.');
-      return;
-    }
-    this.app.workspaceScript = message;
-  }
-
-  setupSettingsFile(e, message) {
-    log.info('Setting up settings file:', message);
-    this.settingsScript = message;
-    if (!this.created) {
-      log.info('The app is not ready. Will set it later.');
-      return;
-    }
-    this.app.settingsScript = message;
-    this.themeLoader.setupSettingsFile(message);
-  }
-
+  /**
+   * Sets up the application properties.
+   *
+   * @param {ArcElectron} app App electron element.
+   */
   _setupApp(app) {
     if (this.workspaceScript) {
       app.workspaceScript = this.workspaceScript;
