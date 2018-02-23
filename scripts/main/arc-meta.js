@@ -87,7 +87,7 @@ class ArcMeta extends ArcPreferences {
       });
     }
     this._meta = data;
-    return data;
+    return Promise.resolve(data);
   }
   /**
    * Creates default metadata for ARC.
