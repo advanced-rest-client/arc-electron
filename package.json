@@ -14,7 +14,7 @@
   "scripts": {
     "start": "electron --inspect=5858 --enable-logging .",
     "postinstall": "electron-builder install-app-deps",
-    "test": "NODE_ENV=test mocha test/*.test.js",
+    "test": "NODE_ENV=test mocha test/**/*.test.js",
     "test-only": "NODE_ENV=test mocha test/*.test.js",
     "build-l": "npx electron-builder -l",
     "build-w": "npx electron-builder -w",
@@ -38,6 +38,7 @@
     "ssl-root-cas": "^1.2.4"
   },
   "dependencies": {
+    "camelcase": "^4.1.0",
     "electron-log": "^2.2.9",
     "electron-updater": "^2.18.2",
     "form-data": "^2.3.1",
