@@ -3,12 +3,13 @@ const path = require('path');
 const url = require('url');
 const {ArcSessionControl} = require('./session-control');
 const {ArcSessionRecorder} = require('./arc-session-recorder');
+const {ArcPreferences} = require('./arc-preferences');
 /**
  * A class that manages opened app windows.
  */
 class ArcWindowsManager {
   constructor(startupOptions) {
-    this.startupOptions = startupOptions;
+    this.startupOptions = startupOptions || {};
     this.windows = [];
     // Task manager window reference.
     this._tmWin = undefined;
@@ -16,6 +17,8 @@ class ArcWindowsManager {
     this.__windowMoved = this.__windowMoved.bind(this);
     this.__windowResized = this.__windowResized.bind(this);
     this.__windowOpenedPopup = this.__windowOpenedPopup.bind(this);
+    this._settingChangedHandler = this._settingChangedHandler.bind(this);
+    this._prefs = new ArcPreferences(startupOptions.settingsFile);
     this.recorder = new ArcSessionRecorder();
   }
   // True if has at leas one window.
@@ -28,6 +31,7 @@ class ArcWindowsManager {
     ipcMain.on('new-window', this._windowOpenHandler.bind(this));
     ipcMain.on('toggle-devtools', this._toggleDevToolsHandler.bind(this));
     ipcMain.on('reload-app-required', this._reloadRequiredHandler.bind(this));
+    ipcMain.on('settings-changed', this._settingChangedHandler);
   }
 
   _windowOpenHandler() {
@@ -64,6 +68,27 @@ class ArcWindowsManager {
     this.windows.forEach((win, index) => {
       if (win.isDestroyed()) {
         this.windows.splice(index, 1);
+        return;
+      }
+      win.webContents.send(type, args);
+    });
+  }
+  /**
+   * Notifies all opened windows with event data
+   * except for a window represented by a WebContents.
+   *
+   * @param {String} type Event type (channel name)
+   * @param {?Array} args List of arguments.
+   * @param {WebContents} wc Window that should not receive 
+   * notification.
+   */
+  notifyAllBut(type, args, wc) {
+    this.windows.forEach((win, index) => {
+      if (win.isDestroyed()) {
+        this.windows.splice(index, 1);
+        return;
+      }
+      if (win.webContents.id === wc.id) {
         return;
       }
       win.webContents.send(type, args);
@@ -231,6 +256,18 @@ class ArcWindowsManager {
       }
       win.reload();
     });
+  }
+  /**
+   * A handler for a `settigs-changed` from a renderer process.
+   * It informs other windows about the change so all
+   * windows can consume the same change.
+   */
+  _settingChangedHandler(event, key, value, area) {
+    this.notifyAllBut('settings-changed', {
+      key: key, 
+      value: value, 
+      area: area
+    }, event.sender);
   }
 }
 

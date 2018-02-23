@@ -1,6 +1,6 @@
 const ipc = require('electron').ipcRenderer;
 const log = require('electron-log');
-const {ArcPreferences} = require('./scripts/main/arc-preferences');
+const {ArcPreferencesRenderer} = require('./scripts/renderer/arc-preferences');
 const {ThemeLoader} = require('./scripts/renderer/theme-loader');
 /**
  * Class responsible for initializing the main ARC elements
@@ -65,7 +65,7 @@ class ArcInit {
 
   initPreferences() {
     log.info('Initializing app preferences...');
-    this.__prefs = new ArcPreferences(this.settingsScript);
+    this.__prefs = new ArcPreferencesRenderer(this.settingsScript);
     this.__prefs.observe();
     return this.__prefs.loadSettings();
   }

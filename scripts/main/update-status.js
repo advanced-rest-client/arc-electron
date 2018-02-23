@@ -83,6 +83,7 @@ class UpdateStatus extends ArcBase {
     return pref.loadSettings()
     .then((settings) => {
       if (settings.autoUpdate === false) {
+        autoUpdater.autoDownload = false;
         return;
       }
       log.info('Initializing Auto Updater...');

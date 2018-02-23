@@ -1,10 +1,10 @@
 const path = require('path');
-const {ArcPreferences} = require('./../main/arc-preferences');
+const {ArcPreferencesRenderer} = require('./arc-preferences');
 const log = require('electron-log');
 /**
  * A module responsible for storing / restoring latest request from user FS.
  */
-class WorkspaceState extends ArcPreferences {
+class WorkspaceState extends ArcPreferencesRenderer {
   constructor(stateFile) {
     super();
     log.info('Initializing workspace state class.');

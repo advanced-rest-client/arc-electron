@@ -6,15 +6,24 @@ const {ArcBase} = require('./arc-base');
  * A module responsible for storing / restoring user settings.
  */
 class ArcPreferences extends ArcBase {
+  /**
+   * @constructor
+   *
+   * @param {?String} settingsFile Path to a settings file. If not set default
+   * location is used.
+   */
   constructor(settingsFile) {
     super();
     this._setupPaths(settingsFile);
     // Current read settings.
     this.__settings = undefined;
-    this._settingsReadHandler = this._settingsReadHandler.bind(this);
-    this._settingsChangeHandler = this._settingsChangeHandler.bind(this);
   }
-
+  /**
+   * Setups paths to settings files.
+   *
+   * @param {?String} settingsFile Optional path to a settings file different
+   * than the default one.
+   */
   _setupPaths(settingsFile) {
     const app = (electron.app || electron.remote.app);
     this.userSettingsDir = app.getPath('userData');
@@ -26,18 +35,18 @@ class ArcPreferences extends ArcBase {
       this.settingsFile = path.join(this.userSettingsDir, 'settings.json');
     }
   }
-
+  /**
+   * Resolves file path to correct path if it's starts with `~`.
+   *
+   * @param {String} file Settings file path
+   * @return {String} Path to the file.
+   */
   _resolvePath(file) {
-    const app = (electron.app || electron.remote.app);
     if (file[0] === '~') {
+      const app = (electron.app || electron.remote.app);
       file = app.getPath('home') + file.substr(1);
     }
     return file;
-  }
-
-  observe() {
-    window.addEventListener('settings-read', this._settingsReadHandler);
-    window.addEventListener('settings-changed', this._settingsChangeHandler);
   }
   /**
    * Ensures that the file exists and reads it's content as JSON.
@@ -60,16 +69,26 @@ class ArcPreferences extends ArcBase {
       spaces: 2
     });
   }
-
+  /**
+   * Loads current settings from settings file.
+   *
+   * @return {Promise} Promise resolved to a settings file.
+   */
   loadSettings() {
     if (this.__settings) {
       return Promise.resolve(this.__settings);
     }
     return this.restoreFile(this.settingsFile)
-    .then(data => this._processSettings(data))
+    .then((data) => this._processSettings(data))
     .catch(() => this._processSettings());
   }
-
+  /**
+   * Processes data from settings file. Creates default settings if settings
+   * file do not exists.
+   *
+   * @param {?Object} data Settings read from the settings file.
+   * @return {Object} Settings for the app.
+   */
   _processSettings(data) {
     if (!data || !Object.keys(data).length) {
       this.__settings = this.defaultSettings();
@@ -81,12 +100,18 @@ class ArcPreferences extends ArcBase {
     this.__settings = data;
     return data;
   }
-
+  /**
+   * Stores current settings to file.
+   *
+   * @return {Promise} Promise resolved when the settings are stored.
+   */
   updateSettings() {
     return this.storeFile(this.settingsFile, this.__settings);
   }
   /**
    * Creates default settings object.
+   *
+   * @return {Object} Default settings object.
    */
   defaultSettings() {
     return {
@@ -96,54 +121,6 @@ class ArcPreferences extends ArcBase {
       'autoUpdate': true,
       'telemetry': true
     };
-  }
-
-  _settingsReadHandler(e) {
-    e.preventDefault();
-    e.stopPropagation();
-
-    e.detail.result = this.loadSettings();
-  }
-
-  _settingsChangeHandler(e) {
-    if (!e.cancelable) {
-      return;
-    }
-    e.preventDefault();
-    e.stopPropagation();
-    var name = e.detail.name;
-    if (!name) {
-      e.detail.result = Promise.reject(new Error('Name is not set.'));
-      return;
-    }
-    e.detail.result = this.saveConfig(name, e.detail.value);
-  }
-
-  saveConfig(name, value) {
-    if (!this.__settings) {
-      return Promise.reject('Settings not ready!');
-    }
-    this.__settings[name] = value;
-    return this.updateSettings()
-    .then(() => this._informChanged(name, value, 'local'));
-  }
-
-  /**
-   * Dispatches `settings-changed` event
-   * @param {String} key Setting key
-   * @param {Any} value Setting value
-   * @param {String} area Source storage area
-   */
-  _informChanged(key, value, area) {
-    var event = new CustomEvent('settings-changed', {
-      detail: {
-        name: key,
-        value: value,
-        area: area
-      },
-      cancelable: false
-    });
-    document.body.dispatchEvent(event);
   }
 }
 exports.ArcPreferences = ArcPreferences;

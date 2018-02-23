@@ -29,7 +29,7 @@
     "chai": "^4.1.2",
     "chance": "^1.0.13",
     "electron": "~1.7.11",
-    "electron-builder": "^19.56.2",
+    "electron-builder": "^20.0.9",
     "eslint": "^4.16.0",
     "eslint-config-google": "^0.9.1",
     "glob": "^7.1.2",
@@ -107,6 +107,13 @@
       "target": [
         {
           "target": "deb",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        },
+        {
+          "target": "rpm",
           "arch": [
             "x64",
             "ia32"

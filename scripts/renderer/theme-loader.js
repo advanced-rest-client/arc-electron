@@ -3,7 +3,7 @@ const electron = require('electron');
 const ipc = electron.ipcRenderer;
 const path = require('path');
 const app = (electron.app || electron.remote.app);
-const {ArcPreferences} = require('../main/arc-preferences');
+const {ArcPreferencesRenderer} = require('./arc-preferences');
 
 class ThemeLoader {
   constructor() {
@@ -37,7 +37,7 @@ class ThemeLoader {
    * Handler for the `theme-active-info` custom event from theme panel.
    */
   activeThemeHandler(e) {
-    const prefs = new ArcPreferences(this.settingsFile);
+    const prefs = new ArcPreferencesRenderer(this.settingsFile);
     e.preventDefault();
     if (this.activeTheme) {
       e.detail.result = Promise.resolve(this.activeTheme);
@@ -217,7 +217,7 @@ class ThemeLoader {
    * @return {Promise} Resolved promise when settings file is saved.
    */
   updateThemeSettings(themeId) {
-    const prefs = new ArcPreferences(this.settingsFile);
+    const prefs = new ArcPreferencesRenderer(this.settingsFile);
     return prefs.loadSettings()
     .then(() => prefs.saveConfig('theme', themeId));
   }
