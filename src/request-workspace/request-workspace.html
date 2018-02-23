@@ -184,6 +184,9 @@ the License.
         })
         .catch(() => this.appendPanel())
         .then(() => {
+          this.fire('workspace-restored', undefined, {
+            bubbles: true
+          });
           this._restoringWorkspace = false;
         });
       },

@@ -18,6 +18,10 @@
       -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
       background-color: var(--primary-background-color);
       @apply --layout-fit;
+
+      --app-drawer-content-container: {
+        background-color: var(--arc-menu-background-color, #eeeeee);
+      };
     }
 
     app-header-layout {
@@ -121,7 +125,8 @@
       </app-header>
       <app-drawer-layout id="drawerLayout" force-narrow="{{forceNarrowLayout}}" narrow="{{narrowLayout}}">
         <app-drawer id="mainDrawer" opened="{{drawerOpened}}">
-          <arc-menu rest-api></arc-menu>
+          <!-- <arc-menu rest-api></arc-menu> -->
+          <div data-append="arc-menu"></div>
           <div id="drawerResizer"></div>
         </app-drawer>
         <app-drawer id="newsDrawer" align="right" opened="[[messageCenterOpened]]">
@@ -133,7 +138,7 @@
             attr-for-selected="data-route"
             selected-attribute="opened"
             selected="[[routeData.base]]">
-            <request-workspace attr-for-opened="opened" data-route="request" route="{{route}}" workspace-script="[[workspaceScript]]"></request-workspace>
+            <request-workspace attr-for-opened="opened" data-route="request" route="{{route}}" workspace-script="[[workspaceScript]]" on-workspace-restored="_workspaceRestored"></request-workspace>
             <websocket-panel attr-for-opened="opened" data-route="socket"></websocket-panel>
             <history-panel attr-for-opened="opened" data-route="history"></history-panel>
             <saved-requests-panel attr-for-opened="opened" data-route="saved"></saved-requests-panel>
@@ -379,6 +384,16 @@
         if (!this.route.path) {
           this.set('route.path', '/request/latest/0');
         }
+      },
+
+      _workspaceRestored: function() {
+        if (this.$$('arc-menu')) {
+          return;
+        }
+        let container = this.$$('[data-append="arc-menu"]');
+        let menu = document.createElement('arc-menu');
+        menu.restApi = true;
+        container.appendChild(menu);
       },
 
       _refreshLayout() {
