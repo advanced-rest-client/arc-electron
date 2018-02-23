@@ -21,6 +21,7 @@ class ArcInit {
   }
 
   listen() {
+    ipc.on('window-state-info', this._stateInfoHandler.bind(this));
     ipc.on('window-rendered', this.initApp.bind(this));
     ipc.on('set-workspace-file', this.setupWorkspaceFile.bind(this));
     ipc.on('set-settings-file', this.setupSettingsFile.bind(this));
@@ -36,6 +37,36 @@ class ArcInit {
     ipc.on('request-action', this.execRequestAction.bind(this));
     ipc.on('theme-editor-preview', this._themePreviewHandler.bind(this));
     this.themeLoader.listen();
+  }
+  /**
+   * Requests initial state information from the main process for current
+   * window.
+   */
+  requestState() {
+    ipc.send('window-state-request');
+  }
+  /**
+   * Handler for the `window-state-info` event from the main process.
+   * Setups properties to be passed to the ARC application.
+   *
+   * When this is called it creates application window and places it in the
+   * document body.
+   *
+   * @param {Event} e
+   * @param {Object} info Main proces initil properties. See `AppOptions` class
+   * for more details.
+   */
+  _stateInfoHandler(e, info) {
+    info = info || {};
+    if (info.settingsFile) {
+      this.settingsScript = info.settingsFile;
+    }
+    if (info.workspaceFile) {
+      this.workspaceScript = info.workspaceFile;
+      this.themeLoader.setupSettingsFile(this.workspaceScript);
+    }
+
+    this.initApp();
   }
 
   initApp() {
@@ -243,3 +274,4 @@ class ArcInit {
 
 const initScript = new ArcInit();
 initScript.listen();
+initScript.requestState();
