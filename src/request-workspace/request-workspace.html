@@ -141,10 +141,18 @@ the License.
         this._restoringWorkspace = true;
       },
 
-      ready: function() {
-        this._setState(new WorkspaceState(this.workspaceScript));
+      attached: function() {
         this.listen(window, 'selected-environment-changed', '_envChanged');
-        this.__ready = true;
+        if (!this.state) {
+          this._setState(new WorkspaceState(this.workspaceScript));
+        }
+        if (!this.__ready) {
+          this.__ready = true;
+        }
+      },
+
+      detached: function() {
+        this.unlisten(window, 'selected-environment-changed', '_envChanged');
       },
 
       _workspaceScriptChanged: function(script) {
