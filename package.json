@@ -3,7 +3,7 @@
   "description": "The Advanced REST Client desktop application.",
   "version": "12.1.1",
   "homepage": "https://advancedrestclient.com/",
-  "license": "LICENSE.md",
+  "license": "Apache-2.0",
   "author": {
     "name": "Pawel Psztyc",
     "email": "arc@mulesoft.com"
