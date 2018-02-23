@@ -80,7 +80,7 @@ the License.
       </paper-tabs>
     </div>
     <iron-pages id="requests" selected-attribute="opened" selected="[[selected]]" selectable=".panel">
-      <template is="dom-repeat" items="{{activeRequests}}" restamp>
+      <template is="dom-repeat" items="{{activeRequests}}" on-dom-change="_panelRendered">
         <arc-request-panel request-panel-id="[[index]]" class="panel" request="{{item}}"></arc-request-panel>
       </template>
     </iron-pages>
@@ -177,6 +177,11 @@ the License.
         this._restoringWorkspace = true;
         this.state.restore()
         .then(data => this._worspaceStateRestored(data))
+        .then(() => {
+          if (!this.activeRequests || !this.activeRequests.length) {
+            return this.appendPanel();
+          }
+        })
         .catch(() => this.appendPanel())
         .then(() => {
           this._restoringWorkspace = false;
@@ -213,28 +218,75 @@ the License.
         panel.request = obj;
         return this.selected;
       },
-
+      /**
+       * Restores workspace state (appends request panels) from the workspace
+       * settings.
+       *
+       * @param {Object} data Workspace settings file.
+       * @return {Promise} Promise resolved when all request panels are
+       * restored.
+       */
       _worspaceStateRestored: function(data) {
+        this.set('activeRequests', []);
         this._restoreWorkspaceEnvironment(data);
         if (!data || !data.requests) {
-          return this.appendPanel();
+          return Promise.resolve();
         }
-        data.requests.forEach(() => {
-          this.appendPanel();
+        this.__toRestore = {
+          requests: data.requests,
+          selected: data.selected
+        };
+        return new Promise((resolve) => {
+          this.__toRestore.promise = resolve;
+          this._restoreNext();
         });
-        Polymer.dom.flush();
-        data.requests.forEach((request, i) => {
-          let panel = this._getPanel(i);
-          panel.proxyRequest = request;
-        });
-
-        if (data.selected || data.selected === 0) {
-          let i = Number(data.selected);
-          if (i === i && i < data.requests.length) {
-            this.selected = i;
-          }
+      },
+      /**
+       * Rleated to `_worspaceStateRestored()` function.
+       * Adds new panel if there's anything more to restore. Otherwise
+       * it resolves restoring promise. This function works together with
+       * `_panelRendered()`.
+       */
+      _restoreNext: function() {
+        if (!this.__toRestore) {
+          return;
+        }
+        if (!this.__toRestore.requests.length) {
+          this.setSelectedPanel(this.__toRestore.selected);
+          this.__toRestore.promise();
+          this.__toRestore = undefined;
+          return;
+        }
+        this.appendPanel();
+      },
+      /**
+       * Sets currently selected panel.
+       *
+       * @param {Number} selected Selected index. Strings are converted to
+       * number.
+       */
+      setSelectedPanel: function(selected) {
+        let i = Number(selected);
+        if (i === i && i < this.activeRequests.length) {
+          this.selected = i;
         }
       },
+      /**
+       * Called when request panels `dom-repeat` renders new panel(s).
+       * If there's anything to restore (from `__toRestore` property)
+       * it restores it to last added panel and calls `_restoreNext()`
+       * function.
+       */
+      _panelRendered: function() {
+        if (!this.__toRestore || !this.__toRestore.requests.length) {
+          return;
+        }
+        let next = this.__toRestore.requests.shift();
+        let panel = this._getPanel(this.activeRequests.length - 1);
+        panel.proxyRequest = next;
+        this._restoreNext();
+      },
+
       // A handler for "add" icon click.
       _addRequestHandler: function() {
         this.async(function() {
