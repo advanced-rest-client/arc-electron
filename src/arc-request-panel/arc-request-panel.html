@@ -152,7 +152,9 @@ the License.
         }
         this.set('request', base);
         if (data.multipart) {
-          let payload = this._restoreMultipart(data.multipart);
+          const {PayloadProcessor} = require('./scripts/renderer/lib/payload-processor');
+          const processor = new PayloadProcessor();
+          const payload = processor.restoreMultipart(data.multipart);
           this.set('request.payload', payload);
         }
       },
@@ -336,41 +338,6 @@ the License.
           method: 'GET',
           url: ''
         });
-      },
-      /**
-       * Restores a multipart object.
-       *
-       * @param {Array} data Multipart data
-       */
-      _restoreMultipart: function(data) {
-        var fd = new FormData();
-        data.forEach(part => {
-          let name = part.name;
-          let value;
-          if (part.isFile) {
-            try {
-              value = this._dataURLtoBlob(part.value);
-            } catch (e) {
-              value = '';
-            }
-          } else {
-            value = part.value;
-          }
-          fd.append(name, value);
-        });
-        return fd;
-      },
-
-      _dataURLtoBlob: function(dataurl) {
-        var arr = dataurl.split(',');
-        var mime = arr[0].match(/:(.*?);/)[1];
-        var bstr = atob(arr[1]);
-        var n = bstr.length;
-        var u8arr = new Uint8Array(n);
-        while (n--) {
-          u8arr[n] = bstr.charCodeAt(n);
-        }
-        return new Blob([u8arr], {type: mime});
       }
     });
   </script>
