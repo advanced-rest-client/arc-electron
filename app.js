@@ -1,6 +1,6 @@
 const ipc = require('electron').ipcRenderer;
 const log = require('electron-log');
-const {ArcPreferences} = require('./scripts/main/arc-preferences');
+const {ArcPreferencesRenderer} = require('./scripts/renderer/arc-preferences');
 const {ThemeLoader} = require('./scripts/renderer/theme-loader');
 /**
  * Class responsible for initializing the main ARC elements
@@ -21,9 +21,7 @@ class ArcInit {
   }
 
   listen() {
-    ipc.on('window-rendered', this.initApp.bind(this));
-    ipc.on('set-workspace-file', this.setupWorkspaceFile.bind(this));
-    ipc.on('set-settings-file', this.setupSettingsFile.bind(this));
+    ipc.on('window-state-info', this._stateInfoHandler.bind(this));
     window.onbeforeunload = this.beforeUnloadWindow.bind(this);
     var updateHandler = this.updateEventHandler.bind(this);
     ipc.on('checking-for-update', updateHandler);
@@ -37,15 +35,56 @@ class ArcInit {
     ipc.on('theme-editor-preview', this._themePreviewHandler.bind(this));
     this.themeLoader.listen();
   }
+  /**
+   * Requests initial state information from the main process for current
+   * window.
+   */
+  requestState() {
+    ipc.send('window-state-request');
+  }
+  /**
+   * Handler for the `window-state-info` event from the main process.
+   * Setups properties to be passed to the ARC application.
+   *
+   * When this is called it creates application window and places it in the
+   * document body.
+   *
+   * @param {Event} e
+   * @param {Object} info Main proces initil properties. See `AppOptions` class
+   * for more details.
+   */
+  _stateInfoHandler(e, info) {
+    info = info || {};
+    if (info.settingsFile) {
+      this.settingsScript = info.settingsFile;
+    }
+    if (info.workspaceFile) {
+      this.workspaceScript = info.workspaceFile;
+      this.themeLoader.setupSettingsFile(this.workspaceScript);
+    }
+    this.initApp();
+  }
 
   initApp() {
     log.info('Initializing renderer window...');
     return this.initPreferences()
     .then(settings => this.themeApp(settings))
-    .then(() => this._createApp());
+    .then(() => this._createApp())
+    .catch((cause) => this.reportFatalError(cause));
+  }
+  /**
+   * Reports fatal application error.
+   *
+   * @param {Error} err Error object
+   */
+  reportFatalError(err) {
+    ipc.send('fatal-error', err.message);
   }
 
   _createApp() {
+    if (this.created) {
+      return Promise.resolve();
+    }
     return new Promise((resolve, reject) => {
       Polymer.Base.importHref('src/arc-electron.html', () => {
         resolve();
@@ -62,14 +101,24 @@ class ArcInit {
       this.created = true;
     });
   }
-
+  /**
+   * Initializes and reads application settings.
+   *
+   * @return {Promise} Promise resolved to current settings.
+   */
   initPreferences() {
     log.info('Initializing app preferences...');
-    this.__prefs = new ArcPreferences(this.settingsScript);
+    this.__prefs = new ArcPreferencesRenderer(this.settingsScript);
     this.__prefs.observe();
     return this.__prefs.loadSettings();
   }
-
+  /**
+   * Sets up application theme.
+   *
+   * @param {String} settings Current application settings.
+   * @return {Promise} Promise resolved when the application theme is
+   * set and ready.
+   */
   themeApp(settings) {
     log.info('Initializing app theme.');
     var id;
@@ -90,28 +139,11 @@ class ArcInit {
       log.error('Unable to load default theme file.', cause);
     });
   }
-
-  setupWorkspaceFile(e, message) {
-    log.info('Setting up workspace file:', message);
-    this.workspaceScript = message;
-    if (!this.created) {
-      log.info('The app is not ready. Will set it later.');
-      return;
-    }
-    this.app.workspaceScript = message;
-  }
-
-  setupSettingsFile(e, message) {
-    log.info('Setting up settings file:', message);
-    this.settingsScript = message;
-    if (!this.created) {
-      log.info('The app is not ready. Will set it later.');
-      return;
-    }
-    this.app.settingsScript = message;
-    this.themeLoader.setupSettingsFile(message);
-  }
-
+  /**
+   * Sets up the application properties.
+   *
+   * @param {ArcElectron} app App electron element.
+   */
   _setupApp(app) {
     if (this.workspaceScript) {
       app.workspaceScript = this.workspaceScript;
@@ -243,3 +275,4 @@ class ArcInit {
 
 const initScript = new ArcInit();
 initScript.listen();
+initScript.requestState();

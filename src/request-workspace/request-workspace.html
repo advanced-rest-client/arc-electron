@@ -72,7 +72,7 @@ the License.
       <paper-tabs selected="{{selected}}" scrollable>
         <template is="dom-repeat" items="[[activeRequests]]">
           <paper-tab>
-            <span class="tab-name">[[_computeTabName(item)]]</span>
+            <span class="tab-name">[[_computeTabName(item, item.url)]]</span>
             <iron-icon class="close-icon" icon="arc:close" data-index$="[[index]]" on-tap="_closeRequest"></iron-icon>
           </paper-tab>
         </template>
@@ -80,7 +80,7 @@ the License.
       </paper-tabs>
     </div>
     <iron-pages id="requests" selected-attribute="opened" selected="[[selected]]" selectable=".panel">
-      <template is="dom-repeat" items="{{activeRequests}}" restamp>
+      <template is="dom-repeat" items="{{activeRequests}}" on-dom-change="_panelRendered">
         <arc-request-panel request-panel-id="[[index]]" class="panel" request="{{item}}"></arc-request-panel>
       </template>
     </iron-pages>
@@ -141,10 +141,18 @@ the License.
         this._restoringWorkspace = true;
       },
 
-      ready: function() {
-        this._setState(new WorkspaceState(this.workspaceScript));
+      attached: function() {
         this.listen(window, 'selected-environment-changed', '_envChanged');
-        this.__ready = true;
+        if (!this.state) {
+          this._setState(new WorkspaceState(this.workspaceScript));
+        }
+        if (!this.__ready) {
+          this.__ready = true;
+        }
+      },
+
+      detached: function() {
+        this.unlisten(window, 'selected-environment-changed', '_envChanged');
       },
 
       _workspaceScriptChanged: function(script) {
@@ -168,9 +176,17 @@ the License.
       restoreWorkspace: function() {
         this._restoringWorkspace = true;
         this.state.restore()
-        .then(data => this._worspaceStateRestored(data))
+        .then((data) => this._worspaceStateRestored(data))
+        .then(() => {
+          if (!this.activeRequests || !this.activeRequests.length) {
+            return this.appendPanel();
+          }
+        })
         .catch(() => this.appendPanel())
         .then(() => {
+          this.fire('workspace-restored', undefined, {
+            bubbles: true
+          });
           this._restoringWorkspace = false;
         });
       },
@@ -205,34 +221,83 @@ the License.
         panel.request = obj;
         return this.selected;
       },
-
+      /**
+       * Restores workspace state (appends request panels) from the workspace
+       * settings.
+       *
+       * @param {Object} data Workspace settings file.
+       * @return {Promise} Promise resolved when all request panels are
+       * restored.
+       */
       _worspaceStateRestored: function(data) {
+        this.set('activeRequests', []);
         this._restoreWorkspaceEnvironment(data);
         if (!data || !data.requests) {
-          return this.appendPanel();
+          return Promise.resolve();
         }
-        data.requests.forEach(() => {
-          this.appendPanel();
+        this.__toRestore = {
+          requests: Array.from(data.requests),
+          selected: data.selected
+        };
+        return new Promise((resolve) => {
+          this.__toRestore.promise = resolve;
+          this._restoreNext();
         });
-        Polymer.dom.flush();
-        data.requests.forEach((request, i) => {
-          let panel = this._getPanel(i);
-          panel.proxyRequest = request;
-        });
-
-        if (data.selected || data.selected === 0) {
-          let i = Number(data.selected);
-          if (i === i && i < data.requests.length) {
-            this.selected = i;
-          }
+      },
+      /**
+       * Rleated to `_worspaceStateRestored()` function.
+       * Adds new panel if there's anything more to restore. Otherwise
+       * it resolves restoring promise. This function works together with
+       * `_panelRendered()`.
+       */
+      _restoreNext: function() {
+        if (!this.__toRestore) {
+          return;
+        }
+        if (!this.__toRestore.requests.length) {
+          this.setSelectedPanel(this.__toRestore.selected);
+          this.__toRestore.promise();
+          this.__toRestore = undefined;
+          return;
+        }
+        this.appendPanel();
+      },
+      /**
+       * Sets currently selected panel.
+       *
+       * @param {Number} selected Selected index. Strings are converted to
+       * number.
+       */
+      setSelectedPanel: function(selected) {
+        let i = Number(selected);
+        if (i === i && i < this.activeRequests.length) {
+          this.selected = i;
         }
       },
+      /**
+       * Called when request panels `dom-repeat` renders new panel(s).
+       * If there's anything to restore (from `__toRestore` property)
+       * it restores it to last added panel and calls `_restoreNext()`
+       * function.
+       */
+      _panelRendered: function() {
+        if (!this.__toRestore || !this.__toRestore.requests.length) {
+          return;
+        }
+        let next = this.__toRestore.requests.shift();
+        let panel = this._getPanel(this.activeRequests.length - 1);
+        panel.proxyRequest = next;
+        Polymer.RenderStatus.afterNextRender(this, () => {
+          this._restoreNext();
+        });
+      },
+
       // A handler for "add" icon click.
       _addRequestHandler: function() {
-        this.async(function() {
+        Polymer.RenderStatus.afterNextRender(this, () => {
           this.appendPanel();
           this.selected = this.activeRequests.length - 1;
-        }, 5);
+        });
       },
 
       _computeTabName: function(item) {
@@ -262,7 +327,7 @@ the License.
       },
 
       _routeTabChanged: function(tab, opened) {
-        if (tab === undefined || !opened) {
+        if (tab === undefined || !opened || this._restoringWorkspace) {
           return;
         }
         var ar = this.activeRequests;
@@ -287,18 +352,40 @@ the License.
           }
         }
         if (!ar || tab >= ar.length) {
-          this.appendPanel();
+          if (!this.isEmptyWorkspace(ar)) {
+            this.appendPanel();
+          } else {
+            tab = 0;
+          }
           this._openRequest(this.requestRoute, tab);
         }
         if (this.selected !== tab) {
           this.selected = tab;
         }
       },
+
+      isEmptyWorkspace: function(activeRequests) {
+        if (!activeRequests || !activeRequests.length) {
+          return true;
+        }
+        if (activeRequests.length > 1) {
+          return false;
+        }
+        let item = activeRequests[0];
+        if (item.method === 'GET' && (!item.url || item.url === 'http://') &&
+          !item.headers) {
+          return true;
+        }
+        return false;
+      },
       /**
        * Updates `tab` route property when selection change.
        */
       _selectedChanged: function(selected) {
         if (!this.requestRoute || (!selected && selected !== 0)) {
+          return;
+        }
+        if (this._restoringWorkspace) {
           return;
         }
         if (selected !== this.requestRoute.tab) {
@@ -479,6 +566,9 @@ the License.
        * @param {String} value Environment name
        */
       _storeEnvironmentSelection: function(value) {
+        if (this._restoringWorkspace) {
+          return;
+        }
         this.debounce('env-store-workspace', function() {
           this.state.restore()
           .then((data) => {

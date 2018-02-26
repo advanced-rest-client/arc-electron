@@ -1,6 +1,6 @@
 {
   "lint": {
-    "rules": ["polymer-2-hybrid"]
+    "rules": ["polymer-1"]
   },
   "entrypoint": "app/index.html",
   "shell": "app/src/index.html",
