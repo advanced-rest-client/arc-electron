@@ -138,7 +138,7 @@
             attr-for-selected="data-route"
             selected-attribute="opened"
             selected="[[routeData.base]]">
-            <request-workspace attr-for-opened="opened" data-route="request" route="{{route}}" workspace-script="[[workspaceScript]]" on-workspace-restored="_workspaceRestored"></request-workspace>
+            <request-workspace attr-for-opened="opened" data-route="request" route="{{route}}" workspace-script="[[workspaceScript]]" on-workspace-restored="_createMenu"></request-workspace>
             <websocket-panel attr-for-opened="opened" data-route="socket"></websocket-panel>
             <history-panel attr-for-opened="opened" data-route="history"></history-panel>
             <saved-requests-panel attr-for-opened="opened" data-route="saved"></saved-requests-panel>
@@ -384,9 +384,12 @@
         if (!this.route.path) {
           this.set('route.path', '/request/latest/0');
         }
+        if (this.route.path.indexOf('/request') !== 0) {
+          this._createMenu();
+        }
       },
 
-      _workspaceRestored: function() {
+      _createMenu: function() {
         if (this.$$('arc-menu')) {
           return;
         }
