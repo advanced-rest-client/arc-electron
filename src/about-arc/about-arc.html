@@ -132,6 +132,14 @@ About page for ARC Electron.
       width: 180px;
       height: 39px;
     }
+
+    .error-code {
+      max-width: 360px;
+      margin: 20px auto;
+      background-color: #EF9A9A;
+      padding: 20px;
+      @apply --select-text;
+    }
     </style>
     <section class="title-section">
       <div class="hero">
@@ -171,6 +179,13 @@ About page for ARC Electron.
       </div>
     </section>
 
+    <template is="dom-if" if="[[isError]]">
+      <section class="error-code">
+        <p>[[errorMessage]]</p>
+        <p>[[updateState.1.code]]</p>
+      </section>
+    </template>
+
     <section class="author-line">
       <p><iron-icon icon="arc:code"></iron-icon> by Pawel Psztyc</p>
     </section>
@@ -202,7 +217,11 @@ About page for ARC Electron.
           // True to indicate that update is being checked or downloaded
           updateProgress: Boolean,
           // True to indicate that the update is ready to install
-          updateDownloaded: Boolean
+          updateDownloaded: Boolean,
+          // Indicates that error has been reported.
+          isError: Boolean,
+          // Associated message with current error code.
+          errorMessage: String
         },
 
         observers: [
@@ -220,7 +239,10 @@ About page for ARC Electron.
         },
 
         _updateStateChanged: function(state) {
-          var eventType = state.shift();
+          if (this.isError) {
+            this.isError = false;
+          }
+          var eventType = state[0];
           switch (eventType) {
             case 'checking-for-update':
               this.updateStatePage = 1;
@@ -248,6 +270,8 @@ About page for ARC Electron.
             case 'autoupdate-error':
               this.updateStatePage = 4;
               this.updateProgress = false;
+              this._createErrorMessage(state[0].code);
+              this.isError = true;
             break;
           }
         },
@@ -289,6 +313,27 @@ About page for ARC Electron.
 
         updateInstall: function() {
           ipcRenderer.send('install-update');
+        },
+
+        _createErrorMessage: function(code) {
+          let message;
+          switch (code) {
+            case 'ERR_UPDATER_INVALID_RELEASE_FEED':
+              message = 'Unable to parse releases feed.';
+              break;
+            case 'ERR_UPDATER_NO_PUBLISHED_VERSIONS':
+              message = 'Unable to find published version.';
+              break;
+            case 'ERR_UPDATER_CHANNEL_FILE_NOT_FOUND':
+              message = 'Cannot find latest release information for this platform';
+              break;
+            case 'ERR_UPDATER_LATEST_VERSION_NOT_FOUND':
+              message = 'Unable to find latest version on GitHub';
+              break;
+            default:
+              message = 'Unknown error ocurred.';
+          }
+          this.errorMessage = message;
         }
       });
     })();

@@ -73,6 +73,7 @@
   <script>
   (function() {
     const {ArcSessionControl} = require('./scripts/main/session-control');
+    const {ArcPreferencesRenderer} = require('./scripts/renderer/arc-preferences');
     const {ArcMeta} = require('./scripts/main/arc-meta');
     const {WorkspaceState} = require('./scripts/renderer/workspace-state.js');
     const {shell} = require('electron');
@@ -85,20 +86,25 @@
         // settings file path
         settingsPath: String,
         // Path to the request workspace state file
-        workspaceStatePath: String
+        workspaceStatePath: String,
+        settingsScript: String,
+        workspaceScript: String
       },
+
+      observers: ['setPaths(workspaceScript)', 'setPaths(settingsScript)'],
 
       ready() {
         this.setPaths();
       },
 
       setPaths: function() {
+        const prefs = new ArcPreferencesRenderer(this.settingsScript);
         const meta = new ArcMeta();
         const sessions = new ArcSessionControl(0);
-        const workspace = new WorkspaceState();
+        const workspace = new WorkspaceState(this.workspaceScript);
 
         this.preferencesPath = meta.userSettingsDir;
-        this.settingsPath = meta.settingsFile;
+        this.settingsPath = prefs.settingsFile;
         this.metaFilePath = meta.metaFile;
         this.sessionsPath = sessions.dataPath;
         this.workspaceStatePath = workspace.dataFile;

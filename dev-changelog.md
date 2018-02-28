@@ -1,1 +1,7 @@
-- Fixed error from the main process about destroyed window
+- Fixed restoring Multipart FormData
+- Fixed restoring content-type header value
+- Changed architecture of how new windows are created. Added communication channel between main and renderer process to ask about initial data state.
+- Reduced number of reads and writes to workspace state file (where currently opened requests data are stored)
+- Settings changed in one window are now reflected in other windows.
+- Delayed left hand side menu initialization time after the workspace is restored. It reduces initial load time.
+- Workspace requests are now restored one-by-one instead of bulk.

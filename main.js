@@ -16,6 +16,9 @@ const log = require('electron-log');
  * Main application object controling app's lifecycle.
  */
 class Arc {
+  /**
+   * @constructor
+   */
   constructor() {
     this._registerProtocols();
     const startupOptions = this._processArguments();
@@ -26,9 +29,11 @@ class Arc {
     this.remote = new RemoteApi(this.wm);
     this.prompts = new AppPrompts();
     this.gdrive = new DriveExport();
-    this._listenMenu(this.menu);
+    this._listenMenu();
   }
-
+  /**
+   * Attaches used event listeners to the `electron.app` object.
+   */
   attachListeners() {
     app.on('ready', this._readyHandler.bind(this));
     app.on('window-all-closed', this._allClosedHandler.bind(this));
@@ -86,24 +91,36 @@ class Arc {
       this.sm.start();
     });
   }
-  // Quits when all windows are closed.
+  /**
+   * Quits when all windows are closed.
+   */
   _allClosedHandler() {
     if (process.platform !== 'darwin') {
       app.quit();
     }
   }
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
+  /**
+   * On OS X it's common to re-create a window in the app when the
+   * dock icon is clicked and there are no other windows open.
+   */
   _activateHandler() {
     if (!this.wm.hasWindow) {
       this.wm.open();
     }
   }
-
-  _listenMenu(menu) {
-    menu.on('menu-action', this._menuHandler.bind(this));
+  /**
+   * Listens on menu actions.
+   */
+  _listenMenu() {
+    this.menu.on('menu-action', this._menuHandler.bind(this));
   }
-
+  /**
+   * Event handler for menu actions.
+   *
+   * @param {[type]} action [description]
+   * @param {[type]} win [description]
+   * @return {[type]} [description]
+   */
   _menuHandler(action, win) {
     if (action.indexOf('application') === 0) {
       return this._handleApplicationAction(action.substr(12), win);
@@ -112,18 +129,15 @@ class Arc {
       return win.webContents.send('request-action', action.substr(8));
     }
   }
-
+  /**
+   * Handles `application` group of commands
+   *
+   * @param {String} action Application action.
+   * @param {BrowserWindow} win Target window.
+   */
   _handleApplicationAction(action, win) {
     let windowCommand = 'command';
     switch (action) {
-      case 'install-update':
-        this.us.installUpdate();
-      break;
-      case 'check-for-update':
-        this.us.check({
-          notify: true
-        });
-      break;
       case 'quit':
         app.quit();
       break;

@@ -1,9 +1,9 @@
 {
   "name": "advanced-rest-client",
   "description": "The Advanced REST Client desktop application.",
-  "version": "12.1.1",
+  "version": "12.1.2",
   "homepage": "https://advancedrestclient.com/",
-  "license": "LICENSE.md",
+  "license": "Apache-2.0",
   "author": {
     "name": "Pawel Psztyc",
     "email": "arc@mulesoft.com"
@@ -12,9 +12,9 @@
     "url": "https://github.com/advanced-rest-client/arc-electron"
   },
   "scripts": {
-    "start": "electron --inspect=5858 --enable-logging .",
+    "start": "electron --inspect=5858 --enable-logging --workspace-file=\"~/arc-dev/dev-workspace.json\" --settings-file=\"~/arc-dev/dev-settings.json\" .",
     "postinstall": "electron-builder install-app-deps",
-    "test": "NODE_ENV=test mocha test/*.test.js",
+    "test": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron electron-mocha test/**/*.test.js",
     "test-only": "NODE_ENV=test mocha test/*.test.js",
     "build-l": "npx electron-builder -l",
     "build-w": "npx electron-builder -w",
@@ -29,7 +29,8 @@
     "chai": "^4.1.2",
     "chance": "^1.0.13",
     "electron": "~1.7.11",
-    "electron-builder": "^19.56.2",
+    "electron-builder": "^20.2.0",
+    "electron-mocha": "^5.0.0",
     "eslint": "^4.16.0",
     "eslint-config-google": "^0.9.1",
     "glob": "^7.1.2",
@@ -38,6 +39,7 @@
     "ssl-root-cas": "^1.2.4"
   },
   "dependencies": {
+    "camelcase": "^4.1.0",
     "electron-log": "^2.2.9",
     "electron-updater": "^2.18.2",
     "form-data": "^2.3.1",
@@ -107,6 +109,13 @@
       "target": [
         {
           "target": "deb",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        },
+        {
+          "target": "rpm",
           "arch": [
             "x64",
             "ia32"

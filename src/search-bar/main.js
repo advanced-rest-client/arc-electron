@@ -1,6 +1,6 @@
 const {ipcRenderer} = require('electron');
 const log = require('electron-log');
-const {ArcPreferences} = require('../scripts/main/arc-preferences');
+const {ArcPreferencesRenderer} = require('../scripts/renderer/arc-preferences');
 const {ThemeLoader} = require('../scripts/renderer/theme-loader');
 const path = require('path');
 /**
@@ -52,7 +52,7 @@ class SearchBarInit {
    */
   initPreferences() {
     log.info('Initializing search bar preferences...');
-    const prefs = new ArcPreferences(this.settingsScript);
+    const prefs = new ArcPreferencesRenderer(this.settingsScript);
     return prefs.loadSettings();
   }
   /**
