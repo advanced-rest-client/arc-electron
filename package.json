@@ -15,7 +15,6 @@
     "start": "electron --inspect=5858 --enable-logging --workspace-file=\"~/arc-dev/dev-workspace.json\" --settings-file=\"~/arc-dev/dev-settings.json\" .",
     "postinstall": "electron-builder install-app-deps",
     "test": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron electron-mocha test/**/*.test.js",
-    "test-only": "NODE_ENV=test mocha test/*.test.js",
     "build-l": "npx electron-builder -l",
     "build-w": "npx electron-builder -w",
     "build-m": "npx electron-builder -m",
