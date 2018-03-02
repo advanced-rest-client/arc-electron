@@ -19,6 +19,10 @@ const path = require('path');
  * ```
  */
 class ArcSessionControl extends ArcPreferences {
+  /**
+   * @constructor
+   * @param {Number} windowNumber ID of the window opened for this session.
+   */
   constructor(windowNumber) {
     super();
     this.id = windowNumber;
@@ -39,9 +43,9 @@ class ArcSessionControl extends ArcPreferences {
    */
   restore() {
     return this.restoreFile(this._file)
-    .then(data => this._processData(data))
+    .then((data) => this._processData(data))
     .catch(() => this._processData({}))
-    .then(data => {
+    .then((data) => {
       this.data = data;
       return data;
     });
@@ -64,7 +68,7 @@ class ArcSessionControl extends ArcPreferences {
   updateSize(width, height) {
     this.data.size.width = width;
     this.data.size.height = height;
-    this.debounce('size-update', function() {
+    this.debounce('size-update', () => {
       this.store();
     }, 200);
   }
@@ -79,21 +83,31 @@ class ArcSessionControl extends ArcPreferences {
   updatePosition(x, y) {
     this.data.position.x = x;
     this.data.position.y = y;
-    this.debounce('position-update', function() {
+    this.debounce('position-update', () => {
       this.store();
     }, 200);
   }
-
+  /**
+   * Processes restored data and sets defaults.
+   * @param {Object} data Data restored from session file.
+   * @return {Object} Data with defaults if properties were m issing.
+   */
   _processData(data) {
-    var result = {
+    let result = {
       size: this._readAppScreenSize(data),
       position: this._readAppScreenPosition(data)
     };
     return result;
   }
-
+  /**
+   * Reads application screen size from restored data. Setsa defaults
+   * if any property is missing.
+   *
+   * @param {Object} data Restored data
+   * @return {Object} Data to use
+   */
   _readAppScreenSize(data) {
-    var result = {};
+    let result = {};
     if (data && data.size) {
       result.width = this._numberValue(data.size.width, this._defaultWidth);
       result.height = this._numberValue(data.size.height, this._defaultHeight);
@@ -103,9 +117,15 @@ class ArcSessionControl extends ArcPreferences {
     }
     return result;
   }
-
+  /**
+   * Reads application screen position from restored data. Setsa defaults
+   * if any property is missing.
+   *
+   * @param {Object} data Restored data
+   * @return {Object} Data to use
+   */
   _readAppScreenPosition(data) {
-    var result = {};
+    let result = {};
     if (data && data.position) {
       result.x = this._numberValue(data.position.x);
       result.y = this._numberValue(data.position.y);
@@ -115,7 +135,12 @@ class ArcSessionControl extends ArcPreferences {
     }
     return result;
   }
-
+  /**
+   * Creates a numeric value from read option.
+   * @param {String|Number} value Read value.
+   * @param {Number} defaultValue The value if missing.
+   * @return {Number} Numeric value.
+   */
   _numberValue(value, defaultValue) {
     if (!value && value !== 0) {
       return defaultValue;

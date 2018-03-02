@@ -20,12 +20,12 @@ class RemoteApi extends ArcBase {
    */
   getActiveWindow() {
     log.info('Getting active window...');
-    var win = BrowserWindow.getFocusedWindow();
+    let win = BrowserWindow.getFocusedWindow();
     if (win) {
       return Promise.resolve(win);
     }
     log.info('Focused window not found. Getting any first window.');
-    var wins = BrowserWindow.getAllWindows();
+    let wins = BrowserWindow.getAllWindows();
     if (wins && wins.length) {
       return Promise.resolve(wins[0]);
     }
@@ -39,14 +39,14 @@ class RemoteApi extends ArcBase {
    * If there's no winowd new one is be created. If any window isn't focused
    * first window is used.
    *
-   * @param {Object} requestObj ARC request object (url, method, headers, payload)
+   * @param {Object} requestObj ARC request object
    * @param {?Number} tab Tab index in the window.
    * @return {Promise} Promise resolved when the command was sent to the window.
    */
   updateRequest(requestObj, tab) {
     log.log('RemoteApi::updateRequest::tab:', tab);
     return this.getActiveWindow()
-    .then(win => {
+    .then((win) => {
       log.info('Updating request in active window. Update tab is', tab);
       win.webContents.send('request-action', 'update-request', requestObj, tab);
     });
@@ -60,7 +60,7 @@ class RemoteApi extends ArcBase {
    */
   newTab() {
     return this.getActiveWindow()
-    .then(win => {
+    .then((win) => {
       win.webContents.send('request-action', 'new-tab');
     });
   }
@@ -72,7 +72,7 @@ class RemoteApi extends ArcBase {
    * @return {Promise} Promise resolved to number of tabs.
    */
   getTabsCount(windowIndex) {
-    var p;
+    let p;
     if (typeof windowIndex === 'number') {
       let win = BrowserWindow.getAllWindows()[windowIndex];
       if (!win) {
@@ -83,7 +83,7 @@ class RemoteApi extends ArcBase {
       p = this.getActiveWindow();
     }
     return p
-    .then(win => this.getTabsCountForWindow(win));
+    .then((win) => this.getTabsCountForWindow(win));
   }
   /**
    * Returns a number of tabs for given window object.
@@ -92,9 +92,9 @@ class RemoteApi extends ArcBase {
    * @return {Promise} Promise resolved to number of tabs.
    */
   getTabsCountForWindow(win) {
-    var id = this.nextIpcRequestId();
+    let id = this.nextIpcRequestId();
     const p = this.appendPromise(id);
-    ipcMain.once('current-tabs-count', this.ipcPromiseCallback);
+    ipcMain.once('current-tabs-count', this._ipcPromiseCallback);
     win.webContents.send('command', 'get-tabs-count', id);
     return p;
   }
@@ -103,12 +103,12 @@ class RemoteApi extends ArcBase {
    * Sets a tab active for given window.
    * Active window is used if the index is not provided.
    *
-   * @param {Number} tabIndex Index of the tab to set it active.
+   * @param {Number} tabIndex Index of the tab to set active.
    * @param {?Number} windowIndex The index of the window
    * @return {Promise} Promise resolved when command was send.
    */
   activateTab(tabIndex, windowIndex) {
-    var p;
+    let p;
     if (typeof windowIndex === 'number') {
       let win = BrowserWindow.getAllWindows()[windowIndex];
       if (!win) {
@@ -119,19 +119,30 @@ class RemoteApi extends ArcBase {
       p = this.getActiveWindow();
     }
     return p
-    .then(win => this.activateTabForWindow(tabIndex, win));
+    .then((win) => this.activateTabForWindow(tabIndex, win));
   }
-
+  /**
+   * Activates request tab in given window.
+   *
+   * @param {Number} tabIndex Index of the tab to set active.
+   * @param {BrowserWindow} win Window to use as a command target.
+   * @return {Promise}
+   */
   activateTabForWindow(tabIndex, win) {
-    var id = this.nextIpcRequestId();
+    let id = this.nextIpcRequestId();
     const p = this.appendPromise(id);
-    ipcMain.once('tab-activated', this.ipcPromiseCallback);
+    ipcMain.once('tab-activated', this._ipcPromiseCallback);
     win.webContents.send('command', 'activate-tab', id, tabIndex);
     return p;
   }
-
+  /**
+   * Returns request data for given tab and window id.
+   * @param {Number} tabIndex Index of the tab to get the data from.
+   * @param {?Number} windowIndex The index of the window
+   * @return {Promise} A promise resolved to the ARC request object.
+   */
   getRequest(tabIndex, windowIndex) {
-    var p;
+    let p;
     if (typeof windowIndex === 'number') {
       let win = BrowserWindow.getAllWindows()[windowIndex];
       if (!win) {
@@ -142,13 +153,18 @@ class RemoteApi extends ArcBase {
       p = this.getActiveWindow();
     }
     return p
-    .then(win => this.getRequestForWindow(tabIndex, win));
+    .then((win) => this.getRequestForWindow(tabIndex, win));
   }
-
+  /**
+   Returns request data for given tab id and window.
+   * @param {Number} tabIndex Index of the tab to get the data from.
+   * @param {BrowserWindow} win Target window.
+   * @return {Promise} A promise resolved to the ARC request object.
+   */
   getRequestForWindow(tabIndex, win) {
-    var id = this.nextIpcRequestId();
+    let id = this.nextIpcRequestId();
     const p = this.appendPromise(id);
-    ipcMain.once('request-data', this.ipcPromiseCallback);
+    ipcMain.once('request-data', this._ipcPromiseCallback);
     win.webContents.send('command', 'get-request-data', id, tabIndex);
     return p;
   }

@@ -7,8 +7,10 @@ const uuidv5 = require('uuid/v5');
  *
  * Type: `Object`
  * Properties:
- * - `appId` {String} Generated application ID that can be used to link user data
- * - `aid` {String} Aninimized Id that can be used to link this app with analytics
+ * - `appId` {String} Generated application ID that can be used to
+ * link user data
+ * - `aid` {String} Aninimized Id that can be used to link this app
+ * with analytics
  * account like Google Analytics. **This property is never stored outside local
  * filesystem or analytics server which doesn't allow connect this information
  * with specific app instance**
@@ -96,9 +98,9 @@ class ArcMeta extends ArcPreferences {
    * @return {Promise} Generated metadata object
    */
   _defaultMeta() {
-    var appId = uuidv4();
-    var aid = uuidv5('arc-electron', appId);
-    var result = {
+    let appId = uuidv4();
+    let aid = uuidv5('arc-electron', appId);
+    let result = {
       appId: appId,
       aid: aid
     };

@@ -48,7 +48,7 @@ class AppOptions {
    * Parses startup options.
    */
   parse() {
-    for (var i = 0; i < process.argv.length; i++) {
+    for (let i = 0; i < process.argv.length; i++) {
       if (i === 0) {
         continue;
       }
@@ -81,9 +81,9 @@ class AppOptions {
       arg = arg.substr(0, eqIndex);
     }
     if (arg.indexOf('--') === 0) {
-      return this.availableOptions.find(item => item.name === arg);
+      return this.availableOptions.find((item) => item.name === arg);
     } else if (arg.indexOf('-') === 0) {
-      return this.availableOptions.find(item => item.shortcut === arg);
+      return this.availableOptions.find((item) => item.shortcut === arg);
     }
   }
   /**

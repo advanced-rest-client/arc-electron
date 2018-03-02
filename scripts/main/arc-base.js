@@ -1,15 +1,24 @@
 const log = require('electron-log');
-
+/**
+ * Base class for other classes containing utility functions.
+ */
 class ArcBase {
-
+  /**
+   * @constructor
+   */
   constructor() {
     this._ipcRequestId = 0;
     this._promises = [];
-    this.ipcPromiseCallback = this.ipcPromiseCallback.bind(this);
+    this._ipcPromiseCallback = this._ipcPromiseCallback.bind(this);
   }
-
+  /**
+   * Finds an index of a debounce function by it's name.
+   *
+   * @param {String} name Name of the debouncer.
+   * @return {Number} Index of the debouncer. `-1` if not found.
+   */
   _debounceIndex(name) {
-    return this._debouncers.findIndex(item => item.name === name);
+    return this._debouncers.findIndex((item) => item.name === name);
   }
   /**
    * Prohibits execution of a task for some `time`.
@@ -24,18 +33,19 @@ class ArcBase {
    *
    * @param {String} name Name of the task
    * @param {Function} callback A function to call.
-   * @param {Number} time Number of milliseconds after which the task is executed.
+   * @param {Number} time Number of milliseconds after which the task
+   * is executed.
    */
   debounce(name, callback, time) {
     if (!this._debouncers) {
       this._debouncers = [];
     }
-    var index = this._debounceIndex(name);
+    let index = this._debounceIndex(name);
     if (index !== -1) {
       return;
     }
-    var cancelId = setTimeout(() => {
-      var index = this._debounceIndex(name);
+    let cancelId = setTimeout(() => {
+      let index = this._debounceIndex(name);
       this._debouncers.splice(index, 1);
       callback.call(this);
     }, time);
@@ -51,11 +61,11 @@ class ArcBase {
    * @param {String} name Name of the task
    */
   cancelDebounce(name) {
-    var index = this._debounceIndex(name);
+    let index = this._debounceIndex(name);
     if (index === -1) {
       return;
     }
-    var debounce = this._debouncers[index];
+    let debounce = this._debouncers[index];
     clearTimeout(debounce.id);
     this._debouncers.splice(index, 1);
   }
@@ -74,7 +84,7 @@ class ArcBase {
    * @return {Promise} Generated Promise object.
    */
   appendPromise(id) {
-    var p = new Promise((resolve, reject) => {
+    let p = new Promise((resolve, reject) => {
       let obj = {
         id: id,
         resolve: resolve,
@@ -84,22 +94,29 @@ class ArcBase {
     });
     return p;
   }
-
-  ipcPromiseCallback(event, id, isError, ...args) {
+  /**
+   * Callback function for IPC main event.
+   *
+   * @param {String} event
+   * @param {String} id Id if generated promise.
+   * @param {Boolean} isError Determines if resolved is error.
+   * @param {?Array} args Arguments from the main process.
+   */
+  _ipcPromiseCallback(event, id, isError, ...args) {
     log.info('Received IPC response for id', id, ', is error? ', isError, args);
-    var index = this._promises.findIndex(p => p.id === id);
+    let index = this._promises.findIndex((p) => p.id === id);
     if (index === -1) {
       log.error('IPC promise for id', id, ' not found');
       throw new Error('Promise not found');
     }
-    var promise = this._promises[index];
+    let promise = this._promises[index];
     this._promises.splice(index, 1);
     if (isError) {
       log.info('Rejecting IPC promise');
-      promise.reject.apply(promise, args);
+      promise.reject(...args);
     } else {
       log.info('Resolving IPC promise');
-      promise.resolve.apply(promise, args);
+      promise.resolve(...args);
     }
   }
 }
