@@ -3,7 +3,7 @@ Advanced Rest Client Application
 
 Welcome to the ARC's project repository. Please, read [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) and [ROADMAP.md](ROADMAP.md) files for more information.
 
-## Developent
+## Development
 You are welcome to contribute to the project. To start developing use following instructions.
 
 I assume you have [Node.js][1] already installed on your machine.
