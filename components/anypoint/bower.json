@@ -50,7 +50,6 @@
     "openable-panel-behavior": "advanced-rest-client/openable-panel-behavior#^0.1.2",
     "websocket-panel": "advanced-rest-client/websocket-panel#^0.1.1",
     "chrome-file-export": "advanced-rest-client/chrome-file-export#^0.1.1",
-    "arc-chrome-settings": "advanced-rest-client/arc-chrome-settings#^0.1.1",
     "arc-settings-panel": "advanced-rest-client/arc-settings-panel#^0.2.1",
     "saved-requests-panel": "advanced-rest-client/saved-requests-panel#^0.2.0",
     "google-drive-browser": "advanced-rest-client/google-drive-browser#^0.1.1",
@@ -109,7 +108,7 @@
     "request-hooks-logic": "advanced-rest-client/request-hooks-logic#^0.1.1"
   },
   "devDependencies": {
-    "web-component-tester": "*",
+    "web-component-tester": "^6.0.0",
     "iron-test-helpers": "PolymerElements/iron-test-helpers#^1.2.5"
   },
   "ignore": [],
@@ -119,6 +118,7 @@
     "raml-path-selector": "anypoint",
     "arc-icons": "^0.2.0",
     "raml-json-enhance": "^0.3.2",
-    "authorization-panel": "^0.6.3"
+    "authorization-panel": "^0.6.3",
+    "oauth-authorization": "^0.3.0"
   }
 }
