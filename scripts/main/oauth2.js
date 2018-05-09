@@ -1,20 +1,18 @@
-const {BrowserWindow, ipcMain} = require('electron');
+const {BrowserWindow, ipcMain, session} = require('electron');
 const fs = require('fs-extra');
 const path = require('path');
 const {URLSearchParams} = require('url');
 const _fetch = require('node-fetch');
-const PERSISTNAME = 'persist:web-session';
+// const PERSISTNAME = 'persist:auth-server';
 // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
 const windowParams = {
   width: 640,
   height: 800,
   alwaysOnTop: true,
   autoHideMenuBar: true,
-  title: 'OAuth2 login',
-  frame: true,
   webPreferences: {
     nodeIntegration: false,
-    partition: PERSISTNAME
+    // partition: PERSISTNAME
   }
 };
 /**
@@ -107,12 +105,13 @@ class IdentityProvider {
     this.requestOptions = opts;
     const url = this.computeAuthorizationUrl(opts);
     const params = Object.assign({}, windowParams);
+    params.webPreferences.session = session.fromPartition('persist:oauth2-win');
     if (!opts.interactive) {
       params.show = false;
     }
     const win = new BrowserWindow(params);
     win.loadURL(url);
-    this.observeAuthWindowNavigation(win);
+    this.observeAuthWindowNavigation(win, opts.interactive);
     this.currentOAuthWindow = win;
     return new Promise((resolve, reject) => {
       this.__lastPromise = {
@@ -126,15 +125,19 @@ class IdentityProvider {
    *
    * @param {BrowserWindow} win Window object to observe events on.
    */
-  observeAuthWindowNavigation(win) {
-    if (!this.__awfl) {
-      this.__awfl = this._authWindowFailLoadHandler.bind(this);
-      this.__awrd = this._authWindowResponseDetailHandler.bind(this);
-      this.__awc = this._authWindowCloseHandler.bind(this);
-    }
-    win.webContents.on('did-fail-load', this.__awfl);
-    win.webContents.on('did-get-response-details', this.__awrd);
-    win.on('close', this.__awc);
+  observeAuthWindowNavigation(win, interactive) {
+    // win.webContents.on('did-fail-load', this._authWindowFailLoadHandler.bind(this));
+    win.webContents.on('did-get-response-details', this._authWindowResponseDetailHandler.bind(this, interactive));
+    // win.webContents.on('did-get-redirect-request', (e, old, newUrl) => {
+    //   if (old.indexOf('google-analytics') !== -1) {
+    //     return;
+    //   }
+    //   console.log('REDIRECT FROM', old, 'TO' , newUrl);
+    // });
+    // win.webContents.on('did-navigate', (e, url) => {
+    //   console.log('NAVIGATE EVENT TO: ', url);
+    // });
+    win.on('close', this._authWindowCloseHandler.bind(this));
   }
   /**
    * Removes event listeners, closes the window and cleans the property.
@@ -144,9 +147,9 @@ class IdentityProvider {
     if (!win) {
       return;
     }
-    win.webContents.removeListener('did-fail-load', this.__awfl);
-    win.webContents.removeListener('did-get-response-details', this.__awrd);
-    win.removeListener('close', this.__awc);
+    // win.webContents.removeAllListeners('did-fail-load');
+    win.webContents.removeAllListeners('did-get-response-details');
+    win.removeAllListeners('close');
     win.destroy();
     delete this.currentOAuthWindow;
   }
@@ -439,30 +442,30 @@ class IdentityProvider {
     detail.message = message;
     return detail;
   }
-  /**
-   * Handler for the BrowserWindow load error.
-   * @param {Event} event
-   * @param {Number} errorCode
-   * @param {String} errorDescription
-   * @param {String} validatedURL
-   * @param {Boolean} isMainFrame
-   */
-  _authWindowFailLoadHandler(event, errorCode, errorDescription,
-    validatedURL, isMainFrame) {
-    if (!isMainFrame) {
-      return;
-    }
-    if (validatedURL.indexOf(this.oauthConfig.redirect_uri) === 0) {
-      this._reportOAuthResult(validatedURL);
-    } else {
-      this._reportOAuthError({
-        state: this.requestOptions.state,
-        code: 'auth_error',
-        message:
-          'Unexpected auth response. Make sure the OAuth2 config is valid'
-      });
-    }
-  }
+  // /**
+  //  * Handler for the BrowserWindow load error.
+  //  * @param {Event} event
+  //  * @param {Number} errorCode
+  //  * @param {String} errorDescription
+  //  * @param {String} validatedURL
+  //  * @param {Boolean} isMainFrame
+  //  */
+  // _authWindowFailLoadHandler(event, errorCode, errorDescription,
+  //   validatedURL, isMainFrame) {
+  //   if (!isMainFrame) {
+  //     return;
+  //   }
+  //   if (validatedURL.indexOf(this.oauthConfig.redirect_uri) === 0) {
+  //     this._reportOAuthResult(validatedURL);
+  //   } else {
+  //     this._reportOAuthError({
+  //       state: this.requestOptions.state,
+  //       code: 'auth_error',
+  //       message:
+  //         'Unexpected auth response. Make sure the OAuth2 config is valid'
+  //     });
+  //   }
+  // }
   /**
    * Handler for the auth window close event.
    * If the response wasn't reported so far it reports error.
@@ -489,7 +492,7 @@ class IdentityProvider {
    * @param {Object} headers
    * @param {String} resourceType
    */
-  _authWindowResponseDetailHandler(event, status, newURL, originalURL,
+  _authWindowResponseDetailHandler(interactive, event, status, newURL, originalURL,
     httpResponseCode, requestMethod, referrer, headers, resourceType) {
     if (resourceType !== 'mainFrame') {
       return;
@@ -509,7 +512,21 @@ class IdentityProvider {
       }
     }
     if (newURL.indexOf(this.oauthConfig.redirect_uri) === 0) {
+      if (this.__loadPopupTimeout) {
+        clearTimeout(this.__loadPopupTimeout);
+      }
       this._reportOAuthResult(newURL);
+    } else {
+      if (interactive === false) {
+        this.__loadPopupTimeout = setTimeout(() => {
+          this._reportOAuthError({
+            state: this.requestOptions.state,
+            code: 'auth_error',
+            message:
+              'No response from the server.'
+          });
+        }, 1000);
+      }
     }
   }
 

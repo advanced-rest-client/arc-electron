@@ -131,6 +131,9 @@ class OAuth2Handler {
       message: cause.message || cause || 'Unknown error',
       code: cause.code || 'unknown_error'
     };
+    if (cause.state) {
+      detail.state = cause.state;
+    }
     this.fire('oauth2-error', detail);
   }
   /**
