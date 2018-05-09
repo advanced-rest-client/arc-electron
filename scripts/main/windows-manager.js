@@ -23,6 +23,7 @@ class ArcWindowsManager {
     this.__windowMoved = this.__windowMoved.bind(this);
     this.__windowResized = this.__windowResized.bind(this);
     this.__windowOpenedPopup = this.__windowOpenedPopup.bind(this);
+    this.__contextMenuHandler = this.__contextMenuHandler.bind(this);
     this._settingChangedHandler = this._settingChangedHandler.bind(this);
     this._prefs = new ArcPreferences(startupOptions.settingsFile);
     this.recorder = new ArcSessionRecorder();
@@ -242,6 +243,7 @@ class ArcWindowsManager {
     win.addListener('resize', this.__windowResized);
     win.once('ready-to-show', this.__readyShowHandler.bind(this));
     win.webContents.on('new-window', this.__windowOpenedPopup);
+    win.webContents.on('arc-context-menu', this.__contextMenuHandler);
   }
   /**
    * Finds window index position in windows array.
@@ -372,6 +374,10 @@ class ArcWindowsManager {
       value: value,
       area: area
     }, event.sender);
+  }
+
+  __contextMenuHandler(event, params) {
+    console.log(event, params);
   }
 }
 

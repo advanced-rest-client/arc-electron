@@ -14,6 +14,7 @@ class ArcInit {
     this.workspaceScript = undefined;
     this.settingsScript = undefined;
     this.themeLoader = new ThemeLoader();
+    this.contextActions = [];
   }
 
   get app() {
@@ -33,7 +34,9 @@ class ArcInit {
     ipc.on('command', this.commandHandler.bind(this));
     ipc.on('request-action', this.execRequestAction.bind(this));
     ipc.on('theme-editor-preview', this._themePreviewHandler.bind(this));
+    ipc.on('register-context-action', this._registerMainContextAction.bind(this));
     this.themeLoader.listen();
+    window.addEventListener('contextmenu', this._contextMenuHandler.bind(this));
   }
   /**
    * Requests initial state information from the main process for current
@@ -270,6 +273,43 @@ class ArcInit {
 
   _themePreviewHandler(event, stylesMap) {
     this.themeLoader.previewThemes(stylesMap);
+  }
+
+  _contextMenuHandler(e) {
+    const target = e.composedPath()[0];
+    if (!target) {
+      return;
+    }
+    for (let i = 0, len = this.contextActions.length; i < len; i++) {
+      const data = this.contextActions[i];
+      if (target.matches(data.selector)) {
+        this.invokeContextAction(data.action);
+        return;
+      }
+    }
+  }
+
+  invokeContextAction(action) {
+    ipc.send('arc-context-menu', action);
+  }
+
+  _registerMainContextAction(event, selector, action) {
+    this.registerContextAction(selector, action);
+  }
+
+  registerContextAction(selector, action) {
+    this.contextActions.push({
+      selector,
+      action
+    });
+  }
+
+  unregisterContextAction(action) {
+    const index = this.contextActions.findIndex((item) => item.action === action);
+    if (index === -1) {
+      return;
+    }
+    this.contextActions.splice(index, 1);
   }
 }
 
