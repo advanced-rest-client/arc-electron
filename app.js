@@ -2,29 +2,39 @@ const ipc = require('electron').ipcRenderer;
 const log = require('electron-log');
 const {ArcPreferencesRenderer} = require('./scripts/renderer/arc-preferences');
 const {ThemeLoader} = require('./scripts/renderer/theme-loader');
+const {ArcContextMenu} = require('./scripts/renderer/context-menu');
 /**
  * Class responsible for initializing the main ARC elements
  * and setup base options.
  * Also serves as a communication bridge etween main process and app window.
  */
 class ArcInit {
-
+  /**
+   * @constructor
+   */
   constructor() {
     this.created = false;
     this.workspaceScript = undefined;
     this.settingsScript = undefined;
     this.themeLoader = new ThemeLoader();
-    this.contextActions = [];
   }
-
+  /**
+   * Reference to the main application window.
+   *
+   * @return {HtmlElement}
+   */
   get app() {
     return document.getElementById('app');
   }
-
+  /**
+   * Listens for application events to create a communication
+   * bridge between main process and the app.
+   */
   listen() {
+    this.contextActions = new ArcContextMenu();
     ipc.on('window-state-info', this._stateInfoHandler.bind(this));
     window.onbeforeunload = this.beforeUnloadWindow.bind(this);
-    var updateHandler = this.updateEventHandler.bind(this);
+    const updateHandler = this.updateEventHandler.bind(this);
     ipc.on('checking-for-update', updateHandler);
     ipc.on('update-available', updateHandler);
     ipc.on('update-not-available', updateHandler);
@@ -34,9 +44,7 @@ class ArcInit {
     ipc.on('command', this.commandHandler.bind(this));
     ipc.on('request-action', this.execRequestAction.bind(this));
     ipc.on('theme-editor-preview', this._themePreviewHandler.bind(this));
-    ipc.on('register-context-action', this._registerMainContextAction.bind(this));
     this.themeLoader.listen();
-    window.addEventListener('contextmenu', this._contextMenuHandler.bind(this));
   }
   /**
    * Requests initial state information from the main process for current
@@ -67,11 +75,15 @@ class ArcInit {
     }
     this.initApp();
   }
-
+  /**
+   * Initialized the application when window is ready.
+   *
+   * @return {Promise}
+   */
   initApp() {
     log.info('Initializing renderer window...');
     return this.initPreferences()
-    .then(settings => this.themeApp(settings))
+    .then((settings) => this.themeApp(settings))
     .then(() => this._createApp())
     .catch((cause) => this.reportFatalError(cause));
   }
@@ -83,7 +95,12 @@ class ArcInit {
   reportFatalError(err) {
     ipc.send('fatal-error', err.message);
   }
-
+  /**
+   * Creates application main element.
+   *
+   * @return {Promise} Promise resolved when element is loaded and ready
+   * rendered.
+   */
   _createApp() {
     if (this.created) {
       return Promise.resolve();
@@ -97,7 +114,7 @@ class ArcInit {
     })
     .then(() => {
       log.info('Initializing arc-electron element...');
-      var app = document.createElement('arc-electron');
+      const app = document.createElement('arc-electron');
       app.id = 'app';
       this._setupApp(app);
       document.body.appendChild(app);
@@ -124,21 +141,21 @@ class ArcInit {
    */
   themeApp(settings) {
     log.info('Initializing app theme.');
-    var id;
+    let id;
     if (settings.theme) {
       id = settings.theme;
     } else {
       id = this.themeLoader.defaultTheme;
     }
     return this.themeLoader.activateTheme(id)
-    .catch(cause => {
+    .catch((cause) => {
       if (id === this.themeLoader.default) {
         log.error('Unable to load theme file.', cause);
         return;
       }
       return this.themeLoader.activateTheme(this.themeLoader.defaultTheme);
     })
-    .catch(cause => {
+    .catch((cause) => {
       log.error('Unable to load default theme file.', cause);
     });
   }
@@ -169,19 +186,28 @@ class ArcInit {
 
   /**
    * Handles events related to the application auto-update action.
+   *
+   * @param {Object} sender
+   * @param {Array} message
    */
   updateEventHandler(sender, message) {
-    var app = this.app;
+    const app = this.app;
     console.log('updateEventHandler', message);
     app.updateState = message;
     if (message[0] === 'update-downloaded') {
       app.hasAppUpdate = true;
     }
   }
-
-  commandHandler(event, action, ...args) {
+  /**
+   * Handler for application command.
+   *
+   * @param {EventEmitter} e Node's event
+   * @param {String} action
+   * @param {Array} args
+   */
+  commandHandler(e, action, ...args) {
     log.info('Renderer command handled: ', action);
-    var app = this.app;
+    const app = this.app;
     switch (action) {
       case 'show-settings': app.openSettings(); break;
       case 'about': app.openAbout(); break;
@@ -195,9 +221,9 @@ class ArcInit {
       case 'login-external-webservice': app.openWebUrl(); break;
       case 'open-cookie-manager': app.openCookieManager(); break;
       case 'open-hosts-editor': app.openHostRules(); break;
-      case 'get-tabs-count': this.sendTabsCount(event, args[0]); break;
-      case 'activate-tab': this.activateTab(event, args[0], args[1]); break;
-      case 'get-request-data': this.getRequestData(event, args[0], args[1]); break;
+      case 'get-tabs-count': this.sendTabsCount(e, args[0]); break;
+      case 'activate-tab': this.activateTab(e, args[0], args[1]); break;
+      case 'get-request-data': this.getRequestData(e, args[0], args[1]); break;
       case 'open-themes': app.openThemesPanel(); break;
     }
   }
@@ -205,49 +231,51 @@ class ArcInit {
    * Remote API command.
    * Sends number of tabs command to the main process.
    *
-   * @param {EventEmitter} event
+   * @param {EventEmitter} e
    * @param {Number} callId
    */
-  sendTabsCount(event, callId) {
-    var cnt = this.app.getTabsCount();
-    event.sender.send('current-tabs-count', callId, false, cnt);
+  sendTabsCount(e, callId) {
+    const cnt = this.app.getTabsCount();
+    e.sender.send('current-tabs-count', callId, false, cnt);
   }
   /**
    * Remote API command.
    * Activates a tab in current window.
    *
-   * @param {EventEmitter} event
+   * @param {EventEmitter} e
    * @param {Number} callId
    * @param {Number} tabId ID of a tab
    */
-  activateTab(event, callId, tabId) {
+  activateTab(e, callId, tabId) {
     this.app.workspace.selected = tabId;
-    event.sender.send('tab-activated', callId, false);
+    e.sender.send('tab-activated', callId, false);
   }
   /**
    * Remote API command.
    * Sends request data to the main process.
    *
-   * Because of limitations of sending the data between renderer and main process
-   * objects like FormData of file data won't be sent.
+   * Because of limitations of sending the data between
+   * renderer and main process objects like FormData of
+   * file data won't be sent.
    *
-   * @param {EventEmitter} event
+   * @param {EventEmitter} e
    * @param {Number} callId
    * @param {Number} tabId ID of a tab
    */
-  getRequestData(event, callId, tabId) {
-    var request = this.app.workspace.activeRequests[tabId];
-    event.sender.send('request-data', callId, false, request);
+  getRequestData(e, callId, tabId) {
+    const request = this.app.workspace.activeRequests[tabId];
+    e.sender.send('request-data', callId, false, request);
   }
   /**
    * Handles action performed in main thread (menu action) related to
    * a request.
    *
+   * @param {EventEmitter} e
    * @param {String} action Action name to perform.
    */
-  execRequestAction(event, action, ...args) {
+  execRequestAction(e, action, ...args) {
     log.info('Renderer request command handled: ', action);
-    var app = this.app;
+    const app = this.app;
     switch (action) {
       case 'save':
         app.saveOpened({
@@ -270,46 +298,15 @@ class ArcInit {
         throw new Error('Unrecognized action ' + action);
     }
   }
-
-  _themePreviewHandler(event, stylesMap) {
+  /**
+   * Handler for `theme-editor-preview` event. Current;ly this system is not
+   * in use
+   *
+   * @param {EventEmitter} e
+   * @param {Object} stylesMap
+   */
+  _themePreviewHandler(e, stylesMap) {
     this.themeLoader.previewThemes(stylesMap);
-  }
-
-  _contextMenuHandler(e) {
-    const target = e.composedPath()[0];
-    if (!target) {
-      return;
-    }
-    for (let i = 0, len = this.contextActions.length; i < len; i++) {
-      const data = this.contextActions[i];
-      if (target.matches(data.selector)) {
-        this.invokeContextAction(data.action);
-        return;
-      }
-    }
-  }
-
-  invokeContextAction(action) {
-    ipc.send('arc-context-menu', action);
-  }
-
-  _registerMainContextAction(event, selector, action) {
-    this.registerContextAction(selector, action);
-  }
-
-  registerContextAction(selector, action) {
-    this.contextActions.push({
-      selector,
-      action
-    });
-  }
-
-  unregisterContextAction(action) {
-    const index = this.contextActions.findIndex((item) => item.action === action);
-    if (index === -1) {
-      return;
-    }
-    this.contextActions.splice(index, 1);
   }
 }
 

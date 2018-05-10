@@ -962,8 +962,8 @@
         if (this.routeData.base !== 'request') {
           return;
         }
-        var workspace = this.$$('request-workspace');
-        let index = workspace.appendPanel();
+        const workspace = this.$$('request-workspace');
+        const index = workspace.appendPanel();
         workspace.selected = index;
       },
       /**
@@ -977,7 +977,7 @@
       },
 
       _googleOauthTokenRequested: function(e) {
-        var scope = e.detail.scope.split(' ');
+        const scope = e.detail.scope.split(' ');
         this._requestAuthToken(true, scope);
       },
 
@@ -986,13 +986,13 @@
           return;
         }
         this.__requestingToken = true;
-        var ipc = require('electron').ipcRenderer;
+        let ipc = require('electron').ipcRenderer;
         ipc.send('oauth-2-get-token', {
           interactive: interactive,
           scopes: scope
         });
-        var context = this;
-        var rejected;
+        const context = this;
+        let rejected;
         function resolved(sender, token) {
           let tokenValue = token ? token.accessToken : undefined;
           context.__requestingToken = false;
@@ -1028,7 +1028,7 @@
       },
 
       _notifyRequestPanelResize: function(narrowLayout) {
-        var width = narrowLayout ? 0 : this.drawerWidth;
+        const width = narrowLayout ? 0 : this.drawerWidth;
         this.customStyle['--request-panel-status-bar-left'] = width;
         this.updateStyles();
       },
@@ -1037,7 +1037,7 @@
        * new messages.
        */
       _unreadMessagesChanged: function(e) {
-        var state = !!(e.detail.value && e.detail.value.length > 0);
+        const state = !!(e.detail.value && e.detail.value.length > 0);
         this.set('newMessages', state);
       },
       /**
@@ -1046,7 +1046,7 @@
       openInfoCenter: function() {
         this.messageCenterOpened = !this.messageCenterOpened;
         if (this.messageCenterOpened) {
-          var service = Polymer.dom(this.root).querySelector('arc-messages-service');
+          const service = Polymer.dom(this.root).querySelector('arc-messages-service');
           service.readMessages();
           window.setTimeout(function() {
             service.unread.forEach((item, i) => {
@@ -1102,7 +1102,7 @@
        */
       updateRequestTab: function(request, tab) {
         this.log.info('Updating request object...');
-        var workspace = this.workspace;
+        const workspace = this.workspace;
         if (!workspace) {
           throw new Error('Workspace is not ready.');
         }
@@ -1124,11 +1124,70 @@
        * @return {Number} Number of opened tabs in request workspace.
        */
       getTabsCount: function() {
-        var workspace = this.workspace;
+        const workspace = this.workspace;
         if (!workspace || !workspace.activeRequests) {
           return 0;
         }
         return workspace.activeRequests.length;
+      },
+      /**
+       * Closes a tab by given local index.
+       *
+       * @param {String|Number} index Local index assigned to each
+       * `activeRequests` in the workspace.
+       */
+      closeRequestTabByLocal: function(index) {
+        index = Number(index);
+        this.log.info('Closing tab by local id', index);
+        const workspace = this.workspace;
+        if (!workspace) {
+          throw new Error('Workspace is not ready.');
+        }
+        const itemIndex = workspace.activeRequests
+          .findIndex((item) => item.localIndex === index);
+        if (itemIndex === -1) {
+          return;
+        }
+        workspace.splice('activeRequests', itemIndex, 1);
+        if (workspace.activeRequests.length === 0) {
+          Polymer.RenderStatus.afterNextRender(this, function() {
+            workspace.appendPanel();
+            workspace.selected = 0;
+          });
+        } else if (itemIndex !== 0) {
+          workspace.selected = itemIndex - 1;
+        }
+      },
+      /**
+       * Closes all opened tabs.
+       */
+      closeAllRequestTabs: function() {
+        this.log.info('Closing all tabs');
+        const workspace = this.workspace;
+        if (!workspace) {
+          throw new Error('Workspace is not ready.');
+        }
+        workspace.set('activeRequests', []);
+        Polymer.RenderStatus.afterNextRender(this, function() {
+          workspace.appendPanel();
+          workspace.selected = 0;
+        });
+      },
+
+      closeOtherRequestTabs: function(index) {
+        index = Number(index);
+        this.log.info('Closing tab by local id', index);
+        const workspace = this.workspace;
+        if (!workspace) {
+          throw new Error('Workspace is not ready.');
+        }
+        const active = workspace.activeRequests;
+        for (let i = active.length - 1; i >= 0; i--) {
+          if (active[i].localIndex !== index) {
+            workspace.splice('activeRequests', i, 1);
+          }
+        }
+        workspace.selected = 0;
       }
     });
   </script>

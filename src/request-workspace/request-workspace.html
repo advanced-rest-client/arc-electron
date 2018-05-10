@@ -72,7 +72,7 @@ the License.
       <paper-tabs selected="{{selected}}" scrollable>
         <template is="dom-repeat" items="[[activeRequests]]">
           <paper-tab>
-            <span class="tab-name">[[_computeTabName(item, item.url)]]</span>
+            <span class="tab-name" data-index$="[[item.localIndex]]">[[_computeTabName(item, item.url)]]</span>
             <iron-icon class="close-icon" icon="arc:close" data-index$="[[index]]" on-tap="_closeRequest"></iron-icon>
           </paper-tab>
         </template>
@@ -116,6 +116,10 @@ the License.
         workspaceScript: {
           type: String,
           observer: '_workspaceScriptChanged'
+        },
+        _nextId: {
+          type: Number,
+          value: 0
         }
       },
       /**
@@ -195,7 +199,8 @@ the License.
        */
       appendPanel: function() {
         var obj = {
-          method: 'GET'
+          method: 'GET',
+          localIndex: (this._nextId++)
         };
         var result;
         if (!this.activeRequests) {
@@ -218,6 +223,7 @@ the License.
         this.selected = index;
         Polymer.dom.flush();
         var panel = this._getPanel(this.selected);
+        this.set(`activeRequests.${this.selected}.localIndex`, this._nextId++);
         panel.request = obj;
         return this.selected;
       },
@@ -284,9 +290,11 @@ the License.
         if (!this.__toRestore || !this.__toRestore.requests.length) {
           return;
         }
-        let next = this.__toRestore.requests.shift();
-        let panel = this._getPanel(this.activeRequests.length - 1);
+        const next = this.__toRestore.requests.shift();
+        const index = this.activeRequests.length - 1;
+        const panel = this._getPanel(index);
         panel.proxyRequest = next;
+        this.set(`activeRequests.${index}.localIndex`, this._nextId++);
         Polymer.RenderStatus.afterNextRender(this, () => {
           this._restoreNext();
         });
@@ -479,6 +487,7 @@ the License.
           var panel = this._getPanel(tab);
           panel.proxyRequest = request;
           this._updateTabs();
+          this.set(`activeRequests.${tab}.localIndex`, this._nextId++);
         });
       },
       /**
