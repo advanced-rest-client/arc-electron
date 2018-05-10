@@ -36,6 +36,20 @@ class ArcWindowsManager {
   get hasWindow() {
     return this.windows.length > 0;
   }
+
+  restoreLast() {
+    const win = this.windows && this.windows.length && this.windows[this.windows.length - 1];
+    if (win) {
+      if (win.isDestroyed) {
+        this.windows.pop();
+        this.open();
+      } else {
+        win.show();
+      }
+    } else {
+      this.open();
+    }
+  }
   /**
    * Listens for relevant for this class events from the renderer.
    */

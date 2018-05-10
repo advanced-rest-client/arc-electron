@@ -106,6 +106,8 @@ class Arc {
   _activateHandler() {
     if (!this.wm.hasWindow) {
       this.wm.open();
+    } else {
+      this.wm.restoreLast();
     }
   }
   /**
