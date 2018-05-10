@@ -1,7 +1,7 @@
 {
   "name": "advanced-rest-client",
   "description": "The Advanced REST Client desktop application.",
-  "version": "12.1.2",
+  "version": "12.1.3",
   "homepage": "https://advancedrestclient.com/",
   "license": "Apache-2.0",
   "author": {
