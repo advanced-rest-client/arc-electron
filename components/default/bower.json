@@ -111,6 +111,15 @@
     "raml-request-panel": "^0.5.2",
     "raml-json-enhance": "^0.3.1",
     "authorization-panel": "^0.6.3",
-    "oauth-authorization": "^0.2.3"
+    "oauth-authorization": "^0.2.3",
+    "polymer": "1.9 - 2",
+    "paper-icon-button": "<2",
+    "iron-icon": "^1.0.12",
+    "paper-button": "<2",
+    "arc-icons": "^1.0.0",
+    "iron-flex-layout": "<2",
+    "paper-styles": "<2",
+    "webcomponentsjs": "^0.7.24",
+    "iron-validatable-behavior": "<2"
   }
 }
