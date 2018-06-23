@@ -16,6 +16,7 @@ const tls = require('tls');
 const url = require('url');
 const zlib = require('zlib');
 const EventEmitter = require('events');
+const log = require('electron-log');
 
 const nlBuffer = Buffer.from([13, 10]);
 const nlNlBuffer = Buffer.from([13, 10, 13, 10]);
@@ -439,7 +440,7 @@ class SocketRequest extends EventEmitter {
       const msg = auth.createMessage1(this.uri.host);
       this.arcRequest.headers = this.replaceHeader(this.arcRequest.headers,
         'Authorization', 'NTLM ' + msg.toBase64());
-      console.log('New auth headers: ', this.arcRequest.headers);
+      log.info('New auth headers: ', this.arcRequest.headers);
     } else if (this.auth && this.auth.state === 1) {
       const msg = auth.createMessage3(this.auth.challengeHeader, this.uri.host);
       this.auth.state = 2;
@@ -905,7 +906,7 @@ class SocketRequest extends EventEmitter {
       return;
     }
 
-    console.log('Processing status');
+    log.info('Processing status');
     const index = data.indexOf(nlBuffer);
     let statusLine = data.slice(0, index).toString();
     data = data.slice(index + 2);
@@ -928,7 +929,7 @@ class SocketRequest extends EventEmitter {
     }
     this._response.status = status;
     this._response.statusMessage = msg;
-    console.log('Received status',
+    log.info('Received status',
       this._response.status,
       this._response.statusMessage);
     this.state = SocketRequest.HEADERS;
@@ -949,7 +950,7 @@ class SocketRequest extends EventEmitter {
       this._parseHeaders();
       return;
     }
-    console.log('Processing headers');
+    log.info('Processing headers');
     // Looking for end of headers section
     let index = data.indexOf(nlNlBuffer);
     let padding = 4;
@@ -1037,7 +1038,7 @@ class SocketRequest extends EventEmitter {
     }
     this._response.headersRaw = raw;
     const list = this.headersToObject(raw);
-    console.log('Received headers list', raw);
+    log.info('Received headers list', raw);
     const headers = new Headers(list);
     this._response.headers = headers;
     if (headers.has('Content-Length')) {
@@ -1128,12 +1129,12 @@ class SocketRequest extends EventEmitter {
 
       this._chunkSize -= size;
       if (data.length === 0) {
-        // console.warn('Next chunk will start with CRLF!');
+        // log.warn('Next chunk will start with CRLF!');
         return;
       }
       data = data.slice(size + 2); // + CR
       if (data.length === 0) {
-        // console.log('No more data here. Waiting for new chunk');
+        // log.info('No more data here. Waiting for new chunk');
         return;
       }
     }
@@ -1168,7 +1169,7 @@ class SocketRequest extends EventEmitter {
         index = array.indexOf(nlBuffer);
       }
     }
-    // console.log('Size index: ', index);
+    // log.info('Size index: ', index);
     const chunkSize = parseInt(array.slice(0, index).toString(), 16);
     if (chunkSize !== chunkSize) {
       this._chunkSize = undefined;
