@@ -6,7 +6,7 @@ const {ArcContextMenu} = require('./scripts/renderer/context-menu');
 /**
  * Class responsible for initializing the main ARC elements
  * and setup base options.
- * Also serves as a communication bridge etween main process and app window.
+ * Also serves as a communication bridge between main process and app window.
  */
 class ArcInit {
   /**
@@ -17,6 +17,7 @@ class ArcInit {
     this.workspaceScript = undefined;
     this.settingsScript = undefined;
     this.themeLoader = new ThemeLoader();
+    this.contextActions = new ArcContextMenu();
   }
   /**
    * Reference to the main application window.
@@ -31,9 +32,9 @@ class ArcInit {
    * bridge between main process and the app.
    */
   listen() {
-    this.contextActions = new ArcContextMenu();
-    ipc.on('window-state-info', this._stateInfoHandler.bind(this));
+    this.contextActions.listenMainEvents();
     window.onbeforeunload = this.beforeUnloadWindow.bind(this);
+    this.themeLoader.listen();
     const updateHandler = this.updateEventHandler.bind(this);
     ipc.on('checking-for-update', updateHandler);
     ipc.on('update-available', updateHandler);
@@ -44,7 +45,7 @@ class ArcInit {
     ipc.on('command', this.commandHandler.bind(this));
     ipc.on('request-action', this.execRequestAction.bind(this));
     ipc.on('theme-editor-preview', this._themePreviewHandler.bind(this));
-    this.themeLoader.listen();
+    ipc.on('window-state-info', this._stateInfoHandler.bind(this));
   }
   /**
    * Requests initial state information from the main process for current
@@ -66,13 +67,21 @@ class ArcInit {
    */
   _stateInfoHandler(e, info) {
     info = info || {};
+    const initConfig = {};
     if (info.settingsFile) {
       this.settingsScript = info.settingsFile;
+      initConfig.settingsScript = info.settingsFile;
     }
     if (info.workspaceFile) {
       this.workspaceScript = info.workspaceFile;
+      initConfig.workspaceScript = info.workspaceScript;
       this.themeLoader.setupSettingsFile(this.workspaceScript);
     }
+    initConfig.componentsDir = this.themeLoader.componentsDir;
+    if (!window.ArcConfig) {
+      window.ArcConfig = {};
+    }
+    window.ArcConfig.initConfig = initConfig;
     this.initApp();
   }
   /**
@@ -93,6 +102,7 @@ class ArcInit {
    * @param {Error} err Error object
    */
   reportFatalError(err) {
+    console.error(err);
     ipc.send('fatal-error', err.message);
   }
   /**
@@ -106,7 +116,7 @@ class ArcInit {
       return Promise.resolve();
     }
     return new Promise((resolve, reject) => {
-      Polymer.Base.importHref('src/arc-electron.html', () => {
+      Polymer.importHref('src/arc-electron.html', () => {
         resolve();
       }, () => {
         reject(new Error('Unable to load ARC app'));
@@ -171,6 +181,7 @@ class ArcInit {
     if (this.settingsScript) {
       app.settingsScript = this.settingsScript;
     }
+    app.componentsDir = this.themeLoader.componentsDir;
     log.info('Initializing ARC app');
     app.initApplication();
   }

@@ -1,9 +1,9 @@
-<link rel="import" href="request-workspace/request-workspace.html">
+<!-- <link rel="import" href="request-workspace/request-workspace.html">
 <link rel="import" href="file-export/file-export.html">
 <link rel="import" href="about-arc/about-arc.html">
 <link rel="import" href="electron-drive/electron-drive.html">
-<link rel="import" href="api-console-panel/api-console-panel.html">
-<link rel="import" href="app-paths-info/app-paths-info.html">
+<link rel="import" href="api-console-panel/api-console-panel.html"> -->
+<!-- <link rel="import" href="app-paths-info/app-paths-info.html"> -->
 
 <dom-module id="arc-electron">
   <template>
@@ -103,6 +103,9 @@
       @apply --navigation-notification-button-active;
     }
     </style>
+    <app-location route="{{route}}" use-hash-as-path></app-location>
+    <app-route route="{{route}}" pattern="/:base" data="{{routeData}}"></app-route>
+
     <app-header-layout has-scrolling-region id="scrollingRegion">
       <app-header fixed shadow scroll-target="scrollingRegion">
         <app-toolbar>
@@ -125,8 +128,7 @@
       </app-header>
       <app-drawer-layout id="drawerLayout" force-narrow="{{forceNarrowLayout}}" narrow="{{narrowLayout}}">
         <app-drawer id="mainDrawer" opened="{{drawerOpened}}">
-          <!-- <arc-menu rest-api></arc-menu> -->
-          <div data-append="arc-menu"></div>
+          <arc-menu rest-api></arc-menu>
           <div id="drawerResizer"></div>
         </app-drawer>
         <app-drawer id="newsDrawer" align="right" opened="[[messageCenterOpened]]">
@@ -138,7 +140,7 @@
             attr-for-selected="data-route"
             selected-attribute="opened"
             selected="[[routeData.base]]">
-            <request-workspace attr-for-opened="opened" data-route="request" route="{{route}}" workspace-script="[[workspaceScript]]" on-workspace-restored="_createMenu"></request-workspace>
+            <arc-request-workspace data-route="request"></arc-request-workspace>
             <websocket-panel attr-for-opened="opened" data-route="socket"></websocket-panel>
             <history-panel attr-for-opened="opened" data-route="history"></history-panel>
             <saved-requests-panel attr-for-opened="opened" data-route="saved"></saved-requests-panel>
@@ -159,21 +161,7 @@
         </div>
       </app-drawer-layout>
     </app-header-layout>
-    <variables-drawer-editor id="environmentsDrawer" with-backdrop></variables-drawer-editor>
-    <web-url-input id="webUrlInput" purpose="web-session" on-open-web-url="_openWebUrlHandler"></web-url-input>
-    <app-location route="{{route}}" use-hash-as-path></app-location>
-    <app-route route="{{route}}" pattern="/:base" data="{{routeData}}"></app-route>
-    <app-route route="{{route}}" pattern="/project/:id" data="{{projectRoute}}"></app-route>
-    <app-route route="{{route}}" pattern="/request/drive/:action/:id" data="{{driveFileRoute}}"></app-route>
-    <arc-title base="[[routeData.base]]" page-title="{{pageTitle}}"></arc-title>
-    <drop-file-importer></drop-file-importer>
-    <arc-license-dialog></arc-license-dialog>
-    <arc-onboarding></arc-onboarding>
-    <paper-toast id="processingRamlToast" duration="0">
-      Processing RAML data. Please wait. <paper-spinner active></paper-spinner>
-    </paper-toast>
-    <paper-toast id="processingRamlErrorToast" class="error-toast"></paper-toast>
-    <paper-toast id="errorToast" duration="5000"></paper-toast>
+
     <template is="dom-if" if="[[telemetry]]" restamp="true">
       <app-analytics tracking-id="UA-18021184-6" app-name="ARC-electon" app-id="[[appId]]" app-version="[[appVersion]]" data-source="electron-app">
         <template is="dom-repeat" items="[[gaCustomMetrics]]">
@@ -200,995 +188,1005 @@
         </template>
       </app-analytics>
     </template>
-    <app-logger></app-logger>
-    <arc-definitions></arc-definitions>
-    <variables-evaluator no-before-request></variables-evaluator>
-    <variables-manager></variables-manager>
-    <request-saver></request-saver>
-    <response-history-saver></response-history-saver>
-    <url-history-saver></url-history-saver>
-    <arc-data-export></arc-data-export>
-    <arc-data-import></arc-data-import>
-    <authorization-data-saver></authorization-data-saver>
-    <project-model></project-model>
-    <rest-api-model></rest-api-model>
-    <host-rules-model></host-rules-model>
-    <request-model></request-model>
-    <file-export></file-export>
-    <electron-drive></electron-drive>
-    <arc-messages-service platform="electron" on-unread-changed="_unreadMessagesChanged" messages="{{appMessages}}"></arc-messages-service>
-    <raml-js-parser json latest-json="{{plainRaml}}"></raml-js-parser>
-    <raml-json-enhance json="[[plainRaml.specification]]" on-raml-json-enhance-ready="_ramlEnhanced" on-error="_ramlEnhanceError"></raml-json-enhance>
   </template>
   <script>
-    Polymer({
-      is: 'arc-electron',
-
-      properties: {
-        // Computed current page title
-        pageTitle: String,
-        // Currently selected request in the request editor
-        selectedRequest: String,
-        // Route data recognized by app location element
+  /**
+   * Main component for ARC electron app.
+   */
+  class ArcElectron extends Polymer.Element {
+    static get is() {return 'arc-electron';}
+    static get properties() {
+      return {
+        /**
+         * A base path to the web componentes. It is used to determine
+         * components location when including parts of the application.
+         */
+        componentsDir: String,
+        /**
+         * Current route data
+         */
         route: Object,
-        // Parsed route data
+        /**
+         * Main route data
+         */
         routeData: Object,
-        // Parsed route data for google drive
-        driveFileRoute: Object,
-        // Application ID for analytics
-        appId: {
-          type: String,
-          value: 'com.mulesoft.arc'
-        },
-        // Current application varsion
-        appVersion: {
-          type: String,
-          value: function() {
-            const {app} = require('electron').remote;
-            return app.getVersion();
-          }
-        },
-        gaCustomMetrics: Array,
-        gaCustomDimensions: Array,
-        // Width of the main navigation drawer.
-        drawerWidth: {
-          type: String,
-          value: '360px',
-          observer: '_drawerWidthChanged'
-        },
-        forceNarrowLayout: {
-          type: Boolean,
-          value: false
-        },
-        narrowLayout: {
-          type: Boolean,
-          value: false
-        },
-
-        _drawerInitTrackWidth: Number,
-        _drawerInitTransition: Number,
-        accessToken: String,
-        // Latest update event data
-        updateState: Array,
         /**
-         * Sets Google Analytics state. If this is not set or falsy, then Google
-         * Analytics is diosabled (element is removed from the DOM).
+         * When true then a source components are being loaded.
          */
-        telemetry: Boolean,
-        // True if application drawer is opened.
-        drawerOpened: Boolean,
-        // True if application update is possible.
-        hasAppUpdate: Boolean,
-        // True to display "new messages" icon in the main nav bar
-        newMessages: Boolean,
-        // List of cached messages from app developer.
-        appMessages: Array,
-        // If true, messages center is opened.
-        messageCenterOpened: Boolean,
-        // Last parsed RAML output from the parser.
-        plainRaml: Object,
-        // Scroll target for the application.
-        scrollTarget: {
-          type: Object,
-          value: function() {
-            return this.$.scrollingRegion.$$('#contentContainer');
-          }
-        },
-        /**
-         * A workspace state file.
-         * To be set to override default location.
-         */
-        workspaceScript: {
-          type: String,
-          reflectToAttribute: true
-        },
-        /**
-         * The settings file location.
-         * To be set to override default location.
-         */
-        settingsScript: {
-          type: String,
-          reflectToAttribute: true
-        },
-        // True when the application has been initialized by the main script
-        _appInitialized: Boolean,
-        // Electron log object
-        log: {
-          type: Object,
-          readOnly: true,
-          value: function() {
-            return require('electron-log');
-          }
-        },
-        // A handler to the workspace object
-        workspace: {
-          type: Object,
-          value: function() {
-            return this.$$('request-workspace');
-          },
-          readOnly: true
-        }
-      },
+        _loadingSources: Boolean
+      };
+    }
 
-      listeners: {
-        navigate: '_navigateHandler',
-        'drawerResizer.track': '_drawerTrack',
-        tap: '_handleLinks',
-        'content-copy': '_copyContentHandler',
-        'google-autorize': '_googleOauthTokenRequested',
-        'process-incoming-data': '_processIcomingDataHandler',
-        'pick-google-drive-item': 'openDrivePicker',
-        'open-drive-selector': 'openDrivePicker',
-        'settings-changed': '_settingChanged',
-        'open-external-url': '_openExternalHandler',
-        'app-version': '_appVersionRequestHandler',
-        'open-variables-editor': '_variablesOpenRequest'
-      },
+    static get observers() {
+      return [
+        '_baseRouteChanged(routeData.base)'
+      ];
+    }
 
-      observers: [
-        '_setupRequestRoute(_appInitialized, requestRoute.*)',
-        '_driveFileRouteChanged(_appInitialized, driveFileRoute.*)',
-        '_notifyRequestPanelResize(narrowLayout)'
-      ],
-
-      detacheded: function() {
-        this.unlisten(document.body, 'display-license', 'openLicense');
-        this._unobserveMainEvents();
-      },
-      /**
-       * Called by the application window main script when all
-       * setup is ready and the application can be initialized.
-       */
-      initApplication: function() {
-        if (this._appInitialized) {
-          return;
-        }
-        this._requestAuthToken(false);
-        this.listen(document.body, 'display-license', 'openLicense');
-        this.async(() => this.setupAnalytics(), 1);
-        this._refreshLayout();
-        const {CookieBridge} = require('./scripts/renderer/cookie-brindge');
-        this.cb = new CookieBridge(require('electron').ipcRenderer);
-        this.cb.listen();
-        this._appInitialized = true;
-        this.initRouting();
-        const {WindowSearchHelper} = require('./scripts/renderer/window-search.js');
-        this.windowSearch = new WindowSearchHelper();
-        this.windowSearch.listen();
-        const {OAuth2Handler} =  require('./scripts/renderer/oauth2-handler.js');
-        this.oa2handler = new OAuth2Handler();
-        this.oa2handler.listen();
-      },
-
-      initRouting: function() {
-        if (!this.route.path) {
-          this.set('route.path', '/request/latest/0');
-        }
-        if (this.route.path.indexOf('/request') !== 0) {
-          this._createMenu();
-        }
-      },
-
-      _createMenu: function() {
-        if (this.$$('arc-menu')) {
-          return;
-        }
-        let container = this.$$('[data-append="arc-menu"]');
-        let menu = document.createElement('arc-menu');
-        menu.restApi = true;
-        container.appendChild(menu);
-      },
-
-      _refreshLayout() {
-        // The window is not whown by the main process unless the content is
-        // ready. Because of that calculations made in the dawer and header
-        // layaouts are wrong (at a time of computations elemets size is 0).
-        // This function forces to recalculate layout.
-        Polymer.RenderStatus.afterNextRender(this, () => {
-          this._drawerWidthChanged(this.drawerWidth);
-          this.$.scrollingRegion._updateContentPosition();
-          this.$.drawerLayout.resetLayout();
-        });
-      },
-
-      _routeDataChanged: function(record) {
-        var params = record && record.base;
-        switch (params.base) {
-          case 'request':
-            return this._setupRequestRoute(this._appInitialized, params);
-        }
-      },
-
-      /**
-       * Reads current settings and enables Google Analytics if it's not
-       * disabled by the uers.
-       */
-      setupAnalytics: function() {
-        var event = this.fire('settings-read', {}, {
-          composed: true,
-          cancelable: true
-        });
-        if (!event.defaultPrevented) {
-          throw new Error('Settings provided not found.');
-        }
-        return event.detail.result.then(settings => {
-          if (settings.telemetry === false) {
-            this._analyticsDisabled();
-          } else {
-            this._analyticsEnabled();
-            this.async(function() {
-              this._telemetryScreen();
-            }, 20);
-          }
-        });
-      },
-      /**
-       * Enables Google Analytics.
-       *
-       * Until settings status is checked Google Analytics components is not
-       * even in the DOM. Once the `telemetry` flag is set analytics elements
-       * are attached to the DOM and start handling events.
-       *
-       * This can be disabled by calling `_analyticsDisabled` or by sending
-       * `settings-changed` custom event with `telemetry` key.
-       */
-      _analyticsEnabled: function() {
-        this.telemetry = true;
-        if (this.gaCustomDimensions) {
-          return;
-        }
-        this.gaCustomDimensions = [];
-        this.push('gaCustomDimensions', {
-          index: 1,
-          value: process.versions.chrome
-        });
-        this.push('gaCustomDimensions', {
-          index: 2,
-          value: this.appVersion
-        });
-        this.push('gaCustomDimensions', {
-          index: 5,
-          value: 'stable'
-        });
-      },
-      // To be called if GA is disabled to remove GA elements from the DOM.
-      _analyticsDisabled: function() {
-        this.telemetry = false;
-        // no need to clean up custom dimensions
-        // since it is removed from DOM anyway.
-      },
-      /**
-       * Handles settings change event.
-       * If changed setting is `telemetry` then it upodates GA state.
-       */
-      _settingChanged: function(e) {
-        // Here we just care about `telemetry`
-        if (e.detail.name !== 'telemetry') {
-          return;
-        }
-        var value = e.detail.value;
-        if (typeof value !== 'boolean') {
-          value = value === 'false' ? false : true;
-        }
-        if (value) {
-          this._analyticsEnabled();
-        } else {
-          this._analyticsDisabled();
-        }
-      },
-
-      _setupRequestRoute: function(initialized, record) {
-        if (!initialized) {
-          return;
-        }
-        var params = record && record.base;
-        if (!params || !params.type) {
-          return;
-        }
-        var id;
-        switch (params.type) {
-          case 'history': id = params.id; break;
-          case 'saved': id = params.id; break;
-          case 'restore':
-          case 'latest':
-          case 'current':
-            this.selectedRequest = undefined;
-            return;
-          case 'drive':
-            this.selectedRequest = undefined;
-            // return this.openDriveItem(params.driveId);
-            return;
-          default:
-            this.selectedRequest = undefined;
-            console.error('ID not handled!', params);
-            throw new Error('ID not handled!');
-        }
-        this.selectedRequest = decodeURIComponent(id);
-      },
-
-      _driveFileRouteChanged: function(initialized, record) {
-        if (!initialized) {
-          return;
-        }
-        var params = record && record.base;
-        if (!params || !params.action || !params.id) {
-          return;
-        }
-        // open and create actions are basically the same...
-        this.openDriveItem(params.id);
-      },
-
-      openDriveItem: function(id) {
-        Polymer.RenderStatus.afterNextRender(this, function() {
-          if (!this.accessToken) {
-            this.addEventListener('oauth-2-token-ready', function clb() {
-              this.removeEventListener('oauth-2-token-ready', clb);
-              this.openDriveItem(id);
-            });
-            return this._requestAuthToken(true);
-          }
-          this.fire('navigate', {
-            base: 'drive'
-          });
-          var picker = Polymer.dom(this.root).querySelector('google-drive-browser');
-          picker._isOpened = true;
-          picker._downloadFile(id);
-        });
-      },
-      /**
-       * Handles opening a file from Google Drive.
-       * Normalizes content to the import object and opens import panel
-       * if the data is import data or a request if import data contains single
-       * request.
-       */
-      _openDriveRequest: function(e) {
-        var opts = {
-          diveId: e.detail.diveId
-        };
-        this._processIcomingData(e.detail.content, opts);
-      },
-
-      _isSingleRequest: function(data) {
-        if (!data.requests || !data.requests.length) {
-          return false;
-        }
-        if (data.requests.length !== 1) {
-          return false;
-        }
-        if (data.projects && data.projects.length === 0) {
-          delete data.projects;
-        }
-        if (data.history && data.history.length === 0) {
-          delete data.history;
-        }
-        if (Object.keys(data).length === 4) {
-          return true;
-        }
-        return false;
-      },
-
-      _processIcomingDataHandler: function(e) {
-        if (e.detail.type === 'json') {
-          this._processIcomingData(e.detail.data);
-        } else if (e.detail.type === 'raml') {
-          this.$.processingRamlToast.opened = true;
-          let parser = this.$$('raml-js-parser');
-          if (e.detail.filesystem) {
-            parser.files = e.detail.filesystem;
-          }
-          parser.loadFiles(e.detail.file);
-        }
-      },
-
-      _ramlEnhanced: function(e) {
-        this.$.processingRamlToast.opened = false;
-        var raml = e.detail.json;
-        this.$$('api-console-panel').raml = raml;
-        this.fire('navigate', {
-          base: 'api-console'
-        });
-      },
-
-      _ramlEnhanceError: function(e) {
-        this.$.processingRamlToast.opened = false;
-        var message = 'Unable to parse JSON data: ' + e.detail.message;
-        this.$.processingRamlErrorToast.text = message;
-        this.$.processingRamlErrorToast.opened = true;
-      },
-
-      _processIcomingData: function(data, opts) {
-        if (!data) {
-          return;
-        }
-        opts = opts || {};
-        var event = this.fire('import-normalize', {
-          content: data
-        }, {
-          cancelable: true
-        });
-        event.detail.result.then(data => {
-          if (this._isSingleRequest(data)) {
-            let obj = data.requests[0];
-            if (opts.diveId) {
-              obj.type = 'google-drive';
-              obj.driveId = opts.diveId;
-            }
-            let panel = Polymer.dom(this.root).querySelector('request-workspace');
-            let tab = panel.fromObject(obj);
-            this.fire('navigate', {
-              base: 'request',
-              type: 'current',
-              id: '0',
-              tab: tab
-            });
-          } else {
-            let panel = Polymer.dom(this.root).querySelector('data-import-export-panel');
-            panel.importObject = data;
-            panel.importPage = 3;
-            this.openImportExport();
-          }
-        })
-        .catch(cause => this.notifyError(cause.message));
-      },
-
-      notifyError: function(message) {
-        this.$.errorToast.text = message;
-        this.$.errorToast.opened = true;
-      },
-
-      _unobserveMainEvents: function() {
-        if (this.cb) {
-          this.cb.unlisten();
-        }
-        if (!this.__ueh) {
-          return;
-        }
-        const ipc = require('electron').ipcRenderer;
-        ipc.removeListener('request-action', this.__rah);
-        ipc.removeListener('command', this.__ch);
-      },
-      /**
-       * Handler for the `navigate` custom event. Updates a route depending on
-       * passed data.
-       *
-       */
-      _navigateHandler: function(e) {
-        var params = e.detail;
-        var url;
-        switch (params.base) {
-          case 'default': url = '/request/latest/0/new'; break;
-          case 'history': url = '/history'; break;
-          case 'settings': url = '/settings'; break;
-          case 'about': url = '/about'; break;
-          case 'socket': url = '/socket'; break;
-          case 'saved': url = '/saved'; break;
-          case 'dataimport': url = '/dataimport'; break;
-          case 'project':
-            if (params.id) {
-              url = '/project/' + params.id;
-            }
+    _baseRouteChanged(base) {
+      let id;
+      let _path;
+      switch (base) {
+        case 'request':
+          id = 'arc-request-workspace';
+          _path = 'arc-request-workspace/arc-request-workspace';
           break;
-          case 'request':
-            let type = params.type || 'latest';
-            let id = params.id || '0';
-            url = '/request/' + type + '/' + encodeURIComponent(id) + '/';
-            if (e.detail.tab !== undefined) {
-              url += e.detail.tab;
-            } else if (type !== 'latest') {
-              url += 'new';
-            }
-          break;
-          case 'drive': url = '/drive'; break;
-          case 'cookie-manager': url = '/cookie-manager'; break;
-          case 'api-console':
-            let acId;
-            if (params.id) {
-              acId = encodeURIComponent(params.id);
-            } else {
-              acId = 'current';
-            }
-            url = '/api-console/' + acId;
-          break;
-          case 'rest-projects': url = '/rest-projects'; break;
-          case 'exchange-search': url = '/exchange-search'; break;
-          case 'hosts-rules': url = '/hosts-rules'; break;
-          case 'themes-panel': url = '/themes-panel'; break;
-        }
-        if (url) {
-          this.set('route.path', url);
-          this._telemetryScreen();
-        } else {
-          this.fire('send-analytics', {
-            type: 'exception',
-            description: 'Route not handled' + JSON.stringify(params),
-            fatal: false
-          });
-          throw new Error('The route is not handled correctly', params);
-        }
-      },
-
-      _telemetryScreen: function() {
-        var screenName = '[unknown]';
-        switch (this.routeData.base) {
-          case 'history': screenName = 'History'; break;
-          case 'settings': screenName = 'Settings'; break;
-          case 'about': screenName = 'About'; break;
-          case 'socket': screenName = 'Socket'; break;
-          case 'saved': screenName = 'Saved'; break;
-          case 'dataimport': screenName = 'Data import / export'; break;
-          case 'project': screenName = 'Project details';  break;
-          case 'default':
-          case 'request': screenName = 'Request panel'; break;
-          case 'drive': screenName = 'Drive selector'; break;
-          case 'cookie-manager': screenName = 'Cookie manager'; break;
-          case 'api-console':  screenName = 'API Console'; break;
-          case 'rest-projects': screenName = 'REST APIs list'; break;
-          case 'exchange-search': screenName = 'Exchange search'; break;
-          case 'hosts-rules': screenName = 'Hosts rules'; break;
-          case 'themes-panel': screenName = 'Themes panel'; break;
-        }
-        this.fire('send-analytics', {
-          type: 'screenview',
-          name: screenName
-        });
-      },
-
-      toggleDrawer: function() {
-        if (this.forceNarrowLayout && this.narrowLayout) {
-          this.drawerOpened = !this.drawerOpened;
-          return;
-        }
-        if (this.narrowLayout && !this.forceNarrowLayout) {
-          this.drawerOpened = !this.drawerOpened;
-          return;
-        }
-        this.forceNarrowLayout = !this.forceNarrowLayout;
-      },
-
-      _computePinDrawerClass: function(forceNarrowLayout, narrowLayout, drawerOpened) {
-        var clazz = 'drawer-pin';
-        if (forceNarrowLayout && narrowLayout && drawerOpened) {
-          clazz += ' visible';
-        }
-        return clazz;
-      },
-
-      openAbout: function() {
-        this.fire('navigate', {
-          base: 'about'
-        });
-      },
-
-      openDrivePicker: function() {
-        this.fire('navigate', {
-          base: 'drive'
-        });
-      },
-
-      // Pin drawer back to the app.
-      _pinDrawer: function() {
-        this.forceNarrowLayout = false;
-      },
-      /**
-       * Opens the import / export panel
-       */
-      openImportExport: function() {
-        this.fire('navigate', {
-          base: 'dataimport'
-        });
-      },
-      /**
-       * Opens the settings panel.
-       */
-      openSettings: function() {
-        this.fire('navigate', {
-          base: 'settings'
-        });
-      },
-
-      /**
-       * Opens the host rules editor.
-       */
-      openHostRules: function() {
-        this.fire('navigate', {
-          base: 'hosts-rules'
-        });
-      },
-
-      openLicense: function() {
-        var dialog = Polymer.dom(this.root).querySelector('arc-license-dialog');
-        dialog.opened = true;
-      },
-
-      _drawerTrack: function(e) {
-        switch (e.detail.state) {
-          case 'start':
-            this.__drawerTrackStart();
-          break;
-          case 'track':
-            this.__drawerTrack(e.detail);
-          break;
-          case 'end':
-            this.__drawerTrackEnd(e.detail);
-          break;
-        }
-      },
-
-      __drawerTrackStart: function() {
-        var content = this.$.mainDrawer.$.contentContainer;
-        this._drawerInitTransition = getComputedStyle(content).getPropertyValue('transition');
-        content.style.transition = 'left ease-in-out 0.01s';
-        this._drawerInitTrackWidth = Number(this.drawerWidth.replace('px', ''));
-        if (this.forceNarrowLayout) {
-          this.forceNarrowLayout = false;
-          this.drawerOpened = true;
-        }
-      },
-
-      __drawerTrack: function(detail) {
-        var newWidth = this._drawerInitTrackWidth + detail.dx;
-        if (newWidth <= 10) {
-          newWidth = 10;
-        }
-        this.drawerWidth = newWidth + 'px';
-        // this.$.paperDrawerPanel.$.main.style.transition = 'left ease-in-out 0.01s';
-      },
-
-      __drawerTrackEnd: function(detail) {
-        var content = this.$.mainDrawer.$.contentContainer;
-        content.style.transition = this._drawerInitTransition;
-        var newWidth = this._drawerInitTrackWidth + detail.dx;
-        if (newWidth <= 10) {
-          newWidth = 10;
-        }
-        this.drawerWidth = newWidth + 'px';
-        this._drawerInitTrackWidth = undefined;
-        this._drawerInitTransition = undefined;
-      },
-
-      _drawerWidthChanged: function(width) {
-        if (!width) {
-          return;
-        }
-        this.customStyle['--app-drawer-width'] = width;
-        this.customStyle['--request-panel-status-bar-left'] = width;
-        this.updateStyles();
-        this.$.drawerLayout.resetLayout();
-      },
-
-      _handleLinks: function(e) {
-        var target = e.path[0];
-        if (!target) {
-          return;
-        }
-        if (target.nodeName !== 'A') {
-          return;
-        }
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        const shell = require('electron').remote.shell;
-        shell.openExternal(target.href);
-      },
-
-      _openExternalHandler: function(e) {
-        e.preventDefault();
-        const shell = require('electron').remote.shell;
-        shell.openExternal(e.detail.url);
-      },
-
-      onNewWindow: function() {
-        const ipc = require('electron').ipcRenderer;
-        ipc.send('new-window');
-      },
-
-      openLogs: function() {
-        const ipc = require('electron').ipcRenderer;
-        ipc.send('toggle-devtools');
-      },
-
-      openImport: function() {
-        this.fire('navigate', {
-          base: 'dataimport'
-        });
-        var panel = this.$$('data-import-export-panel');
-        panel.hideExport = true;
-        panel.hideImport = false;
-      },
-
-      openExport: function() {
-        this.fire('navigate', {
-          base: 'dataimport'
-        });
-        var panel = this.$$('data-import-export-panel');
-        panel.hideExport = false;
-        panel.hideImport = true;
-      },
-
-      openSaved: function() {
-        this.fire('navigate', {
-          base: 'saved'
-        });
-      },
-
-      openHistory: function() {
-        this.fire('navigate', {
-          base: 'history'
-        });
-      },
-
-      _copyContentHandler: function(e) {
-        const {clipboard} = require('electron');
-        clipboard.writeText(e.detail.value);
-        e.preventDefault();
-      },
-      /**
-       * Saves currently opened requests.
-       *
-       * @param {?Object} opts Optional options object. It can contain `source`
-       * property with value of `shortcut` to indicate that the shortcut was
-       * used and the app can automatically save current request
-       */
-      saveOpened: function(opts) {
-        if (this.routeData.base !== 'request') {
-          return;
-        }
-        this.$$('request-workspace').saveOpened(opts);
-      },
-      /**
-       * Opens new tab in the request workspace.
-       */
-      newRequestTab: function() {
-        if (this.routeData.base !== 'request') {
-          return;
-        }
-        const workspace = this.$$('request-workspace');
-        const index = workspace.appendPanel();
-        workspace.selected = index;
-      },
-      /**
-       * Sends currently opened request.
-       */
-      sendCurrentTab: function() {
-        if (this.routeData.base !== 'request') {
-          return;
-        }
-        this.$$('request-workspace').sendCurrent();
-      },
-
-      _googleOauthTokenRequested: function(e) {
-        const scope = e.detail.scope.split(' ');
-        this._requestAuthToken(true, scope);
-      },
-
-      _requestAuthToken: function(interactive, scope) {
-        if (this.__requestingToken) {
-          return;
-        }
-        this.__requestingToken = true;
-        let ipc = require('electron').ipcRenderer;
-        ipc.send('oauth-2-get-token', {
-          interactive: interactive,
-          scopes: scope
-        });
-        const context = this;
-        let rejected;
-        function resolved(sender, token) {
-          let tokenValue = token ? token.accessToken : undefined;
-          context.__requestingToken = false;
-          ipc.removeListener('oauth-2-token-ready', resolved);
-          ipc.removeListener('oauth-2-token-error', rejected);
-          context.fire('google-signin-success', {
-            scope: scope,
-            token: tokenValue
-          });
-          context.accessToken = tokenValue;
-          ipc = null;
-        }
-        rejected = function() {
-          context.__requestingToken = false;
-          ipc.removeListener('oauth-2-token-ready', resolved);
-          ipc.removeListener('oauth-2-token-error', rejected);
-          context.fire('google-signout', {
-            scope: scope
-          });
-          ipc = null;
-        };
-        ipc.on('oauth-2-token-ready', resolved);
-        ipc.on('oauth-2-token-error', rejected);
-      },
-
-      _appVersionRequestHandler: function(e) {
-        e.detail.version = this.appVersion;
-      },
-
-      updateInstall: function() {
-        const ipc = require('electron').ipcRenderer;
-        ipc.send('install-update');
-      },
-
-      _notifyRequestPanelResize: function(narrowLayout) {
-        const width = narrowLayout ? 0 : this.drawerWidth;
-        this.customStyle['--request-panel-status-bar-left'] = width;
-        this.updateStyles();
-      },
-      /**
-       * Sets `newMessages` propert depending if messaging service detected
-       * new messages.
-       */
-      _unreadMessagesChanged: function(e) {
-        const state = !!(e.detail.value && e.detail.value.length > 0);
-        this.set('newMessages', state);
-      },
-      /**
-       * Opens the info center drawwer.
-       */
-      openInfoCenter: function() {
-        this.messageCenterOpened = !this.messageCenterOpened;
-        if (this.messageCenterOpened) {
-          const service = Polymer.dom(this.root).querySelector('arc-messages-service');
-          service.readMessages();
-          window.setTimeout(function() {
-            service.unread.forEach((item, i) => {
-              service.set(['unread', i, 'read'], 1);
-            });
-          }, 4000);
-        }
-      },
-      /**
-       * Closes the info center drawwer.
-       */
-      closeInfoCenter: function() {
-        this.messageCenterOpened = false;
-      },
-
-      openWebUrl: function() {
-        this.$.webUrlInput.opened = true;
-      },
-
-      _openWebUrlHandler: function(e) {
-        var ipc = require('electron').ipcRenderer;
-        ipc.send('open-web-url', e.detail.url, e.detail.purpose);
-      },
-      // Navigate to the cookie manager
-      openCookieManager: function() {
-        this.fire('navigate', {
-          base: 'cookie-manager'
-        });
-      },
-
-      openExchangeSearch: function() {
-        this.fire('navigate', {
-          base: 'exchange-search'
-        });
-      },
-
-      openThemesPanel: function() {
-        this.fire('navigate', {
-          base: 'themes-panel'
-        });
-      },
-
-      _variablesOpenRequest: function(e) {
-        e.stopPropagation();
-        this.$.environmentsDrawer.opened = true;
-      },
-      /**
-       * Updates a request object in this window for a specific tab.
-       *
-       * @param {Object} request ARC request obejct
-       * @param {?Number} tab Tab index to update. If not provided (or not a number)
-       * it uses current active tab.
-       */
-      updateRequestTab: function(request, tab) {
-        this.log.info('Updating request object...');
-        const workspace = this.workspace;
-        if (!workspace) {
-          throw new Error('Workspace is not ready.');
-        }
-        if (typeof tab !== 'number') {
-          this.log.info('Tab not provided. Using current selection...');
-          tab = workspace.selected;
-        }
-
-        if (!workspace.activeRequests[tab]) {
-          this.log.error('Trying to update tab request but the tab does not exists.', tab);
-          throw new Error('Requested tab does not exists.');
-        }
-        this.log.info('Updating request object on tab', tab);
-        workspace.set(['activeRequests', tab], request);
-      },
-      /**
-       * Returns number of currently opened tabs
-       *
-       * @return {Number} Number of opened tabs in request workspace.
-       */
-      getTabsCount: function() {
-        const workspace = this.workspace;
-        if (!workspace || !workspace.activeRequests) {
-          return 0;
-        }
-        return workspace.activeRequests.length;
-      },
-      /**
-       * Closes a tab by given local index.
-       *
-       * @param {String|Number} index Local index assigned to each
-       * `activeRequests` in the workspace.
-       */
-      closeRequestTabByLocal: function(index) {
-        index = Number(index);
-        this.log.info('Closing tab by local id', index);
-        const workspace = this.workspace;
-        if (!workspace) {
-          throw new Error('Workspace is not ready.');
-        }
-        const itemIndex = workspace.activeRequests
-          .findIndex((item) => item.localIndex === index);
-        if (itemIndex === -1) {
-          return;
-        }
-        workspace.splice('activeRequests', itemIndex, 1);
-        if (workspace.activeRequests.length === 0) {
-          Polymer.RenderStatus.afterNextRender(this, function() {
-            workspace.appendPanel();
-            workspace.selected = 0;
-          });
-        } else if (itemIndex !== 0) {
-          workspace.selected = itemIndex - 1;
-        }
-      },
-      /**
-       * Closes all opened tabs.
-       */
-      closeAllRequestTabs: function() {
-        this.log.info('Closing all tabs');
-        const workspace = this.workspace;
-        if (!workspace) {
-          throw new Error('Workspace is not ready.');
-        }
-        workspace.set('activeRequests', []);
-        Polymer.RenderStatus.afterNextRender(this, function() {
-          workspace.appendPanel();
-          workspace.selected = 0;
-        });
-      },
-
-      closeOtherRequestTabs: function(index) {
-        index = Number(index);
-        this.log.info('Closing tab by local id', index);
-        const workspace = this.workspace;
-        if (!workspace) {
-          throw new Error('Workspace is not ready.');
-        }
-        const active = workspace.activeRequests;
-        for (let i = active.length - 1; i >= 0; i--) {
-          if (active[i].localIndex !== index) {
-            workspace.splice('activeRequests', i, 1);
-          }
-        }
-        workspace.selected = 0;
       }
-    });
+      if (!id) {
+        console.error(`The base route ${base} is not recognized`);
+        return;
+      }
+      const cls = customElements.get(id);
+      if (cls) {
+        return;
+      }
+      const componentUrl = `${this.componentsDir}/${_path}.html`;
+      this._loadingSources = true;
+      Polymer.importHref(componentUrl, () => {
+        this._loadingSources = false;
+      }, () => {
+        this._loadingSources = false;
+        this._reportComponentLoadingError(componentUrl);
+      }, true);
+    }
+
+    initApplication() {
+
+    }
+
+    _reportComponentLoadingError(url) {
+      console.error(`Unable to load component ${url}`);
+    }
+  }
+  window.customElements.define(ArcElectron.is, ArcElectron);
+    // Polymer({
+    //   is: 'arc-electron',
+    //
+    //   properties: {
+    //     // Currently selected request in the request editor
+    //     selectedRequest: String,
+    //     // Route data recognized by app location element
+    //     route: Object,
+    //     // Parsed route data
+    //     routeData: Object,
+    //     // Parsed route data for google drive
+    //     driveFileRoute: Object,
+    //     // Application ID for analytics
+    //     appId: {
+    //       type: String,
+    //       value: 'com.mulesoft.arc'
+    //     },
+    //     // Current application varsion
+    //     appVersion: {
+    //       type: String,
+    //       value: function() {
+    //         const {app} = require('electron').remote;
+    //         return app.getVersion();
+    //       }
+    //     },
+    //     gaCustomMetrics: Array,
+    //     gaCustomDimensions: Array,
+    //     // Width of the main navigation drawer.
+    //     drawerWidth: {
+    //       type: String,
+    //       value: '360px',
+    //       observer: '_drawerWidthChanged'
+    //     },
+    //     forceNarrowLayout: {
+    //       type: Boolean,
+    //       value: false
+    //     },
+    //     narrowLayout: {
+    //       type: Boolean,
+    //       value: false
+    //     },
+    //
+    //     _drawerInitTrackWidth: Number,
+    //     _drawerInitTransition: Number,
+    //     accessToken: String,
+    //     // Latest update event data
+    //     updateState: Array,
+    //     /**
+    //      * Sets Google Analytics state. If this is not set or falsy, then Google
+    //      * Analytics is diosabled (element is removed from the DOM).
+    //      */
+    //     telemetry: Boolean,
+    //     // True if application drawer is opened.
+    //     drawerOpened: Boolean,
+    //     // True if application update is possible.
+    //     hasAppUpdate: Boolean,
+    //     // True to display "new messages" icon in the main nav bar
+    //     newMessages: Boolean,
+    //     // List of cached messages from app developer.
+    //     appMessages: Array,
+    //     // If true, messages center is opened.
+    //     messageCenterOpened: Boolean,
+    //     // Last parsed RAML output from the parser.
+    //     plainRaml: Object,
+    //     // Scroll target for the application.
+    //     scrollTarget: {
+    //       type: Object,
+    //       value: function() {
+    //         return this.$.scrollingRegion.$$('#contentContainer');
+    //       }
+    //     },
+    //     /**
+    //      * A workspace state file.
+    //      * To be set to override default location.
+    //      */
+    //     workspaceScript: {
+    //       type: String,
+    //       reflectToAttribute: true
+    //     },
+    //     /**
+    //      * The settings file location.
+    //      * To be set to override default location.
+    //      */
+    //     settingsScript: {
+    //       type: String,
+    //       reflectToAttribute: true
+    //     },
+    //     // True when the application has been initialized by the main script
+    //     _appInitialized: Boolean,
+    //     // Electron log object
+    //     log: {
+    //       type: Object,
+    //       readOnly: true,
+    //       value: function() {
+    //         return require('electron-log');
+    //       }
+    //     },
+    //     // A handler to the workspace object
+    //     workspace: {
+    //       type: Object,
+    //       value: function() {
+    //         return this.$$('request-workspace');
+    //       },
+    //       readOnly: true
+    //     }
+    //   },
+    //
+    //   listeners: {
+    //     navigate: '_navigateHandler',
+    //     'drawerResizer.track': '_drawerTrack',
+    //     tap: '_handleLinks',
+    //     'content-copy': '_copyContentHandler',
+    //     'google-autorize': '_googleOauthTokenRequested',
+    //     'process-incoming-data': '_processIcomingDataHandler',
+    //     'pick-google-drive-item': 'openDrivePicker',
+    //     'open-drive-selector': 'openDrivePicker',
+    //     'settings-changed': '_settingChanged',
+    //     'open-external-url': '_openExternalHandler',
+    //     'app-version': '_appVersionRequestHandler',
+    //     'open-variables-editor': '_variablesOpenRequest'
+    //   },
+    //
+    //   observers: [
+    //     '_driveFileRouteChanged(_appInitialized, driveFileRoute.*)',
+    //     '_notifyRequestPanelResize(narrowLayout)'
+    //   ],
+    //
+    //   detacheded: function() {
+    //     this.unlisten(document.body, 'display-license', 'openLicense');
+    //     this._unobserveMainEvents();
+    //   },
+    //   /**
+    //    * Called by the application window main script when all
+    //    * setup is ready and the application can be initialized.
+    //    */
+    //   initApplication: function() {
+    //     if (this._appInitialized) {
+    //       return;
+    //     }
+    //     this._requestAuthToken(false);
+    //     this.listen(document.body, 'display-license', 'openLicense');
+    //     this.async(() => this.setupAnalytics(), 1);
+    //     this._refreshLayout();
+    //     const {CookieBridge} = require('./scripts/renderer/cookie-brindge');
+    //     this.cb = new CookieBridge(require('electron').ipcRenderer);
+    //     this.cb.listen();
+    //     this._appInitialized = true;
+    //     this.initRouting();
+    //     const {WindowSearchHelper} = require('./scripts/renderer/window-search.js');
+    //     this.windowSearch = new WindowSearchHelper();
+    //     this.windowSearch.listen();
+    //     const {OAuth2Handler} =  require('./scripts/renderer/oauth2-handler.js');
+    //     this.oa2handler = new OAuth2Handler();
+    //     this.oa2handler.listen();
+    //   },
+    //
+    //   initRouting: function() {
+    //     if (!this.route.path) {
+    //       this.set('route.path', '/request/latest/0');
+    //     }
+    //     if (this.route.path.indexOf('/request') !== 0) {
+    //       this._createMenu();
+    //     }
+    //   },
+    //
+    //   _createMenu: function() {
+    //     if (this.$$('arc-menu')) {
+    //       return;
+    //     }
+    //     let container = this.$$('[data-append="arc-menu"]');
+    //     let menu = document.createElement('arc-menu');
+    //     menu.restApi = true;
+    //     container.appendChild(menu);
+    //   },
+    //
+    //   _refreshLayout() {
+    //     // The window is not whown by the main process unless the content is
+    //     // ready. Because of that calculations made in the dawer and header
+    //     // layaouts are wrong (at a time of computations elemets size is 0).
+    //     // This function forces to recalculate layout.
+    //     Polymer.RenderStatus.afterNextRender(this, () => {
+    //       this._drawerWidthChanged(this.drawerWidth);
+    //       this.$.scrollingRegion._updateContentPosition();
+    //       this.$.drawerLayout.resetLayout();
+    //     });
+    //   },
+    //
+    //   /**
+    //    * Reads current settings and enables Google Analytics if it's not
+    //    * disabled by the uers.
+    //    */
+    //   setupAnalytics: function() {
+    //     var event = this.fire('settings-read', {}, {
+    //       composed: true,
+    //       cancelable: true
+    //     });
+    //     if (!event.defaultPrevented) {
+    //       throw new Error('Settings provided not found.');
+    //     }
+    //     return event.detail.result.then(settings => {
+    //       if (settings.telemetry === false) {
+    //         this._analyticsDisabled();
+    //       } else {
+    //         this._analyticsEnabled();
+    //         this.async(function() {
+    //           this._telemetryScreen();
+    //         }, 20);
+    //       }
+    //     });
+    //   },
+    //   /**
+    //    * Enables Google Analytics.
+    //    *
+    //    * Until settings status is checked Google Analytics components is not
+    //    * even in the DOM. Once the `telemetry` flag is set analytics elements
+    //    * are attached to the DOM and start handling events.
+    //    *
+    //    * This can be disabled by calling `_analyticsDisabled` or by sending
+    //    * `settings-changed` custom event with `telemetry` key.
+    //    */
+    //   _analyticsEnabled: function() {
+    //     this.telemetry = true;
+    //     if (this.gaCustomDimensions) {
+    //       return;
+    //     }
+    //     this.gaCustomDimensions = [];
+    //     this.push('gaCustomDimensions', {
+    //       index: 1,
+    //       value: process.versions.chrome
+    //     });
+    //     this.push('gaCustomDimensions', {
+    //       index: 2,
+    //       value: this.appVersion
+    //     });
+    //     this.push('gaCustomDimensions', {
+    //       index: 5,
+    //       value: 'stable'
+    //     });
+    //   },
+    //   // To be called if GA is disabled to remove GA elements from the DOM.
+    //   _analyticsDisabled: function() {
+    //     this.telemetry = false;
+    //     // no need to clean up custom dimensions
+    //     // since it is removed from DOM anyway.
+    //   },
+    //   /**
+    //    * Handles settings change event.
+    //    * If changed setting is `telemetry` then it upodates GA state.
+    //    */
+    //   _settingChanged: function(e) {
+    //     // Here we just care about `telemetry`
+    //     if (e.detail.name !== 'telemetry') {
+    //       return;
+    //     }
+    //     var value = e.detail.value;
+    //     if (typeof value !== 'boolean') {
+    //       value = value === 'false' ? false : true;
+    //     }
+    //     if (value) {
+    //       this._analyticsEnabled();
+    //     } else {
+    //       this._analyticsDisabled();
+    //     }
+    //   },
+    //
+    //   _driveFileRouteChanged: function(initialized, record) {
+    //     if (!initialized) {
+    //       return;
+    //     }
+    //     var params = record && record.base;
+    //     if (!params || !params.action || !params.id) {
+    //       return;
+    //     }
+    //     // open and create actions are basically the same...
+    //     this.openDriveItem(params.id);
+    //   },
+    //
+    //   openDriveItem: function(id) {
+    //     Polymer.RenderStatus.afterNextRender(this, function() {
+    //       if (!this.accessToken) {
+    //         this.addEventListener('oauth-2-token-ready', function clb() {
+    //           this.removeEventListener('oauth-2-token-ready', clb);
+    //           this.openDriveItem(id);
+    //         });
+    //         return this._requestAuthToken(true);
+    //       }
+    //       this.fire('navigate', {
+    //         base: 'drive'
+    //       });
+    //       var picker = Polymer.dom(this.root).querySelector('google-drive-browser');
+    //       picker._isOpened = true;
+    //       picker._downloadFile(id);
+    //     });
+    //   },
+    //   /**
+    //    * Handles opening a file from Google Drive.
+    //    * Normalizes content to the import object and opens import panel
+    //    * if the data is import data or a request if import data contains single
+    //    * request.
+    //    */
+    //   _openDriveRequest: function(e) {
+    //     var opts = {
+    //       diveId: e.detail.diveId
+    //     };
+    //     this._processIcomingData(e.detail.content, opts);
+    //   },
+    //
+    //   _isSingleRequest: function(data) {
+    //     if (!data.requests || !data.requests.length) {
+    //       return false;
+    //     }
+    //     if (data.requests.length !== 1) {
+    //       return false;
+    //     }
+    //     if (data.projects && data.projects.length === 0) {
+    //       delete data.projects;
+    //     }
+    //     if (data.history && data.history.length === 0) {
+    //       delete data.history;
+    //     }
+    //     if (Object.keys(data).length === 4) {
+    //       return true;
+    //     }
+    //     return false;
+    //   },
+    //
+    //   _processIcomingDataHandler: function(e) {
+    //     if (e.detail.type === 'json') {
+    //       this._processIcomingData(e.detail.data);
+    //     } else if (e.detail.type === 'raml') {
+    //       this.$.processingRamlToast.opened = true;
+    //       let parser = this.$$('raml-js-parser');
+    //       if (e.detail.filesystem) {
+    //         parser.files = e.detail.filesystem;
+    //       }
+    //       parser.loadFiles(e.detail.file);
+    //     }
+    //   },
+    //
+    //   _ramlEnhanced: function(e) {
+    //     this.$.processingRamlToast.opened = false;
+    //     var raml = e.detail.json;
+    //     this.$$('api-console-panel').raml = raml;
+    //     this.fire('navigate', {
+    //       base: 'api-console'
+    //     });
+    //   },
+    //
+    //   _ramlEnhanceError: function(e) {
+    //     this.$.processingRamlToast.opened = false;
+    //     var message = 'Unable to parse JSON data: ' + e.detail.message;
+    //     this.$.processingRamlErrorToast.text = message;
+    //     this.$.processingRamlErrorToast.opened = true;
+    //   },
+    //
+    //   _processIcomingData: function(data, opts) {
+    //     if (!data) {
+    //       return;
+    //     }
+    //     opts = opts || {};
+    //     var event = this.fire('import-normalize', {
+    //       content: data
+    //     }, {
+    //       cancelable: true
+    //     });
+    //     event.detail.result.then(data => {
+    //       if (this._isSingleRequest(data)) {
+    //         let obj = data.requests[0];
+    //         if (opts.diveId) {
+    //           obj.type = 'google-drive';
+    //           obj.driveId = opts.diveId;
+    //         }
+    //         let panel = Polymer.dom(this.root).querySelector('request-workspace');
+    //         let tab = panel.fromObject(obj);
+    //         this.fire('navigate', {
+    //           base: 'request',
+    //           type: 'current',
+    //           id: '0',
+    //           tab: tab
+    //         });
+    //       } else {
+    //         let panel = Polymer.dom(this.root).querySelector('data-import-export-panel');
+    //         panel.importObject = data;
+    //         panel.importPage = 3;
+    //         this.openImportExport();
+    //       }
+    //     })
+    //     .catch(cause => this.notifyError(cause.message));
+    //   },
+    //
+    //   notifyError: function(message) {
+    //     this.$.errorToast.text = message;
+    //     this.$.errorToast.opened = true;
+    //   },
+    //
+    //   _unobserveMainEvents: function() {
+    //     if (this.cb) {
+    //       this.cb.unlisten();
+    //     }
+    //     if (!this.__ueh) {
+    //       return;
+    //     }
+    //     const ipc = require('electron').ipcRenderer;
+    //     ipc.removeListener('request-action', this.__rah);
+    //     ipc.removeListener('command', this.__ch);
+    //   },
+    //   /**
+    //    * Handler for the `navigate` custom event. Updates a route depending on
+    //    * passed data.
+    //    *
+    //    */
+    //   _navigateHandler: function(e) {
+    //     var params = e.detail;
+    //     var url;
+    //     switch (params.base) {
+    //       case 'default': url = '/request/latest/0/new'; break;
+    //       case 'history': url = '/history'; break;
+    //       case 'settings': url = '/settings'; break;
+    //       case 'about': url = '/about'; break;
+    //       case 'socket': url = '/socket'; break;
+    //       case 'saved': url = '/saved'; break;
+    //       case 'dataimport': url = '/dataimport'; break;
+    //       case 'project':
+    //         if (params.id) {
+    //           url = '/project/' + params.id;
+    //         }
+    //       break;
+    //       case 'request':
+    //         let type = params.type || 'latest';
+    //         let id = params.id || '0';
+    //         url = '/request/' + type + '/' + encodeURIComponent(id) + '/';
+    //         if (e.detail.tab !== undefined) {
+    //           url += e.detail.tab;
+    //         } else if (type !== 'latest') {
+    //           url += 'new';
+    //         }
+    //       break;
+    //       case 'drive': url = '/drive'; break;
+    //       case 'cookie-manager': url = '/cookie-manager'; break;
+    //       case 'api-console':
+    //         let acId;
+    //         if (params.id) {
+    //           acId = encodeURIComponent(params.id);
+    //         } else {
+    //           acId = 'current';
+    //         }
+    //         url = '/api-console/' + acId;
+    //       break;
+    //       case 'rest-projects': url = '/rest-projects'; break;
+    //       case 'exchange-search': url = '/exchange-search'; break;
+    //       case 'hosts-rules': url = '/hosts-rules'; break;
+    //       case 'themes-panel': url = '/themes-panel'; break;
+    //     }
+    //     if (url) {
+    //       this.set('route.path', url);
+    //       this._telemetryScreen();
+    //     } else {
+    //       this.fire('send-analytics', {
+    //         type: 'exception',
+    //         description: 'Route not handled' + JSON.stringify(params),
+    //         fatal: false
+    //       });
+    //       throw new Error('The route is not handled correctly', params);
+    //     }
+    //   },
+    //
+    //   _telemetryScreen: function() {
+    //     var screenName = '[unknown]';
+    //     switch (this.routeData.base) {
+    //       case 'history': screenName = 'History'; break;
+    //       case 'settings': screenName = 'Settings'; break;
+    //       case 'about': screenName = 'About'; break;
+    //       case 'socket': screenName = 'Socket'; break;
+    //       case 'saved': screenName = 'Saved'; break;
+    //       case 'dataimport': screenName = 'Data import / export'; break;
+    //       case 'project': screenName = 'Project details';  break;
+    //       case 'default':
+    //       case 'request': screenName = 'Request panel'; break;
+    //       case 'drive': screenName = 'Drive selector'; break;
+    //       case 'cookie-manager': screenName = 'Cookie manager'; break;
+    //       case 'api-console':  screenName = 'API Console'; break;
+    //       case 'rest-projects': screenName = 'REST APIs list'; break;
+    //       case 'exchange-search': screenName = 'Exchange search'; break;
+    //       case 'hosts-rules': screenName = 'Hosts rules'; break;
+    //       case 'themes-panel': screenName = 'Themes panel'; break;
+    //     }
+    //     this.fire('send-analytics', {
+    //       type: 'screenview',
+    //       name: screenName
+    //     });
+    //   },
+    //
+    //   toggleDrawer: function() {
+    //     if (this.forceNarrowLayout && this.narrowLayout) {
+    //       this.drawerOpened = !this.drawerOpened;
+    //       return;
+    //     }
+    //     if (this.narrowLayout && !this.forceNarrowLayout) {
+    //       this.drawerOpened = !this.drawerOpened;
+    //       return;
+    //     }
+    //     this.forceNarrowLayout = !this.forceNarrowLayout;
+    //   },
+    //
+    //   _computePinDrawerClass: function(forceNarrowLayout, narrowLayout, drawerOpened) {
+    //     var clazz = 'drawer-pin';
+    //     if (forceNarrowLayout && narrowLayout && drawerOpened) {
+    //       clazz += ' visible';
+    //     }
+    //     return clazz;
+    //   },
+    //
+    //   openAbout: function() {
+    //     this.fire('navigate', {
+    //       base: 'about'
+    //     });
+    //   },
+    //
+    //   openDrivePicker: function() {
+    //     this.fire('navigate', {
+    //       base: 'drive'
+    //     });
+    //   },
+    //
+    //   // Pin drawer back to the app.
+    //   _pinDrawer: function() {
+    //     this.forceNarrowLayout = false;
+    //   },
+    //   /**
+    //    * Opens the import / export panel
+    //    */
+    //   openImportExport: function() {
+    //     this.fire('navigate', {
+    //       base: 'dataimport'
+    //     });
+    //   },
+    //   /**
+    //    * Opens the settings panel.
+    //    */
+    //   openSettings: function() {
+    //     this.fire('navigate', {
+    //       base: 'settings'
+    //     });
+    //   },
+    //
+    //   /**
+    //    * Opens the host rules editor.
+    //    */
+    //   openHostRules: function() {
+    //     this.fire('navigate', {
+    //       base: 'hosts-rules'
+    //     });
+    //   },
+    //
+    //   openLicense: function() {
+    //     var dialog = Polymer.dom(this.root).querySelector('arc-license-dialog');
+    //     dialog.opened = true;
+    //   },
+    //
+    //   _drawerTrack: function(e) {
+    //     switch (e.detail.state) {
+    //       case 'start':
+    //         this.__drawerTrackStart();
+    //       break;
+    //       case 'track':
+    //         this.__drawerTrack(e.detail);
+    //       break;
+    //       case 'end':
+    //         this.__drawerTrackEnd(e.detail);
+    //       break;
+    //     }
+    //   },
+    //
+    //   __drawerTrackStart: function() {
+    //     var content = this.$.mainDrawer.$.contentContainer;
+    //     this._drawerInitTransition = getComputedStyle(content).getPropertyValue('transition');
+    //     content.style.transition = 'left ease-in-out 0.01s';
+    //     this._drawerInitTrackWidth = Number(this.drawerWidth.replace('px', ''));
+    //     if (this.forceNarrowLayout) {
+    //       this.forceNarrowLayout = false;
+    //       this.drawerOpened = true;
+    //     }
+    //   },
+    //
+    //   __drawerTrack: function(detail) {
+    //     var newWidth = this._drawerInitTrackWidth + detail.dx;
+    //     if (newWidth <= 10) {
+    //       newWidth = 10;
+    //     }
+    //     this.drawerWidth = newWidth + 'px';
+    //     // this.$.paperDrawerPanel.$.main.style.transition = 'left ease-in-out 0.01s';
+    //   },
+    //
+    //   __drawerTrackEnd: function(detail) {
+    //     var content = this.$.mainDrawer.$.contentContainer;
+    //     content.style.transition = this._drawerInitTransition;
+    //     var newWidth = this._drawerInitTrackWidth + detail.dx;
+    //     if (newWidth <= 10) {
+    //       newWidth = 10;
+    //     }
+    //     this.drawerWidth = newWidth + 'px';
+    //     this._drawerInitTrackWidth = undefined;
+    //     this._drawerInitTransition = undefined;
+    //   },
+    //
+    //   _drawerWidthChanged: function(width) {
+    //     if (!width) {
+    //       return;
+    //     }
+    //     this.customStyle['--app-drawer-width'] = width;
+    //     this.customStyle['--request-panel-status-bar-left'] = width;
+    //     this.updateStyles();
+    //     this.$.drawerLayout.resetLayout();
+    //   },
+    //
+    //   _handleLinks: function(e) {
+    //     var target = e.path[0];
+    //     if (!target) {
+    //       return;
+    //     }
+    //     if (target.nodeName !== 'A') {
+    //       return;
+    //     }
+    //     e.preventDefault();
+    //     e.stopPropagation();
+    //     e.stopImmediatePropagation();
+    //     const shell = require('electron').remote.shell;
+    //     shell.openExternal(target.href);
+    //   },
+    //
+    //   _openExternalHandler: function(e) {
+    //     e.preventDefault();
+    //     const shell = require('electron').remote.shell;
+    //     shell.openExternal(e.detail.url);
+    //   },
+    //
+    //   onNewWindow: function() {
+    //     const ipc = require('electron').ipcRenderer;
+    //     ipc.send('new-window');
+    //   },
+    //
+    //   openLogs: function() {
+    //     const ipc = require('electron').ipcRenderer;
+    //     ipc.send('toggle-devtools');
+    //   },
+    //
+    //   openImport: function() {
+    //     this.fire('navigate', {
+    //       base: 'dataimport'
+    //     });
+    //     var panel = this.$$('data-import-export-panel');
+    //     panel.hideExport = true;
+    //     panel.hideImport = false;
+    //   },
+    //
+    //   openExport: function() {
+    //     this.fire('navigate', {
+    //       base: 'dataimport'
+    //     });
+    //     var panel = this.$$('data-import-export-panel');
+    //     panel.hideExport = false;
+    //     panel.hideImport = true;
+    //   },
+    //
+    //   openSaved: function() {
+    //     this.fire('navigate', {
+    //       base: 'saved'
+    //     });
+    //   },
+    //
+    //   openHistory: function() {
+    //     this.fire('navigate', {
+    //       base: 'history'
+    //     });
+    //   },
+    //
+    //   _copyContentHandler: function(e) {
+    //     const {clipboard} = require('electron');
+    //     clipboard.writeText(e.detail.value);
+    //     e.preventDefault();
+    //   },
+    //   /**
+    //    * Saves currently opened requests.
+    //    *
+    //    * @param {?Object} opts Optional options object. It can contain `source`
+    //    * property with value of `shortcut` to indicate that the shortcut was
+    //    * used and the app can automatically save current request
+    //    */
+    //   saveOpened: function(opts) {
+    //     if (this.routeData.base !== 'request') {
+    //       return;
+    //     }
+    //     this.$$('request-workspace').saveOpened(opts);
+    //   },
+    //   /**
+    //    * Opens new tab in the request workspace.
+    //    */
+    //   newRequestTab: function() {
+    //     if (this.routeData.base !== 'request') {
+    //       return;
+    //     }
+    //     const workspace = this.$$('request-workspace');
+    //     const index = workspace.appendPanel();
+    //     workspace.selected = index;
+    //   },
+    //   /**
+    //    * Sends currently opened request.
+    //    */
+    //   sendCurrentTab: function() {
+    //     if (this.routeData.base !== 'request') {
+    //       return;
+    //     }
+    //     this.$$('request-workspace').sendCurrent();
+    //   },
+    //
+    //   _googleOauthTokenRequested: function(e) {
+    //     const scope = e.detail.scope.split(' ');
+    //     this._requestAuthToken(true, scope);
+    //   },
+    //
+    //   _requestAuthToken: function(interactive, scope) {
+    //     if (this.__requestingToken) {
+    //       return;
+    //     }
+    //     this.__requestingToken = true;
+    //     let ipc = require('electron').ipcRenderer;
+    //     ipc.send('oauth-2-get-token', {
+    //       interactive: interactive,
+    //       scopes: scope
+    //     });
+    //     const context = this;
+    //     let rejected;
+    //     function resolved(sender, token) {
+    //       let tokenValue = token ? token.accessToken : undefined;
+    //       context.__requestingToken = false;
+    //       ipc.removeListener('oauth-2-token-ready', resolved);
+    //       ipc.removeListener('oauth-2-token-error', rejected);
+    //       context.fire('google-signin-success', {
+    //         scope: scope,
+    //         token: tokenValue
+    //       });
+    //       context.accessToken = tokenValue;
+    //       ipc = null;
+    //     }
+    //     rejected = function() {
+    //       context.__requestingToken = false;
+    //       ipc.removeListener('oauth-2-token-ready', resolved);
+    //       ipc.removeListener('oauth-2-token-error', rejected);
+    //       context.fire('google-signout', {
+    //         scope: scope
+    //       });
+    //       ipc = null;
+    //     };
+    //     ipc.on('oauth-2-token-ready', resolved);
+    //     ipc.on('oauth-2-token-error', rejected);
+    //   },
+    //
+    //   _appVersionRequestHandler: function(e) {
+    //     e.detail.version = this.appVersion;
+    //   },
+    //
+    //   updateInstall: function() {
+    //     const ipc = require('electron').ipcRenderer;
+    //     ipc.send('install-update');
+    //   },
+    //
+    //   _notifyRequestPanelResize: function(narrowLayout) {
+    //     const width = narrowLayout ? 0 : this.drawerWidth;
+    //     this.customStyle['--request-panel-status-bar-left'] = width;
+    //     this.updateStyles();
+    //   },
+    //   /**
+    //    * Sets `newMessages` propert depending if messaging service detected
+    //    * new messages.
+    //    */
+    //   _unreadMessagesChanged: function(e) {
+    //     const state = !!(e.detail.value && e.detail.value.length > 0);
+    //     this.set('newMessages', state);
+    //   },
+    //   /**
+    //    * Opens the info center drawwer.
+    //    */
+    //   openInfoCenter: function() {
+    //     this.messageCenterOpened = !this.messageCenterOpened;
+    //     if (this.messageCenterOpened) {
+    //       const service = Polymer.dom(this.root).querySelector('arc-messages-service');
+    //       service.readMessages();
+    //       window.setTimeout(function() {
+    //         service.unread.forEach((item, i) => {
+    //           service.set(['unread', i, 'read'], 1);
+    //         });
+    //       }, 4000);
+    //     }
+    //   },
+    //   /**
+    //    * Closes the info center drawwer.
+    //    */
+    //   closeInfoCenter: function() {
+    //     this.messageCenterOpened = false;
+    //   },
+    //
+    //   openWebUrl: function() {
+    //     this.$.webUrlInput.opened = true;
+    //   },
+    //
+    //   _openWebUrlHandler: function(e) {
+    //     var ipc = require('electron').ipcRenderer;
+    //     ipc.send('open-web-url', e.detail.url, e.detail.purpose);
+    //   },
+    //   // Navigate to the cookie manager
+    //   openCookieManager: function() {
+    //     this.fire('navigate', {
+    //       base: 'cookie-manager'
+    //     });
+    //   },
+    //
+    //   openExchangeSearch: function() {
+    //     this.fire('navigate', {
+    //       base: 'exchange-search'
+    //     });
+    //   },
+    //
+    //   openThemesPanel: function() {
+    //     this.fire('navigate', {
+    //       base: 'themes-panel'
+    //     });
+    //   },
+    //
+    //   _variablesOpenRequest: function(e) {
+    //     e.stopPropagation();
+    //     this.$.environmentsDrawer.opened = true;
+    //   },
+    //   /**
+    //    * Updates a request object in this window for a specific tab.
+    //    *
+    //    * @param {Object} request ARC request obejct
+    //    * @param {?Number} tab Tab index to update. If not provided (or not a number)
+    //    * it uses current active tab.
+    //    */
+    //   updateRequestTab: function(request, tab) {
+    //     this.log.info('Updating request object...');
+    //     const workspace = this.workspace;
+    //     if (!workspace) {
+    //       throw new Error('Workspace is not ready.');
+    //     }
+    //     if (typeof tab !== 'number') {
+    //       this.log.info('Tab not provided. Using current selection...');
+    //       tab = workspace.selected;
+    //     }
+    //
+    //     if (!workspace.activeRequests[tab]) {
+    //       this.log.error('Trying to update tab request but the tab does not exists.', tab);
+    //       throw new Error('Requested tab does not exists.');
+    //     }
+    //     this.log.info('Updating request object on tab', tab);
+    //     workspace.set(['activeRequests', tab], request);
+    //   },
+    //   /**
+    //    * Returns number of currently opened tabs
+    //    *
+    //    * @return {Number} Number of opened tabs in request workspace.
+    //    */
+    //   getTabsCount: function() {
+    //     const workspace = this.workspace;
+    //     if (!workspace || !workspace.activeRequests) {
+    //       return 0;
+    //     }
+    //     return workspace.activeRequests.length;
+    //   },
+    //   /**
+    //    * Closes a tab by given local index.
+    //    *
+    //    * @param {String|Number} index Local index assigned to each
+    //    * `activeRequests` in the workspace.
+    //    */
+    //   closeRequestTabByLocal: function(index) {
+    //     index = Number(index);
+    //     this.log.info('Closing tab by local id', index);
+    //     const workspace = this.workspace;
+    //     if (!workspace) {
+    //       throw new Error('Workspace is not ready.');
+    //     }
+    //     const itemIndex = workspace.activeRequests
+    //       .findIndex((item) => item.localIndex === index);
+    //     if (itemIndex === -1) {
+    //       return;
+    //     }
+    //     workspace.splice('activeRequests', itemIndex, 1);
+    //     if (workspace.activeRequests.length === 0) {
+    //       Polymer.RenderStatus.afterNextRender(this, function() {
+    //         workspace.appendPanel();
+    //         workspace.selected = 0;
+    //       });
+    //     } else if (itemIndex !== 0) {
+    //       workspace.selected = itemIndex - 1;
+    //     }
+    //   },
+    //   /**
+    //    * Closes all opened tabs.
+    //    */
+    //   closeAllRequestTabs: function() {
+    //     this.log.info('Closing all tabs');
+    //     const workspace = this.workspace;
+    //     if (!workspace) {
+    //       throw new Error('Workspace is not ready.');
+    //     }
+    //     workspace.set('activeRequests', []);
+    //     Polymer.RenderStatus.afterNextRender(this, function() {
+    //       workspace.appendPanel();
+    //       workspace.selected = 0;
+    //     });
+    //   },
+    //
+    //   closeOtherRequestTabs: function(index) {
+    //     index = Number(index);
+    //     this.log.info('Closing tab by local id', index);
+    //     const workspace = this.workspace;
+    //     if (!workspace) {
+    //       throw new Error('Workspace is not ready.');
+    //     }
+    //     const active = workspace.activeRequests;
+    //     for (let i = active.length - 1; i >= 0; i--) {
+    //       if (active[i].localIndex !== index) {
+    //         workspace.splice('activeRequests', i, 1);
+    //       }
+    //     }
+    //     workspace.selected = 0;
+    //   }
+    // });
   </script>
 </dom-module>

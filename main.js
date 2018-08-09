@@ -62,13 +62,19 @@ class Arc {
       }
     });
   }
-  // processes start arguments
+  /**
+   * Processes start arguments
+   * @return {Object} [description]
+   */
   _processArguments() {
     const startupOptions = new AppOptions();
     startupOptions.parse();
     return startupOptions;
   }
-
+  /**
+   * Called when the application is ready to start.
+   * @return {Promise}
+   */
   _readyHandler() {
     const defaults = new AppDefaults();
     return defaults.prepareEnvironment()
@@ -83,12 +89,13 @@ class Arc {
       this.prompts.listen();
       this.us.listen();
       this.gdrive.listen();
+      this.menu.build();
+      this.sm.start();
+
       this.wm.open();
       if (!this.isDebug()) {
         this.us.start();
       }
-      this.menu.build();
-      this.sm.start();
     });
   }
   /**

@@ -4,39 +4,66 @@ const ipc = electron.ipcRenderer;
 const path = require('path');
 const app = (electron.app || electron.remote.app);
 const {ArcPreferencesRenderer} = require('./arc-preferences');
-
+/**
+ * A class responsible for loading ARC components and
+ * theme from appropieate source.
+ *
+ * Anypoint theme has to use different source as it uses different definitions
+ * for `paper-*` components (like input or dropdown menu). Because there's
+ * no possibility to replace a defined element at runtime it has to be done
+ * before any custom element is registered. Hence this loader.
+ */
 class ThemeLoader {
+  /**
+   * @constructor
+   */
   constructor() {
     this.basePath = path.join(app.getPath('userData'), 'themes');
     this.infoFilePath = path.join(this.basePath, 'themes-info.json');
-    this.listThemesHandler = this.listThemesHandler.bind(this);
-    this.activeThemeHandler = this.activeThemeHandler.bind(this);
-    this.activateHandler = this.activateHandler.bind(this);
-    this.editCurrentHandler = this.editCurrentHandler.bind(this);
+    this._listThemesHandler = this._listThemesHandler.bind(this);
+    this._activeThemeHandler = this._activeThemeHandler.bind(this);
+    this._activateHandler = this._activateHandler.bind(this);
+    this._editCurrentHandler = this._editCurrentHandler.bind(this);
     this.defaultTheme = 'dd1b715f-af00-4ee8-8b0c-2a262b3cf0c8';
     this.anypointTheme = '859e0c71-ce8b-44df-843b-bca602c13d06';
-    this.activeTheme = undefined;
+    this.activeTheme = this.defaultTheme;
     this.importFileName = 'import.html';
     this.componentsBasePath = path.join('./', 'components');
   }
+  /**
+   * @return {String} A path to insllaed web components directory
+   */
+  get componentsDir() {
+    let packageName;
+    if (this.activeTheme === this.anypointTheme) {
+      packageName = 'anypoint';
+    } else {
+      packageName = 'default';
+    }
+    return path.join('components', packageName, 'bower_components');
+  }
 
   listen() {
-    window.addEventListener('themes-list', this.listThemesHandler);
-    window.addEventListener('theme-active-info', this.activeThemeHandler);
-    window.addEventListener('theme-activate', this.activateHandler);
-    window.addEventListener('theme-editor-edit', this.editCurrentHandler);
+    window.addEventListener('themes-list', this._listThemesHandler);
+    window.addEventListener('theme-active-info', this._activeThemeHandler);
+    window.addEventListener('theme-activate', this._activateHandler);
+    window.addEventListener('theme-editor-edit', this._editCurrentHandler);
   }
   /**
    * Handler for the `themes-list` custom event from theme panel.
+   *
+   * @param {CustomEvent} e
    */
-  listThemesHandler(e) {
+  _listThemesHandler(e) {
     e.preventDefault();
     e.detail.result = this.loadThemes();
   }
   /**
    * Handler for the `theme-active-info` custom event from theme panel.
+   *
+   * @param {CustomEvent} e
    */
-  activeThemeHandler(e) {
+  _activeThemeHandler(e) {
     const prefs = new ArcPreferencesRenderer(this.settingsFile);
     e.preventDefault();
     if (this.activeTheme) {
@@ -44,8 +71,8 @@ class ThemeLoader {
       return;
     }
     e.detail.result = prefs.loadSettings()
-    .then(config => {
-      var theme;
+    .then((config) => {
+      let theme;
       if (config && config.theme) {
         theme = config.theme;
       }
@@ -62,18 +89,20 @@ class ThemeLoader {
    * Anypoint theme is a special case when the window has to be reloaded when
    * switching from / to the theme. It loads different components definitions
    * which cannot be updated once an element has been already registered.
+   *
+   * @param {CustomEvent} e
    */
-  activateHandler(e) {
+  _activateHandler(e) {
     const id = e.detail.theme;
-    var p;
-    var reload = false;
+    let p;
+    let reload = false;
     if (id === this.anypointTheme || this.activeTheme === this.anypointTheme) {
       p = Promise.resolve();
       reload = true;
     } else {
       p = this.activateTheme(id);
     }
-    return p
+    p
     .then(() => this.updateThemeSettings(id))
     .then(() => {
       if (reload) {
@@ -91,19 +120,19 @@ class ThemeLoader {
    * @return {[type]} [description]
    */
   activateTheme(id) {
-    var model;
-    var themes;
+    let model;
+    let themes;
 
     return this.unactivateTheme(this.activeTheme)
     .then(() => {
       this.activeTheme = id;
       return this.loadThemes();
     })
-    .then(data => {
+    .then((data) => {
       themes = data;
       return this.getThemeInfo(id, data);
     })
-    .then(info => {
+    .then((info) => {
       if (!info) {
         console.error('Theme not found. Going back to the default theme.');
         this.activeTheme = this.defaultTheme;
@@ -111,12 +140,12 @@ class ThemeLoader {
       }
       return info;
     })
-    .then(info => this._fillThemeInfo(info))
-    .then(info => {
+    .then((info) => this._fillThemeInfo(info))
+    .then((info) => {
       model = info;
       return info;
     })
-    .then(info => this._loadWebComponent(info.fileLocation))
+    .then((info) => this._loadWebComponent(info.fileLocation))
     .then(() => this._loadAppComponents(id))
     .then(() => this.includeCustomStyle(model.themeName));
   }
@@ -183,9 +212,9 @@ class ThemeLoader {
    * @return {Object} Updated theme model.
    */
   _fillThemeInfo(info) {
-    var name = 'arc-theme-';
+    let name = 'arc-theme-';
     name += info.main.replace('.html', '');
-    info.themeName  = name;
+    info.themeName = name;
     info.fileLocation = path.join(info.path, info.main);
     return info;
   }
@@ -193,9 +222,16 @@ class ThemeLoader {
   /**
    * Updates settings file location so next check for theme configuration will
    * be made to correct configuration file.
+   *
+   * @param {String} path A path to app settings file.
    */
   setupSettingsFile(path) {
     this.settingsFile = path;
+  }
+
+  setupComponentsPath(path) {
+    this.ignoreComponentPath = true;
+    this.componentsBasePath = path;
   }
 
   /**
@@ -225,7 +261,7 @@ class ThemeLoader {
    * A handler for edit current theme action.
    * Opens a theme editor for currently loaded theme.
    */
-  editCurrentHandler() {
+  _editCurrentHandler() {
     if (!this.activeTheme) {
       console.error('Theme is not activated.');
       return;
@@ -294,7 +330,7 @@ class ThemeLoader {
   }
 
   _loadAppComponents(id) {
-    var packageName;
+    let packageName;
     if (id === this.anypointTheme) {
       packageName = 'anypoint';
     } else {

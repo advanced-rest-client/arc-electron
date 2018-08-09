@@ -36,9 +36,12 @@ class ArcWindowsManager {
   get hasWindow() {
     return this.windows.length > 0;
   }
-
+  /**
+   * Restores latest window is any present.
+   */
   restoreLast() {
-    const win = this.windows && this.windows.length && this.windows[this.windows.length - 1];
+    const win = this.windows && this.windows.length &&
+      this.windows[this.windows.length - 1];
     if (win) {
       if (win.isDestroyed) {
         this.windows.pop();
@@ -148,7 +151,7 @@ class ArcWindowsManager {
       let win = this.__getNewWindow(index, data);
       win.__arcSession = session;
       this.__loadPage(win, path);
-      // win.webContents.openDevTools();
+      win.webContents.openDevTools();
       this.__attachListeners(win);
       this.windows.push(win);
       return this.recorder.record()
@@ -235,9 +238,9 @@ class ArcWindowsManager {
    * @param {Event} ev
    */
   _winStateRequestHandler(ev) {
-    let contents = ev.sender;
-    let opts = Object.assign({}, this.startupOptions);
-    let win = this.windows.find((item) => {
+    const contents = ev.sender;
+    const opts = Object.assign({}, this.startupOptions);
+    const win = this.windows.find((item) => {
       if (item.isDestroyed()) {
         return false;
       }

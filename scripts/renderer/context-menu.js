@@ -13,7 +13,6 @@ class ArcContextMenu {
     this._contextMenuHandler = this._contextMenuHandler.bind(this);
     this._selectionHandler = this._selectionHandler.bind(this);
     this._clickHandler = this._clickHandler.bind(this);
-    this.listenMainEvents();
   }
   /**
    * Reference to the main application window.
