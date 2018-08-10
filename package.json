@@ -47,7 +47,7 @@
     "ntlm": "^0.1.3",
     "parse5": "^4.0.0",
     "polymer-analyzer": "^2.7.0",
-    "polymer-bundler": "^4.0.1",
+    "polymer-bundler": "^4.0.2",
     "shady-css-parser": "^0.1.0",
     "uuid": "^3.2.1"
   },
