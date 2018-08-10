@@ -148,9 +148,9 @@
     },
     "appx": {
       "applicationId": "AdvancedRestClient",
-      "identityName" : "48695PawelPsztyc.advanced-rest-client",
-      "publisher" : "CN=D213CA20-88CE-42AC-A9F2-C5D41BF04550",
-      "publisherDisplayName" : "Pawel Psztyc"
+      "identityName": "48695PawelPsztyc.advanced-rest-client",
+      "publisher": "CN=D213CA20-88CE-42AC-A9F2-C5D41BF04550",
+      "publisherDisplayName": "Pawel Psztyc"
     },
     "publish": [
       {
