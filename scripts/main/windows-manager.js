@@ -3,7 +3,6 @@ const path = require('path');
 const url = require('url');
 const {ArcSessionControl} = require('./session-control');
 const {ArcSessionRecorder} = require('./arc-session-recorder');
-const {ArcPreferences} = require('./arc-preferences');
 const {ContextActions} = require('./context-actions');
 /**
  * A class that manages opened app windows.
@@ -26,7 +25,6 @@ class ArcWindowsManager {
     this.__windowOpenedPopup = this.__windowOpenedPopup.bind(this);
     this.__contextMenuHandler = this.__contextMenuHandler.bind(this);
     this._settingChangedHandler = this._settingChangedHandler.bind(this);
-    this._prefs = new ArcPreferences(startupOptions.settingsFile);
     this.recorder = new ArcSessionRecorder();
     this.contextActions = new ContextActions();
   }

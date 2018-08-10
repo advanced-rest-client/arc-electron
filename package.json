@@ -12,7 +12,7 @@
     "url": "https://github.com/advanced-rest-client/arc-electron"
   },
   "scripts": {
-    "start": "electron . --workspace-file=\"~/arc-dev/dev-workspace.json\" --settings-file=\"~/arc-dev/dev-settings.json\"",
+    "start": "electron . --inspect --workspace-file=\"~/arc-dev/dev-workspace.json\" --settings-file=\"~/arc-dev/dev-settings.json\"",
     "postinstall": "electron-builder install-app-deps",
     "test": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron electron-mocha test/**/*.test.js",
     "build-l": "npx electron-builder -l",
