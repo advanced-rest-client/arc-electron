@@ -16,10 +16,13 @@ const tls = require('tls');
 const url = require('url');
 const zlib = require('zlib');
 const EventEmitter = require('events');
+const log = require('electron-log');
 
 const nlBuffer = Buffer.from([13, 10]);
 const nlNlBuffer = Buffer.from([13, 10, 13, 10]);
-
+/**
+ * Transport library for Advanced REST Client for node via Electron app.
+ */
 class SocketRequest extends EventEmitter {
   /**
    * Constructs the request from ARC's request object
@@ -40,11 +43,13 @@ class SocketRequest extends EventEmitter {
     this.state = 0;
     this.socket = undefined;
     this._timeout = opts.timeout || 0;
-    this.followRedirects = opts.followRedirects === undefined ? true : opts.followRedirects;
+    this.followRedirects = opts.followRedirects === undefined ?
+      true : opts.followRedirects;
     this.hosts = opts.hosts;
     this.uri = request.url;
     /**
-     * Host header can be different than registered URL because of `hosts` rules.
+     * Host header can be different than registered URL because of
+     * `hosts` rules.
      * If a rule changes host value of the URL the original URL's host value
      * is used when generating the request and not overriden one.
      * This way virual hosts can be tested using hosts.
@@ -54,16 +59,23 @@ class SocketRequest extends EventEmitter {
     this.hostHeader = this._getHostHeader(request.url);
     this._hostTestReg = /^\s*host\s*:/im;
   }
-
+  /**
+   * Sets the `uri` value from an URL.
+   * @param {String} value
+   */
   set uri(value) {
     value = this.applyHosts(value);
     this.__uri = url.parse(value);
   }
-
+  /**
+   * @return {Object} Parsed value of the request URL.
+   */
   get uri() {
     return this.__uri;
   }
-
+  /**
+   * @return {Number} Set timeout value.
+   */
   get timeout() {
     return this._timeout;
   }
@@ -93,14 +105,17 @@ class SocketRequest extends EventEmitter {
     return 2;
   }
   /**
-   * Status indicating thet the message has been read and connection is closing or closed.
+   * Status indicating thet the message has been read and
+   * connection is closing or closed.
    *
    * @default 0
    */
   static get DONE() {
     return 3;
   }
-
+  /**
+   * Cleans the state after finished.
+   */
   _cleanUp() {
     this.redirects = undefined;
     this._response = undefined;
@@ -111,7 +126,9 @@ class SocketRequest extends EventEmitter {
     this.abort();
     this.aborted = false;
   }
-
+  /**
+   * Cleans up the state for redirect.
+   */
   _cleanUpRedirect() {
     this._response = undefined;
     this.stats = {};
@@ -119,19 +136,26 @@ class SocketRequest extends EventEmitter {
     this._rawBody = undefined;
     this._rawHeaders = undefined;
   }
-
+  /**
+   * Sends the request.
+   *
+   * @return {Promise}
+   */
   send() {
     this.abort();
     this.aborted = false;
     return this.connect()
     .then(() => this.prepareMessage())
-    .then(message => this.writeMessage(message))
-    .catch(cause => {
+    .then((message) => this.writeMessage(message))
+    .catch((cause) => {
       this.abort();
       throw cause;
     });
   }
-
+  /**
+   * Aborts current request.
+   * It emitts `error` event
+   */
   abort() {
     this.aborted = true;
     if (!this.socket) {
@@ -151,17 +175,17 @@ class SocketRequest extends EventEmitter {
    * @return {Promise} Resolved promise to an `ArrayBuffer`.
    */
   prepareMessage() {
-    var payload = this.arcRequest.payload;
+    let payload = this.arcRequest.payload;
     if (['get', 'head'].indexOf(this.arcRequest.method.toLowerCase()) !== -1) {
       payload = undefined;
     }
     return this._payloadMessage(payload)
-    .then(buffer => {
+    .then((buffer) => {
       this._addContentLength(buffer);
       this._handleAuthorization(buffer);
       return this._prepareMessage(buffer);
     })
-    .then(message => {
+    .then((message) => {
       if (this.auth) {
         if (this.auth.headers) {
           this.arcRequest.headers = this.auth.headers;
@@ -174,8 +198,8 @@ class SocketRequest extends EventEmitter {
   /**
    * Sends a data to a socket.
    *
-   * @param {Buffer} message HTTP message to send
-   * @return {[type]} [description]
+   * @param {Buffer} buffer HTTP message to send
+   * @return {Promise}
    */
   writeMessage(buffer) {
     // const buffer = Buffer.from(message);
@@ -198,14 +222,14 @@ class SocketRequest extends EventEmitter {
   connect() {
     const port = this._getPort(this.uri.port, this.uri.protocol);
     const host = this.uri.hostname;
-    var promise;
+    let promise;
     if (port === 443 || this.uri.protocol === 'https:') {
       promise = this._connectTls(port, host);
     } else {
       promise = this._connect(port, host);
     }
     return promise
-    .then(socket => {
+    .then((socket) => {
       if (this.timeout && this.timeout > 0) {
         socket.setTimeout(this.timeout);
       }
@@ -225,7 +249,7 @@ class SocketRequest extends EventEmitter {
   _connect(port, host) {
     return new Promise((resolve, reject) => {
       const connectionStart = performance.now();
-      var afterLookup;
+      let afterLookup;
       const client = net.createConnection(port, host, {}, () => {
         this.stats.connect = performance.now() - afterLookup;
         resolve(client);
@@ -252,13 +276,13 @@ class SocketRequest extends EventEmitter {
       rejectUnauthorized: false,
       requestCert: false,
       requestOCSP: false,
-      checkServerIdentity:  function() {},
+      checkServerIdentity: function() {},
       servername: host,
     };
     return new Promise((resolve, reject) => {
       const connectionStart = performance.now();
-      var secureStart = -1;
-      var afterLookup;
+      let secureStart = -1;
+      let afterLookup;
       const client = tls.connect(port, host, options, () => {
         secureStart = performance.now();
         this.stats.connect = performance.now() - afterLookup;
@@ -273,7 +297,8 @@ class SocketRequest extends EventEmitter {
         this.stats.dns = afterLookup - connectionStart;
       });
       client.once('secureConnect', () => {
-        this.stats.ssl = secureStart > -1 ? performance.now() - secureStart : -1;
+        this.stats.ssl = secureStart > -1 ?
+          performance.now() - secureStart : -1;
       });
     });
   }
@@ -285,10 +310,10 @@ class SocketRequest extends EventEmitter {
    * @return {Buffer} `Buffer` of a HTTP message
    */
   _prepareMessage(buffer) {
-    var headers = [];
-    var path = this.uri.pathname;
-    var search = this.uri.search;
-    var hash = this.uri.hash;
+    const headers = [];
+    const search = this.uri.search;
+    const hash = this.uri.hash;
+    let path = this.uri.pathname;
     if (search) {
       path += search;
     }
@@ -299,15 +324,15 @@ class SocketRequest extends EventEmitter {
     if (this._hostRequired()) {
       headers.push('Host: ' + this.hostHeader);
     }
-    var str = headers.join('\r\n');
+    let str = headers.join('\r\n');
     if (this.arcRequest.headers) {
       str += '\r\n';
       str += this._normalizeString(this.arcRequest.headers);
     }
-    var startbuffer = Buffer.from(str, 'utf8');
-    var endBuffer = Buffer.from(new Uint8Array([13, 10, 13, 10]));
-    var body;
-    var sum = startbuffer.length + endBuffer.length;
+    const startbuffer = Buffer.from(str, 'utf8');
+    const endBuffer = Buffer.from(new Uint8Array([13, 10, 13, 10]));
+    let body;
+    let sum = startbuffer.length + endBuffer.length;
     if (buffer) {
       sum += buffer.length;
       body = Buffer.concat([startbuffer, endBuffer, buffer], sum);
@@ -324,7 +349,7 @@ class SocketRequest extends EventEmitter {
    * headers list.
    */
   _hostRequired() {
-    var headers = this.arcRequest.headers;
+    const headers = this.arcRequest.headers;
     if (typeof headers !== 'string') {
       return true;
     }
@@ -349,7 +374,6 @@ class SocketRequest extends EventEmitter {
     }
     return 80;
   }
-
   /**
    * Tranforms a payload message into `Buffer`
    *
@@ -373,9 +397,10 @@ class SocketRequest extends EventEmitter {
     if (payload instanceof FormData) {
       let _conventer = require('./form-data');
       return _conventer(payload)
-      .then(result => {
-        let headers = this.arcRequest.headers;
-        this.arcRequest.headers = this.replaceHeader(headers, 'Content-Type', result.type);
+      .then((result) => {
+        const headers = this.arcRequest.headers;
+        this.arcRequest.headers =
+          this.replaceHeader(headers, 'Content-Type', result.type);
         return result.buffer;
       });
     }
@@ -388,31 +413,36 @@ class SocketRequest extends EventEmitter {
    * Alters authorization header depending on the `auth` object
    */
   _handleAuthorization() {
-    var auth = this.arcRequest.auth;
+    const auth = this.arcRequest.auth;
     if (!auth) {
       return;
     }
     switch (auth.method) {
-      case 'ntlm': return this._authorizeNtlm(auth);
+      case 'ntlm':
+        this._authorizeNtlm(auth);
+        return;
     }
   }
-
+  /**
+   * Authorize the request with NTLM
+   * @param {Object} authData Credentials to use
+   */
   _authorizeNtlm(authData) {
-    var {NtlmAuth} = require('./ntlm');
+    const {NtlmAuth} = require('./ntlm');
     authData.url = this.arcRequest.url;
-    var auth = new NtlmAuth(authData);
+    const auth = new NtlmAuth(authData);
     if (!this.auth) {
       this.auth = {
         method: 'ntlm',
         state: 0,
         headers: this.arcRequest.headers
       };
-      let msg = auth.createMessage1(this.uri.host);
+      const msg = auth.createMessage1(this.uri.host);
       this.arcRequest.headers = this.replaceHeader(this.arcRequest.headers,
         'Authorization', 'NTLM ' + msg.toBase64());
-      console.log('New auth headers: ', this.arcRequest.headers);
+      log.info('New auth headers: ', this.arcRequest.headers);
     } else if (this.auth && this.auth.state === 1) {
-      let msg = auth.createMessage3(this.auth.challengeHeader, this.uri.host);
+      const msg = auth.createMessage3(this.auth.challengeHeader, this.uri.host);
       this.auth.state = 2;
       this.arcRequest.headers = this.replaceHeader(this.arcRequest.headers,
         'authorization', 'NTLM ' + msg.toBase64());
@@ -426,7 +456,7 @@ class SocketRequest extends EventEmitter {
    */
   _blob2buffer(blob) {
     return new Promise((resolve, reject) => {
-      var reader = new FileReader();
+      const reader = new FileReader();
       reader.addEventListener('loadend', (e) => {
         resolve(Buffer.from(e.target.result));
       });
@@ -450,10 +480,10 @@ class SocketRequest extends EventEmitter {
       return headers;
     }
     headers = headers.split(/\n(?=[^ \t]+)/gim);
-    var lowerName = name.toLowerCase();
-    var updated = false;
-    var result = [];
-    for (var i = 0, len = headers.length; i < len; i++) {
+    const lowerName = name.toLowerCase();
+    let updated = false;
+    const result = [];
+    for (let i = 0, len = headers.length; i < len; i++) {
       let line = headers[i].trim();
       if (!line) {
         continue;
@@ -476,17 +506,19 @@ class SocketRequest extends EventEmitter {
     }
     return result.join('\n');
   }
-
   /**
    * NormalizeLineEndingsToCRLF
    * https://code.google.com/p/chromium/codesearch#chromium/src/third_party/WebKit/Source/
    * platform/text/LineEnding.cpp&rcl=1458041387&l=101
    *
    * TODO: Check if using Uint8Array is faster.
+   *
+   * @param {String} string A string to be normalized.
+   * @return {String} normalized string
    */
   _normalizeString(string) {
-    var result = '';
-    for (var i = 0; i < string.length; i++) {
+    let result = '';
+    for (let i = 0; i < string.length; i++) {
       let c = string[i];
       let p = string[i + 1];
       if (c === '\r') {
@@ -506,7 +538,6 @@ class SocketRequest extends EventEmitter {
     }
     return result;
   }
-
   /**
    * Adds the `content-length` header to current request headers list if
    * it's required.
@@ -519,8 +550,8 @@ class SocketRequest extends EventEmitter {
     if (this.arcRequest.method === 'GET') {
       return;
     }
-    var size = buffer ? buffer.length : 0;
-    var headers = this.arcRequest.headers;
+    const size = buffer ? buffer.length : 0;
+    let headers = this.arcRequest.headers;
     // HEAD must set content length header even if it's not carrying payload.
     if (headers) {
       if (headers.toLowerCase().indexOf('content-length') === -1) {
@@ -539,7 +570,7 @@ class SocketRequest extends EventEmitter {
   /**
    * Convert ArrayBuffer to readable form
    * @param {ArrayBuffer} buff
-   * @returns {String} Converted string
+   * @return {String} Converted string
    */
   arrayBufferToString(buff) {
     if (this.aborted) {
@@ -562,7 +593,6 @@ class SocketRequest extends EventEmitter {
    * Convert a string to an ArrayBuffer.
    * @param {string} string The string to convert.
    * @return {Buffer} An array buffer whose bytes correspond to the string.
-   * @returns {Buffer}
    */
   stringToArrayBuffer(string) {
     if (this.aborted) {
@@ -573,9 +603,10 @@ class SocketRequest extends EventEmitter {
   /**
    * Add event listeners to existing socket.
    * @param {net.Socket} socket An instance of the socket.
+   * @return {net.Socket} The same socket. Used for chaining.
    */
   _addSocketListeners(socket) {
-    var received = false;
+    let received = false;
     socket.on('data', (data) => {
       if (!received) {
         let now = performance.now();
@@ -604,7 +635,8 @@ class SocketRequest extends EventEmitter {
       if (this.state !== SocketRequest.DONE) {
         if (!this._response) {
           // The parser havn't found the end of message so there was no message!
-          this._errorRequest(new Error('Connection closed without sending a data'));
+          this._errorRequest(
+            new Error('Connection closed without sending a data'));
         } else {
           // There is an issue with the response. Size missmatch? Anyway,
           // it tries to create a response from current data.
@@ -620,19 +652,24 @@ class SocketRequest extends EventEmitter {
     });
     return socket;
   }
-
+  /**
+   * Processes response message chunk
+   * @param {Buffer} buffer Message buffer
+   */
   _processResponse(buffer) {
     this._processSocketMessage(buffer);
     this._reportResponse();
   }
-
+  /**
+   * Reports response after processing it.
+   */
   _reportResponse() {
     if (this.aborted) {
       return;
     }
     this.stats.lastReceived = performance.now();
     this.stats.receive = this.stats.lastReceived - this.stats.firstReceived;
-    var status = this._response.status;
+    const status = this._response.status;
     if (status >= 300 && status < 400) {
       if (this.followRedirects && this._reportRedirect(status)) {
         return;
@@ -649,15 +686,19 @@ class SocketRequest extends EventEmitter {
       includeRedirects: true
     });
   }
-
+  /**
+   * Handles the response with NTLM authorization
+   */
   handleNtlmResponse() {
     if (this.auth.state === 0) {
       if (this._response.headers.has('www-authenticate')) {
         this.auth.state = 1;
-        this.auth.challengeHeader = this._response.headers.get('www-authenticate');
+        this.auth.challengeHeader =
+          this._response.headers.get('www-authenticate');
         this._cleanUpRedirect();
-        return this.prepareMessage()
-        .then(message => this.writeMessage(message));
+        this.prepareMessage()
+        .then((message) => this.writeMessage(message));
+        return;
       }
     }
     delete this.auth;
@@ -666,11 +707,15 @@ class SocketRequest extends EventEmitter {
       includeRedirects: true
     });
   }
-
+  /**
+   * Reports response when redirected.
+   * @param {Number} status Received status code
+   * @return {Boolean} True if the request has been redirected.
+   */
   _reportRedirect(status) {
     // https://github.com/jarrodek/socket-fetch/issues/13
-    var redirect = false;
-    var redirectOptions = {};
+    let redirect = false;
+    const redirectOptions = {};
     switch (status) {
       case 300:
       case 304:
@@ -680,7 +725,7 @@ class SocketRequest extends EventEmitter {
       case 301:
       case 302:
       case 307:
-        if (['GET','HEAD'].indexOf(this.arcRequest.method) !== -1) {
+        if (['GET', 'HEAD'].indexOf(this.arcRequest.method) !== -1) {
           redirect = true;
         }
         break;
@@ -692,7 +737,7 @@ class SocketRequest extends EventEmitter {
     if (!redirect) {
       return false;
     }
-    var locationHeader = 'location';
+    const locationHeader = 'location';
     if (!this._response.headers.has(locationHeader)) {
       return false;
     }
@@ -704,15 +749,15 @@ class SocketRequest extends EventEmitter {
   }
 
   /**
-   * Creates a response and adds it to the redirects list and redirects the request to the
-   * new location.
+   * Creates a response and adds it to the redirects list and redirects
+   * the request to the new location.
    *
    * @param {Object} options A redirection options:
    * forceGet {Boolean} - If true the redirected request will be GET request
    * location {String} - location of the resource (redirect uri)
    */
   _redirectRequest(options) {
-    var location = options.location;
+    let location = options.location;
     // https://github.com/jarrodek/socket-fetch/issues/5
     try {
       let u = new URL(location);
@@ -755,7 +800,7 @@ class SocketRequest extends EventEmitter {
         return;
       }
     }
-    var detail = {
+    const detail = {
       location: location,
       returnValue: true
     };
@@ -769,14 +814,14 @@ class SocketRequest extends EventEmitter {
     if (!this.redirects) {
       this.redirects = new Set();
     }
-    var responseCookies;
+    let responseCookies;
     if (this._response.headers.has('set-cookie')) {
       responseCookies = this._response.headers.get('set-cookie');
     }
     this._createResponse({
       includeRedirects: false
     })
-    .then(response => {
+    .then((response) => {
       response.requestUrl = this.arcRequest.url;
       response.messageSent = this.arcRequest.messageSent;
       this.redirects.add(response);
@@ -797,8 +842,8 @@ class SocketRequest extends EventEmitter {
       }
       this.uri = location;
       this.hostHeader = this._getHostHeader(location);
-      // No idea why but without setTimeout the program loses it's scope after calling
-      // the function.
+      // No idea why but without setTimeout the program loses it's
+      // scope after calling the function.
       window.setTimeout(() => {
         this.send();
       }, 0);
@@ -846,6 +891,7 @@ class SocketRequest extends EventEmitter {
    * and then will set `state` to HEADERS.
    *
    * @param {Buffer} data Received data
+   * @return {Buffer}
    */
   _processStatus(data) {
     if (this.aborted) {
@@ -860,14 +906,14 @@ class SocketRequest extends EventEmitter {
       return;
     }
 
-    console.log('Processing status');
-    var index = data.indexOf(nlBuffer);
-    var statusLine = data.slice(0, index).toString();
+    log.info('Processing status');
+    const index = data.indexOf(nlBuffer);
+    let statusLine = data.slice(0, index).toString();
     data = data.slice(index + 2);
     statusLine = statusLine.replace(/HTTP\/\d(\.\d)?\s/, '');
-    var delimPos = statusLine.indexOf(' ');
-    var status;
-    var msg = '';
+    const delimPos = statusLine.indexOf(' ');
+    let status;
+    let msg = '';
     if (delimPos === -1) {
       status = statusLine;
     } else {
@@ -883,7 +929,9 @@ class SocketRequest extends EventEmitter {
     }
     this._response.status = status;
     this._response.statusMessage = msg;
-    console.log('Received status', this._response.status, this._response.statusMessage);
+    log.info('Received status',
+      this._response.status,
+      this._response.statusMessage);
     this.state = SocketRequest.HEADERS;
     return data;
   }
@@ -892,6 +940,7 @@ class SocketRequest extends EventEmitter {
    * Read headers from the received data.
    *
    * @param {Buffer} data Received data
+   * @return {Buffer} Remaining data in the buffer.
    */
   _processHeaders(data) {
     if (this.aborted) {
@@ -901,13 +950,13 @@ class SocketRequest extends EventEmitter {
       this._parseHeaders();
       return;
     }
-    console.log('Processing headers');
+    log.info('Processing headers');
     // Looking for end of headers section
-    var index = data.indexOf(nlNlBuffer);
-    var padding = 4;
+    let index = data.indexOf(nlNlBuffer);
+    let padding = 4;
     if (index === -1) {
       // It can also be 2x ASCII 10
-      let _index = data.indexOf(nlBuffer);
+      let _index = data.indexOf(Buffer.from([10, 10]));
       if (_index !== -1) {
         index = _index;
         padding = 2;
@@ -915,10 +964,9 @@ class SocketRequest extends EventEmitter {
     }
 
     // https://github.com/jarrodek/socket-fetch/issues/3
-    var enterIndex = data.indexOf(nlBuffer);
+    const enterIndex = data.indexOf(nlBuffer);
     if (index === -1 && enterIndex !== 0) {
       // end in next chunk
-      // this._connection.headers += this.arrayBufferToString(data);
       if (!this._rawHeaders) {
         this._rawHeaders = data;
       } else {
@@ -939,12 +987,16 @@ class SocketRequest extends EventEmitter {
     this._parseHeaders(this._rawHeaders);
     delete this._rawHeaders;
     this.state = SocketRequest.BODY;
-    var start = index === -1 ? 0 : index;
-    var move = (enterIndex === 0) ? 2 : padding;
+    const start = index === -1 ? 0 : index;
+    const move = (enterIndex === 0) ? 2 : padding;
     data = data.slice(start + move);
     return this._postHeaders(data);
   }
-  // Check the response headers and end the request if nescesary.
+  /**
+   * Check the response headers and end the request if nescesary.
+   * @param {Buffer} data Current response data buffer
+   * @return {Buffer}
+   */
   _postHeaders(data) {
     if (this.arcRequest.method === 'HEAD') {
       this._reportResponse();
@@ -974,18 +1026,20 @@ class SocketRequest extends EventEmitter {
   }
 
   /**
-   * This function assumes that all the headers has been read and it's just before changing
-   * the ststaus to BODY.
+   * This function assumes that all the headers has been read and it's
+   * just before changing the ststaus to BODY.
+   *
+   * @param {Buffer} array
    */
   _parseHeaders(array) {
-    var raw = '';
+    let raw = '';
     if (array) {
       raw = array.toString();
     }
     this._response.headersRaw = raw;
-    var list = this.headersToObject(raw);
-    console.log('Received headers list', raw);
-    var headers = new Headers(list);
+    const list = this.headersToObject(raw);
+    log.info('Received headers list', raw);
+    const headers = new Headers(list);
     this._response.headers = headers;
     if (headers.has('Content-Length')) {
       this._contentLength = Number(headers.get('Content-Length'));
@@ -996,7 +1050,7 @@ class SocketRequest extends EventEmitter {
         this._chunked = true;
       }
     }
-    var detail = {
+    const detail = {
       returnValue: true,
       value: headers
     };
@@ -1007,7 +1061,7 @@ class SocketRequest extends EventEmitter {
     }
   }
   /**
-   * Chunked body must be properly processed
+   * Sets the `_rawBody` property.
    *
    * @param {Buffer} data A data to process
    */
@@ -1016,26 +1070,34 @@ class SocketRequest extends EventEmitter {
       return;
     }
     if (this._chunked) {
-      return this._processBodyChunked(data);
+      this._processBodyChunked(data);
+      return;
     }
 
     if (!this._rawBody) {
       this._rawBody = data;
       if (this._rawBody.length >= this._contentLength) {
-        return this._reportResponse();
+        this._reportResponse();
+        return;
       }
       return;
     }
     let sum = this._rawBody.length + data.length;
     this._rawBody = Buffer.concat([this._rawBody, data], sum);
     if (this._rawBody.length >= this._contentLength) {
-      return this._reportResponse();
+      this._reportResponse();
+      return;
     }
   }
-
+  /**
+   * Sets the `_rawBody` property for a chunked response.
+   *
+   * @param {Buffer} data A latest data to process
+   */
   _processBodyChunked(data) {
     if (this.__bodyChunk) {
-      data = Buffer.concat([this.__bodyChunk, data], this.__bodyChunk.length + data.length);
+      data = Buffer.concat([
+        this.__bodyChunk, data], this.__bodyChunk.length + data.length);
       this.__bodyChunk = undefined;
     }
     while (true) {
@@ -1067,12 +1129,12 @@ class SocketRequest extends EventEmitter {
 
       this._chunkSize -= size;
       if (data.length === 0) {
-        // console.warn('Next chunk will start with CRLF!');
+        // log.warn('Next chunk will start with CRLF!');
         return;
       }
       data = data.slice(size + 2); // + CR
       if (data.length === 0) {
-        // console.log('No more data here. Waiting for new chunk');
+        // log.info('No more data here. Waiting for new chunk');
         return;
       }
     }
@@ -1082,13 +1144,13 @@ class SocketRequest extends EventEmitter {
    * Everything before it is a chunk size.
    *
    * @param {Buffer} array
-   * @returns {Buffer}
+   * @return {Buffer}
    */
   readChunkSize(array) {
     if (this.aborted) {
       return;
     }
-    var index = array.indexOf(nlBuffer);
+    let index = array.indexOf(nlBuffer);
     if (index === -1) {
       // not found in this portion of data.
       return array;
@@ -1096,7 +1158,8 @@ class SocketRequest extends EventEmitter {
     if (index === 0) {
       // Node's buffer cuts CRLF after the end of chunk data, without last CLCR,
       // here's to fix it.
-      // It can be either new line from the last chunk or end of the message where
+      // It can be either new line from the last chunk or end of
+      // the message where
       // the rest of the array is [13, 10, 48, 13, 10, 13, 10]
       if (array.indexOf(nlNlBuffer) === 0) {
         this._chunkSize = 0;
@@ -1106,8 +1169,8 @@ class SocketRequest extends EventEmitter {
         index = array.indexOf(nlBuffer);
       }
     }
-    // console.log('Size index: ', index);
-    var chunkSize = parseInt(array.slice(0, index).toString(), 16);
+    // log.info('Size index: ', index);
+    const chunkSize = parseInt(array.slice(0, index).toString(), 16);
     if (chunkSize !== chunkSize) {
       this._chunkSize = undefined;
       return array.slice(index + 2);
@@ -1156,7 +1219,8 @@ class SocketRequest extends EventEmitter {
    * Create a `Response` object.
    *
    * @param {Object} opts An options to construct a response object:
-   *  - {Boolean} includeRedirects If true the response will have information about redirects.
+   *  - {Boolean} includeRedirects If true the response will have
+   *    information about redirects.
    *  - {Error} error An error object when the response is errored.
    * @return {Response} A response object.
    */
@@ -1170,23 +1234,26 @@ class SocketRequest extends EventEmitter {
     if (this.aborted) {
       return Promise.resolve();
     }
-    var status = this._response.status;
+    const status = this._response.status;
     if (status < 100 || status > 599) {
-      return Promise.reject(new Error(`The response status "${status}" is not allowed.
+      return Promise.reject(
+        new Error(`The response status "${status}" is not allowed.
       See HTTP spec for more details: https://tools.ietf.org/html/rfc2616#section-6.1.1`));
     } else if (status === undefined) {
-      return Promise.reject(new Error(`The response status is empty.
-      It means that the successful connection wasn't made. Check your request parameters.`));
+      return Promise.reject(
+        new Error(`The response status is empty.
+      It means that the successful connection wasn't made.
+      Check your request parameters.`));
     }
     return this._decompress()
-    .then(body => {
-      let options = {
+    .then((body) => {
+      const options = {
         status: status,
         statusText: this._response.statusMessage,
         headers: this._response.headers,
         url: this.arcRequest.url
       };
-      let response = new Response(body, options);
+      const response = new Response(body, options);
       response.stats = this.stats;
       if (opts.includeRedirects && this.redirects && this.redirects.size) {
         response.redirects = this.redirects;
@@ -1197,15 +1264,19 @@ class SocketRequest extends EventEmitter {
       return response;
     });
   }
-
+  /**
+   * Generates authorization info object from response.
+   *
+   * @return {Object}
+   */
   _getAuth() {
     if (this.auth) {
       return this.auth;
     }
-    var auth = this._response.headers.has('www-authenticate') ?
+    let auth = this._response.headers.has('www-authenticate') ?
       this._response.headers.get('www-authenticate') : undefined;
-    var result = {
-      'method': 'unknown'
+    const result = {
+      method: 'unknown'
     };
     if (auth) {
       auth = auth.toLowerCase();
@@ -1228,15 +1299,15 @@ class SocketRequest extends EventEmitter {
     if (this.aborted) {
       return Promise.resolve();
     }
-    var body = this._rawBody;
+    const body = this._rawBody;
     if (!body) {
       return Promise.resolve();
     }
-    var ceHeader = 'content-encoding';
+    const ceHeader = 'content-encoding';
     if (!this._response.headers.has(ceHeader)) {
       return Promise.resolve(body);
     }
-    var ce = this._response.headers.get(ceHeader);
+    const ce = this._response.headers.get(ceHeader);
     if (ce.indexOf('deflate') !== -1) {
       return this._inflate(body);
     }
@@ -1245,7 +1316,11 @@ class SocketRequest extends EventEmitter {
     }
     return Promise.resolve(body);
   }
-
+  /**
+   * Decompress body with Inflate.
+   * @param {Buffer} body Received response payload
+   * @return {Promise} Promise resolved to decompressed buffer.
+   */
   _inflate(body) {
     body = Buffer.from(body);
     return new Promise((resolve, reject) => {
@@ -1258,7 +1333,11 @@ class SocketRequest extends EventEmitter {
       });
     });
   }
-
+  /**
+   * Decompress body with ZLib.
+   * @param {Buffer} body Received response payload
+   * @return {Promise} Promise resolved to decompressed buffer.
+   */
   _gunzip(body) {
     body = Buffer.from(body);
     return new Promise((resolve, reject) => {
@@ -1276,11 +1355,12 @@ class SocketRequest extends EventEmitter {
    * Generate response object and publish it to the listeners.
    *
    * @param {Object} opts See #_createResponse for more info.
+   * @return {Promise}
    */
   _publishResponse(opts) {
     this.state = SocketRequest.DONE;
     return this._createResponse(opts)
-    .then(response => {
+    .then((response) => {
       this.emit('load', response, this.arcRequest);
       this._cleanUp();
       this.abort();
@@ -1291,24 +1371,29 @@ class SocketRequest extends EventEmitter {
       });
     });
   }
-
+  /**
+   * Handles cookie exchange when redirecting the request.
+   * @param {String} responseCookies Cookies received in the resposne
+   * @param {String} location Redirect destination
+   */
   _processRedirectCookies(responseCookies, location) {
-    var newParser = new Cookies(responseCookies, location);
+    /* global Cookies */
+    let newParser = new Cookies(responseCookies, location);
     newParser.filter();
-    var expired = newParser.clearExpired();
-    var requestHeaders = this.arcRequest.headers || '';
-    let headersList = this.headersToObject(requestHeaders);
-    let names = Object.keys(headersList);
-    let index = names.findIndex(name => name.toLowerCase() === 'cookie');
+    const expired = newParser.clearExpired();
+    const requestHeaders = this.arcRequest.headers || '';
+    const headersList = this.headersToObject(requestHeaders);
+    const names = Object.keys(headersList);
+    const index = names.findIndex((name) => name.toLowerCase() === 'cookie');
     if (index !== -1) {
-      var oldCookies = headersList[names[index]];
-      var oldParser = new Cookies(oldCookies, location);
+      const oldCookies = headersList[names[index]];
+      const oldParser = new Cookies(oldCookies, location);
       oldParser.filter();
       oldParser.clearExpired();
       oldParser.merge(newParser);
       newParser = oldParser;
       // remove expired from the new response.
-      newParser.cookies = newParser.cookies.filter(c => {
+      newParser.cookies = newParser.cookies.filter((c) => {
         for (let i = 0, len = expired.length; i < len; i++) {
           if (expired[i].name === c.name) {
             return false;
@@ -1317,12 +1402,13 @@ class SocketRequest extends EventEmitter {
         return true;
       });
     }
-    var str = newParser.toString(true);
+    let str = newParser.toString(true);
     if (str) {
-      this.arcRequest.headers = this.replaceHeader(requestHeaders, 'cookie', str);
+      this.arcRequest.headers =
+        this.replaceHeader(requestHeaders, 'cookie', str);
     } else if (index !== -1) {
       let str = '';
-      names.forEach(name => {
+      names.forEach((name) => {
         if (name.toLowerCase() === 'cookie') {
           return;
         }
@@ -1335,17 +1421,20 @@ class SocketRequest extends EventEmitter {
     }
   }
 
-  // Finishes the response with error message.
+  /**
+   * Finishes the response with error message.
+   * @param {Object} opts `code` and `message`
+   */
   _errorRequest(opts) {
     this.aborted = true;
-    var message;
+    let message;
     if (opts.code && !opts.message) {
       message = this.getCodeMessage(opts.code);
     } else if (opts.message) {
       message = opts.message;
     }
     message = message || 'Unknown error occurred';
-    var error = new Error(message);
+    const error = new Error(message);
     this.emit('error', error);
     this._cleanUp();
   }
@@ -1356,31 +1445,39 @@ class SocketRequest extends EventEmitter {
    * @return {String} Evaluated URL with hosts rules.
    */
   applyHosts(value) {
-    var rules = this.hosts;
+    const rules = this.hosts;
     if (!rules || !rules.length) {
       return value;
     }
     for (let i = 0; i < rules.length; i++) {
-      let rule = rules[i];
-      let result = this._evaluateRule(value, rule);
+      const rule = rules[i];
+      const result = this._evaluateRule(value, rule);
       if (result) {
         return result;
       }
     }
     return value;
   }
-
+  /**
+   * Evaluates hosts rule and applies it to the `url`.
+   * @param {String} url The URL to evaluate
+   * @param {Object} rule ARC rule definition
+   * @return {String} Processed url.
+   */
   _evaluateRule(url, rule) {
     if (!rule.from || !rule.to) {
       return;
     }
-    var re = this._createRuleRe(rule.from);
+    const re = this._createRuleRe(rule.from);
     if (!re.test(url)) {
       return;
     }
     return url.replace(re, rule.to);
   }
-
+  /**
+   * @param {String} input Rule body
+   * @return {RegExp} Regular expression for the rule.
+   */
   _createRuleRe(input) {
     input = input.replace(/\*/g, '(.*)');
     return new RegExp(input, 'gi');
@@ -1392,18 +1489,21 @@ class SocketRequest extends EventEmitter {
    * @return {String} Value of the host header
    */
   _getHostHeader(value) {
-    var uri = url.parse(value);
-    var hostValue = uri.hostname;
-    var defaultPorts = [80, 443];
-    var port = this._getPort(uri.port, uri.protocol);
+    const uri = url.parse(value);
+    let hostValue = uri.hostname;
+    const defaultPorts = [80, 443];
+    const port = this._getPort(uri.port, uri.protocol);
     if (defaultPorts.indexOf(port) === -1) {
       hostValue += ':' + port;
     }
     return hostValue;
   }
-
+  /**
+   * @param {Number} code Error code
+   * @return {String} Message associated with the code.
+   */
   getCodeMessage(code) {
-    var errorCodes = {
+    const errorCodes = {
       1: 'An asynchronous IO operation is not yet complete.',
       2: 'A generic failure occurred.',
       3: 'An operation was aborted (due to user action)',
@@ -1412,14 +1512,14 @@ class SocketRequest extends EventEmitter {
       6: 'The file or directory cannot be found',
       7: 'An operation timed out',
       8: 'The file is too large',
-      9: 'An unexpected error.  This may be caused by a programming mistake or an invalid ' +
-        'assumption',
+      9: 'An unexpected error.  This may be caused by a programming ' +
+        'mistake or an invalid assumption',
       10: 'Permission to access a resource, other than the network, was denied',
       11: 'The operation failed because of unimplemented functionality',
       12: 'There were not enough resources to complete the operation',
       13: 'Memory allocation failed',
-      14: 'The file upload failed because the file\'s modification time was different from the ' +
-        'expectation',
+      14: 'The file upload failed because the file\'s modification ' +
+        'time was different from the expectation',
       15: 'The socket is not connected',
       16: 'The file already exists',
       17: 'The path or file name is too long',
@@ -1427,134 +1527,161 @@ class SocketRequest extends EventEmitter {
       19: 'The file has a virus',
       20: 'The client chose to block the request',
       21: 'The network changed',
-      22: 'The request was blocked by the URL blacklist configured by the domain administrator',
+      22: 'The request was blocked by the URL blacklist ' +
+        'configured by the domain administrator',
       23: 'The socket is already connected',
       100: 'A connection was closed (corresponding to a TCP FIN)',
       101: 'A connection was reset (corresponding to a TCP RST)',
       102: 'A connection attempt was refused',
-      103: 'A connection timed out as a result of not receiving an ACK for data sent. This can ' +
-        'include a FIN packet that did not get ACK\'d',
+      103: 'A connection timed out as a result of not receiving an ACK for ' +
+        'data sent. This can include a FIN packet that did not get ACK\'d',
       104: 'A connection attempt failed',
       105: 'The host name could not be resolved',
       106: 'The Internet connection has been lost',
       107: 'An SSL protocol error occurred',
-      108: 'The IP address or port number is invalid (e.g., cannot connect to the IP address 0 ' +
-        'or the port 0)',
-      109: 'The IP address is unreachable.  This usually means that there is no route to the ' +
-        'specified host or network',
-      110: 'The server requested a client certificate for SSL client authentication',
+      108: 'The IP address or port number is invalid (e.g., cannot connect ' +
+        'to the IP address 0 or the port 0)',
+      109: 'The IP address is unreachable.  This usually means that there ' +
+        'is no route to the specified host or network',
+      110: 'The server requested a client certificate for SSL client ' +
+        'authentication',
       111: 'A tunnel connection through the proxy could not be established',
       112: 'No SSL protocol versions are enabled',
-      113: 'The client and server don\'t support a common SSL protocol version or cipher suite',
+      113: 'The client and server don\'t support a common SSL protocol ' +
+        'version or cipher suite',
       114: 'The server requested a renegotiation (rehandshake)',
-      115: 'The proxy requested authentication (for tunnel establishment) with an unsupported ' +
-        'method',
-      116: 'During SSL renegotiation (rehandshake), the server sent a certificate with an error',
-      117: 'The SSL handshake failed because of a bad or missing client certificate',
+      115: 'The proxy requested authentication (for tunnel establishment) ' +
+        'with an unsupported method',
+      116: 'During SSL renegotiation (rehandshake), the server sent a ' +
+        'certificate with an error',
+      117: 'The SSL handshake failed because of a bad or missing client' +
+        ' certificate',
       118: 'A connection attempt timed out',
-      119: 'There are too many pending DNS resolves, so a request in the queue was aborted',
-      120: 'Failed establishing a connection to the SOCKS proxy server for a target host',
-      121: 'The SOCKS proxy server failed establishing connection to the target host because ' +
-        'that host is unreachable',
+      119: 'There are too many pending DNS resolves, so a request in the ' +
+        'queue was aborted',
+      120: 'Failed establishing a connection to the SOCKS proxy server for ' +
+        'a target host',
+      121: 'The SOCKS proxy server failed establishing connection to the ' +
+        'target host because that host is unreachable',
       122: 'The request to negotiate an alternate protocol failed',
       123: 'The peer sent an SSL no_renegotiation alert message',
-      124: 'Winsock sometimes reports more data written than passed.  This is probably due to a ' +
-        'broken LSP',
+      124: 'Winsock sometimes reports more data written than passed.  This ' +
+        'is probably due to a broken LSP',
       125: 'An SSL peer sent us a fatal decompression_failure alert.',
       126: 'An SSL peer sent us a fatal bad_record_mac alert',
       127: 'The proxy requested authentication (for tunnel establishment)',
-      128: 'A known TLS strict server didn\'t offer the renegotiation extension',
-      129: 'The SSL server attempted to use a weak ephemeral Diffie-Hellman key',
+      128: 'A known TLS strict server didn\'t offer the renegotiation ' +
+        'extension',
+      129: 'The SSL server attempted to use a weak ephemeral ' +
+        'Diffie-Hellman key',
       130: 'Could not create a connection to the proxy server.',
       131: 'A mandatory proxy configuration could not be used.',
-      133: 'We\'ve hit the max socket limit for the socket pool while preconnecting.',
-      134: 'The permission to use the SSL client certificate\'s private key was denied',
+      133: 'We\'ve hit the max socket limit for the socket pool ' +
+        'while preconnecting.',
+      134: 'The permission to use the SSL client certificate\'s ' +
+        'private key was denied',
       135: 'The SSL client certificate has no private key',
       136: 'The certificate presented by the HTTPS Proxy was invalid',
       137: 'An error occurred when trying to do a name resolution (DNS)',
       138: 'Permission to access the network was denied.',
       139: 'The request throttler module cancelled this request to avoid DDOS',
-      140: 'A request to create an SSL tunnel connection through the HTTPS proxy received a ' +
-        'non-200 (OK) and non-407 (Proxy Auth) response.',
-      141: 'We were unable to sign the CertificateVerify data of an SSL client auth handshake ' +
-        'with the client certificate\'s private key',
+      140: 'A request to create an SSL tunnel connection through the HTTPS ' +
+        'proxy received a non-200 (OK) and non-407 (Proxy Auth) response.',
+      141: 'We were unable to sign the CertificateVerify data of an SSL ' +
+        'client auth handshake with the client certificate\'s private key',
       142: 'The message was too large for the transport',
-      143: 'A SPDY session already exists, and should be used instead of this connection',
+      143: 'A SPDY session already exists, and should be used instead of ' +
+        'this connection',
       145: 'Websocket protocol error.',
       146: 'Connection was aborted for switching to another ptotocol.',
       147: 'Returned when attempting to bind an address that is already in use',
       148: 'An operation failed because the SSL handshake has not completed',
       149: 'SSL peer\'s public key is invalid',
-      150: 'The certificate didn\'t match the built-in public key pins for the host name',
-      151: 'Server request for client certificate did not contain any types we support',
-      152: 'Server requested one type of cert, then requested a different type while the first ' +
-        'was still being generated',
+      150: 'The certificate didn\'t match the built-in public key pins for ' +
+        'the host name',
+      151: 'Server request for client certificate did not contain any ' +
+        'types we support',
+      152: 'Server requested one type of cert, then requested a different ' +
+        'type while the first was still being generated',
       153: 'An SSL peer sent us a fatal decrypt_error alert. ',
-      154: 'There are too many pending WebSocketJob instances, so the new job was not pushed ' +
-        'to the queue',
-      155: 'There are too many active SocketStream instances, so the new connect request was ' +
-        'rejected',
+      154: 'There are too many pending WebSocketJob instances, so the new ' +
+        'job was not pushed to the queue',
+      155: 'There are too many active SocketStream instances, so the new ' +
+        'connect request was rejected',
       156: 'The SSL server certificate changed in a renegotiation',
-      157: 'The SSL server indicated that an unnecessary TLS version fallback was performed',
-      158: 'Certificate Transparency: All Signed Certificate Timestamps failed to verify',
+      157: 'The SSL server indicated that an unnecessary TLS version ' +
+        'fallback was performed',
+      158: 'Certificate Transparency: All Signed Certificate ' +
+        'Timestamps failed to verify',
       159: 'The SSL server sent us a fatal unrecognized_name alert',
       300: 'The URL is invalid',
       301: 'The scheme of the URL is disallowed',
       302: 'The scheme of the URL is unknown',
       310: 'Attempting to load an URL resulted in too many redirects',
-      311: 'Attempting to load an URL resulted in an unsafe redirect (e.g., a redirect to file: ' +
-        'is considered unsafe)',
+      311: 'Attempting to load an URL resulted in an unsafe redirect ' +
+        '(e.g., a redirect to file: is considered unsafe)',
       312: 'Attempting to load an URL with an unsafe port number.',
       320: 'The server\'s response was invalid',
       321: 'Error in chunked transfer encoding',
       322: 'The server did not support the request method',
-      323: 'The response was 407 (Proxy Authentication Required), yet we did not send the ' +
-        'request to a proxy',
+      323: 'The response was 407 (Proxy Authentication Required), yet ' +
+        'we did not send the request to a proxy',
       324: 'The server closed the connection without sending any data',
       325: 'The headers section of the response is too large',
-      326: 'The PAC requested by HTTP did not have a valid status code (non-200)',
+      326: 'The PAC requested by HTTP did not have a valid status ' +
+        'code (non-200)',
       327: 'The evaluation of the PAC script failed',
-      328: 'The response was 416 (Requested range not satisfiable) and the server cannot ' +
-        'satisfy the range requested',
+      328: 'The response was 416 (Requested range not satisfiable) ' +
+        'and the server cannot satisfy the range requested',
       329: 'The identity used for authentication is invalid',
       330: 'Content decoding of the response body failed',
-      331: 'An operation could not be completed because all network IO is suspended',
+      331: 'An operation could not be completed because all network ' +
+        'IO is suspended',
       332: 'FLIP data received without receiving a SYN_REPLY on the stream',
       333: 'Converting the response to target encoding failed',
-      334: 'The server sent an FTP directory listing in a format we do not understand',
+      334: 'The server sent an FTP directory listing in a format we do ' +
+        'not understand',
       335: 'Attempted use of an unknown SPDY stream id',
       336: 'There are no supported proxies in the provided list',
       337: 'There is a SPDY protocol error',
       338: 'Credentials could not be established during HTTP Authentication',
-      339: 'An HTTP Authentication scheme was tried which is not supported on this machine',
+      339: 'An HTTP Authentication scheme was tried which is not ' +
+        'supported on this machine',
       340: 'Detecting the encoding of the response failed',
-      341: '(GSSAPI) No Kerberos credentials were available during HTTP Authentication',
-      342: 'An unexpected, but documented, SSPI or GSSAPI status code was returned',
+      341: '(GSSAPI) No Kerberos credentials were available ' +
+        'during HTTP Authentication',
+      342: 'An unexpected, but documented, SSPI or GSSAPI status ' +
+        'code was returned',
       343: 'The environment was not set up correctly for authentication',
       344: 'An undocumented SSPI or GSSAPI status code was returned',
       345: 'The HTTP response was too big to drain',
-      346: 'The HTTP response contained multiple distinct Content-Length headers',
-      347: 'SPDY Headers have been received, but not all of them - status or version headers ' +
-        'are missing, so we\'re expecting additional frames to complete them',
+      346: 'The HTTP response contained multiple distinct ' +
+        'Content-Length headers',
+      347: 'SPDY Headers have been received, but not all of them - ' +
+        'status or version headers are missing, so we\'re expecting ' +
+        'additional frames to complete them',
       348: 'No PAC URL configuration could be retrieved from DHCP.',
       349: 'The HTTP response contained multiple Content-Disposition headers',
       350: 'The HTTP response contained multiple Location headers',
-      351: 'SPDY server refused the stream. Client should retry. This should never be a ' +
-        'user-visible error',
+      351: 'SPDY server refused the stream. Client should retry.' +
+        ' This should never be a user-visible error',
       352: 'SPDY server didn\'t respond to the PING message',
-      353: 'The request couldn\'t be completed on an HTTP pipeline. Client should retry',
-      354: 'The HTTP response body transferred fewer bytes than were advertised by the ' +
-        'Content-Length header when the connection is closed',
-      355: 'The HTTP response body is transferred with Chunked-Encoding, but the terminating ' +
-        'zero-length chunk was never sent when the connection is closed',
+      353: 'The request couldn\'t be completed on an HTTP pipeline. ' +
+        'Client should retry',
+      354: 'The HTTP response body transferred fewer bytes than were ' +
+        'advertised by the Content-Length header when the connection is closed',
+      355: 'The HTTP response body is transferred with Chunked-Encoding, but ' +
+        'the terminating zero-length chunk was never sent when the ' +
+        'connection is closed',
       356: 'There is a QUIC protocol error',
       357: 'The HTTP headers were truncated by an EOF',
       358: 'The QUIC crytpo handshake failed.',
       359: 'An https resource was requested over an insecure QUIC connection',
       501: 'The server\'s response was insecure (e.g. there was a cert error)',
-      502: 'The server responded to a <keygen> with a generated client cert that we don\'t ' +
-        'have the matching private key for',
-      503: 'An error adding to the OS certificate database (e.g. OS X Keychain)',
+      502: 'The server responded to a <keygen> with a generated client cert ' +
+        'that we don\'t have the matching private key for',
+      503: 'An error adding to the OS certificate database ' +
+        '(e.g. OS X Keychain)',
       800: 'DNS resolver received a malformed response',
       801: 'DNS server requires TCP',
       802: 'DNS server failed.',

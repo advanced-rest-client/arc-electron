@@ -149,7 +149,7 @@ class ArcInit {
     }
     return this.themeLoader.activateTheme(id)
     .catch((cause) => {
-      if (id === this.themeLoader.default) {
+      if (id === this.themeLoader.defaultTheme) {
         log.error('Unable to load theme file.', cause);
         return;
       }
