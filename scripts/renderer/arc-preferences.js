@@ -1,32 +1,28 @@
-const {ArcPreferences} = require('../main/arc-preferences');
-const electron = require('electron');
+const {ipcRenderer} = require('electron');
 /**
  * Class that provides access to user settings file in the renderer process.
- *
- * @extends ArcPreferences
  */
-class ArcPreferencesRenderer extends ArcPreferences {
-  /**
-   * @constructor
-   *
+class ArcPreferencesRenderer {
+  /*
    * @param {?String} settingsFile Settings file lection if different than
    * default one.
    */
-  constructor(settingsFile) {
-    super(settingsFile);
-    this._settingsReadHandler = this._settingsReadHandler.bind(this);
-    this._settingsChangeHandler = this._settingsChangeHandler.bind(this);
-    this._mainSettingsChangedHandler =
-      this._mainSettingsChangedHandler.bind(this);
+  constructor() {
+    this._readHandler = this._readHandler.bind(this);
+    this._changeHandler = this._changeHandler.bind(this);
+    this._mainPrefsHandler = this._mainPrefsHandler.bind(this);
+    this._mainChangedHandler = this._mainChangedHandler.bind(this);
+    this.promises = [];
+    this.lastRequestId = 0;
   }
   /**
    * Observers window events.
    */
   observe() {
-    window.addEventListener('settings-read', this._settingsReadHandler);
-    window.addEventListener('settings-changed', this._settingsChangeHandler);
-    electron.ipcRenderer.on('settings-changed',
-      this._mainSettingsChangedHandler);
+    window.addEventListener('settings-read', this._readHandler);
+    window.addEventListener('settings-changed', this._changeHandler);
+    ipcRenderer.on('app-preference-updated', this._mainChangedHandler);
+    ipcRenderer.on('app-preferences', this._mainPrefsHandler);
   }
   /**
    * Handler for the `settings-read` custom event. Reads current settings.
@@ -35,19 +31,45 @@ class ArcPreferencesRenderer extends ArcPreferences {
    *
    * @param {CustomEvent} e Custom event
    */
-  _settingsReadHandler(e) {
+  _readHandler(e) {
     e.preventDefault();
     e.stopPropagation();
     e.detail.result = this.loadSettings();
   }
   /**
-   * Handler for the `settings-changed` custom event.
-   * Stores settings by calling `saveConfig()` function. Result of calling the
-   * function is assigned to detail's `result` property.
-   *
-   * @param {CustomEvent} e Event handled by the script.
+   * Loads application settings from the main thread.
+   * @return {Promise}
    */
-  _settingsChangeHandler(e) {
+  loadSettings() {
+    return new Promise((resolve) => {
+      const id = (++this.lastRequestId);
+      this.promises.push({
+        type: 'read',
+        resolve,
+        id
+      });
+      ipcRenderer.send('read-app-preferences', id);
+    });
+  }
+
+  _mainPrefsHandler(e, settings, id) {
+    if (!id) {
+      return;
+    }
+    let p;
+    for (let i = 0, len = this.promises.length; i < len; i++) {
+      if (this.promises[i].id === id) {
+        p = this.promises[i];
+        this.promises.splice(i, 1);
+        break;
+      }
+    }
+    if (p) {
+      p.resolve(settings);
+    }
+  }
+
+  _changeHandler(e) {
     if (!e.cancelable) {
       return;
     }
@@ -58,63 +80,37 @@ class ArcPreferencesRenderer extends ArcPreferences {
       e.detail.result = Promise.reject(new Error('Name is not set.'));
       return;
     }
-    e.detail.result = this.saveConfig(name, e.detail.value);
-  }
-  /**
-   * Updates and stores configuration for a property.
-   *
-   * @param {String} name Name of the property to update.
-   * @param {String|Boolean|Object|Array|Number} value Value to store.
-   * @return {Promise} Promise resolved when the settings are stored.
-   */
-  saveConfig(name, value) {
-    if (!this.__settings) {
-      return Promise.reject('Settings not ready!');
-    }
-    this.__settings[name] = value;
-    return this.updateSettings()
-    .then(() => this._informChanged(name, value, 'local'));
-  }
-  /**
-   * Sends the cotification about the change to the main process
-   * and calls `_informChangeWeb()` function to notify components about
-   * the change.
-   * @param {String} key Setting key
-   * @param {Any} value Setting value
-   * @param {String} area Source storage area
-   */
-  _informChanged(key, value, area) {
-    electron.ipcRenderer.send('settings-changed', key, value, area);
-    this._informChangeWeb(key, value, area);
-  }
-  /**
-   * Dispatches `settings-changed` event.
-   * This can only happen in renderer process.
-   * @param {String} key Setting key
-   * @param {Any} value Setting value
-   * @param {String} area Source storage area
-   */
-  _informChangeWeb(key, value, area) {
-    let event = new CustomEvent('settings-changed', {
-      detail: {
-        name: key,
-        value: value,
-        area: area
-      },
-      cancelable: false,
-      bubbles: true
+    e.detail.result = new Promise((resolve) => {
+      const value = e.detail.value;
+      this.promises.push({
+        type: 'store',
+        resolve,
+        name
+      });
+      ipcRenderer.send('update-app-preference', name, value);
     });
-    document.body.dispatchEvent(event);
   }
-  /**
-   * Handler for the `settings-changed` event emmited by the
-   * main process.
-   *
-   * @param {Event} event Event received from the main process.
-   * @param {Object} data Event arguments.
-   */
-  _mainSettingsChangedHandler(event, data) {
-    this._informChangeWeb(data.key, data.value, data.area);
+
+  _mainChangedHandler(e, name, value) {
+    let p;
+    for (let i = 0, len = this.promises.length; i < len; i++) {
+      const item = this.promises[i];
+      if (item.type === 'store' && item.name === name) {
+        p = item;
+        this.promises.splice(i, 1);
+        break;
+      }
+    }
+    if (p) {
+      p.resolve();
+    }
+    document.body.dispatchEvent(new CustomEvent('app-preference-updated', {
+      bubbles: true,
+      detail: {
+        name: name,
+        value: value
+      }
+    }));
   }
 }
 exports.ArcPreferencesRenderer = ArcPreferencesRenderer;

@@ -23,7 +23,6 @@ class ThemeLoader {
     this._listThemesHandler = this._listThemesHandler.bind(this);
     this._activeThemeHandler = this._activeThemeHandler.bind(this);
     this._activateHandler = this._activateHandler.bind(this);
-    this._editCurrentHandler = this._editCurrentHandler.bind(this);
     this.defaultTheme = 'dd1b715f-af00-4ee8-8b0c-2a262b3cf0c8';
     this.anypointTheme = '859e0c71-ce8b-44df-843b-bca602c13d06';
     this.activeTheme = this.defaultTheme;
@@ -47,7 +46,6 @@ class ThemeLoader {
     window.addEventListener('themes-list', this._listThemesHandler);
     window.addEventListener('theme-active-info', this._activeThemeHandler);
     window.addEventListener('theme-activate', this._activateHandler);
-    window.addEventListener('theme-editor-edit', this._editCurrentHandler);
   }
   /**
    * Handler for the `themes-list` custom event from theme panel.
@@ -161,16 +159,16 @@ class ThemeLoader {
    * It also uses Polymer's low level API to clear variables and mixins.
    */
   removeCustomStyle() {
-    var old = document.body.querySelector('[data-theme]');
+    const old = document.body.querySelector('[data-theme]');
     if (!old) {
       return;
     }
-    var cached = Polymer.StyleDefaults._styles;
+    const cached = Polymer.StyleDefaults._styles;
     if (!cached) {
       return;
     }
-    var theme = old.dataset.theme;
-    for (var i = cached.length - 1; i >= 0; i--) {
+    const theme = old.dataset.theme;
+    for (let i = cached.length - 1; i >= 0; i--) {
       let item = cached[i];
       if (item.dataset.theme !== theme) {
         continue;
@@ -188,7 +186,7 @@ class ThemeLoader {
    * @param {String} themeName Loaded theme module name to include in the styles.
    */
   includeCustomStyle(themeName) {
-    var s = document.createElement('style', 'custom-style');
+    const s = document.createElement('style', 'custom-style');
     s.include = themeName;
     s.dataset.theme = themeName;
     document.body.appendChild(s);
@@ -203,7 +201,7 @@ class ThemeLoader {
    */
   getThemeInfo(id, themes) {
     themes = themes || [];
-    return themes.find(item => item._id === id);
+    return themes.find((item) => item._id === id);
   }
   /**
    * Adds required by this program fields to the Theme info model.
@@ -236,10 +234,11 @@ class ThemeLoader {
 
   /**
    * Loads list of themes from apps directory.
+   * @return {Promise}
    */
   loadThemes() {
     return fs.readJson(this.infoFilePath, {throws: false})
-    .then(info => {
+    .then((info) => {
       if (!info) {
         info = [];
       }
@@ -257,77 +256,6 @@ class ThemeLoader {
     return prefs.loadSettings()
     .then(() => prefs.saveConfig('theme', themeId));
   }
-  /**
-   * A handler for edit current theme action.
-   * Opens a theme editor for currently loaded theme.
-   */
-  _editCurrentHandler() {
-    if (!this.activeTheme) {
-      console.error('Theme is not activated.');
-      return;
-    }
-    var themeInfo;
-    return this.loadThemes()
-    .then(data => this.getThemeInfo(this.activeTheme, data))
-    .then(theme => {
-      if (!theme) {
-        throw new Error('Theme not found.');
-      }
-      return this._fillThemeInfo(theme);
-    })
-    .then(theme => {
-      themeInfo = theme;
-      return this._analyzeStyles();
-    })
-    .then(styleData => {
-      require('electron').ipcRenderer.send('open-theme-editor', {
-        themeId: this.activeTheme,
-        themesLocation: this.basePath,
-        theme: themeInfo,
-        styles: styleData
-      });
-    })
-    .catch(cause => {
-      console.error('Unable to start theme editor', cause);
-    });
-  }
-
-  _analyzeStyles() {
-    const cacheFile = path.join(this.basePath, '.cache', 'style-' + this.activeTheme + '.json');
-    return fs.pathExists(cacheFile)
-    .then(exists => {
-      if (exists) {
-        return fs.readJson(cacheFile);
-      }
-      return this._loadAnalyzer()
-      .then(analyzer => analyzer.analyze())
-      .then(result => {
-        return this._storeStylesCache(cacheFile, result).then(() => result);
-      });
-    });
-  }
-
-  _storeStylesCache(cacheFile, data) {
-    var dir = path.dirname(cacheFile);
-    return fs.ensureDir(dir)
-    .then(() => fs.writeJson(cacheFile, data));
-  }
-
-  _loadAnalyzer() {
-    var analyzer = document.getElementById('styleAnalyzer');
-    if (analyzer) {
-      return Promise.resolve(analyzer);
-    }
-    let loc = 'bower_components/polymer-styles-analyzer/polymer-styles-analyzer.html';
-    return this._loadWebComponent(loc)
-    .then(() => {
-      let analyzer = document.createElement('polymer-styles-analyzer');
-      analyzer.id = 'styleAnalyzer';
-      analyzer.skipLayoutVariables = true;
-      document.body.appendChild(analyzer);
-      return analyzer;
-    });
-  }
 
   _loadAppComponents(id) {
     let packageName;
@@ -342,11 +270,11 @@ class ThemeLoader {
 
   _loadWebComponent(href) {
     return new Promise((resolve, reject) => {
-      var link = document.createElement('link');
+      const link = document.createElement('link');
       link.rel = 'import';
       link.href = href;
-      var loadListener;
-      var errorListener;
+      let loadListener;
+      let errorListener;
       loadListener = function(e) {
         e.target.__firedLoad = true;
         e.target.removeEventListener('load', loadListener);
@@ -363,10 +291,6 @@ class ThemeLoader {
       link.addEventListener('error', errorListener);
       document.head.appendChild(link);
     });
-  }
-
-  previewThemes(stylesMap) {
-    Polymer.updateStyles(stylesMap);
   }
 
   requireReload() {

@@ -7,11 +7,9 @@ const {DriveExport} = require('./scripts/main/drive-export');
 const {SessionManager} = require('./scripts/main/session-manager');
 const {AppOptions} = require('./scripts/main/app-options');
 const {RemoteApi} = require('./scripts/main/remote-api');
-const {AppDefaults} = require('./scripts/main/app-defaults');
 const {ContentSearchService} = require('./scripts/main/search-service');
 const {AppPrompts} = require('./scripts/main/app-prompts.js');
 const log = require('electron-log');
-
 /**
  * Main application object controling app's lifecycle.
  */
@@ -21,15 +19,6 @@ class Arc {
    */
   constructor() {
     this._registerProtocols();
-    const startupOptions = this._processArguments();
-    this.menu = new ArcMainMenu();
-    this.wm = new ArcWindowsManager(startupOptions.getOptions());
-    this.us = new UpdateStatus(this.wm, this.menu);
-    this.sm = new SessionManager(this.wm);
-    this.remote = new RemoteApi(this.wm);
-    this.prompts = new AppPrompts();
-    this.gdrive = new DriveExport();
-    this._listenMenu();
   }
   /**
    * Attaches used event listeners to the `electron.app` object.
@@ -76,6 +65,7 @@ class Arc {
    * @return {Promise}
    */
   _readyHandler() {
+    const {AppDefaults} = require('./scripts/main/app-defaults');
     const defaults = new AppDefaults();
     return defaults.prepareEnvironment()
     .catch((cause) => {
@@ -83,19 +73,36 @@ class Arc {
       log.error(cause);
     })
     .then(() => {
-      log.info('Application is now ready');
-      ArcIdentity.listen();
-      this.wm.listen();
-      this.prompts.listen();
-      this.us.listen();
-      this.gdrive.listen();
+      const startupOptions = this._processArguments();
+      const opts = startupOptions.getOptions();
+      console.log(opts);
+      const {PreferencesManager} = require('./scripts/main/preferences-manager');
+      this.prefs = new PreferencesManager(opts.settingsFile);
+      this.prefs.listen();
+      this.menu = new ArcMainMenu();
       this.menu.build();
+      this.us = new UpdateStatus(this.wm, this.menu);
+      this.wm = new ArcWindowsManager(opts);
+      this.wm.listen();
+      this.us.listen();
+      this.gdrive = new DriveExport();
+      this.gdrive.listen();
+      this.sm = new SessionManager(this.wm);
       this.sm.start();
-
+      this.remote = new RemoteApi(this.wm);
+      log.info('Application is now ready');
       this.wm.open();
       if (!this.isDebug()) {
         this.us.start();
       }
+      this.prompts = new AppPrompts();
+      this.prompts.listen();
+      this._listenMenu();
+      ArcIdentity.listen();
+    })
+    .catch((cause) => {
+      log.error('Unable to start the application.', cause.message);
+      log.error(cause);
     });
   }
   /**

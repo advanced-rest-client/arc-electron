@@ -4,140 +4,71 @@
 <link rel="import" href="electron-drive/electron-drive.html">
 <link rel="import" href="api-console-panel/api-console-panel.html"> -->
 <!-- <link rel="import" href="app-paths-info/app-paths-info.html"> -->
-
+<link rel="import" href="../components/default/import.html">
 <dom-module id="arc-electron">
   <template>
     <style>
     :host {
       display: block;
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
       -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-      background-color: var(--primary-background-color);
       @apply --layout-fit;
-
-      --app-drawer-content-container: {
-        background-color: var(--arc-menu-background-color, #eeeeee);
-      };
     }
 
-    app-header-layout {
-      position: absolute;
-      top: 0;
-      right: 0;
-      bottom: 0;
-      left: 0;
-      background-color: var(--primary-background-color);
+    .main-container {
+      @apply --layout-horizontal;
     }
 
-    app-header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      background-color: var(--toolbar-background-color);
-      color: var(--toolbar-color);
-      height: 64px;
-    }
-
-    app-toolbar paper-icon-button {
-      color: rgba(255, 255, 255, 0.87);
-    }
-
-    app-toolbar paper-icon-button:hover {
-      color: var(--hover-button-accent-color);
-    }
-
-    #drawerResizer {
-      position: absolute;
-      bottom: 0;
-      top: 0;
-      right: 0;
-      width: 3px;
-      background-color: transparent;
-      cursor: ew-resize;
-      transition: width 0.2s ease-in-out, background-color 0.2s ease-in-out;
-    }
-
-    #drawerResizer:hover {
-      background-color: var(--drawer-resizer-color-hover, #BDBDBD);
-      width: var(--drawer-resizer-width-hover, 6px);
-    }
-
-    .app-name {
-      font-family: 'Roboto', 'Noto', sans-serif;
-      -webkit-font-smoothing: antialiased;
-      font-size: 16px;
-      font-weight: 400;
-      line-height: 24px;
-    }
-
-    .drawer-toggle-button {
-      display: inline-block !important;
-    }
-
-    .drawer-pin {
-      display: none;
-    }
-
-    .drawer-pin.visible {
-      display: inline-block;
-    }
-
-    .content {
+    .pages {
       @apply --layout-flex;
+      margin: 24px;
+      padding: 12px;
+      background-color: #fff;
+      @apply --shadow-elevation-2dp;
     }
 
-    .nav-notification-button {
-      @apply --navigation-notification-button;
-    }
-
-    .nav-notification-button:hover {
-      @apply --navigation-notification-button-hover;
-    }
-
-    .nav-notification-button[active] {
-      @apply --navigation-notification-button-active;
+    nav {
+      width: 320px;
+      background-color: #fff;
     }
     </style>
+    <!-- Routing -->
     <app-location route="{{route}}" use-hash-as-path></app-location>
     <app-route route="{{route}}" pattern="/:base" data="{{routeData}}"></app-route>
-
+    <!-- Database support -->
+    <auth-data-model></auth-data-model>
+    <project-model></project-model>
+    <rest-api-model></rest-api-model>
+    <host-rules-model></host-rules-model>
+    <request-model></request-model>
+    <url-history-saver></url-history-saver>
+    <authorization-data-saver></authorization-data-saver>
+    <!-- Request logic -->
+    <oauth2-authorization></oauth2-authorization>
+    <oauth1-authorization></oauth1-authorization>
+    <arc-request-logic></arc-request-logic>
+    <request-hooks-logic></request-hooks-logic>
+    <variables-manager></variables-manager>
+    <variables-evaluator></variables-evaluator>
+    <!-- Application views -->
     <app-header-layout has-scrolling-region id="scrollingRegion">
-      <app-header fixed shadow scroll-target="scrollingRegion">
+      <app-header slot="header" fixed shadow scroll-target="scrollingRegion">
         <app-toolbar>
-          <paper-icon-button icon="arc:menu" on-tap="toggleDrawer" title="Toggle drawer"></paper-icon-button>
-          <div main-title>[[pageTitle]]</div>
-          <paper-icon-button icon="arc:pin-drawer" class$="[[_computePinDrawerClass(forceNarrowLayout, narrowLayout, drawerOpened)]]" on-tap="_pinDrawer" title="Pin drawer" alt="Pin drawer"></paper-icon-button>
+          <paper-icon-button icon="arc:menu" on-click="toggleDrawer" title="Toggle drawer"></paper-icon-button>
+          <div main-title>ARC</div>
           <template is="dom-if" if="[[newMessages]]">
-            <span>
-              <paper-icon-button class="nav-notification-button" icon="arc:info-outline" on-tap="openInfoCenter" toggles active="[[messageCenterOpened]]"></paper-icon-button>
-              <paper-tooltip animation-delay="200">See what's new in the app</paper-tooltip>
-            </span>
+            <paper-icon-button class="nav-notification-button" icon="arc:info-outline" on-click="openInfoCenter" toggles active="[[messageCenterOpened]]" title="See what's new in the app"></paper-icon-button>
           </template>
           <template is="dom-if" if="[[hasAppUpdate]]">
-            <span>
-              <paper-icon-button icon="arc:file-download" class="nav-notification-button" on-tap="updateInstall"></paper-icon-button>
-              <paper-tooltip animation-delay="200">Restart and install update</paper-tooltip>
-            </span>
+            <paper-icon-button icon="arc:file-download" class="nav-notification-button" on-click="updateInstall" title="Restart and install update"></paper-icon-button>
           </template>
         </app-toolbar>
       </app-header>
-      <app-drawer-layout id="drawerLayout" force-narrow="{{forceNarrowLayout}}" narrow="{{narrowLayout}}">
-        <app-drawer id="mainDrawer" opened="{{drawerOpened}}">
+      <section role="main" class="main-container">
+        <nav>
           <arc-menu rest-api></arc-menu>
-          <div id="drawerResizer"></div>
-        </app-drawer>
-        <app-drawer id="newsDrawer" align="right" opened="[[messageCenterOpened]]">
-          <arc-info-messages messages="[[appMessages]]" on-close="closeInfoCenter"></arc-info-messages>
-        </app-drawer>
-        <div class="content">
-          <iron-pages id="pages"
-            class="mainPages"
-            attr-for-selected="data-route"
+        </nav>
+        <div class="pages">
+          <iron-pages id="pages" class="mainPages" attr-for-selected="data-route"
             selected-attribute="opened"
             selected="[[routeData.base]]">
             <arc-request-workspace data-route="request"></arc-request-workspace>
@@ -159,9 +90,9 @@
             <themes-panel attr-for-opened="opened" data-route="themes-panel"></themes-panel>
           </iron-pages>
         </div>
-      </app-drawer-layout>
+      </section>
     </app-header-layout>
-
+    <!-- Google Analytics -->
     <template is="dom-if" if="[[telemetry]]" restamp="true">
       <app-analytics tracking-id="UA-18021184-6" app-name="ARC-electon" app-id="[[appId]]" app-version="[[appVersion]]" data-source="electron-app">
         <template is="dom-repeat" items="[[gaCustomMetrics]]">

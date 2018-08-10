@@ -15,7 +15,7 @@ class ArcInit {
   constructor() {
     this.created = false;
     this.workspaceScript = undefined;
-    this.settingsScript = undefined;
+    this.settingsFile = undefined;
     this.themeLoader = new ThemeLoader();
     this.contextActions = new ArcContextMenu();
   }
@@ -69,8 +69,8 @@ class ArcInit {
     info = info || {};
     const initConfig = {};
     if (info.settingsFile) {
-      this.settingsScript = info.settingsFile;
-      initConfig.settingsScript = info.settingsFile;
+      this.settingsFile = info.settingsFile;
+      initConfig.settingsFile = info.settingsFile;
     }
     if (info.workspaceFile) {
       this.workspaceScript = info.workspaceFile;
@@ -138,7 +138,7 @@ class ArcInit {
    */
   initPreferences() {
     log.info('Initializing app preferences...');
-    this.__prefs = new ArcPreferencesRenderer(this.settingsScript);
+    this.__prefs = new ArcPreferencesRenderer(this.settingsFile);
     this.__prefs.observe();
     return this.__prefs.loadSettings();
   }
@@ -178,8 +178,8 @@ class ArcInit {
     if (this.workspaceScript) {
       app.workspaceScript = this.workspaceScript;
     }
-    if (this.settingsScript) {
-      app.settingsScript = this.settingsScript;
+    if (this.settingsFile) {
+      app.settingsFile = this.settingsFile;
     }
     app.componentsDir = this.themeLoader.componentsDir;
     log.info('Initializing ARC app');
