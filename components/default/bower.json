@@ -26,7 +26,6 @@
     "paper-toast": "PolymerElements/paper-toast#^2.0.0",
     "iron-flex-layout": "PolymerElements/iron-flex-layout#^2.0.0",
     "paper-styles": "PolymerElements/paper-styles#^2.0.0",
-    "paper-spinner": "PolymerElements/paper-styles#^2.0.0",
 
 
     "arc-request-workspace": "advanced-rest-client/arc-request-workspace#2.0.0-preview",

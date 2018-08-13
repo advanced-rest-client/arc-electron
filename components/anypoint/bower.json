@@ -25,8 +25,7 @@
     "iron-a11y-keys": "PolymerElements/iron-a11y-keys#^2.0.0",
     "iron-flex-layout": "PolymerElements/iron-flex-layout#^2.0.0",
     "paper-styles": "PolymerElements/paper-styles#^2.0.0",
-    "paper-spinner": "PolymerElements/paper-styles#^2.0.0",
-    
+
 
 
     "arc-definitions": "advanced-rest-client/arc-definitions#^2.0.0",
