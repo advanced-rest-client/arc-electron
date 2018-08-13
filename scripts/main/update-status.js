@@ -1,11 +1,11 @@
 const {ArcBase} = require('./arc-base');
 const {autoUpdater} = require('electron-updater');
 const {dialog, nativeImage, ipcMain} = require('electron');
-const {ArcPreferences} = require('./arc-preferences');
+const {ArcPreferences} = require('@advanced-rest-client/arc-electron-preferences');
 const log = require('electron-log');
 const path = require('path');
-autoUpdater.logger = log;
-autoUpdater.logger.transports.file.level = 'info';
+// autoUpdater.logger = log;
+// autoUpdater.logger.transports.file.level = 'info';
 
 /**
  * A module to check for updates.

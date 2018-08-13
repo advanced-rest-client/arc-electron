@@ -12,7 +12,7 @@
     "url": "https://github.com/advanced-rest-client/arc-electron"
   },
   "scripts": {
-    "start": "electron . --inspect --workspace-file=\"~/arc-dev/dev-workspace.json\" --settings-file=\"~/arc-dev/dev-settings.json\"",
+    "start": "electron . --inspect --workspace-path=\"~/arc-dev/workspace\" --settings-file=\"~/arc-dev/dev-settings.json\"",
     "postinstall": "electron-builder install-app-deps",
     "test": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron electron-mocha test/**/*.test.js",
     "build-l": "npx electron-builder -l",
@@ -39,10 +39,10 @@
   },
   "dependencies": {
     "@advanced-rest-client/arc-electron-preferences": "^1.0.0-rc1",
-    "@advanced-rest-client/electron-drive": "0.1.0-rc2",
-    "@advanced-rest-client/electron-oauth2": "1.0.0-rc1",
+    "@advanced-rest-client/electron-drive": "0.1.0-rc3",
+    "@advanced-rest-client/electron-oauth2": "1.0.0-rc2",
     "camelcase": "^4.1.0",
-    "electron-log": "^2.2.14",
+    "electron-log": "^2.2.16",
     "electron-updater": "^3.1.1",
     "form-data": "^2.3.2",
     "fs-extra": "^4.0.3",

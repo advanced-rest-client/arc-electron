@@ -4,6 +4,7 @@ const {UpdateStatus} = require('./scripts/main/update-status');
 const {ArcMainMenu} = require('./scripts/main/main-menu');
 const {Oauth2Identity} = require('@advanced-rest-client/electron-oauth2');
 const {DriveExport} = require('@advanced-rest-client/electron-drive');
+const {PreferencesManager} = require('@advanced-rest-client/arc-electron-preferences/main');
 const {SessionManager} = require('./scripts/main/session-manager');
 const {AppOptions} = require('./scripts/main/app-options');
 const {RemoteApi} = require('./scripts/main/remote-api');
@@ -18,6 +19,8 @@ class Arc {
    * @constructor
    */
   constructor() {
+    const startupOptions = this._processArguments();
+    this.initOptions = startupOptions.getOptions();
     this._registerProtocols();
   }
   /**
@@ -73,16 +76,12 @@ class Arc {
       log.error(cause);
     })
     .then(() => {
-      const startupOptions = this._processArguments();
-      const opts = startupOptions.getOptions();
-      console.log(opts);
-      const {PreferencesManager} = require('./scripts/main/preferences-manager');
-      this.prefs = new PreferencesManager(opts.settingsFile);
-      this.prefs.listen();
+      this.prefs = new PreferencesManager(this.initOptions);
+      this.prefs.observe();
       this.menu = new ArcMainMenu();
       this.menu.build();
       this.us = new UpdateStatus(this.wm, this.menu);
-      this.wm = new ArcWindowsManager(opts);
+      this.wm = new ArcWindowsManager(this.initOptions);
       this.wm.listen();
       this.us.listen();
       this.gdrive = new DriveExport();

@@ -3,7 +3,7 @@ const {app, Menu, MenuItem} = require('electron');
 const fs = require('fs-extra');
 const path = require('path');
 const log = require('electron-log');
-log.transports.file.level = 'info';
+// log.transports.file.level = 'info';
 
 /**
  * A module to handle app menu actions

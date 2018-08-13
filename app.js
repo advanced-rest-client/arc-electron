@@ -1,6 +1,9 @@
 const ipc = require('electron').ipcRenderer;
-const log = require('electron-log');
+// const log = require('electron-log');
 const {ArcElectronDrive} = require('@advanced-rest-client/electron-drive/renderer');
+const {OAuth2Handler} = require('@advanced-rest-client/electron-oauth2/renderer');
+const {WorkspaceManager} = require('@advanced-rest-client/arc-electron-preferences/renderer');
+const {ArcPreferencesProxy} = require('@advanced-rest-client/arc-electron-preferences/renderer');
 const {ThemeLoader} = require('./scripts/renderer/theme-loader');
 const {ArcContextMenu} = require('./scripts/renderer/context-menu');
 /**
@@ -14,11 +17,9 @@ class ArcInit {
    */
   constructor() {
     this.created = false;
-    this.workspaceScript = undefined;
-    this.settingsFile = undefined;
-    this.themeLoader = new ThemeLoader();
     this.contextActions = new ArcContextMenu();
     this.driveBridge = new ArcElectronDrive();
+    this.oauth2Proxy = new OAuth2Handler();
   }
   /**
    * Reference to the main application window.
@@ -35,9 +36,9 @@ class ArcInit {
   listen() {
     this.contextActions.listenMainEvents();
     window.onbeforeunload = this.beforeUnloadWindow.bind(this);
-    this.themeLoader.listen();
     const updateHandler = this.updateEventHandler.bind(this);
     this.driveBridge.listen();
+    this.oauth2Proxy.listen();
     ipc.on('checking-for-update', updateHandler);
     ipc.on('update-available', updateHandler);
     ipc.on('update-not-available', updateHandler);
@@ -69,20 +70,15 @@ class ArcInit {
    */
   _stateInfoHandler(e, info) {
     info = info || {};
-    const initConfig = {};
-    if (info.settingsFile) {
-      this.settingsFile = info.settingsFile;
-      initConfig.settingsFile = info.settingsFile;
+    const initConfig = info;
+    if (!initConfig.workspaceIndex) {
+      initConfig.workspaceIndex = 0;
     }
-    if (info.workspaceFile) {
-      this.workspaceScript = info.workspaceFile;
-      initConfig.workspaceScript = info.workspaceScript;
-      this.themeLoader.setupSettingsFile(this.workspaceScript);
-    }
-    initConfig.componentsDir = this.themeLoader.componentsDir;
+    this.workspaceIndex = initConfig.workspaceIndex;
     if (!window.ArcConfig) {
       window.ArcConfig = {};
     }
+    this.initConfig = initConfig;
     window.ArcConfig.initConfig = initConfig;
     this.initApp();
   }
@@ -92,7 +88,13 @@ class ArcInit {
    * @return {Promise}
    */
   initApp() {
-    log.info('Initializing renderer window...');
+    console.info('Initializing renderer window...');
+    const opts = {};
+    if (this.initConfig.workspacePath) {
+      opts.filePath = this.initConfig.workspacePath;
+    }
+    this.workspaceManager = new WorkspaceManager(this.workspaceIndex, opts);
+    this.workspaceManager.observe();
     return this.initPreferences()
     .then((settings) => this.themeApp(settings))
     .then(() => this._createApp())
@@ -125,7 +127,7 @@ class ArcInit {
       });
     })
     .then(() => {
-      log.info('Initializing arc-electron element...');
+      console.info('Initializing arc-electron element...');
       const app = document.createElement('arc-electron');
       app.id = 'app';
       this._setupApp(app);
@@ -139,10 +141,10 @@ class ArcInit {
    * @return {Promise} Promise resolved to current settings.
    */
   initPreferences() {
-    log.info('Initializing app preferences...');
-    this.__prefs = new ArcPreferencesRenderer(this.settingsFile);
-    this.__prefs.observe();
-    return this.__prefs.loadSettings();
+    console.info('Initializing app preferences...');
+    this.prefProxy = new ArcPreferencesProxy();
+    this.prefProxy.observe();
+    return this.prefProxy.load();
   }
   /**
    * Sets up application theme.
@@ -152,7 +154,9 @@ class ArcInit {
    * set and ready.
    */
   themeApp(settings) {
-    log.info('Initializing app theme.');
+    this.themeLoader = new ThemeLoader(settings.theme);
+    this.themeLoader.listen();
+    console.info('Initializing app theme.');
     let id;
     if (settings.theme) {
       id = settings.theme;
@@ -162,13 +166,13 @@ class ArcInit {
     return this.themeLoader.activateTheme(id)
     .catch((cause) => {
       if (id === this.themeLoader.defaultTheme) {
-        log.error('Unable to load theme file.', cause);
+        console.error('Unable to load theme file.', cause);
         return;
       }
       return this.themeLoader.activateTheme(this.themeLoader.defaultTheme);
     })
     .catch((cause) => {
-      log.error('Unable to load default theme file.', cause);
+      console.error('Unable to load default theme file.', cause);
     });
   }
   /**
@@ -177,14 +181,8 @@ class ArcInit {
    * @param {ArcElectron} app App electron element.
    */
   _setupApp(app) {
-    if (this.workspaceScript) {
-      app.workspaceScript = this.workspaceScript;
-    }
-    if (this.settingsFile) {
-      app.settingsFile = this.settingsFile;
-    }
     app.componentsDir = this.themeLoader.componentsDir;
-    log.info('Initializing ARC app');
+    console.info('Initializing ARC app');
     app.initApplication();
   }
   /**
@@ -219,7 +217,7 @@ class ArcInit {
    * @param {Array} args
    */
   commandHandler(e, action, ...args) {
-    log.info('Renderer command handled: ', action);
+    console.info('Renderer command handled: ', action);
     const app = this.app;
     switch (action) {
       case 'show-settings': app.openSettings(); break;
@@ -287,7 +285,7 @@ class ArcInit {
    * @param {String} action Action name to perform.
    */
   execRequestAction(e, action, ...args) {
-    log.info('Renderer request command handled: ', action);
+    console.info('Renderer request command handled: ', action);
     const app = this.app;
     switch (action) {
       case 'save':

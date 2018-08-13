@@ -1,7 +1,7 @@
 const {BrowserWindow, dialog, ipcMain} = require('electron');
 const path = require('path');
 const url = require('url');
-const {ArcSessionControl} = require('./session-control');
+const {ArcSessionControl} = require('@advanced-rest-client/arc-electron-preferences/main');
 const {ArcSessionRecorder} = require('./arc-session-recorder');
 const {ContextActions} = require('./context-actions');
 /**
@@ -144,9 +144,9 @@ class ArcWindowsManager {
   open(path) {
     let index = this.windows.length;
     let session = new ArcSessionControl(index);
-    return session.restore()
+    return session.load()
     .then((data) => {
-      let win = this.__getNewWindow(index, data);
+      const win = this.__getNewWindow(index, data);
       win.__arcSession = session;
       this.__loadPage(win, path);
       win.webContents.openDevTools();
@@ -245,9 +245,11 @@ class ArcWindowsManager {
       return item.id === contents.id;
     });
     if (win) {
-      opts.startPath = win._startPath;
+      opts.workspaceIndex = win.__arcIndex;
+      this.contextActions.registerDefaultActions(win.webContents);
+    } else {
+      opts.workspaceIndex = 0;
     }
-    this.contextActions.registerDefaultActions(win.webContents);
     contents.send('window-state-info', opts);
   }
   /**

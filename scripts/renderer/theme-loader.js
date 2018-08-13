@@ -3,7 +3,6 @@ const electron = require('electron');
 const ipc = electron.ipcRenderer;
 const path = require('path');
 const app = (electron.app || electron.remote.app);
-const {ArcPreferencesRenderer} = require('./arc-preferences');
 /**
  * A class responsible for loading ARC components and
  * theme from appropieate source.
@@ -15,9 +14,11 @@ const {ArcPreferencesRenderer} = require('./arc-preferences');
  */
 class ThemeLoader {
   /**
-   * @constructor
+   * @param {?String} userTheme A theme to be restored. If not set default is
+   * used
    */
-  constructor() {
+  constructor(userTheme) {
+    this.userTheme = userTheme;
     this.basePath = path.join(app.getPath('userData'), 'themes');
     this.infoFilePath = path.join(this.basePath, 'themes-info.json');
     this._listThemesHandler = this._listThemesHandler.bind(this);
@@ -25,7 +26,7 @@ class ThemeLoader {
     this._activateHandler = this._activateHandler.bind(this);
     this.defaultTheme = 'dd1b715f-af00-4ee8-8b0c-2a262b3cf0c8';
     this.anypointTheme = '859e0c71-ce8b-44df-843b-bca602c13d06';
-    this.activeTheme = this.defaultTheme;
+    this.activeTheme = this.userTheme || this.defaultTheme;
     this.importFileName = 'import.html';
     this.componentsBasePath = path.join('./', 'components');
   }
@@ -62,24 +63,12 @@ class ThemeLoader {
    * @param {CustomEvent} e
    */
   _activeThemeHandler(e) {
-    const prefs = new ArcPreferencesRenderer(this.settingsFile);
     e.preventDefault();
     if (this.activeTheme) {
       e.detail.result = Promise.resolve(this.activeTheme);
       return;
     }
-    e.detail.result = prefs.loadSettings()
-    .then((config) => {
-      let theme;
-      if (config && config.theme) {
-        theme = config.theme;
-      }
-      if (!theme) {
-        theme = this.defaultTheme;
-      }
-      this.activeTheme = theme;
-      return theme;
-    });
+    e.detail.result = Promise.resolve(this.activeTheme);
   }
   /**
    * Activates a theme selected by the user.
@@ -252,9 +241,16 @@ class ThemeLoader {
    * @return {Promise} Resolved promise when settings file is saved.
    */
   updateThemeSettings(themeId) {
-    const prefs = new ArcPreferencesRenderer(this.settingsFile);
-    return prefs.loadSettings()
-    .then(() => prefs.saveConfig('theme', themeId));
+    const e = new CustomEvent('settings-changed', {
+      cancelable: true,
+      bubbles: true,
+      detail: {
+        name: 'theme',
+        value: themeId
+      }
+    });
+    document.body.dispatchEvent(e);
+    return e.detail.result;
   }
 
   _loadAppComponents(id) {

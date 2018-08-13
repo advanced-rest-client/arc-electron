@@ -1,8 +1,8 @@
-const {ArcMeta} = require('./arc-meta');
+const {ArcMeta} = require('@advanced-rest-client/arc-electron-preferences/main');
 const _FormData = require('form-data');
 const _fetch = require('node-fetch');
 const log = require('electron-log');
-log.transports.file.level = 'info';
+// log.transports.file.level = 'info';
 /**
  * Session recorder.
  *
