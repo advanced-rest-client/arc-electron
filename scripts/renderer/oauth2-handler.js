@@ -19,7 +19,7 @@ class OAuth2Handler {
    * @return {Number} A request ID to the background page.
    */
   nextRequestId() {
-    return ++ this._requestId;
+    return ++this._requestId;
   }
   /**
    * Attaches listeners on the body element to listen for elements events.

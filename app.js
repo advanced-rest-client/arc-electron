@@ -1,6 +1,6 @@
 const ipc = require('electron').ipcRenderer;
 const log = require('electron-log');
-const {ArcPreferencesRenderer} = require('./scripts/renderer/arc-preferences');
+const {ArcElectronDrive} = require('@advanced-rest-client/electron-drive/renderer');
 const {ThemeLoader} = require('./scripts/renderer/theme-loader');
 const {ArcContextMenu} = require('./scripts/renderer/context-menu');
 /**
@@ -18,6 +18,7 @@ class ArcInit {
     this.settingsFile = undefined;
     this.themeLoader = new ThemeLoader();
     this.contextActions = new ArcContextMenu();
+    this.driveBridge = new ArcElectronDrive();
   }
   /**
    * Reference to the main application window.
@@ -36,6 +37,7 @@ class ArcInit {
     window.onbeforeunload = this.beforeUnloadWindow.bind(this);
     this.themeLoader.listen();
     const updateHandler = this.updateEventHandler.bind(this);
+    this.driveBridge.listen();
     ipc.on('checking-for-update', updateHandler);
     ipc.on('update-available', updateHandler);
     ipc.on('update-not-available', updateHandler);

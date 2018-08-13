@@ -2,8 +2,8 @@ const {ipcMain, app} = require('electron');
 const {ArcWindowsManager} = require('./scripts/main/windows-manager');
 const {UpdateStatus} = require('./scripts/main/update-status');
 const {ArcMainMenu} = require('./scripts/main/main-menu');
-const {ArcIdentity} = require('./scripts/main/oauth2');
-const {DriveExport} = require('./scripts/main/drive-export');
+const {Oauth2Identity} = require('@advanced-rest-client/electron-oauth2');
+const {DriveExport} = require('@advanced-rest-client/electron-drive');
 const {SessionManager} = require('./scripts/main/session-manager');
 const {AppOptions} = require('./scripts/main/app-options');
 const {RemoteApi} = require('./scripts/main/remote-api');
@@ -98,7 +98,7 @@ class Arc {
       this.prompts = new AppPrompts();
       this.prompts.listen();
       this._listenMenu();
-      ArcIdentity.listen();
+      Oauth2Identity.listen();
     })
     .catch((cause) => {
       log.error('Unable to start the application.', cause.message);
