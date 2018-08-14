@@ -95,7 +95,7 @@
       </app-header>
       <section role="main" class="main-container">
         <nav>
-          <arc-menu rest-api on-navigate="_handleNavigation"></arc-menu>
+          <arc-menu rest-api></arc-menu>
         </nav>
         <div class="pages">
           <iron-pages id="pages" class="mainPages" attr-for-selected="data-route" selected-attribute="opened" selected="[[page]]">
@@ -188,6 +188,11 @@
       };
     }
 
+    constructor() {
+      super();
+      this._handleNavigation = this._handleNavigation.bind(this);
+    }
+
     static get observers() {
       return [
         '_baseRouteChanged(routeData.base)'
@@ -197,6 +202,7 @@
     connectedCallback() {
       super.connectedCallback();
       this._variablesButton = this.$.varToggleButton;
+      window.addEventListener('navigate', this._handleNavigation);
     }
 
     _baseRouteChanged(base) {
@@ -255,6 +261,8 @@
         case 'request':
           this._setupRequest(e.detail);
           break;
+        default:
+          console.warn('Unknown navigation', e.detail);
       }
     }
 

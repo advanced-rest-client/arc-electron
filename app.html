@@ -39,9 +39,25 @@
     cursor: pointer;
     min-height: 40px;
   }
+
+  bottom-sheet {
+    width: var(--arc-bottom-sheet-width, 100%);
+    max-width: var(--arc-bottom-sheet-max-width, 700px);
+  }
   </style>
 </head>
 <body>
+  <!-- This elements are undefined until the main application is loaded. -->
+  <bottom-sheet id="editorSheet" with-backdrop>
+    <saved-request-editor id="requestEditor"></saved-request-detail>
+  </bottom-sheet>
+  <bottom-sheet id="detailsSheet" with-backdrop>
+    <saved-request-detail id="requestDetails"></saved-request-detail>
+  </bottom-sheet>
+  <bottom-sheet id="snippetsSheet" with-backdrop>
+    <http-code-snippets id="requestSnippets"></http-code-snippets>
+  </bottom-sheet>
   <script src="app.js"></script>
+  <script src="scripts/renderer/bottom-sheet-support.js"></script>
 </body>
 </html>
