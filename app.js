@@ -84,7 +84,8 @@ class ArcInit {
     }
     this.initConfig = initConfig;
     window.ArcConfig.initConfig = initConfig;
-    this.initApp();
+    this.initApp()
+    .then(() => console.log('Application window is now ready.'));
   }
   /**
    * Initialized the application when window is ready.

@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "@advanced-rest-client/arc-electron-preferences": "^1.0.0-rc1",
-    "@advanced-rest-client/arc-electron-sources-manager": "0.1.0-rc1",
+    "@advanced-rest-client/arc-electron-sources-manager": "0.1.0-rc2",
     "@advanced-rest-client/electron-drive": "0.1.0-rc3",
     "@advanced-rest-client/electron-oauth2": "1.0.0-rc2",
     "camelcase": "^4.1.0",
