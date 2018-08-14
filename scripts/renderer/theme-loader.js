@@ -99,16 +99,17 @@ class ThemeLoader {
   }
   /**
    * Activates theme for given ID.
-   * IDs are generated upon theme installation and stored in `this.basePath`
-   * in `themes-info.json` file. This function reads the file to find
-   * the theme.
    *
-   * @param {[type]} id [description]
-   * @return {[type]} [description]
+   * @param {String} id Theme ID
+   * @return {Promise}
    */
   activateTheme(id) {
     let model;
     let themes;
+
+    if (!id) {
+      id = this.activeTheme;
+    }
 
     return this.unactivateTheme(this.activeTheme)
     .then(() => {
@@ -130,11 +131,23 @@ class ThemeLoader {
     .then((info) => this._fillThemeInfo(info))
     .then((info) => {
       model = info;
-      return info;
     })
-    .then((info) => this._loadWebComponent(info.fileLocation))
     .then(() => this._loadAppComponents(id))
-    .then(() => this.includeCustomStyle(model.themeName));
+    .then(() => {
+      Polymer.importHref(model.fileLocation, () => {
+        const el = Polymer.StyleGather.stylesFromModule(model.themeName)[0];
+        const newStyle = new Polymer.CustomStyle();
+        const sc = document.createElement('style');
+        sc.innerText = el.innerText;
+        newStyle.appendChild(sc);
+        document.body.appendChild(newStyle);
+      }, () => {
+        debugger;
+      }, true);
+    });
+    // .then((info) => this._loadWebComponent(info.fileLocation))
+    // .then(() => this._loadAppComponents(id))
+    // .then(() => this.includeCustomStyle(model.themeName));
   }
 
   unactivateTheme() {

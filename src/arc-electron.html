@@ -170,7 +170,11 @@
       if (cls) {
         return;
       }
-      const componentUrl = `${this.componentsDir}/${_path}.html`;
+      this._loadComponent(_path);
+    }
+
+    _loadComponent(path) {
+      const componentUrl = `${this.componentsDir}/bower_components/${path}.html`;
       this._loadingSources = true;
       Polymer.importHref(componentUrl, () => {
         this._loadingSources = false;
@@ -185,7 +189,7 @@
     }
 
     _reportComponentLoadingError(url) {
-      console.error(`Unable to load component ${url}`);
+      console.error(`Unable to load component from ${url}`);
     }
   }
   window.customElements.define(ArcElectron.is, ArcElectron);

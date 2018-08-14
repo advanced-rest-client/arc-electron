@@ -81,7 +81,7 @@ class Arc {
       this.menu = new ArcMainMenu();
       this.menu.build();
       this.us = new UpdateStatus(this.wm, this.menu);
-      this.wm = new ArcWindowsManager(this.initOptions);
+      this.wm = new ArcWindowsManager(this.initOptions, this.prefs);
       this.wm.listen();
       this.us.listen();
       this.gdrive = new DriveExport();

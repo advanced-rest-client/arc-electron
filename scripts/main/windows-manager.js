@@ -2,6 +2,7 @@ const {BrowserWindow, dialog, ipcMain} = require('electron');
 const path = require('path');
 const url = require('url');
 const {ArcSessionControl} = require('@advanced-rest-client/arc-electron-preferences/main');
+const {SourcesManager} = require('@advanced-rest-client/arc-electron-sources-manager/main');
 const {ArcSessionRecorder} = require('./arc-session-recorder');
 const {ContextActions} = require('./context-actions');
 /**
@@ -9,12 +10,11 @@ const {ContextActions} = require('./context-actions');
  */
 class ArcWindowsManager {
   /**
-   * @constructor
-   *
    * @param {?Object} startupOptions Application startup object. See
    * `AppOptions` for more details.
+   * @param {PreferencesManager} pm ARC preferences manager module instance
    */
-  constructor(startupOptions) {
+  constructor(startupOptions, pm) {
     this.startupOptions = startupOptions || {};
     this.windows = [];
     // Task manager window reference.
@@ -27,6 +27,7 @@ class ArcWindowsManager {
     this._settingChangedHandler = this._settingChangedHandler.bind(this);
     this.recorder = new ArcSessionRecorder();
     this.contextActions = new ContextActions();
+    this.sourcesManager = new SourcesManager(pm, startupOptions);
   }
   /**
    * @return {Boolean} True if has at leas one window.
@@ -61,6 +62,7 @@ class ArcWindowsManager {
     ipcMain.on('reload-app-required', this._reloadRequiredHandler.bind(this));
     ipcMain.on('settings-changed', this._settingChangedHandler);
     ipcMain.on('window-state-request', this._winStateRequestHandler.bind(this));
+    this.sourcesManager.listen();
   }
   /**
    * A handler for new window open event. Calls `open()` function.
@@ -237,20 +239,22 @@ class ArcWindowsManager {
    */
   _winStateRequestHandler(ev) {
     const contents = ev.sender;
-    const opts = Object.assign({}, this.startupOptions);
     const win = this.windows.find((item) => {
       if (item.isDestroyed()) {
         return false;
       }
       return item.id === contents.id;
     });
-    if (win) {
-      opts.workspaceIndex = win.__arcIndex;
-      this.contextActions.registerDefaultActions(win.webContents);
-    } else {
-      opts.workspaceIndex = 0;
-    }
-    contents.send('window-state-info', opts);
+    this.sourcesManager.getAppConfig()
+    .then((opts) => {
+      if (win) {
+        opts.workspaceIndex = win.__arcIndex;
+        this.contextActions.registerDefaultActions(win.webContents);
+      } else {
+        opts.workspaceIndex = 0;
+      }
+      contents.send('window-state-info', opts);
+    });
   }
   /**
    * Attaches listeners to the window object.

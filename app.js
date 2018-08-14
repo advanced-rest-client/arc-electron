@@ -4,7 +4,7 @@ const {ArcElectronDrive} = require('@advanced-rest-client/electron-drive/rendere
 const {OAuth2Handler} = require('@advanced-rest-client/electron-oauth2/renderer');
 const {WorkspaceManager} = require('@advanced-rest-client/arc-electron-preferences/renderer');
 const {ArcPreferencesProxy} = require('@advanced-rest-client/arc-electron-preferences/renderer');
-const {ThemeLoader} = require('./scripts/renderer/theme-loader');
+const {ThemeManager} = require('@advanced-rest-client/arc-electron-sources-manager/renderer');
 const {ArcContextMenu} = require('./scripts/renderer/context-menu');
 /**
  * Class responsible for initializing the main ARC elements
@@ -20,6 +20,8 @@ class ArcInit {
     this.contextActions = new ArcContextMenu();
     this.driveBridge = new ArcElectronDrive();
     this.oauth2Proxy = new OAuth2Handler();
+    this.themeManager = new ThemeManager();
+    this.prefProxy = new ArcPreferencesProxy();
   }
   /**
    * Reference to the main application window.
@@ -39,6 +41,8 @@ class ArcInit {
     const updateHandler = this.updateEventHandler.bind(this);
     this.driveBridge.listen();
     this.oauth2Proxy.listen();
+    this.themeManager.listen();
+    this.prefProxy.observe();
     ipc.on('checking-for-update', updateHandler);
     ipc.on('update-available', updateHandler);
     ipc.on('update-not-available', updateHandler);
@@ -95,9 +99,8 @@ class ArcInit {
     }
     this.workspaceManager = new WorkspaceManager(this.workspaceIndex, opts);
     this.workspaceManager.observe();
-    return this.initPreferences()
-    .then((settings) => this.themeApp(settings))
-    .then(() => this._createApp())
+    return this._createApp()
+    .then(() => this.themeManager.loadTheme(this.initConfig.themeFile))
     .catch((cause) => this.reportFatalError(cause));
   }
   /**
@@ -119,11 +122,19 @@ class ArcInit {
     if (this.created) {
       return Promise.resolve();
     }
-    return new Promise((resolve, reject) => {
-      Polymer.importHref('src/arc-electron.html', () => {
-        resolve();
-      }, () => {
-        reject(new Error('Unable to load ARC app'));
+    console.log('Importing components from ', this.initConfig.importFile);
+    return this._importHref(this.initConfig.importFile)
+    .catch(() => {
+      throw new Error('Unable to load components import file.');
+    })
+    .then(() => {
+      console.log('Importing arc-electron component');
+      return new Promise((resolve, reject) => {
+        Polymer.importHref('src/arc-electron.html', () => {
+          resolve();
+        }, () => {
+          reject(new Error('Unable to load ARC app'));
+        });
       });
     })
     .then(() => {
@@ -135,44 +146,31 @@ class ArcInit {
       this.created = true;
     });
   }
-  /**
-   * Initializes and reads application settings.
-   *
-   * @return {Promise} Promise resolved to current settings.
-   */
-  initPreferences() {
-    console.info('Initializing app preferences...');
-    this.prefProxy = new ArcPreferencesProxy();
-    this.prefProxy.observe();
-    return this.prefProxy.load();
-  }
-  /**
-   * Sets up application theme.
-   *
-   * @param {String} settings Current application settings.
-   * @return {Promise} Promise resolved when the application theme is
-   * set and ready.
-   */
-  themeApp(settings) {
-    this.themeLoader = new ThemeLoader(settings.theme);
-    this.themeLoader.listen();
-    console.info('Initializing app theme.');
-    let id;
-    if (settings.theme) {
-      id = settings.theme;
-    } else {
-      id = this.themeLoader.defaultTheme;
-    }
-    return this.themeLoader.activateTheme(id)
-    .catch((cause) => {
-      if (id === this.themeLoader.defaultTheme) {
-        console.error('Unable to load theme file.', cause);
-        return;
-      }
-      return this.themeLoader.activateTheme(this.themeLoader.defaultTheme);
-    })
-    .catch((cause) => {
-      console.error('Unable to load default theme file.', cause);
+
+  _importHref(href) {
+    return new Promise((resolve, reject) => {
+      const link = document.createElement('link');
+      link.rel = 'import';
+      link.href = href;
+      link.setAttribute('import-href', '');
+      link.setAttribute('async', '');
+      const callbacks = {
+        load: function() {
+          callbacks.cleanup();
+          resolve();
+        },
+        error: function() {
+          callbacks.cleanup();
+          reject();
+        },
+        cleanup: function() {
+          link.removeEventListener('load', callbacks.load);
+          link.removeEventListener('error', callbacks.error);
+        }
+      };
+      link.addEventListener('load', callbacks.load);
+      link.addEventListener('error', callbacks.error);
+      document.head.appendChild(link);
     });
   }
   /**
@@ -181,8 +179,8 @@ class ArcInit {
    * @param {ArcElectron} app App electron element.
    */
   _setupApp(app) {
-    app.componentsDir = this.themeLoader.componentsDir;
     console.info('Initializing ARC app');
+    app.componentsDir = this.initConfig.appComponents;
     app.initApplication();
   }
   /**
