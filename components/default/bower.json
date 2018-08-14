@@ -57,7 +57,8 @@
     "uuid-generator": "advanced-rest-client/uuid-generator#^2.0.0",
     "exchange-search-panel": "advanced-rest-client/exchange-search-panel#2.0.0-preview",
     "project-details": "advanced-rest-client/project-details#2.0.0-preview",
-
+    "environment-selector": "advanced-rest-client/environment-selector#2.0.0-preview",
+    "variables-preview-overlay": "advanced-rest-client/variables-preview-overlay#2.0.0-preview",
 
     "oauth-authorization": "advanced-rest-client/oauth-authorization#^2.0.0",
     "web-animations-js": "web-animations/web-animations-js#^2.3",
