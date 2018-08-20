@@ -1,4 +1,5 @@
-const ipc = require('electron').ipcRenderer;
+const {ipcRenderer: ipc} = require('electron');
+const {app} = require('electron').remote;
 const log = require('electron-log');
 const {ArcElectronDrive} = require('@advanced-rest-client/electron-drive/renderer');
 const {OAuth2Handler} = require('@advanced-rest-client/electron-oauth2/renderer');
@@ -9,6 +10,7 @@ const {SocketRequest} = require('@advanced-rest-client/electron-request');
 const {CookieBridge} = require('@advanced-rest-client/electron-session-state/renderer');
 const {ArcContextMenu} = require('./context-menu');
 const setImmediateFn = setImmediate;
+const versions = process.versions;
 process.once('loaded', () => {
   global.ipcRenderer = ipc;
   global.ipc = ipc;
@@ -22,4 +24,8 @@ process.once('loaded', () => {
   global.CookieBridge = CookieBridge;
   global.log = log;
   global.setImmediate = setImmediateFn;
+  global.versionInfo = {
+    chrome: versions.chrome,
+    appVersion: app.getVersion()
+  };
 });

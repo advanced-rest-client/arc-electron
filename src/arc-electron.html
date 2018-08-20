@@ -185,7 +185,21 @@
          * A reference to the variables open button.
          * @type {String}
          */
-        _variablesButton: Object
+        _variablesButton: Object,
+        gaCustomDimensions: Array,
+        gaCustomMetrics: Array,
+        // Application ID for analytics
+        appId: {
+          type: String,
+          value: 'com.mulesoft.arc'
+        },
+        // Current application varsion
+        appVersion: {
+          type: String,
+          value() {
+            return versionInfo.appVersion;
+          }
+        },
       };
     }
 
@@ -251,6 +265,8 @@
       Polymer.RenderStatus.afterNextRender(this, () => {
         this.updateStyles({});
       });
+      this.setupAnalytics();
+      this._requestAuthToken(false);
     }
 
     _reportComponentLoadingError(url) {
@@ -325,6 +341,290 @@
       }
       this.$.workspace.selected = 0;
     }
+
+    /**
+     * Returns number of currently opened tabs
+     *
+     * @return {Number} Number of opened tabs in request workspace.
+     */
+    getTabsCount() {
+      const workspace = this.$.workspace;
+      if (!workspace || !workspace.activeRequests) {
+        return 0;
+      }
+      return workspace.activeRequests.length;
+    }
+
+    /**
+     * Updates a request object in this window for a specific tab.
+     *
+     * @param {Object} request ARC request obejct
+     * @param {?Number} index Tab index to update. If not provided (or not a number)
+     * it uses current active tab.
+     */
+    updateRequestTab(request, index) {
+      /* global log */
+      log.info('Updating request object...');
+      const workspace = this.$.workspace;
+      if (typeof index !== 'number') {
+        log.info('Tab not provided. Using current selection...');
+        index = workspace.selected;
+      }
+      workspace.updateRequestObject(request, index);
+    }
+
+    _dispatchNavigate(detail) {
+      this.dispatchEvent(new CustomEvent('navigate', {
+        bubbles: true,
+        composed: true,
+        detail
+      }));
+    }
+
+    // Navigate to the cookie manager
+    openCookieManager() {
+      this._dispatchNavigate({
+        base: 'cookie-manager'
+      });
+    }
+
+    openExchangeSearch() {
+      this._dispatchNavigate({
+        base: 'exchange-search'
+      });
+    }
+
+    openThemesPanel() {
+      this._dispatchNavigate({
+        base: 'themes-panel'
+      });
+    }
+
+    openAbout() {
+      this._dispatchNavigate({
+        base: 'about'
+      });
+    }
+
+    openDrivePicker() {
+      this._dispatchNavigate({
+        base: 'drive'
+      });
+    }
+    /**
+     * Opens the import / export panel
+     */
+    openImportExport() {
+      this._dispatchNavigate({
+        base: 'dataimport'
+      });
+    }
+    /**
+     * Opens the settings panel.
+     */
+    openSettings() {
+      this._dispatchNavigate({
+        base: 'settings'
+      });
+    }
+
+    /**
+     * Opens the host rules editor.
+     */
+    openHostRules() {
+      this._dispatchNavigate({
+        base: 'hosts-rules'
+      });
+    }
+
+    openImport() {
+      this._dispatchNavigate({
+        base: 'dataimport'
+      });
+      // var panel = this.$$('data-import-export-panel');
+      // panel.hideExport = true;
+      // panel.hideImport = false;
+    }
+
+    openExport() {
+      this._dispatchNavigate({
+        base: 'dataimport'
+      });
+      // var panel = this.$$('data-import-export-panel');
+      // panel.hideExport = false;
+      // panel.hideImport = true;
+    }
+
+    openSaved() {
+      this._dispatchNavigate({
+        base: 'saved'
+      });
+    }
+
+    openHistory() {
+      this._dispatchNavigate({
+        base: 'history'
+      });
+    }
+
+    /**
+     * Reads current settings and enables Google Analytics if it's not
+     * disabled by the uers.
+     *
+     * @return {Promise}
+     */
+    setupAnalytics() {
+      const e = new CustomEvent('settings-read', {
+        composed: true,
+        cancelable: true,
+        bubbles: true,
+        detail: {}
+      });
+      this.dispatchEvent(e);
+      if (!e.defaultPrevented) {
+        // throw new Error('Settings provider not found.');
+        log.warn(`Settings provider not found`);
+        return;
+      }
+      return e.detail.result
+      .then((settings) => {
+        if (settings.telemetry === false) {
+          this._analyticsDisabled();
+        } else {
+          this._analyticsEnabled();
+          setTimeout(() => this._telemetryScreen(), 20);
+        }
+      });
+    }
+    /**
+     * Enables Google Analytics.
+     *
+     * Until settings status is checked Google Analytics components is not
+     * even in the DOM. Once the `telemetry` flag is set analytics elements
+     * are attached to the DOM and start handling events.
+     *
+     * This can be disabled by calling `_analyticsDisabled` or by sending
+     * `settings-changed` custom event with `telemetry` key.
+     */
+    _analyticsEnabled() {
+      this.telemetry = true;
+      if (this.gaCustomDimensions) {
+        return;
+      }
+      /* global versionInfo */
+      this.gaCustomDimensions = [];
+      this.push('gaCustomDimensions', {
+        index: 1,
+        value: versionInfo.chrome
+      });
+      this.push('gaCustomDimensions', {
+        index: 2,
+        value: this.appVersion
+      });
+      this.push('gaCustomDimensions', {
+        index: 5,
+        value: 'stable'
+      });
+    }
+    // To be called if GA is disabled to remove GA elements from the DOM.
+    _analyticsDisabled() {
+      this.telemetry = false;
+    }
+    /**
+     * Handles settings change event.
+     * If changed setting is `telemetry` then it upodates GA state.
+     *
+     * @param {CustomEvent} e
+     */
+    _settingChanged(e) {
+      if (e.detail.name !== 'telemetry') {
+        return;
+      }
+      let value = e.detail.value;
+      if (typeof value !== 'boolean') {
+        value = value === 'false' ? false : true;
+      }
+      if (value) {
+        this._analyticsEnabled();
+      } else {
+        this._analyticsDisabled();
+      }
+    }
+    _telemetryScreen() {
+      let screenName = '[unknown]';
+      switch (this.page) {
+        case 'history': screenName = 'History'; break;
+        case 'settings': screenName = 'Settings'; break;
+        case 'about': screenName = 'About'; break;
+        case 'socket': screenName = 'Socket'; break;
+        case 'saved': screenName = 'Saved'; break;
+        case 'dataimport': screenName = 'Data import / export'; break;
+        case 'project': screenName = 'Project details'; break;
+        case 'default':
+        case 'request': screenName = 'Request panel'; break;
+        case 'drive': screenName = 'Drive selector'; break;
+        case 'cookie-manager': screenName = 'Cookie manager'; break;
+        case 'api-console': screenName = 'API Console'; break;
+        case 'rest-projects': screenName = 'REST APIs list'; break;
+        case 'exchange-search': screenName = 'Exchange search'; break;
+        case 'hosts-rules': screenName = 'Hosts rules'; break;
+        case 'themes-panel': screenName = 'Themes panel'; break;
+      }
+      this.dispatchEvent(new CustomEvent('send-analytics', {
+        composed: true,
+        cancelable: true,
+        bubbles: true,
+        detail: {
+          type: 'screenview',
+          name: screenName
+        }
+      }));
+    }
+
+    _requestAuthToken(interactive, scope) {
+      if (this.__requestingToken) {
+        return;
+      }
+      this.__requestingToken = true;
+      /* global ipc */
+      ipc.send('oauth-2-get-token', {
+        interactive: interactive,
+        scopes: scope
+      });
+      const context = this;
+      let rejected;
+      function resolved(sender, token) {
+        let tokenValue = token ? token.accessToken : undefined;
+        context.__requestingToken = false;
+        ipc.removeListener('oauth-2-token-ready', resolved);
+        ipc.removeListener('oauth-2-token-error', rejected);
+        context.dispatchEvent(new CustomEvent('google-signin-success', {
+          composed: true,
+          cancelable: true,
+          bubbles: true,
+          detail: {
+            scope: scope,
+            token: tokenValue
+          }
+        }));
+        context.accessToken = tokenValue;
+      }
+      rejected = function() {
+        context.__requestingToken = false;
+        ipc.removeListener('oauth-2-token-ready', resolved);
+        ipc.removeListener('oauth-2-token-error', rejected);
+        context.dispatchEvent(new CustomEvent('google-signout', {
+          composed: true,
+          cancelable: true,
+          bubbles: true,
+          detail: {
+            scope: scope
+          }
+        }));
+      };
+      ipc.on('oauth-2-token-ready', resolved);
+      ipc.on('oauth-2-token-error', rejected);
+    }
   }
   window.customElements.define(ArcElectron.is, ArcElectron);
     // Polymer({
@@ -339,19 +639,7 @@
     //     routeData: Object,
     //     // Parsed route data for google drive
     //     driveFileRoute: Object,
-    //     // Application ID for analytics
-    //     appId: {
-    //       type: String,
-    //       value: 'com.mulesoft.arc'
-    //     },
-    //     // Current application varsion
-    //     appVersion: {
-    //       type: String,
-    //       value: function() {
-    //         const {app} = require('electron').remote;
-    //         return app.getVersion();
-    //       }
-    //     },
+
     //     gaCustomMetrics: Array,
     //     gaCustomDimensions: Array,
     //     // Width of the main navigation drawer.
@@ -394,7 +682,7 @@
     //     // Scroll target for the application.
     //     scrollTarget: {
     //       type: Object,
-    //       value: function() {
+    //       value() {
     //         return this.$.scrollingRegion.$$('#contentContainer');
     //       }
     //     },
@@ -420,14 +708,14 @@
     //     log: {
     //       type: Object,
     //       readOnly: true,
-    //       value: function() {
+    //       value() {
     //         return require('electron-log');
     //       }
     //     },
     //     // A handler to the workspace object
     //     workspace: {
     //       type: Object,
-    //       value: function() {
+    //       value() {
     //         return this.$$('request-workspace');
     //       },
     //       readOnly: true
@@ -454,7 +742,7 @@
     //     '_notifyRequestPanelResize(narrowLayout)'
     //   ],
     //
-    //   detacheded: function() {
+    //   detacheded() {
     //     this.unlisten(document.body, 'display-license', 'openLicense');
     //     this._unobserveMainEvents();
     //   },
@@ -462,7 +750,7 @@
     //    * Called by the application window main script when all
     //    * setup is ready and the application can be initialized.
     //    */
-    //   initApplication: function() {
+    //   initApplication() {
     //     if (this._appInitialized) {
     //       return;
     //     }
@@ -480,7 +768,7 @@
     //     this.windowSearch.listen();
     //   },
     //
-    //   initRouting: function() {
+    //   initRouting() {
     //     if (!this.route.path) {
     //       this.set('route.path', '/request/latest/0');
     //     }
@@ -489,7 +777,7 @@
     //     }
     //   },
     //
-    //   _createMenu: function() {
+    //   _createMenu() {
     //     if (this.$$('arc-menu')) {
     //       return;
     //     }
@@ -511,85 +799,8 @@
     //     });
     //   },
     //
-    //   /**
-    //    * Reads current settings and enables Google Analytics if it's not
-    //    * disabled by the uers.
-    //    */
-    //   setupAnalytics: function() {
-    //     var event = this.fire('settings-read', {}, {
-    //       composed: true,
-    //       cancelable: true
-    //     });
-    //     if (!event.defaultPrevented) {
-    //       throw new Error('Settings provided not found.');
-    //     }
-    //     return event.detail.result.then(settings => {
-    //       if (settings.telemetry === false) {
-    //         this._analyticsDisabled();
-    //       } else {
-    //         this._analyticsEnabled();
-    //         this.async(function() {
-    //           this._telemetryScreen();
-    //         }, 20);
-    //       }
-    //     });
-    //   },
-    //   /**
-    //    * Enables Google Analytics.
-    //    *
-    //    * Until settings status is checked Google Analytics components is not
-    //    * even in the DOM. Once the `telemetry` flag is set analytics elements
-    //    * are attached to the DOM and start handling events.
-    //    *
-    //    * This can be disabled by calling `_analyticsDisabled` or by sending
-    //    * `settings-changed` custom event with `telemetry` key.
-    //    */
-    //   _analyticsEnabled: function() {
-    //     this.telemetry = true;
-    //     if (this.gaCustomDimensions) {
-    //       return;
-    //     }
-    //     this.gaCustomDimensions = [];
-    //     this.push('gaCustomDimensions', {
-    //       index: 1,
-    //       value: process.versions.chrome
-    //     });
-    //     this.push('gaCustomDimensions', {
-    //       index: 2,
-    //       value: this.appVersion
-    //     });
-    //     this.push('gaCustomDimensions', {
-    //       index: 5,
-    //       value: 'stable'
-    //     });
-    //   },
-    //   // To be called if GA is disabled to remove GA elements from the DOM.
-    //   _analyticsDisabled: function() {
-    //     this.telemetry = false;
-    //     // no need to clean up custom dimensions
-    //     // since it is removed from DOM anyway.
-    //   },
-    //   /**
-    //    * Handles settings change event.
-    //    * If changed setting is `telemetry` then it upodates GA state.
-    //    */
-    //   _settingChanged: function(e) {
-    //     // Here we just care about `telemetry`
-    //     if (e.detail.name !== 'telemetry') {
-    //       return;
-    //     }
-    //     var value = e.detail.value;
-    //     if (typeof value !== 'boolean') {
-    //       value = value === 'false' ? false : true;
-    //     }
-    //     if (value) {
-    //       this._analyticsEnabled();
-    //     } else {
-    //       this._analyticsDisabled();
-    //     }
-    //   },
     //
-    //   _driveFileRouteChanged: function(initialized, record) {
+    //   _driveFileRouteChanged(initialized, record) {
     //     if (!initialized) {
     //       return;
     //     }
@@ -601,7 +812,7 @@
     //     this.openDriveItem(params.id);
     //   },
     //
-    //   openDriveItem: function(id) {
+    //   openDriveItem(id) {
     //     Polymer.RenderStatus.afterNextRender(this, function() {
     //       if (!this.accessToken) {
     //         this.addEventListener('oauth-2-token-ready', function clb() {
@@ -624,14 +835,14 @@
     //    * if the data is import data or a request if import data contains single
     //    * request.
     //    */
-    //   _openDriveRequest: function(e) {
+    //   _openDriveRequest(e) {
     //     var opts = {
     //       diveId: e.detail.diveId
     //     };
     //     this._processIcomingData(e.detail.content, opts);
     //   },
     //
-    //   _isSingleRequest: function(data) {
+    //   _isSingleRequest(data) {
     //     if (!data.requests || !data.requests.length) {
     //       return false;
     //     }
@@ -650,7 +861,7 @@
     //     return false;
     //   },
     //
-    //   _processIcomingDataHandler: function(e) {
+    //   _processIcomingDataHandler(e) {
     //     if (e.detail.type === 'json') {
     //       this._processIcomingData(e.detail.data);
     //     } else if (e.detail.type === 'raml') {
@@ -663,7 +874,7 @@
     //     }
     //   },
     //
-    //   _ramlEnhanced: function(e) {
+    //   _ramlEnhanced(e) {
     //     this.$.processingRamlToast.opened = false;
     //     var raml = e.detail.json;
     //     this.$$('api-console-panel').raml = raml;
@@ -672,14 +883,14 @@
     //     });
     //   },
     //
-    //   _ramlEnhanceError: function(e) {
+    //   _ramlEnhanceError(e) {
     //     this.$.processingRamlToast.opened = false;
     //     var message = 'Unable to parse JSON data: ' + e.detail.message;
     //     this.$.processingRamlErrorToast.text = message;
     //     this.$.processingRamlErrorToast.opened = true;
     //   },
     //
-    //   _processIcomingData: function(data, opts) {
+    //   _processIcomingData(data, opts) {
     //     if (!data) {
     //       return;
     //     }
@@ -714,12 +925,12 @@
     //     .catch(cause => this.notifyError(cause.message));
     //   },
     //
-    //   notifyError: function(message) {
+    //   notifyError(message) {
     //     this.$.errorToast.text = message;
     //     this.$.errorToast.opened = true;
     //   },
     //
-    //   _unobserveMainEvents: function() {
+    //   _unobserveMainEvents() {
     //     if (this.cb) {
     //       this.cb.unlisten();
     //     }
@@ -735,7 +946,7 @@
     //    * passed data.
     //    *
     //    */
-    //   _navigateHandler: function(e) {
+    //   _navigateHandler(e) {
     //     var params = e.detail;
     //     var url;
     //     switch (params.base) {
@@ -790,7 +1001,7 @@
     //     }
     //   },
     //
-    //   _telemetryScreen: function() {
+    //   _telemetryScreen() {
     //     var screenName = '[unknown]';
     //     switch (this.routeData.base) {
     //       case 'history': screenName = 'History'; break;
@@ -816,7 +1027,7 @@
     //     });
     //   },
     //
-    //   toggleDrawer: function() {
+    //   toggleDrawer() {
     //     if (this.forceNarrowLayout && this.narrowLayout) {
     //       this.drawerOpened = !this.drawerOpened;
     //       return;
@@ -828,7 +1039,7 @@
     //     this.forceNarrowLayout = !this.forceNarrowLayout;
     //   },
     //
-    //   _computePinDrawerClass: function(forceNarrowLayout, narrowLayout, drawerOpened) {
+    //   _computePinDrawerClass(forceNarrowLayout, narrowLayout, drawerOpened) {
     //     var clazz = 'drawer-pin';
     //     if (forceNarrowLayout && narrowLayout && drawerOpened) {
     //       clazz += ' visible';
@@ -836,54 +1047,14 @@
     //     return clazz;
     //   },
     //
-    //   openAbout: function() {
-    //     this.fire('navigate', {
-    //       base: 'about'
-    //     });
-    //   },
     //
-    //   openDrivePicker: function() {
-    //     this.fire('navigate', {
-    //       base: 'drive'
-    //     });
-    //   },
     //
-    //   // Pin drawer back to the app.
-    //   _pinDrawer: function() {
-    //     this.forceNarrowLayout = false;
-    //   },
-    //   /**
-    //    * Opens the import / export panel
-    //    */
-    //   openImportExport: function() {
-    //     this.fire('navigate', {
-    //       base: 'dataimport'
-    //     });
-    //   },
-    //   /**
-    //    * Opens the settings panel.
-    //    */
-    //   openSettings: function() {
-    //     this.fire('navigate', {
-    //       base: 'settings'
-    //     });
-    //   },
-    //
-    //   /**
-    //    * Opens the host rules editor.
-    //    */
-    //   openHostRules: function() {
-    //     this.fire('navigate', {
-    //       base: 'hosts-rules'
-    //     });
-    //   },
-    //
-    //   openLicense: function() {
+    //   openLicense() {
     //     var dialog = Polymer.dom(this.root).querySelector('arc-license-dialog');
     //     dialog.opened = true;
     //   },
     //
-    //   _drawerTrack: function(e) {
+    //   _drawerTrack(e) {
     //     switch (e.detail.state) {
     //       case 'start':
     //         this.__drawerTrackStart();
@@ -897,7 +1068,7 @@
     //     }
     //   },
     //
-    //   __drawerTrackStart: function() {
+    //   __drawerTrackStart() {
     //     var content = this.$.mainDrawer.$.contentContainer;
     //     this._drawerInitTransition = getComputedStyle(content).getPropertyValue('transition');
     //     content.style.transition = 'left ease-in-out 0.01s';
@@ -908,7 +1079,7 @@
     //     }
     //   },
     //
-    //   __drawerTrack: function(detail) {
+    //   __drawerTrack(detail) {
     //     var newWidth = this._drawerInitTrackWidth + detail.dx;
     //     if (newWidth <= 10) {
     //       newWidth = 10;
@@ -917,7 +1088,7 @@
     //     // this.$.paperDrawerPanel.$.main.style.transition = 'left ease-in-out 0.01s';
     //   },
     //
-    //   __drawerTrackEnd: function(detail) {
+    //   __drawerTrackEnd(detail) {
     //     var content = this.$.mainDrawer.$.contentContainer;
     //     content.style.transition = this._drawerInitTransition;
     //     var newWidth = this._drawerInitTrackWidth + detail.dx;
@@ -929,7 +1100,7 @@
     //     this._drawerInitTransition = undefined;
     //   },
     //
-    //   _drawerWidthChanged: function(width) {
+    //   _drawerWidthChanged(width) {
     //     if (!width) {
     //       return;
     //     }
@@ -939,7 +1110,7 @@
     //     this.$.drawerLayout.resetLayout();
     //   },
     //
-    //   _handleLinks: function(e) {
+    //   _handleLinks(e) {
     //     var target = e.path[0];
     //     if (!target) {
     //       return;
@@ -954,53 +1125,25 @@
     //     shell.openExternal(target.href);
     //   },
     //
-    //   _openExternalHandler: function(e) {
+    //   _openExternalHandler(e) {
     //     e.preventDefault();
     //     const shell = require('electron').remote.shell;
     //     shell.openExternal(e.detail.url);
     //   },
     //
-    //   onNewWindow: function() {
+    //   onNewWindow() {
     //     const ipc = require('electron').ipcRenderer;
     //     ipc.send('new-window');
     //   },
     //
-    //   openLogs: function() {
+    //   openLogs() {
     //     const ipc = require('electron').ipcRenderer;
     //     ipc.send('toggle-devtools');
     //   },
     //
-    //   openImport: function() {
-    //     this.fire('navigate', {
-    //       base: 'dataimport'
-    //     });
-    //     var panel = this.$$('data-import-export-panel');
-    //     panel.hideExport = true;
-    //     panel.hideImport = false;
-    //   },
+
     //
-    //   openExport: function() {
-    //     this.fire('navigate', {
-    //       base: 'dataimport'
-    //     });
-    //     var panel = this.$$('data-import-export-panel');
-    //     panel.hideExport = false;
-    //     panel.hideImport = true;
-    //   },
-    //
-    //   openSaved: function() {
-    //     this.fire('navigate', {
-    //       base: 'saved'
-    //     });
-    //   },
-    //
-    //   openHistory: function() {
-    //     this.fire('navigate', {
-    //       base: 'history'
-    //     });
-    //   },
-    //
-    //   _copyContentHandler: function(e) {
+    //   _copyContentHandler(e) {
     //     const {clipboard} = require('electron');
     //     clipboard.writeText(e.detail.value);
     //     e.preventDefault();
@@ -1012,7 +1155,7 @@
     //    * property with value of `shortcut` to indicate that the shortcut was
     //    * used and the app can automatically save current request
     //    */
-    //   saveOpened: function(opts) {
+    //   saveOpened(opts) {
     //     if (this.routeData.base !== 'request') {
     //       return;
     //     }
@@ -1021,7 +1164,7 @@
     //   /**
     //    * Opens new tab in the request workspace.
     //    */
-    //   newRequestTab: function() {
+    //   newRequestTab() {
     //     if (this.routeData.base !== 'request') {
     //       return;
     //     }
@@ -1032,65 +1175,29 @@
     //   /**
     //    * Sends currently opened request.
     //    */
-    //   sendCurrentTab: function() {
+    //   sendCurrentTab() {
     //     if (this.routeData.base !== 'request') {
     //       return;
     //     }
     //     this.$$('request-workspace').sendCurrent();
     //   },
     //
-    //   _googleOauthTokenRequested: function(e) {
+    //   _googleOauthTokenRequested(e) {
     //     const scope = e.detail.scope.split(' ');
     //     this._requestAuthToken(true, scope);
     //   },
     //
-    //   _requestAuthToken: function(interactive, scope) {
-    //     if (this.__requestingToken) {
-    //       return;
-    //     }
-    //     this.__requestingToken = true;
-    //     let ipc = require('electron').ipcRenderer;
-    //     ipc.send('oauth-2-get-token', {
-    //       interactive: interactive,
-    //       scopes: scope
-    //     });
-    //     const context = this;
-    //     let rejected;
-    //     function resolved(sender, token) {
-    //       let tokenValue = token ? token.accessToken : undefined;
-    //       context.__requestingToken = false;
-    //       ipc.removeListener('oauth-2-token-ready', resolved);
-    //       ipc.removeListener('oauth-2-token-error', rejected);
-    //       context.fire('google-signin-success', {
-    //         scope: scope,
-    //         token: tokenValue
-    //       });
-    //       context.accessToken = tokenValue;
-    //       ipc = null;
-    //     }
-    //     rejected = function() {
-    //       context.__requestingToken = false;
-    //       ipc.removeListener('oauth-2-token-ready', resolved);
-    //       ipc.removeListener('oauth-2-token-error', rejected);
-    //       context.fire('google-signout', {
-    //         scope: scope
-    //       });
-    //       ipc = null;
-    //     };
-    //     ipc.on('oauth-2-token-ready', resolved);
-    //     ipc.on('oauth-2-token-error', rejected);
-    //   },
     //
-    //   _appVersionRequestHandler: function(e) {
+    //   _appVersionRequestHandler(e) {
     //     e.detail.version = this.appVersion;
     //   },
     //
-    //   updateInstall: function() {
+    //   updateInstall() {
     //     const ipc = require('electron').ipcRenderer;
     //     ipc.send('install-update');
     //   },
     //
-    //   _notifyRequestPanelResize: function(narrowLayout) {
+    //   _notifyRequestPanelResize(narrowLayout) {
     //     const width = narrowLayout ? 0 : this.drawerWidth;
     //     this.customStyle['--request-panel-status-bar-left'] = width;
     //     this.updateStyles();
@@ -1099,14 +1206,14 @@
     //    * Sets `newMessages` propert depending if messaging service detected
     //    * new messages.
     //    */
-    //   _unreadMessagesChanged: function(e) {
+    //   _unreadMessagesChanged(e) {
     //     const state = !!(e.detail.value && e.detail.value.length > 0);
     //     this.set('newMessages', state);
     //   },
     //   /**
     //    * Opens the info center drawwer.
     //    */
-    //   openInfoCenter: function() {
+    //   openInfoCenter() {
     //     this.messageCenterOpened = !this.messageCenterOpened;
     //     if (this.messageCenterOpened) {
     //       const service = Polymer.dom(this.root).querySelector('arc-messages-service');
@@ -1121,75 +1228,22 @@
     //   /**
     //    * Closes the info center drawwer.
     //    */
-    //   closeInfoCenter: function() {
+    //   closeInfoCenter() {
     //     this.messageCenterOpened = false;
     //   },
     //
-    //   openWebUrl: function() {
+    //   openWebUrl() {
     //     this.$.webUrlInput.opened = true;
     //   },
     //
-    //   _openWebUrlHandler: function(e) {
+    //   _openWebUrlHandler(e) {
     //     var ipc = require('electron').ipcRenderer;
     //     ipc.send('open-web-url', e.detail.url, e.detail.purpose);
     //   },
-    //   // Navigate to the cookie manager
-    //   openCookieManager: function() {
-    //     this.fire('navigate', {
-    //       base: 'cookie-manager'
-    //     });
-    //   },
-    //
-    //   openExchangeSearch: function() {
-    //     this.fire('navigate', {
-    //       base: 'exchange-search'
-    //     });
-    //   },
-    //
-    //   openThemesPanel: function() {
-    //     this.fire('navigate', {
-    //       base: 'themes-panel'
-    //     });
-    //   },
+
     //
 
-    //   /**
-    //    * Updates a request object in this window for a specific tab.
-    //    *
-    //    * @param {Object} request ARC request obejct
-    //    * @param {?Number} tab Tab index to update. If not provided (or not a number)
-    //    * it uses current active tab.
-    //    */
-    //   updateRequestTab: function(request, tab) {
-    //     this.log.info('Updating request object...');
-    //     const workspace = this.workspace;
-    //     if (!workspace) {
-    //       throw new Error('Workspace is not ready.');
-    //     }
-    //     if (typeof tab !== 'number') {
-    //       this.log.info('Tab not provided. Using current selection...');
-    //       tab = workspace.selected;
-    //     }
-    //
-    //     if (!workspace.activeRequests[tab]) {
-    //       this.log.error('Trying to update tab request but the tab does not exists.', tab);
-    //       throw new Error('Requested tab does not exists.');
-    //     }
-    //     this.log.info('Updating request object on tab', tab);
-    //     workspace.set(['activeRequests', tab], request);
-    //   },
-    //   /**
-    //    * Returns number of currently opened tabs
-    //    *
-    //    * @return {Number} Number of opened tabs in request workspace.
-    //    */
-    //   getTabsCount: function() {
-    //     const workspace = this.workspace;
-    //     if (!workspace || !workspace.activeRequests) {
-    //       return 0;
-    //     }
-    //     return workspace.activeRequests.length;
-    //   }
+
     // });
   </script>
 </dom-module>
