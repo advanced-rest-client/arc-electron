@@ -303,7 +303,27 @@
     }
 
     openWebUrl() {
-      
+
+    }
+
+    closeWorkspaceTab(index) {
+      index = Number(index);
+      this.$.workspace.removeRequest(index);
+    }
+
+    closeAllWorkspaceTabs() {
+      this.$.workspace.clearWorkspace();
+    }
+
+    closeOtherWorkspaceTabs(index) {
+      index = Number(index);
+      const active = this.$.workspace.activeRequests;
+      for (let i = active.length - 1; i >= 0; i--) {
+        if (i !== index) {
+          this.$.workspace.removeRequest(i, true);
+        }
+      }
+      this.$.workspace.selected = 0;
     }
   }
   window.customElements.define(ArcElectron.is, ArcElectron);
@@ -1169,65 +1189,6 @@
     //       return 0;
     //     }
     //     return workspace.activeRequests.length;
-    //   },
-    //   /**
-    //    * Closes a tab by given local index.
-    //    *
-    //    * @param {String|Number} index Local index assigned to each
-    //    * `activeRequests` in the workspace.
-    //    */
-    //   closeRequestTabByLocal: function(index) {
-    //     index = Number(index);
-    //     this.log.info('Closing tab by local id', index);
-    //     const workspace = this.workspace;
-    //     if (!workspace) {
-    //       throw new Error('Workspace is not ready.');
-    //     }
-    //     const itemIndex = workspace.activeRequests
-    //       .findIndex((item) => item.localIndex === index);
-    //     if (itemIndex === -1) {
-    //       return;
-    //     }
-    //     workspace.splice('activeRequests', itemIndex, 1);
-    //     if (workspace.activeRequests.length === 0) {
-    //       Polymer.RenderStatus.afterNextRender(this, function() {
-    //         workspace.appendPanel();
-    //         workspace.selected = 0;
-    //       });
-    //     } else if (itemIndex !== 0) {
-    //       workspace.selected = itemIndex - 1;
-    //     }
-    //   },
-    //   /**
-    //    * Closes all opened tabs.
-    //    */
-    //   closeAllRequestTabs: function() {
-    //     this.log.info('Closing all tabs');
-    //     const workspace = this.workspace;
-    //     if (!workspace) {
-    //       throw new Error('Workspace is not ready.');
-    //     }
-    //     workspace.set('activeRequests', []);
-    //     Polymer.RenderStatus.afterNextRender(this, function() {
-    //       workspace.appendPanel();
-    //       workspace.selected = 0;
-    //     });
-    //   },
-    //
-    //   closeOtherRequestTabs: function(index) {
-    //     index = Number(index);
-    //     this.log.info('Closing tab by local id', index);
-    //     const workspace = this.workspace;
-    //     if (!workspace) {
-    //       throw new Error('Workspace is not ready.');
-    //     }
-    //     const active = workspace.activeRequests;
-    //     for (let i = active.length - 1; i >= 0; i--) {
-    //       if (active[i].localIndex !== index) {
-    //         workspace.splice('activeRequests', i, 1);
-    //       }
-    //     }
-    //     workspace.selected = 0;
     //   }
     // });
   </script>

@@ -109,6 +109,7 @@ class ArcContextMenu {
    * @param {Object} xy An object with `x` and `y` coordinates of click.
    */
   renderActions(actions, xy) {
+    this.removeActions();
     const box = document.createElement('paper-listbox');
     box.addEventListener('selected-changed', this._selectionHandler);
     actions.forEach((action) => {
@@ -160,15 +161,20 @@ class ArcContextMenu {
   _handleAction(action) {
     switch (action.action) {
       case 'request-panel-close-tab':
-        this.app.closeRequestTabByLocal(this._lastTarget.dataset.index);
+        this.app.closeWorkspaceTab(this._getTabIndex());
         break;
       case 'request-panel-close-all-tabs':
-        this.app.closeAllRequestTabs();
+        this.app.closeAllWorkspaceTabs();
         break;
       case 'request-panel-close-other-tabs':
-        this.app.closeOtherRequestTabs(this._lastTarget.dataset.index);
+        this.app.closeOtherWorkspaceTabs(this._getTabIndex());
         break;
     }
+  }
+
+  _getTabIndex() {
+    const tab = this._lastTarget.parentElement;
+    return Array.from(tab.parentElement.children).indexOf(tab);
   }
   /**
    * Closes menu action.
