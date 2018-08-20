@@ -2,7 +2,6 @@ const {BrowserWindow, dialog, ipcMain} = require('electron');
 const path = require('path');
 const url = require('url');
 const {ArcSessionControl} = require('@advanced-rest-client/arc-electron-preferences/main');
-const {SourcesManager} = require('@advanced-rest-client/arc-electron-sources-manager/main');
 const {ArcSessionRecorder} = require('./arc-session-recorder');
 const {ContextActions} = require('./context-actions');
 /**
@@ -10,11 +9,11 @@ const {ContextActions} = require('./context-actions');
  */
 class ArcWindowsManager {
   /**
-   * @param {?Object} startupOptions Application startup object. See
+   * @param {Object} startupOptions Application startup object. See
    * `AppOptions` for more details.
-   * @param {PreferencesManager} pm ARC preferences manager module instance
+   * @param {SourcesManager} sm
    */
-  constructor(startupOptions, pm) {
+  constructor(startupOptions, sm) {
     this.startupOptions = startupOptions || {};
     this.windows = [];
     // Task manager window reference.
@@ -27,7 +26,7 @@ class ArcWindowsManager {
     this._settingChangedHandler = this._settingChangedHandler.bind(this);
     this.recorder = new ArcSessionRecorder();
     this.contextActions = new ContextActions();
-    this.sourcesManager = new SourcesManager(pm, startupOptions);
+    this.sourcesManager = sm;
   }
   /**
    * @return {Boolean} True if has at leas one window.
@@ -62,7 +61,6 @@ class ArcWindowsManager {
     ipcMain.on('reload-app-required', this._reloadRequiredHandler.bind(this));
     ipcMain.on('settings-changed', this._settingChangedHandler);
     ipcMain.on('window-state-request', this._winStateRequestHandler.bind(this));
-    this.sourcesManager.listen();
   }
   /**
    * A handler for new window open event. Calls `open()` function.
@@ -205,7 +203,9 @@ class ArcWindowsManager {
       show: false,
       webPreferences: {
         partition: 'persist:arc-window',
-        nativeWindowOpen: true
+        nativeWindowOpen: true,
+        nodeIntegration: false,
+        preload: path.join(__dirname, '..', 'renderer', 'preload.js')
       }
     });
     mainWindow.__arcIndex = index;

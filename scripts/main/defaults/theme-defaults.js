@@ -1,4 +1,3 @@
-const {ThemeLoader} = require('../../renderer/theme-loader');
 const fs = require('fs-extra');
 const path = require('path');
 const log = require('electron-log');
@@ -7,8 +6,12 @@ const log = require('electron-log');
  * A class that is responsible for setting up theme defaults.
  */
 class ThemeDefaults {
-  constructor() {
-    this.themePath = new ThemeLoader().basePath;
+  /**
+   * @param {SourcesManager} sm
+   */
+  constructor(sm) {
+    this.themePath = sm.themesBasePath;
+    this.infoFilePath = sm.infoFilePath;
   }
   /**
    * Sets defaults if the defaults are not yet set.
@@ -24,7 +27,9 @@ class ThemeDefaults {
   }
 
   /**
-   * Copies the default theme data to themes folder if not created
+   * Copies the default theme data to themes folder if not created.
+   *
+   * @return {Promise}
    */
   _setDefaultTheme() {
     const themePath = 'default-theme';
@@ -41,7 +46,7 @@ class ThemeDefaults {
   _ensureTheme(themePath, themeFile) {
     const file = path.join(this.themePath, themePath, themeFile);
     return fs.pathExists(file)
-    .then(exists => {
+    .then((exists) => {
       if (exists) {
         return;
       }
@@ -56,7 +61,7 @@ class ThemeDefaults {
     return fs.ensureDir(dest)
     .then(() => fs.copy(path.join(source, file), path.join(dest, file)))
     .then(() => fs.copy(path.join(source, pkg), path.join(dest, pkg)))
-    .catch(cause => {
+    .catch((cause) => {
       log.error('Unable to copy default theme from ', source, 'to', dest, cause);
     });
   }
@@ -64,7 +69,7 @@ class ThemeDefaults {
   _setThemeInfo() {
     const file = path.join(this.themePath, 'themes-info.json');
     return fs.pathExists(file)
-    .then(exists => {
+    .then((exists) => {
       if (exists) {
         return;
       }
@@ -76,17 +81,17 @@ class ThemeDefaults {
   _copyThemesInfo() {
     const source =
       path.join(__dirname, '..', '..', '..', 'appresources', 'themes', 'themes-info.json');
-    const dest = path.join(this.themePath, 'themes-info.json');
+    const dest = this.infoFilePath;
     return fs.readJson(source, {throws: false})
-    .then(info => {
+    .then((info) => {
       info = info || [];
-      info = info.map(i => {
+      info = info.map((i) => {
         i.path = path.join(this.themePath, i.path);
         return i;
       });
       return info;
     })
-    .then(info => fs.writeJson(dest, info));
+    .then((info) => fs.writeJson(dest, info));
   }
 }
 exports.ThemeDefaults = ThemeDefaults;

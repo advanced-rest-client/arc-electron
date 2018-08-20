@@ -5,11 +5,12 @@ const {ArcMainMenu} = require('./scripts/main/main-menu');
 const {Oauth2Identity} = require('@advanced-rest-client/electron-oauth2');
 const {DriveExport} = require('@advanced-rest-client/electron-drive');
 const {PreferencesManager} = require('@advanced-rest-client/arc-electron-preferences/main');
-const {SessionManager} = require('./scripts/main/session-manager');
+const {SessionManager} = require('@advanced-rest-client/electron-session-state/main');
 const {AppOptions} = require('./scripts/main/app-options');
 const {RemoteApi} = require('./scripts/main/remote-api');
 const {ContentSearchService} = require('./scripts/main/search-service');
 const {AppPrompts} = require('./scripts/main/app-prompts.js');
+const {SourcesManager} = require('@advanced-rest-client/arc-electron-sources-manager/main');
 const log = require('electron-log');
 /**
  * Main application object controling app's lifecycle.
@@ -68,26 +69,21 @@ class Arc {
    * @return {Promise}
    */
   _readyHandler() {
+    this._initializePreferencesManager();
+    this._initializeSourcesManager();
     const {AppDefaults} = require('./scripts/main/app-defaults');
     const defaults = new AppDefaults();
-    return defaults.prepareEnvironment()
+    return defaults.prepareEnvironment(this.sourcesManager)
     .catch((cause) => {
       log.error('Unable to prepare the environment.', cause.message);
       log.error(cause);
     })
     .then(() => {
-      this.prefs = new PreferencesManager(this.initOptions);
-      this.prefs.observe();
-      this.menu = new ArcMainMenu();
-      this.menu.build();
-      this.us = new UpdateStatus(this.wm, this.menu);
-      this.wm = new ArcWindowsManager(this.initOptions, this.prefs);
-      this.wm.listen();
-      this.us.listen();
-      this.gdrive = new DriveExport();
-      this.gdrive.listen();
-      this.sm = new SessionManager(this.wm);
-      this.sm.start();
+      this._initializeMenu();
+      this._initializeWindowsManager();
+      this._initializeUpdateStatus();
+      this._initializeGoogleDriveIntegration();
+      this._initializeSessionManager();
       this.remote = new RemoteApi(this.wm);
       log.info('Application is now ready');
       this.wm.open();
@@ -103,6 +99,45 @@ class Arc {
       log.error('Unable to start the application.', cause.message);
       log.error(cause);
     });
+  }
+
+  _initializePreferencesManager() {
+    this.prefs = new PreferencesManager(this.initOptions);
+    this.prefs.observe();
+  }
+
+  _initializeSourcesManager() {
+    this.sourcesManager = new SourcesManager(this.prefs, this.initOptions);
+    this.sourcesManager.listen();
+  }
+
+  _initializeMenu() {
+    this.menu = new ArcMainMenu();
+    this.menu.build();
+  }
+
+  _initializeGoogleDriveIntegration() {
+    this.gdrive = new DriveExport();
+    this.gdrive.listen();
+  }
+
+  _initializeSessionManager() {
+    this.sm = new SessionManager({appUrls: [
+      'https://advancedrestclient-1155.appspot.com',
+      'advancedrestclient.com'
+    ]});
+    this.sm.listen();
+    this.sm.on('cookie-changed', (cookies) => this.wm.notifyAll('cookie-changed', cookies));
+  }
+
+  _initializeWindowsManager() {
+    this.wm = new ArcWindowsManager(this.initOptions, this.sourcesManager);
+    this.wm.listen();
+  }
+
+  _initializeUpdateStatus() {
+    this.us = new UpdateStatus(this.wm, this.menu);
+    this.us.listen();
   }
   /**
    * Quits when all windows are closed.
@@ -226,11 +261,3 @@ if (process.env.NODE_ENV === 'test') {
 if (arcApp.isDebug()) {
   global.arcApp = arcApp;
 }
-// Dev...
-ipcMain.on('open-theme-editor', (event, data) => {
-  log.info('Starting theme editor');
-  const windowId = event.sender.id;
-  const {ThemesEditor} = require('./scripts/main/themes-editor.js');
-  const editor = new ThemesEditor(windowId, data);
-  editor.run();
-});

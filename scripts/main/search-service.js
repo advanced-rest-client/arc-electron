@@ -90,7 +90,7 @@ class ContentSearchService {
    * @return {BrowserWindow} Created window.
    */
   _getWindow() {
-    let win = new BrowserWindow({
+    const win = new BrowserWindow({
       backgroundColor: '#ffffff',
       show: true,
       frame: false,

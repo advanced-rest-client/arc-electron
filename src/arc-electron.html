@@ -64,8 +64,9 @@
     <oauth1-authorization></oauth1-authorization>
     <arc-request-logic></arc-request-logic>
     <request-hooks-logic></request-hooks-logic>
+    <electron-http-transport></electron-http-transport>
     <variables-manager></variables-manager>
-    <variables-evaluator></variables-evaluator>
+    <variables-evaluator no-before-request></variables-evaluator>
     <!-- Application views -->
     <app-header-layout has-scrolling-region id="scrollingRegion">
       <app-header slot="header" fixed shadow scroll-target="scrollingRegion">
@@ -299,6 +300,10 @@
         this.$.environmentsDrawer.opened = true;
       })
       .catch((cmp) => this._reportComponentLoadingError(cmp));
+    }
+
+    openWebUrl() {
+      
     }
   }
   window.customElements.define(ArcElectron.is, ArcElectron);

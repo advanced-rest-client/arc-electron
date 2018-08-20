@@ -1,11 +1,5 @@
-const ipc = require('electron').ipcRenderer;
-// const log = require('electron-log');
-const {ArcElectronDrive} = require('@advanced-rest-client/electron-drive/renderer');
-const {OAuth2Handler} = require('@advanced-rest-client/electron-oauth2/renderer');
-const {WorkspaceManager} = require('@advanced-rest-client/arc-electron-preferences/renderer');
-const {ArcPreferencesProxy} = require('@advanced-rest-client/arc-electron-preferences/renderer');
-const {ThemeManager} = require('@advanced-rest-client/arc-electron-sources-manager/renderer');
-const {ArcContextMenu} = require('./scripts/renderer/context-menu');
+// Scrips are moved to scripts/renderer/preload.js so node integration can be disabled
+// in the application window.
 /**
  * Class responsible for initializing the main ARC elements
  * and setup base options.
@@ -16,12 +10,15 @@ class ArcInit {
    * @constructor
    */
   constructor() {
+    /* global ipc, ArcContextMenu, ArcElectronDrive, OAuth2Handler,
+    ThemeManager, ArcPreferencesProxy, CookieBridge */
     this.created = false;
     this.contextActions = new ArcContextMenu();
     this.driveBridge = new ArcElectronDrive();
     this.oauth2Proxy = new OAuth2Handler();
     this.themeManager = new ThemeManager();
     this.prefProxy = new ArcPreferencesProxy();
+    this.cookieBridge = new CookieBridge();
   }
   /**
    * Reference to the main application window.
@@ -43,6 +40,7 @@ class ArcInit {
     this.oauth2Proxy.listen();
     this.themeManager.listen();
     this.prefProxy.observe();
+    this.cookieBridge.listen();
     ipc.on('checking-for-update', updateHandler);
     ipc.on('update-available', updateHandler);
     ipc.on('update-not-available', updateHandler);

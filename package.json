@@ -42,6 +42,8 @@
     "@advanced-rest-client/arc-electron-sources-manager": "0.1.0-rc2",
     "@advanced-rest-client/electron-drive": "0.1.0-rc3",
     "@advanced-rest-client/electron-oauth2": "1.0.0-rc2",
+    "@advanced-rest-client/electron-request": "^1.0.0-rc4",
+    "@advanced-rest-client/electron-session-state": "^1.0.0-rc1",
     "camelcase": "^4.1.0",
     "electron-log": "^2.2.16",
     "electron-updater": "^3.1.1",
