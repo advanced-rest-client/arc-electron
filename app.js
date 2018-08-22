@@ -11,7 +11,7 @@ class ArcInit {
    */
   constructor() {
     /* global ipc, ArcContextMenu, ArcElectronDrive, OAuth2Handler,
-    ThemeManager, ArcPreferencesProxy, CookieBridge */
+    ThemeManager, ArcPreferencesProxy, CookieBridge, WorkspaceManager */
     this.created = false;
     this.contextActions = new ArcContextMenu();
     this.driveBridge = new ArcElectronDrive();
