@@ -52,6 +52,8 @@
     <!-- Routing -->
     <app-location route="{{route}}" use-hash-as-path></app-location>
     <app-route route="{{route}}" pattern="/:base" data="{{routeData}}"></app-route>
+    <app-route route="{{route}}" pattern="/:base/:id" data="{{commonRoute}}"></app-route>
+    <app-route route="{{route}}" pattern="/:base/:type/:id" data="{{typeRoute}}"></app-route>
     <!-- Database support -->
     <auth-data-model></auth-data-model>
     <project-model></project-model>
@@ -101,22 +103,22 @@
         <div class="pages">
           <iron-pages id="pages" class="mainPages" attr-for-selected="data-route" selected-attribute="opened" selected="[[page]]">
             <arc-request-workspace data-route="request" id="workspace"></arc-request-workspace>
-            <websocket-panel attr-for-opened="opened" data-route="socket"></websocket-panel>
-            <history-panel attr-for-opened="opened" data-route="history"></history-panel>
-            <saved-requests-panel attr-for-opened="opened" data-route="saved"></saved-requests-panel>
+            <websocket-panel data-route="socket"></websocket-panel>
+            <history-panel data-route="history"></history-panel>
+            <saved-requests-panel data-route="saved"></saved-requests-panel>
             <data-import-export-panel data-route="dataimport" api-key="1076318174169-u4a5d3j2v0tbie1jnjgsluqk1ti7ged3.apps.googleusercontent.com"></data-import-export-panel>
-            <arc-settings-panel data-route="settings" attr-for-opened="opened">
+            <arc-settings-panel data-route="settings">
               <app-paths-info workspace-script="[[workspaceScript]]" settings-script="[[settingsScript]]"></app-paths-info>
             </arc-settings-panel>
-            <about-arc attr-for-opened="opened" data-route="about" update-state="[[updateState]]"></about-arc>
-            <project-details attr-for-opened="opened" data-route="project" project-id="[[projectRoute.id]]" attr-for-opened="opened"></project-details>
-            <google-drive-browser mime-type="application/restclient+data" data-route="drive" attr-for-opened="opened" api-key="1076318174169-u4a5d3j2v0tbie1jnjgsluqk1ti7ged3.apps.googleusercontent.com" access-token="[[accessToken]]" on-drive-file-picker-data="_openDriveRequest"></google-drive-browser>
-            <cookie-manager attr-for-opened="opened" data-route="cookie-manager"></cookie-manager>
-            <api-console-panel attr-for-opened="opened" data-route="api-console" scroll-target="[[scrollTarget]]"></api-console-panel>
-            <rest-apis-list-panel attr-for-opened="opened" data-route="rest-projects" render-explore></rest-apis-list-panel>
-            <exchange-search-panel attr-for-opened="opened" data-route="exchange-search" scroll-target="[[scrollTarget]]" allow-auth exchange-redirect-uri="https://auth.advancedrestclient.com/oauth-popup.html" exchange-client-id="59KaqF90hLgZMJec" force-oauth-events></exchange-search-panel>
-            <host-rules-editor attr-for-opened="opened" data-route="hosts-rules"></host-rules-editor>
-            <themes-panel attr-for-opened="opened" data-route="themes-panel"></themes-panel>
+            <about-arc data-route="about" update-state="[[updateState]]"></about-arc>
+            <project-details data-route="project" id="projectDetails"></project-details>
+            <google-drive-browser mime-type="application/restclient+data" data-route="drive" api-key="1076318174169-u4a5d3j2v0tbie1jnjgsluqk1ti7ged3.apps.googleusercontent.com" access-token="[[accessToken]]" on-drive-file-picker-data="_openDriveRequest"></google-drive-browser>
+            <cookie-manager data-route="cookie-manager"></cookie-manager>
+            <api-console-panel data-route="api-console" scroll-target="[[scrollTarget]]"></api-console-panel>
+            <rest-apis-list-panel data-route="rest-projects" render-explore></rest-apis-list-panel>
+            <exchange-search-panel data-route="exchange-search" scroll-target="[[scrollTarget]]" allow-auth exchange-redirect-uri="https://auth.advancedrestclient.com/oauth-popup.html" exchange-client-id="59KaqF90hLgZMJec" force-oauth-events></exchange-search-panel>
+            <host-rules-editor data-route="hosts-rules"></host-rules-editor>
+            <themes-panel data-route="themes-panel"></themes-panel>
           </iron-pages>
         </div>
       </section>
@@ -200,6 +202,7 @@
             return versionInfo.appVersion;
           }
         },
+        typeRoute: Object
       };
     }
 
@@ -210,7 +213,8 @@
 
     static get observers() {
       return [
-        '_baseRouteChanged(routeData.base)'
+        '_baseRouteChanged(routeData.base)',
+        '_commonRouteChanged(commonRoute.*)'
       ];
     }
 
@@ -224,6 +228,23 @@
       if (this.page !== base) {
         this.page = base;
       }
+      switch (base) {
+        case 'request':
+          this._setupRequest(this.typeRoute);
+          break;
+      }
+    }
+
+    _commonRouteChanged(record) {
+      const base = record.base;
+      if (!base) {
+        return;
+      }
+      switch (base.base) {
+        case 'project':
+          this.$.projectDetails.projectId = decodeURIComponent(base.id);
+        break;
+      }
     }
 
     _pageChanged(page) {
@@ -233,6 +254,10 @@
         case 'request':
           id = 'arc-request-workspace';
           _path = 'arc-request-workspace/arc-request-workspace';
+          break;
+        case 'project':
+          id = 'project-details';
+          _path = 'project-details/project-details';
           break;
       }
       if (!id) {
@@ -262,11 +287,9 @@
     }
 
     initApplication() {
-      Polymer.RenderStatus.afterNextRender(this, () => {
-        this.updateStyles({});
-      });
-      this.setupAnalytics();
-      this._requestAuthToken(false);
+      Polymer.RenderStatus.afterNextRender(this, () => this.updateStyles({}));
+      Polymer.RenderStatus.afterNextRender(this, () => this.setupAnalytics());
+      Polymer.RenderStatus.afterNextRender(this, () => this._requestAuthToken(false));
     }
 
     _reportComponentLoadingError(url) {
@@ -274,25 +297,79 @@
     }
 
     _handleNavigation(e) {
-      switch (e.detail.base) {
+      const params = e.detail;
+      let url;
+      switch (params.base) {
+        case 'default': url = '/request/latest/0/new'; break;
+        case 'history': url = '/history'; break;
+        case 'settings': url = '/settings'; break;
+        case 'about': url = '/about'; break;
+        case 'socket': url = '/socket'; break;
+        case 'saved': url = '/saved'; break;
+        case 'dataimport': url = '/dataimport'; break;
+        case 'project':
+          if (params.id) {
+            url = '/project/' + params.id;
+          }
+        break;
         case 'request':
-          this._setupRequest(e.detail);
-          break;
-        default:
-          console.warn('Unknown navigation', e.detail);
+          const type = params.type || 'new';
+          let id = params.id || 'new';
+          url = '/request/' + type + '/' + encodeURIComponent(id) + '/';
+          // if (e.detail.tab !== undefined) {
+          //   url += e.detail.tab;
+          // } else if (type !== 'latest') {
+          //   url += 'new';
+          // }
+        break;
+        case 'drive': url = '/drive'; break;
+        case 'cookie-manager': url = '/cookie-manager'; break;
+        case 'api-console':
+          let acId;
+          if (params.id) {
+            acId = encodeURIComponent(params.id);
+          } else {
+            acId = 'current';
+          }
+          url = '/api-console/' + acId;
+        break;
+        case 'rest-projects': url = '/rest-projects'; break;
+        case 'exchange-search': url = '/exchange-search'; break;
+        case 'hosts-rules': url = '/hosts-rules'; break;
+        case 'themes-panel': url = '/themes-panel'; break;
+      }
+      if (url) {
+        this.set('route.path', url);
+        this._telemetryScreen();
+      } else {
+        // this.fire('send-analytics', {
+        //   type: 'exception',
+        //   description: 'Route not handled' + JSON.stringify(params),
+        //   fatal: false
+        // });
+        throw new Error('The route is not handled correctly', params);
       }
     }
 
     _setupRequest(params) {
-      if (this.page !== params.base) {
-        this.page = params.base;
-      }
-      if (!params.type || params.type === 'latest' || !params.id) {
-        console.warn(`Unsupported navigation ${params.type}, ${params.id}`);
+      if (!params) {
         return;
       }
       const {id, type} = params;
-      this.$.requestModel.read(type, id)
+      if (!type || !this.$.workspace.addEmptyRequest) {
+        return;
+      }
+      if (type === 'new') {
+        if (this.$.workspace.addEmptyRequest) {
+          this.$.workspace.addEmptyRequest();
+        }
+        return;
+      }
+      if (params.type === 'latest' || !params.id) {
+        console.warn(`Unsupported navigation ${type}, ${id}`);
+        return;
+      }
+      this.$.requestModel.read(type, decodeURIComponent(id))
       .then((request) => {
         const index = this.$.workspace.findRequestIndex(request._id);
         if (index === -1) {
@@ -483,7 +560,7 @@
       this.dispatchEvent(e);
       if (!e.defaultPrevented) {
         // throw new Error('Settings provider not found.');
-        log.warn(`Settings provider not found`);
+        log.warn(`[arc-electron-app] Settings provider not found`);
         return;
       }
       return e.detail.result
@@ -624,6 +701,19 @@
       };
       ipc.on('oauth-2-token-ready', resolved);
       ipc.on('oauth-2-token-error', rejected);
+    }
+    /**
+     * Saves currently opened requests.
+     *
+     * @param {?Object} opts Optional options object. It can contain `source`
+     * property with value of `shortcut` to indicate that the shortcut was
+     * used and the app can automatically save current request
+     */
+    saveOpened(opts) {
+      if (this.routeData.base !== 'request') {
+        return;
+      }
+      this.$.workspace.saveOpened(opts);
     }
   }
   window.customElements.define(ArcElectron.is, ArcElectron);
@@ -1147,19 +1237,6 @@
     //     const {clipboard} = require('electron');
     //     clipboard.writeText(e.detail.value);
     //     e.preventDefault();
-    //   },
-    //   /**
-    //    * Saves currently opened requests.
-    //    *
-    //    * @param {?Object} opts Optional options object. It can contain `source`
-    //    * property with value of `shortcut` to indicate that the shortcut was
-    //    * used and the app can automatically save current request
-    //    */
-    //   saveOpened(opts) {
-    //     if (this.routeData.base !== 'request') {
-    //       return;
-    //     }
-    //     this.$$('request-workspace').saveOpened(opts);
     //   },
     //   /**
     //    * Opens new tab in the request workspace.
