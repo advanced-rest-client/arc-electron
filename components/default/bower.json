@@ -55,7 +55,8 @@
     "web-animations-js": "web-animations/web-animations-js#^2.3",
     "app-pouchdb": "PolymerElements/app-pouchdb#^2.1.1",
     "api-console": "mulesoft/api-console#5.0.0-preview",
-    "electron-http-transport": "advanced-rest-client/electron-http-transport"
+    "electron-http-transport": "advanced-rest-client/electron-http-transport",
+    "host-rules-editor": "advanced-rest-client/host-rules-editor#2.0.0-preview"
   },
   "devDependencies": {
     "web-component-tester": "^6.0.0",

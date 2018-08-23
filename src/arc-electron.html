@@ -21,15 +21,18 @@
 
     .pages {
       @apply --layout-flex;
-      margin: 24px;
-      padding: 12px;
+      padding: 12px 24px 12px 24px;
       background-color: #fff;
-      @apply --shadow-elevation-2dp;
+      @apply --shadow-elevation-4dp;
+      position: relative;
+      z-index: 3;
     }
 
     nav {
       width: var(--app-drawer-width);
       background-color: #fff;
+      position: relative;
+      z-index: 2;
     }
 
     .env-container {
@@ -48,6 +51,12 @@
       max-height: calc(100vh - 64px - 32px);
       background-color: #fff;
     }
+
+    arc-info-messages {
+      min-width: 320px;
+      position: relative;
+      z-index: 1;
+    }
     </style>
     <!-- Routing -->
     <app-location route="{{route}}" use-hash-as-path></app-location>
@@ -62,6 +71,8 @@
     <request-model id="requestModel"></request-model>
     <url-history-saver></url-history-saver>
     <authorization-data-saver></authorization-data-saver>
+    <!-- Data import / export -->
+    <arc-data-export></arc-data-export>
     <!-- Request logic -->
     <oauth1-authorization></oauth1-authorization>
     <arc-request-logic></arc-request-logic>
@@ -69,6 +80,8 @@
     <electron-http-transport></electron-http-transport>
     <variables-manager></variables-manager>
     <variables-evaluator no-before-request></variables-evaluator>
+    <!-- Info center -->
+    <arc-messages-service platform="electron" on-unread-changed="_unreadMessagesChanged" messages="{{appMessages}}" id="msgService"></arc-messages-service>
     <!-- Application views -->
     <app-header-layout has-scrolling-region id="scrollingRegion">
       <app-header slot="header" fixed shadow scroll-target="scrollingRegion">
@@ -121,6 +134,9 @@
             <themes-panel data-route="themes-panel"></themes-panel>
           </iron-pages>
         </div>
+        <template is="dom-if" if="[[messageCenterOpened]]">
+          <arc-info-messages messages="[[appMessages]]" on-close="closeInfoCenter"></arc-info-messages>
+        </template>
       </section>
     </app-header-layout>
     <!-- Components loded lazily -->
@@ -202,13 +218,29 @@
             return versionInfo.appVersion;
           }
         },
-        typeRoute: Object
+        typeRoute: Object,
+        /**
+         * List of unread messages from app developer.
+         * @type {Array<Object>}
+         */
+        newMessages: Array,
+        // List of cached messages from app developer.
+        appMessages: Array,
+        // True if application update is possible.
+        hasAppUpdate: Boolean,
+        // If true, messages center is opened.
+        messageCenterOpened: Boolean
       };
     }
 
     constructor() {
       super();
       this._handleNavigation = this._handleNavigation.bind(this);
+      this._settingChanged = this._settingChanged.bind(this);
+      this._openExternalHandler = this._openExternalHandler.bind(this);
+      this._appVersionRequestHandler = this._appVersionRequestHandler.bind(this);
+      this._copyContentHandler = this._copyContentHandler.bind(this);
+      this._googleOauthTokenRequested = this._googleOauthTokenRequested.bind(this);
     }
 
     static get observers() {
@@ -222,6 +254,11 @@
       super.connectedCallback();
       this._variablesButton = this.$.varToggleButton;
       window.addEventListener('navigate', this._handleNavigation);
+      window.addEventListener('settings-changed', this._settingChanged);
+      window.addEventListener('open-external-url', this._openExternalHandler);
+      window.addEventListener('app-version', this._appVersionRequestHandler);
+      window.addEventListener('content-copy', this._copyContentHandler);
+      window.addEventListener('google-autorize', this._googleOauthTokenRequested);
     }
 
     _baseRouteChanged(base) {
@@ -258,6 +295,10 @@
         case 'project':
           id = 'project-details';
           _path = 'project-details/project-details';
+          break;
+        case 'hosts-rules':
+          id = 'host-rules-editor';
+          _path = 'host-rules-editor/host-rules-editor';
           break;
       }
       if (!id) {
@@ -543,6 +584,24 @@
         base: 'history'
       });
     }
+    /**
+     * Opens new tab in the request workspace.
+     */
+    newRequestTab() {
+      if (this.routeData.base !== 'request') {
+        return;
+      }
+      this.$.workspace.addEmptyRequest();
+    }
+    /**
+     * Sends currently opened request.
+     */
+    sendCurrentTab() {
+      if (this.routeData.base !== 'request') {
+        return;
+      }
+      this.$.workspace.sendCurrent();
+    }
 
     /**
      * Reads current settings and enables Google Analytics if it's not
@@ -715,180 +774,97 @@
       }
       this.$.workspace.saveOpened(opts);
     }
+    /**
+     * Sets `newMessages` propert depending if messaging service detected
+     * new messages.
+     *
+     * @param {CustomEvent} e
+     */
+    _unreadMessagesChanged(e) {
+      const state = !!(e.detail.value && e.detail.value.length > 0);
+      this.set('newMessages', state);
+    }
+    /**
+     * Opens the info center drawwer.
+     */
+    openInfoCenter() {
+      this.messageCenterOpened = !this.messageCenterOpened;
+      if (this.messageCenterOpened) {
+        this.$.msgService.readMessages();
+        window.setTimeout(() => {
+          this.$.msgService.unread.forEach((item, i) => {
+            this.$.msgService.set(['unread', i, 'read'], 1);
+          });
+        }, 4000);
+      }
+    }
+    /**
+     * Closes the info center drawwer.
+     */
+    closeInfoCenter() {
+      this.messageCenterOpened = false;
+    }
+    /**
+     * Handles `open-external-url` event from ARC components.
+     * @param {CustomEvent} e
+     */
+    _openExternalHandler(e) {
+      e.preventDefault();
+      /* global ipcRenderer */
+      ipcRenderer.send('open-external-url', e.detail.url);
+    }
+    /**
+     * Handles ARC components event for application version.
+     * @param {CustomEvent} e
+     */
+    _appVersionRequestHandler(e) {
+      e.detail.version = this.appVersion;
+    }
+    /**
+     * Handles new window open request.
+     */
+    onNewWindow() {
+      ipcRenderer.send('new-window');
+    }
+    /**
+     * Handles `clipboard-copy` event from ARC components.
+     * The `clipboard` api is loaded in the preload script.
+     *
+     * @param {CustomEvent} e
+     */
+    _copyContentHandler(e) {
+      /* global clipboard */
+      clipboard.writeText(e.detail.value);
+      e.preventDefault();
+    }
+    /**
+     * Installs pading update.
+     */
+    updateInstall() {
+      ipcRenderer.send('install-update');
+    }
+
+    _googleOauthTokenRequested(e) {
+      const scope = e.detail.scope.split(' ');
+      this._requestAuthToken(true, scope);
+    }
   }
   window.customElements.define(ArcElectron.is, ArcElectron);
-    // Polymer({
-    //   is: 'arc-electron',
-    //
-    //   properties: {
-    //     // Currently selected request in the request editor
-    //     selectedRequest: String,
-    //     // Route data recognized by app location element
-    //     route: Object,
-    //     // Parsed route data
-    //     routeData: Object,
-    //     // Parsed route data for google drive
-    //     driveFileRoute: Object,
-
-    //     gaCustomMetrics: Array,
-    //     gaCustomDimensions: Array,
-    //     // Width of the main navigation drawer.
-    //     drawerWidth: {
-    //       type: String,
-    //       value: '360px',
-    //       observer: '_drawerWidthChanged'
-    //     },
-    //     forceNarrowLayout: {
-    //       type: Boolean,
-    //       value: false
-    //     },
-    //     narrowLayout: {
-    //       type: Boolean,
-    //       value: false
-    //     },
-    //
-    //     _drawerInitTrackWidth: Number,
-    //     _drawerInitTransition: Number,
-    //     accessToken: String,
-    //     // Latest update event data
-    //     updateState: Array,
-    //     /**
-    //      * Sets Google Analytics state. If this is not set or falsy, then Google
-    //      * Analytics is diosabled (element is removed from the DOM).
-    //      */
-    //     telemetry: Boolean,
-    //     // True if application drawer is opened.
-    //     drawerOpened: Boolean,
-    //     // True if application update is possible.
-    //     hasAppUpdate: Boolean,
-    //     // True to display "new messages" icon in the main nav bar
-    //     newMessages: Boolean,
-    //     // List of cached messages from app developer.
-    //     appMessages: Array,
-    //     // If true, messages center is opened.
-    //     messageCenterOpened: Boolean,
-    //     // Last parsed RAML output from the parser.
-    //     plainRaml: Object,
-    //     // Scroll target for the application.
-    //     scrollTarget: {
-    //       type: Object,
-    //       value() {
-    //         return this.$.scrollingRegion.$$('#contentContainer');
-    //       }
-    //     },
-    //     /**
-    //      * A workspace state file.
-    //      * To be set to override default location.
-    //      */
-    //     workspaceScript: {
-    //       type: String,
-    //       reflectToAttribute: true
-    //     },
-    //     /**
-    //      * The settings file location.
-    //      * To be set to override default location.
-    //      */
-    //     settingsScript: {
-    //       type: String,
-    //       reflectToAttribute: true
-    //     },
-    //     // True when the application has been initialized by the main script
-    //     _appInitialized: Boolean,
-    //     // Electron log object
-    //     log: {
-    //       type: Object,
-    //       readOnly: true,
-    //       value() {
-    //         return require('electron-log');
-    //       }
-    //     },
-    //     // A handler to the workspace object
-    //     workspace: {
-    //       type: Object,
-    //       value() {
-    //         return this.$$('request-workspace');
-    //       },
-    //       readOnly: true
-    //     }
-    //   },
-    //
     //   listeners: {
-    //     navigate: '_navigateHandler',
-    //     'drawerResizer.track': '_drawerTrack',
-    //     tap: '_handleLinks',
-    //     'content-copy': '_copyContentHandler',
-    //     'google-autorize': '_googleOauthTokenRequested',
     //     'process-incoming-data': '_processIcomingDataHandler',
     //     'pick-google-drive-item': 'openDrivePicker',
     //     'open-drive-selector': 'openDrivePicker',
-    //     'settings-changed': '_settingChanged',
-    //     'open-external-url': '_openExternalHandler',
-    //     'app-version': '_appVersionRequestHandler',
-    //     'open-variables-editor': '_variablesOpenRequest'
-    //   },
-    //
-    //   observers: [
-    //     '_driveFileRouteChanged(_appInitialized, driveFileRoute.*)',
-    //     '_notifyRequestPanelResize(narrowLayout)'
-    //   ],
-    //
-    //   detacheded() {
-    //     this.unlisten(document.body, 'display-license', 'openLicense');
-    //     this._unobserveMainEvents();
     //   },
     //   /**
     //    * Called by the application window main script when all
     //    * setup is ready and the application can be initialized.
     //    */
     //   initApplication() {
-    //     if (this._appInitialized) {
-    //       return;
-    //     }
-    //     this._requestAuthToken(false);
     //     this.listen(document.body, 'display-license', 'openLicense');
-    //     this.async(() => this.setupAnalytics(), 1);
-    //     this._refreshLayout();
-    //     const {CookieBridge} = require('./scripts/renderer/cookie-brindge');
-    //     this.cb = new CookieBridge(require('electron').ipcRenderer);
-    //     this.cb.listen();
-    //     this._appInitialized = true;
-    //     this.initRouting();
     //     const {WindowSearchHelper} = require('./scripts/renderer/window-search.js');
     //     this.windowSearch = new WindowSearchHelper();
     //     this.windowSearch.listen();
     //   },
-    //
-    //   initRouting() {
-    //     if (!this.route.path) {
-    //       this.set('route.path', '/request/latest/0');
-    //     }
-    //     if (this.route.path.indexOf('/request') !== 0) {
-    //       this._createMenu();
-    //     }
-    //   },
-    //
-    //   _createMenu() {
-    //     if (this.$$('arc-menu')) {
-    //       return;
-    //     }
-    //     let container = this.$$('[data-append="arc-menu"]');
-    //     let menu = document.createElement('arc-menu');
-    //     menu.restApi = true;
-    //     container.appendChild(menu);
-    //   },
-    //
-    //   _refreshLayout() {
-    //     // The window is not whown by the main process unless the content is
-    //     // ready. Because of that calculations made in the dawer and header
-    //     // layaouts are wrong (at a time of computations elemets size is 0).
-    //     // This function forces to recalculate layout.
-    //     Polymer.RenderStatus.afterNextRender(this, () => {
-    //       this._drawerWidthChanged(this.drawerWidth);
-    //       this.$.scrollingRegion._updateContentPosition();
-    //       this.$.drawerLayout.resetLayout();
-    //     });
-    //   },
-    //
     //
     //   _driveFileRouteChanged(initialized, record) {
     //     if (!initialized) {
@@ -1013,121 +989,12 @@
     //       }
     //     })
     //     .catch(cause => this.notifyError(cause.message));
-    //   },
+    //   }
     //
     //   notifyError(message) {
     //     this.$.errorToast.text = message;
     //     this.$.errorToast.opened = true;
-    //   },
-    //
-    //   _unobserveMainEvents() {
-    //     if (this.cb) {
-    //       this.cb.unlisten();
-    //     }
-    //     if (!this.__ueh) {
-    //       return;
-    //     }
-    //     const ipc = require('electron').ipcRenderer;
-    //     ipc.removeListener('request-action', this.__rah);
-    //     ipc.removeListener('command', this.__ch);
-    //   },
-    //   /**
-    //    * Handler for the `navigate` custom event. Updates a route depending on
-    //    * passed data.
-    //    *
-    //    */
-    //   _navigateHandler(e) {
-    //     var params = e.detail;
-    //     var url;
-    //     switch (params.base) {
-    //       case 'default': url = '/request/latest/0/new'; break;
-    //       case 'history': url = '/history'; break;
-    //       case 'settings': url = '/settings'; break;
-    //       case 'about': url = '/about'; break;
-    //       case 'socket': url = '/socket'; break;
-    //       case 'saved': url = '/saved'; break;
-    //       case 'dataimport': url = '/dataimport'; break;
-    //       case 'project':
-    //         if (params.id) {
-    //           url = '/project/' + params.id;
-    //         }
-    //       break;
-    //       case 'request':
-    //         let type = params.type || 'latest';
-    //         let id = params.id || '0';
-    //         url = '/request/' + type + '/' + encodeURIComponent(id) + '/';
-    //         if (e.detail.tab !== undefined) {
-    //           url += e.detail.tab;
-    //         } else if (type !== 'latest') {
-    //           url += 'new';
-    //         }
-    //       break;
-    //       case 'drive': url = '/drive'; break;
-    //       case 'cookie-manager': url = '/cookie-manager'; break;
-    //       case 'api-console':
-    //         let acId;
-    //         if (params.id) {
-    //           acId = encodeURIComponent(params.id);
-    //         } else {
-    //           acId = 'current';
-    //         }
-    //         url = '/api-console/' + acId;
-    //       break;
-    //       case 'rest-projects': url = '/rest-projects'; break;
-    //       case 'exchange-search': url = '/exchange-search'; break;
-    //       case 'hosts-rules': url = '/hosts-rules'; break;
-    //       case 'themes-panel': url = '/themes-panel'; break;
-    //     }
-    //     if (url) {
-    //       this.set('route.path', url);
-    //       this._telemetryScreen();
-    //     } else {
-    //       this.fire('send-analytics', {
-    //         type: 'exception',
-    //         description: 'Route not handled' + JSON.stringify(params),
-    //         fatal: false
-    //       });
-    //       throw new Error('The route is not handled correctly', params);
-    //     }
-    //   },
-    //
-    //   _telemetryScreen() {
-    //     var screenName = '[unknown]';
-    //     switch (this.routeData.base) {
-    //       case 'history': screenName = 'History'; break;
-    //       case 'settings': screenName = 'Settings'; break;
-    //       case 'about': screenName = 'About'; break;
-    //       case 'socket': screenName = 'Socket'; break;
-    //       case 'saved': screenName = 'Saved'; break;
-    //       case 'dataimport': screenName = 'Data import / export'; break;
-    //       case 'project': screenName = 'Project details';  break;
-    //       case 'default':
-    //       case 'request': screenName = 'Request panel'; break;
-    //       case 'drive': screenName = 'Drive selector'; break;
-    //       case 'cookie-manager': screenName = 'Cookie manager'; break;
-    //       case 'api-console':  screenName = 'API Console'; break;
-    //       case 'rest-projects': screenName = 'REST APIs list'; break;
-    //       case 'exchange-search': screenName = 'Exchange search'; break;
-    //       case 'hosts-rules': screenName = 'Hosts rules'; break;
-    //       case 'themes-panel': screenName = 'Themes panel'; break;
-    //     }
-    //     this.fire('send-analytics', {
-    //       type: 'screenview',
-    //       name: screenName
-    //     });
-    //   },
-    //
-    //   toggleDrawer() {
-    //     if (this.forceNarrowLayout && this.narrowLayout) {
-    //       this.drawerOpened = !this.drawerOpened;
-    //       return;
-    //     }
-    //     if (this.narrowLayout && !this.forceNarrowLayout) {
-    //       this.drawerOpened = !this.drawerOpened;
-    //       return;
-    //     }
-    //     this.forceNarrowLayout = !this.forceNarrowLayout;
-    //   },
+    //   }
     //
     //   _computePinDrawerClass(forceNarrowLayout, narrowLayout, drawerOpened) {
     //     var clazz = 'drawer-pin';
@@ -1135,192 +1002,19 @@
     //       clazz += ' visible';
     //     }
     //     return clazz;
-    //   },
-    //
-    //
-    //
+    //   }
     //   openLicense() {
     //     var dialog = Polymer.dom(this.root).querySelector('arc-license-dialog');
     //     dialog.opened = true;
-    //   },
-    //
-    //   _drawerTrack(e) {
-    //     switch (e.detail.state) {
-    //       case 'start':
-    //         this.__drawerTrackStart();
-    //       break;
-    //       case 'track':
-    //         this.__drawerTrack(e.detail);
-    //       break;
-    //       case 'end':
-    //         this.__drawerTrackEnd(e.detail);
-    //       break;
-    //     }
-    //   },
-    //
-    //   __drawerTrackStart() {
-    //     var content = this.$.mainDrawer.$.contentContainer;
-    //     this._drawerInitTransition = getComputedStyle(content).getPropertyValue('transition');
-    //     content.style.transition = 'left ease-in-out 0.01s';
-    //     this._drawerInitTrackWidth = Number(this.drawerWidth.replace('px', ''));
-    //     if (this.forceNarrowLayout) {
-    //       this.forceNarrowLayout = false;
-    //       this.drawerOpened = true;
-    //     }
-    //   },
-    //
-    //   __drawerTrack(detail) {
-    //     var newWidth = this._drawerInitTrackWidth + detail.dx;
-    //     if (newWidth <= 10) {
-    //       newWidth = 10;
-    //     }
-    //     this.drawerWidth = newWidth + 'px';
-    //     // this.$.paperDrawerPanel.$.main.style.transition = 'left ease-in-out 0.01s';
-    //   },
-    //
-    //   __drawerTrackEnd(detail) {
-    //     var content = this.$.mainDrawer.$.contentContainer;
-    //     content.style.transition = this._drawerInitTransition;
-    //     var newWidth = this._drawerInitTrackWidth + detail.dx;
-    //     if (newWidth <= 10) {
-    //       newWidth = 10;
-    //     }
-    //     this.drawerWidth = newWidth + 'px';
-    //     this._drawerInitTrackWidth = undefined;
-    //     this._drawerInitTransition = undefined;
-    //   },
-    //
-    //   _drawerWidthChanged(width) {
-    //     if (!width) {
-    //       return;
-    //     }
-    //     this.customStyle['--app-drawer-width'] = width;
-    //     this.customStyle['--request-panel-status-bar-left'] = width;
-    //     this.updateStyles();
-    //     this.$.drawerLayout.resetLayout();
-    //   },
-    //
-    //   _handleLinks(e) {
-    //     var target = e.path[0];
-    //     if (!target) {
-    //       return;
-    //     }
-    //     if (target.nodeName !== 'A') {
-    //       return;
-    //     }
-    //     e.preventDefault();
-    //     e.stopPropagation();
-    //     e.stopImmediatePropagation();
-    //     const shell = require('electron').remote.shell;
-    //     shell.openExternal(target.href);
-    //   },
-    //
-    //   _openExternalHandler(e) {
-    //     e.preventDefault();
-    //     const shell = require('electron').remote.shell;
-    //     shell.openExternal(e.detail.url);
-    //   },
-    //
-    //   onNewWindow() {
-    //     const ipc = require('electron').ipcRenderer;
-    //     ipc.send('new-window');
-    //   },
-    //
-    //   openLogs() {
-    //     const ipc = require('electron').ipcRenderer;
-    //     ipc.send('toggle-devtools');
-    //   },
-    //
-
-    //
-    //   _copyContentHandler(e) {
-    //     const {clipboard} = require('electron');
-    //     clipboard.writeText(e.detail.value);
-    //     e.preventDefault();
-    //   },
-    //   /**
-    //    * Opens new tab in the request workspace.
-    //    */
-    //   newRequestTab() {
-    //     if (this.routeData.base !== 'request') {
-    //       return;
-    //     }
-    //     const workspace = this.$$('request-workspace');
-    //     const index = workspace.appendPanel();
-    //     workspace.selected = index;
-    //   },
-    //   /**
-    //    * Sends currently opened request.
-    //    */
-    //   sendCurrentTab() {
-    //     if (this.routeData.base !== 'request') {
-    //       return;
-    //     }
-    //     this.$$('request-workspace').sendCurrent();
-    //   },
-    //
-    //   _googleOauthTokenRequested(e) {
-    //     const scope = e.detail.scope.split(' ');
-    //     this._requestAuthToken(true, scope);
-    //   },
-    //
-    //
-    //   _appVersionRequestHandler(e) {
-    //     e.detail.version = this.appVersion;
-    //   },
-    //
-    //   updateInstall() {
-    //     const ipc = require('electron').ipcRenderer;
-    //     ipc.send('install-update');
-    //   },
-    //
-    //   _notifyRequestPanelResize(narrowLayout) {
-    //     const width = narrowLayout ? 0 : this.drawerWidth;
-    //     this.customStyle['--request-panel-status-bar-left'] = width;
-    //     this.updateStyles();
-    //   },
-    //   /**
-    //    * Sets `newMessages` propert depending if messaging service detected
-    //    * new messages.
-    //    */
-    //   _unreadMessagesChanged(e) {
-    //     const state = !!(e.detail.value && e.detail.value.length > 0);
-    //     this.set('newMessages', state);
-    //   },
-    //   /**
-    //    * Opens the info center drawwer.
-    //    */
-    //   openInfoCenter() {
-    //     this.messageCenterOpened = !this.messageCenterOpened;
-    //     if (this.messageCenterOpened) {
-    //       const service = Polymer.dom(this.root).querySelector('arc-messages-service');
-    //       service.readMessages();
-    //       window.setTimeout(function() {
-    //         service.unread.forEach((item, i) => {
-    //           service.set(['unread', i, 'read'], 1);
-    //         });
-    //       }, 4000);
-    //     }
-    //   },
-    //   /**
-    //    * Closes the info center drawwer.
-    //    */
-    //   closeInfoCenter() {
-    //     this.messageCenterOpened = false;
-    //   },
+    //   }
     //
     //   openWebUrl() {
     //     this.$.webUrlInput.opened = true;
-    //   },
+    //   }
     //
     //   _openWebUrlHandler(e) {
     //     var ipc = require('electron').ipcRenderer;
     //     ipc.send('open-web-url', e.detail.url, e.detail.purpose);
-    //   },
-
-    //
-
-
-    // });
+    //   }
   </script>
 </dom-module>

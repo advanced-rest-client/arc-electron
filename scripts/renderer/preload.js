@@ -1,4 +1,4 @@
-const {ipcRenderer: ipc} = require('electron');
+const {ipcRenderer: ipc, clipboard} = require('electron');
 const {app} = require('electron').remote;
 const log = require('electron-log');
 const {ArcElectronDrive} = require('@advanced-rest-client/electron-drive/renderer');
@@ -28,4 +28,5 @@ process.once('loaded', () => {
     chrome: versions.chrome,
     appVersion: app.getVersion()
   };
+  global.clipboard = clipboard;
 });

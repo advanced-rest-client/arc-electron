@@ -1,4 +1,4 @@
-const {ipcMain, app} = require('electron');
+const {ipcMain, app, shell} = require('electron');
 const {ArcWindowsManager} = require('./scripts/main/windows-manager');
 const {UpdateStatus} = require('./scripts/main/update-status');
 const {ArcMainMenu} = require('./scripts/main/main-menu');
@@ -31,6 +31,8 @@ class Arc {
     app.on('ready', this._readyHandler.bind(this));
     app.on('window-all-closed', this._allClosedHandler.bind(this));
     app.on('activate', this._activateHandler.bind(this));
+    // The most general events
+    ipcMain.on('open-external-url', this._externalUrlHandler.bind(this));
   }
   /**
    * Registers application protocol and adds a handler.
@@ -246,6 +248,17 @@ class Arc {
    */
   isDebug() {
     return !!process.argv.find((i) => i.indexOf('--inspect') !== -1);
+  }
+  /**
+   * Handles opening an URL in a browser action.
+   * @param {Event} e
+   * @param {String} url The URL to open.
+   */
+  _externalUrlHandler(e, url) {
+    if (!url) {
+      return;
+    }
+    shell.openExternal(url);
   }
 }
 
