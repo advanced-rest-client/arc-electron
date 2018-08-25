@@ -11,6 +11,7 @@ const {CookieBridge} = require('@advanced-rest-client/electron-session-state/ren
 const {ArcContextMenu} = require('./context-menu');
 const setImmediateFn = setImmediate;
 const versions = process.versions;
+const env = process.env;
 process.once('loaded', () => {
   global.ipcRenderer = ipc;
   global.ipc = ipc;
@@ -29,4 +30,7 @@ process.once('loaded', () => {
     appVersion: app.getVersion()
   };
   global.clipboard = clipboard;
+  global.process = {
+    env
+  };
 });
