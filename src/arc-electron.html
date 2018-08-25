@@ -28,6 +28,14 @@
       z-index: 3;
     }
 
+    #pages {
+      height: 100%;
+    }
+
+    #pages > * {
+      height: 100%;
+    }
+
     nav {
       width: var(--app-drawer-width);
       background-color: #fff;
@@ -299,6 +307,10 @@
         case 'hosts-rules':
           id = 'host-rules-editor';
           _path = 'host-rules-editor/host-rules-editor';
+          break;
+        case 'cookie-manager':
+          id = 'cookie-manager';
+          _path = 'cookie-manager/cookie-manager';
           break;
       }
       if (!id) {
