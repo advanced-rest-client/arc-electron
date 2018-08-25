@@ -32,7 +32,6 @@
     "arc-models": "advanced-rest-client/arc-models#2.0.0-preview",
     "request-saver": "advanced-rest-client/request-saver#2.0.0-preview",
     "authorization-data-saver": "advanced-rest-client/authorization-data-saver#^2.0.0-preview",
-    "url-history-saver": "advanced-rest-client/url-history-saver#^2.0.0",
     "arc-definitions": "advanced-rest-client/arc-definitions#^2.0.0",
     "variables-manager": "advanced-rest-client/variables-manager#2.0.0-preview",
     "variables-evaluator": "advanced-rest-client/variables-evaluator#2.0.0-preview",
@@ -57,7 +56,8 @@
     "api-console": "mulesoft/api-console#5.0.0-preview",
     "electron-http-transport": "advanced-rest-client/electron-http-transport",
     "host-rules-editor": "advanced-rest-client/host-rules-editor#2.0.0-preview",
-    "cookie-manager": "advanced-rest-client/cookie-manager#2.0.0-preview"
+    "cookie-manager": "advanced-rest-client/cookie-manager#2.0.0-preview",
+    "web-url-input": "advanced-rest-client/web-url-input#2.0.0-preview"
   },
   "devDependencies": {
     "web-component-tester": "^6.0.0",

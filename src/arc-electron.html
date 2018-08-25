@@ -76,8 +76,8 @@
     <project-model></project-model>
     <rest-api-model></rest-api-model>
     <host-rules-model></host-rules-model>
+    <url-history-model></url-history-model>
     <request-model id="requestModel"></request-model>
-    <url-history-saver></url-history-saver>
     <authorization-data-saver></authorization-data-saver>
     <!-- Data import / export -->
     <arc-data-export></arc-data-export>
@@ -90,6 +90,8 @@
     <variables-evaluator no-before-request></variables-evaluator>
     <!-- Info center -->
     <arc-messages-service platform="electron" on-unread-changed="_unreadMessagesChanged" messages="{{appMessages}}" id="msgService"></arc-messages-service>
+    <!-- Helper components -->
+    <web-url-input id="webUrlInput" purpose="web-session" on-open-web-url="_openWebUrlHandler"></web-url-input>
     <!-- Application views -->
     <app-header-layout has-scrolling-region id="scrollingRegion">
       <app-header slot="header" fixed shadow scroll-target="scrollingRegion">
@@ -447,9 +449,21 @@
       })
       .catch((cmp) => this._reportComponentLoadingError(cmp));
     }
-
+    /**
+     * Loads `web-url-input` component and runs it to ask the user for the URL
+     * to open in session window. Cookies recorded in the window are becomming
+     * requests session cookies.
+     */
     openWebUrl() {
+      this._loadComponent('web-url-input/web-url-input')
+      .then(() => {
+        this.$.webUrlInput.opened = true;
+      })
+      .catch((cmp) => this._reportComponentLoadingError(cmp));
+    }
 
+    _openWebUrlHandler(e) {
+      ipc.send('open-web-url', e.detail.url, e.detail.purpose);
     }
 
     closeWorkspaceTab(index) {
@@ -1020,13 +1034,6 @@
     //     dialog.opened = true;
     //   }
     //
-    //   openWebUrl() {
-    //     this.$.webUrlInput.opened = true;
-    //   }
-    //
-    //   _openWebUrlHandler(e) {
-    //     var ipc = require('electron').ipcRenderer;
-    //     ipc.send('open-web-url', e.detail.url, e.detail.purpose);
-    //   }
+
   </script>
 </dom-module>
