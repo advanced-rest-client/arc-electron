@@ -9,6 +9,7 @@ const {ThemeManager} = require('@advanced-rest-client/arc-electron-sources-manag
 const {SocketRequest} = require('@advanced-rest-client/electron-request');
 const {CookieBridge} = require('@advanced-rest-client/electron-session-state/renderer');
 const {ArcContextMenu} = require('./context-menu');
+const {FilesystemProxy} = require('./filesystem-proxy');
 const setImmediateFn = setImmediate;
 const versions = process.versions;
 const env = process.env;
@@ -25,6 +26,7 @@ process.once('loaded', () => {
   global.CookieBridge = CookieBridge;
   global.log = log;
   global.setImmediate = setImmediateFn;
+  global.FilesystemProxy = FilesystemProxy;
   global.versionInfo = {
     chrome: versions.chrome,
     appVersion: app.getVersion()

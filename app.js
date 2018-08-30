@@ -4,6 +4,15 @@
  * Class responsible for initializing the main ARC elements
  * and setup base options.
  * Also serves as a communication bridge between main process and app window.
+ *
+ * This is only supported in the Electron platform.
+ *
+ * In ARC node integration is disabled as responses received from the server
+ * can be executed in preview window. Any script would instantly get access
+ * to whole electron and node environment. As a consequence the script
+ * would have access to user system. Classes that need access to electron / node
+ * API are loaded in sandbox in the preload script and initialized here.
+ * Scripts can't use `require()` or any other node function.
  */
 class ArcInit {
   /**
@@ -11,7 +20,8 @@ class ArcInit {
    */
   constructor() {
     /* global ipc, ArcContextMenu, ArcElectronDrive, OAuth2Handler,
-    ThemeManager, ArcPreferencesProxy, CookieBridge, WorkspaceManager */
+    ThemeManager, ArcPreferencesProxy, CookieBridge, WorkspaceManager,
+    FilesystemProxy */
     this.created = false;
     this.contextActions = new ArcContextMenu();
     this.driveBridge = new ArcElectronDrive();
@@ -19,6 +29,7 @@ class ArcInit {
     this.themeManager = new ThemeManager();
     this.prefProxy = new ArcPreferencesProxy();
     this.cookieBridge = new CookieBridge();
+    this.fs = new FilesystemProxy();
   }
   /**
    * Reference to the main application window.
@@ -41,6 +52,7 @@ class ArcInit {
     this.themeManager.listen();
     this.prefProxy.observe();
     this.cookieBridge.listen();
+    this.fs.listen();
     ipc.on('checking-for-update', updateHandler);
     ipc.on('update-available', updateHandler);
     ipc.on('update-not-available', updateHandler);
