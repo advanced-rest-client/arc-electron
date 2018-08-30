@@ -79,6 +79,7 @@
     <url-history-model></url-history-model>
     <request-model id="requestModel"></request-model>
     <authorization-data-saver></authorization-data-saver>
+    <websocket-url-history-model></websocket-url-history-model>
     <!-- Data import / export -->
     <arc-data-export app-version="[[appVersion]]" electron-cookies></arc-data-export>
     <!-- Request logic -->
@@ -319,6 +320,10 @@
         case 'about':
           id = 'about-arc-electron';
           _path = 'about-arc-electron/about-arc-electron';
+          break;
+        case 'socket':
+          id = 'websocket-panel';
+          _path = 'websocket-panel/websocket-panel';
           break;
       }
       if (!id) {
@@ -577,7 +582,6 @@
         base: 'settings'
       });
     }
-
     /**
      * Opens the host rules editor.
      */
@@ -604,17 +608,35 @@
       // panel.hideExport = false;
       // panel.hideImport = true;
     }
-
+    /**
+     * Opens web socket panel.
+     */
+    openWebSocket() {
+      this._dispatchNavigate({
+        base: 'socket'
+      });
+    }
+    /**
+     * Opens saved requests screen
+     */
     openSaved() {
       this._dispatchNavigate({
         base: 'saved'
       });
     }
-
+    /**
+     * Opens history requests screen
+     */
     openHistory() {
       this._dispatchNavigate({
         base: 'history'
       });
+    }
+    /**
+     * Opens requests workspace component.
+     */
+    openWorkspace() {
+      this.page = 'request';
     }
     /**
      * Opens new tab in the request workspace.

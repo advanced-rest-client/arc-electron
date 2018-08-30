@@ -193,23 +193,11 @@ class Arc {
       case 'quit':
         app.quit();
       break;
-      case 'open-saved':
-      case 'open-history':
-      case 'open-drive':
-      case 'open-messages':
-      case 'show-settings':
-      case 'about':
-      case 'open-license':
-      case 'import-data':
-      case 'export-data':
-      case 'login-external-webservice':
-      case 'open-cookie-manager':
-      case 'open-hosts-editor':
-      case 'open-themes':
-        win.webContents.send(windowCommand, action);
-      break;
       case 'new-window':
         this.wm.open();
+      break;
+      case 'task-manager':
+        this.wm.openTaskManager();
       break;
       case 'open-privacy-policy':
       case 'open-documentation':
@@ -220,9 +208,6 @@ class Arc {
       case 'web-session-help':
         let {HelpManager} = require('./scripts/main/help-manager');
         HelpManager.helpWith(action);
-      break;
-      case 'task-manager':
-        this.wm.openTaskManager();
       break;
       case 'find':
         if (win.webContents.getURL().indexOf('search-bar') !== -1) {
@@ -238,6 +223,9 @@ class Arc {
           srv = new ContentSearchService(win);
         }
         srv.open();
+      break;
+      default:
+        win.webContents.send(windowCommand, action);
       break;
     }
   }

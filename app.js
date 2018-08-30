@@ -245,6 +245,8 @@ class ArcInit {
       case 'activate-tab': this.activateTab(e, args[0], args[1]); break;
       case 'get-request-data': this.getRequestData(e, args[0], args[1]); break;
       case 'open-themes': app.openThemesPanel(); break;
+      case 'open-requests-workspace': app.openWorkspace(); break;
+      case 'open-web-socket': app.openWebSocket(); break;
     }
   }
   /**

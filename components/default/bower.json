@@ -59,7 +59,8 @@
     "cookie-manager": "advanced-rest-client/cookie-manager#2.0.0-preview",
     "web-url-input": "advanced-rest-client/web-url-input#2.0.0-preview",
     "arc-settings-panel": "advanced-rest-client/arc-settings-panel#2.0.0-preview",
-    "about-arc-electron": "advanced-rest-client/about-arc-electron#2.0.0-preview"
+    "about-arc-electron": "advanced-rest-client/about-arc-electron#2.0.0-preview",
+    "websocket-panel": "advanced-rest-client/websocket-panel#2.0.0-preview"
   },
   "devDependencies": {
     "web-component-tester": "^6.0.0",
