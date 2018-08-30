@@ -130,9 +130,7 @@
             <history-panel data-route="history"></history-panel>
             <saved-requests-panel data-route="saved"></saved-requests-panel>
             <data-import-export-panel data-route="dataimport" api-key="1076318174169-u4a5d3j2v0tbie1jnjgsluqk1ti7ged3.apps.googleusercontent.com"></data-import-export-panel>
-            <arc-settings-panel data-route="settings">
-              <app-paths-info workspace-script="[[workspaceScript]]" settings-script="[[settingsScript]]"></app-paths-info>
-            </arc-settings-panel>
+            <arc-settings-panel data-route="settings"></arc-settings-panel>
             <about-arc data-route="about" update-state="[[updateState]]"></about-arc>
             <project-details data-route="project" id="projectDetails"></project-details>
             <google-drive-browser mime-type="application/restclient+data" data-route="drive" api-key="1076318174169-u4a5d3j2v0tbie1jnjgsluqk1ti7ged3.apps.googleusercontent.com" access-token="[[accessToken]]" on-drive-file-picker-data="_openDriveRequest"></google-drive-browser>
@@ -313,6 +311,10 @@
         case 'cookie-manager':
           id = 'cookie-manager';
           _path = 'cookie-manager/cookie-manager';
+          break;
+        case 'settings':
+          id = 'arc-settings-panel';
+          _path = 'arc-settings-panel/arc-settings-panel';
           break;
       }
       if (!id) {
