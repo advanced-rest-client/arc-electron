@@ -17,6 +17,7 @@
 
     .main-container {
       @apply --layout-horizontal;
+      min-height: 100%;
     }
 
     .pages {
@@ -26,6 +27,7 @@
       @apply --shadow-elevation-4dp;
       position: relative;
       z-index: 3;
+      margin-left: var(--app-drawer-width);
     }
 
     #pages {
@@ -39,7 +41,7 @@
     nav {
       width: var(--app-drawer-width);
       background-color: #fff;
-      position: relative;
+      position: fixed;
       z-index: 2;
     }
 
@@ -136,9 +138,15 @@
             <project-details data-route="project" id="projectDetails"></project-details>
             <google-drive-browser mime-type="application/restclient+data" data-route="drive" api-key="1076318174169-u4a5d3j2v0tbie1jnjgsluqk1ti7ged3.apps.googleusercontent.com" access-token="[[accessToken]]" on-drive-file-picker-data="_openDriveRequest"></google-drive-browser>
             <cookie-manager data-route="cookie-manager"></cookie-manager>
-            <api-console-panel data-route="api-console" scroll-target="[[scrollTarget]]"></api-console-panel>
+            <api-console id="apic" data-route="api-console" scroll-target="[[_scrollTarget]]"></api-console>
             <rest-apis-list-panel data-route="rest-projects" render-explore></rest-apis-list-panel>
-            <exchange-search-panel data-route="exchange-search" scroll-target="[[scrollTarget]]" allow-auth exchange-redirect-uri="https://auth.advancedrestclient.com/oauth-popup.html" exchange-client-id="59KaqF90hLgZMJec" force-oauth-events></exchange-search-panel>
+            <exchange-search-panel
+              data-route="exchange-search"
+              scroll-target="[[_scrollTarget]]"
+              anypoint-auth
+              exchange-redirect-uri="https://auth.advancedrestclient.com/oauth-popup.html"
+              exchange-client-id="59KaqF90hLgZMJec"
+              force-oauth-events></exchange-search-panel>
             <host-rules-editor data-route="hosts-rules"></host-rules-editor>
             <themes-panel data-route="themes-panel"></themes-panel>
           </iron-pages>
@@ -238,7 +246,12 @@
         // True if application update is possible.
         hasAppUpdate: Boolean,
         // If true, messages center is opened.
-        messageCenterOpened: Boolean
+        messageCenterOpened: Boolean,
+        /**
+         * A scroll target for the components that relays on this property.
+         * @type {Element}
+         */
+        _scrollTarget: Object
       };
     }
 
@@ -250,6 +263,7 @@
       this._appVersionRequestHandler = this._appVersionRequestHandler.bind(this);
       this._copyContentHandler = this._copyContentHandler.bind(this);
       this._googleOauthTokenRequested = this._googleOauthTokenRequested.bind(this);
+      this._apiDataHandler = this._apiDataHandler.bind(this);
     }
 
     static get observers() {
@@ -268,6 +282,8 @@
       window.addEventListener('app-version', this._appVersionRequestHandler);
       window.addEventListener('content-copy', this._copyContentHandler);
       window.addEventListener('google-autorize', this._googleOauthTokenRequested);
+      window.addEventListener('api-data-ready', this._apiDataHandler);
+      this._scrollTarget = this.$.scrollingRegion.$.contentContainer;
     }
 
     _baseRouteChanged(base) {
@@ -324,6 +340,14 @@
         case 'socket':
           id = 'websocket-panel';
           _path = 'websocket-panel/websocket-panel';
+          break;
+        case 'exchange-search':
+          id = 'exchange-search-panel';
+          _path = 'exchange-search-panel/exchange-search-panel';
+          break;
+        case 'api-console':
+          id = 'api-console';
+          _path = 'api-console/api-console';
           break;
       }
       if (!id) {
@@ -901,6 +925,18 @@
     _googleOauthTokenRequested(e) {
       const scope = e.detail.scope.split(' ');
       this._requestAuthToken(true, scope);
+    }
+
+    _apiDataHandler(e) {
+      const api = e.detail.api;
+      this._loadComponent('api-console/api-console')
+      .then(() => {
+        this.$.apic.amfModel = api;
+        this._dispatchNavigate({
+          base: 'api-console'
+        });
+      })
+      .catch((cmp) => this._reportComponentLoadingError(cmp));
     }
   }
   window.customElements.define(ArcElectron.is, ArcElectron);

@@ -27,7 +27,7 @@
     "bower": "^1.8.2",
     "chai": "^4.1.2",
     "chance": "^1.0.13",
-    "electron": "^2.0.7",
+    "electron": "^2.0.8",
     "electron-builder": "^20.27.1",
     "electron-mocha": "^5.0.0",
     "eslint": "^4.18.1",
@@ -44,6 +44,7 @@
     "@advanced-rest-client/electron-oauth2": "1.0.0-rc2",
     "@advanced-rest-client/electron-request": "^1.0.0-rc4",
     "@advanced-rest-client/electron-session-state": "^1.0.0-rc1",
+    "amf-client-js": "1.8.0",
     "camelcase": "^4.1.0",
     "electron-log": "^2.2.16",
     "electron-updater": "^3.1.1",
@@ -55,6 +56,8 @@
     "polymer-analyzer": "^2.7.0",
     "polymer-bundler": "^4.0.2",
     "shady-css-parser": "^0.1.0",
+    "tmp": "0.0.33",
+    "unzipper": "^0.9.3",
     "uuid": "^3.2.1"
   },
   "build": {
