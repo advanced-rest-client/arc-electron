@@ -136,7 +136,12 @@
             <arc-settings-panel data-route="settings"></arc-settings-panel>
             <about-arc-electron data-route="about" app-version="[[appVersion]]"></about-arc-electron>
             <project-details data-route="project" id="projectDetails"></project-details>
-            <google-drive-browser mime-type="application/restclient+data" data-route="drive" api-key="1076318174169-u4a5d3j2v0tbie1jnjgsluqk1ti7ged3.apps.googleusercontent.com" access-token="[[accessToken]]" on-drive-file-picker-data="_openDriveRequest"></google-drive-browser>
+            <google-drive-browser
+              mime-type="application/restclient+data"
+              data-route="drive"
+              api-key="1076318174169-u4a5d3j2v0tbie1jnjgsluqk1ti7ged3.apps.googleusercontent.com"
+              access-token="[[driveAccessToken]]"
+              on-drive-file-picker-data="_openDriveRequest"></google-drive-browser>
             <cookie-manager data-route="cookie-manager"></cookie-manager>
             <api-console id="apic" data-route="api-console" scroll-target="[[_scrollTarget]]"></api-console>
             <rest-apis-list-panel data-route="rest-projects" render-explore></rest-apis-list-panel>
@@ -185,6 +190,7 @@
         </template>
       </app-analytics>
     </template>
+    <paper-toast id="errorToast" duration="5000"></paper-toast>
   </template>
   <script>
   /**
@@ -251,7 +257,15 @@
          * A scroll target for the components that relays on this property.
          * @type {Element}
          */
-        _scrollTarget: Object
+        _scrollTarget: Object,
+        /**
+         * When set it enables Google Analytics
+         */
+        telemetry: Boolean,
+        /**
+         * Google Drive access token
+         */
+        driveAccessToken: String
       };
     }
 
@@ -348,6 +362,10 @@
         case 'api-console':
           id = 'api-console';
           _path = 'api-console/api-console';
+          break;
+        case 'drive':
+          id = 'google-drive-browser';
+          _path = 'google-drive-browser/google-drive-browser';
           break;
       }
       if (!id) {
@@ -808,7 +826,7 @@
       const context = this;
       let rejected;
       function resolved(sender, token) {
-        let tokenValue = token ? token.accessToken : undefined;
+        const tokenValue = token ? token.accessToken : undefined;
         context.__requestingToken = false;
         ipc.removeListener('oauth-2-token-ready', resolved);
         ipc.removeListener('oauth-2-token-error', rejected);
@@ -821,7 +839,7 @@
             token: tokenValue
           }
         }));
-        context.accessToken = tokenValue;
+        context.driveAccessToken = tokenValue;
       }
       rejected = function() {
         context.__requestingToken = false;
@@ -938,6 +956,79 @@
       })
       .catch((cmp) => this._reportComponentLoadingError(cmp));
     }
+
+    /**
+     * Handles opening a file from Google Drive.
+     * Normalizes content to the import object and opens import panel
+     * if the data is import data or a request if import data contains single
+     * request.
+     *
+     * @param {CustomEvent} e
+     */
+    _openDriveRequest(e) {
+      const opts = {
+        diveId: e.detail.diveId
+      };
+      this._processIcomingData(e.detail.content, opts);
+    }
+
+    _processIcomingData(data, opts) {
+      if (!data) {
+        return;
+      }
+      opts = opts || {};
+      const e = new CustomEvent('import-normalize', {
+        bubbles: true,
+        composed: true,
+        cancelable: true,
+        detail: {
+          content: data
+        }
+      });
+      this.dispatchEvent(e);
+      e.detail.result
+      .then((data) => {
+        if (this._isSingleRequest(data)) {
+          const obj = data.requests[0];
+          if (opts.diveId) {
+            obj.driveId = opts.diveId;
+          }
+          this.openWorkspace();
+          this.$.workspace.appendRequest(obj);
+        } else {
+          console.warn('Implement me');
+          // let panel = Polymer.dom(this.root).querySelector('data-import-export-panel');
+          // panel.importObject = data;
+          // panel.importPage = 3;
+          // this.openImportExport();
+        }
+      })
+      .catch((cause) => this.notifyError(cause.message));
+    }
+
+    _isSingleRequest(data) {
+      if (!data.requests || !data.requests.length) {
+        return false;
+      }
+      if (data.requests.length !== 1) {
+        return false;
+      }
+      if (data.projects && data.projects.length === 0) {
+        delete data.projects;
+      }
+      if (data.history && data.history.length === 0) {
+        delete data.history;
+      }
+      if (Object.keys(data).length === 4) {
+        return true;
+      }
+      return false;
+    }
+
+    notifyError(message) {
+      this.$.errorToast.text = message;
+      this.$.errorToast.opened = true;
+    }
   }
   window.customElements.define(ArcElectron.is, ArcElectron);
     //   listeners: {
@@ -970,7 +1061,7 @@
     //
     //   openDriveItem(id) {
     //     Polymer.RenderStatus.afterNextRender(this, function() {
-    //       if (!this.accessToken) {
+    //       if (!this.driveAccessToken) {
     //         this.addEventListener('oauth-2-token-ready', function clb() {
     //           this.removeEventListener('oauth-2-token-ready', clb);
     //           this.openDriveItem(id);
@@ -985,37 +1076,9 @@
     //       picker._downloadFile(id);
     //     });
     //   },
-    //   /**
-    //    * Handles opening a file from Google Drive.
-    //    * Normalizes content to the import object and opens import panel
-    //    * if the data is import data or a request if import data contains single
-    //    * request.
-    //    */
-    //   _openDriveRequest(e) {
-    //     var opts = {
-    //       diveId: e.detail.diveId
-    //     };
-    //     this._processIcomingData(e.detail.content, opts);
-    //   },
+
     //
-    //   _isSingleRequest(data) {
-    //     if (!data.requests || !data.requests.length) {
-    //       return false;
-    //     }
-    //     if (data.requests.length !== 1) {
-    //       return false;
-    //     }
-    //     if (data.projects && data.projects.length === 0) {
-    //       delete data.projects;
-    //     }
-    //     if (data.history && data.history.length === 0) {
-    //       delete data.history;
-    //     }
-    //     if (Object.keys(data).length === 4) {
-    //       return true;
-    //     }
-    //     return false;
-    //   },
+
     //
     //   _processIcomingDataHandler(e) {
     //     if (e.detail.type === 'json') {
@@ -1046,45 +1109,9 @@
     //     this.$.processingRamlErrorToast.opened = true;
     //   },
     //
-    //   _processIcomingData(data, opts) {
-    //     if (!data) {
-    //       return;
-    //     }
-    //     opts = opts || {};
-    //     var event = this.fire('import-normalize', {
-    //       content: data
-    //     }, {
-    //       cancelable: true
-    //     });
-    //     event.detail.result.then(data => {
-    //       if (this._isSingleRequest(data)) {
-    //         let obj = data.requests[0];
-    //         if (opts.diveId) {
-    //           obj.type = 'google-drive';
-    //           obj.driveId = opts.diveId;
-    //         }
-    //         let panel = Polymer.dom(this.root).querySelector('request-workspace');
-    //         let tab = panel.fromObject(obj);
-    //         this.fire('navigate', {
-    //           base: 'request',
-    //           type: 'current',
-    //           id: '0',
-    //           tab: tab
-    //         });
-    //       } else {
-    //         let panel = Polymer.dom(this.root).querySelector('data-import-export-panel');
-    //         panel.importObject = data;
-    //         panel.importPage = 3;
-    //         this.openImportExport();
-    //       }
-    //     })
-    //     .catch(cause => this.notifyError(cause.message));
-    //   }
+
     //
-    //   notifyError(message) {
-    //     this.$.errorToast.text = message;
-    //     this.$.errorToast.opened = true;
-    //   }
+
     //
     //   _computePinDrawerClass(forceNarrowLayout, narrowLayout, drawerOpened) {
     //     var clazz = 'drawer-pin';
