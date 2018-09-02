@@ -40,11 +40,11 @@
   "dependencies": {
     "@advanced-rest-client/arc-electron-preferences": "^1.0.0-rc1",
     "@advanced-rest-client/arc-electron-sources-manager": "0.1.0-rc2",
+    "@advanced-rest-client/electron-amf-service": "0.1.0-rc",
     "@advanced-rest-client/electron-drive": "0.1.0-rc3",
     "@advanced-rest-client/electron-oauth2": "1.0.0-rc2",
     "@advanced-rest-client/electron-request": "^1.0.0-rc4",
     "@advanced-rest-client/electron-session-state": "^1.0.0-rc1",
-    "amf-client-js": "1.8.0",
     "camelcase": "^4.1.0",
     "electron-log": "^2.2.16",
     "electron-updater": "^3.1.1",
@@ -56,8 +56,6 @@
     "polymer-analyzer": "^2.7.0",
     "polymer-bundler": "^4.0.2",
     "shady-css-parser": "^0.1.0",
-    "tmp": "0.0.33",
-    "unzipper": "^0.9.3",
     "uuid": "^3.2.1"
   },
   "build": {

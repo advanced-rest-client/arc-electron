@@ -10,7 +10,7 @@ const {SocketRequest} = require('@advanced-rest-client/electron-request');
 const {CookieBridge} = require('@advanced-rest-client/electron-session-state/renderer');
 const {ArcContextMenu} = require('./context-menu');
 const {FilesystemProxy} = require('./filesystem-proxy');
-const {ExchangeDataProcessor} = require('./exchange-data-processor');
+const {ElectronAmfService} = require('@advanced-rest-client/electron-amf-service');
 const setImmediateFn = setImmediate;
 const versions = process.versions;
 const env = process.env;
@@ -28,7 +28,7 @@ process.once('loaded', () => {
   global.log = log;
   global.setImmediate = setImmediateFn;
   global.FilesystemProxy = FilesystemProxy;
-  global.ExchangeDataProcessor = ExchangeDataProcessor;
+  global.ElectronAmfService = ElectronAmfService;
   global.versionInfo = {
     chrome: versions.chrome,
     appVersion: app.getVersion()

@@ -21,7 +21,7 @@ class ArcInit {
   constructor() {
     /* global ipc, ArcContextMenu, ArcElectronDrive, OAuth2Handler,
     ThemeManager, ArcPreferencesProxy, CookieBridge, WorkspaceManager,
-    FilesystemProxy, ExchangeDataProcessor */
+    FilesystemProxy, ElectronAmfService */
     this.created = false;
     this.contextActions = new ArcContextMenu();
     this.driveBridge = new ArcElectronDrive();
@@ -30,7 +30,7 @@ class ArcInit {
     this.prefProxy = new ArcPreferencesProxy();
     this.cookieBridge = new CookieBridge();
     this.fs = new FilesystemProxy();
-    this.exchangeProcessor = new ExchangeDataProcessor();
+    this.amfService = new ElectronAmfService();
   }
   /**
    * Reference to the main application window.
@@ -54,7 +54,7 @@ class ArcInit {
     this.prefProxy.observe();
     this.cookieBridge.listen();
     this.fs.listen();
-    this.exchangeProcessor.listen();
+    this.amfService.listen();
     ipc.on('checking-for-update', updateHandler);
     ipc.on('update-available', updateHandler);
     ipc.on('update-not-available', updateHandler);
