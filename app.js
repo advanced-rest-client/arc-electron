@@ -21,7 +21,7 @@ class ArcInit {
   constructor() {
     /* global ipc, ArcContextMenu, ArcElectronDrive, OAuth2Handler,
     ThemeManager, ArcPreferencesProxy, CookieBridge, WorkspaceManager,
-    FilesystemProxy, ElectronAmfService */
+    FilesystemProxy, ElectronAmfService, versionInfo */
     this.created = false;
     this.contextActions = new ArcContextMenu();
     this.driveBridge = new ArcElectronDrive();
@@ -194,6 +194,8 @@ class ArcInit {
   _setupApp(app) {
     console.info('Initializing ARC app');
     app.componentsDir = this.initConfig.appComponents;
+    app.appVersion = versionInfo.appVersion;
+    app.browserVersion = versionInfo.chrome;
     app.initApplication();
   }
   /**

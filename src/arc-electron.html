@@ -195,89 +195,36 @@
   <script>
   /**
    * Main component for ARC electron app.
+   *
+   * @appliesMixin ArcComponents.ArcAppMixin
    */
-  class ArcElectron extends Polymer.Element {
+  class ArcElectron extends ArcComponents.ArcAppMixin(Polymer.Element) {
     static get is() {return 'arc-electron';}
     static get properties() {
       return {
-        /**
-         * A base path to the web componentes. It is used to determine
-         * components location when including parts of the application.
-         */
-        componentsDir: String,
-        /**
-         * Current route data
-         */
-        route: Object,
-        /**
-         * Main route data
-         */
-        routeData: Object,
         commonRoute: Object,
-        /**
-         * When true then a source components are being loaded.
-         */
-        _loadingSources: Boolean,
-        /**
-         * Currently opened application screen
-         * @type {String}
-         */
-        page: {type: String, observer: '_pageChanged'},
         /**
          * A reference to the variables open button.
          * @type {String}
          */
         _variablesButton: Object,
-        gaCustomDimensions: Array,
-        gaCustomMetrics: Array,
-        // Application ID for analytics
-        appId: {
-          type: String,
-          value: 'com.mulesoft.arc'
-        },
-        // Current application varsion
-        appVersion: {
-          type: String,
-          value() {
-            return versionInfo.appVersion;
-          }
-        },
         typeRoute: Object,
         /**
-         * List of unread messages from app developer.
-         * @type {Array<Object>}
+         * A logger
          */
-        newMessages: Array,
-        // List of cached messages from app developer.
-        appMessages: Array,
-        // True if application update is possible.
-        hasAppUpdate: Boolean,
-        // If true, messages center is opened.
-        messageCenterOpened: Boolean,
-        /**
-         * A scroll target for the components that relays on this property.
-         * @type {Element}
-         */
-        _scrollTarget: Object,
-        /**
-         * When set it enables Google Analytics
-         */
-        telemetry: Boolean,
-        /**
-         * Google Drive access token
-         */
-        driveAccessToken: String
+        log: {
+          type: Object,
+          value: function() {
+            return log;
+          }
+        }
       };
     }
 
     constructor() {
       super();
-      this._handleNavigation = this._handleNavigation.bind(this);
-      this._settingChanged = this._settingChanged.bind(this);
       this._openExternalHandler = this._openExternalHandler.bind(this);
-      this._appVersionRequestHandler = this._appVersionRequestHandler.bind(this);
       this._copyContentHandler = this._copyContentHandler.bind(this);
-      this._googleOauthTokenRequested = this._googleOauthTokenRequested.bind(this);
       this._apiDataHandler = this._apiDataHandler.bind(this);
     }
 
@@ -291,12 +238,8 @@
     connectedCallback() {
       super.connectedCallback();
       this._variablesButton = this.$.varToggleButton;
-      window.addEventListener('navigate', this._handleNavigation);
-      window.addEventListener('settings-changed', this._settingChanged);
       window.addEventListener('open-external-url', this._openExternalHandler);
-      window.addEventListener('app-version', this._appVersionRequestHandler);
       window.addEventListener('content-copy', this._copyContentHandler);
-      window.addEventListener('google-autorize', this._googleOauthTokenRequested);
       window.addEventListener('api-data-ready', this._apiDataHandler);
       this._scrollTarget = this.$.scrollingRegion.$.contentContainer;
     }
@@ -324,140 +267,10 @@
       }
     }
 
-    _pageChanged(page) {
-      let id;
-      let _path;
-      switch (page) {
-        case 'request':
-          id = 'arc-request-workspace';
-          _path = 'arc-request-workspace/arc-request-workspace';
-          break;
-        case 'project':
-          id = 'project-details';
-          _path = 'project-details/project-details';
-          break;
-        case 'hosts-rules':
-          id = 'host-rules-editor';
-          _path = 'host-rules-editor/host-rules-editor';
-          break;
-        case 'cookie-manager':
-          id = 'cookie-manager';
-          _path = 'cookie-manager/cookie-manager';
-          break;
-        case 'settings':
-          id = 'arc-settings-panel';
-          _path = 'arc-settings-panel/arc-settings-panel';
-          break;
-        case 'about':
-          id = 'about-arc-electron';
-          _path = 'about-arc-electron/about-arc-electron';
-          break;
-        case 'socket':
-          id = 'websocket-panel';
-          _path = 'websocket-panel/websocket-panel';
-          break;
-        case 'exchange-search':
-          id = 'exchange-search-panel';
-          _path = 'exchange-search-panel/exchange-search-panel';
-          break;
-        case 'api-console':
-          id = 'api-console';
-          _path = 'api-console/api-console';
-          break;
-        case 'drive':
-          id = 'google-drive-browser';
-          _path = 'google-drive-browser/google-drive-browser';
-          break;
-      }
-      if (!id) {
-        console.error(`The base route ${page} is not recognized`);
-        return;
-      }
-      const cls = customElements.get(id);
-      if (cls) {
-        return;
-      }
-      this._loadComponent(_path)
-      .catch((cmp) => this._reportComponentLoadingError(cmp));
-    }
-
-    _loadComponent(path) {
-      return new Promise((resolve, reject) => {
-        const componentUrl = `${this.componentsDir}/bower_components/${path}.html`;
-        this._loadingSources = true;
-        Polymer.importHref(componentUrl, () => {
-          this._loadingSources = false;
-          resolve();
-        }, () => {
-          this._loadingSources = false;
-          reject(componentUrl);
-        }, true);
-      });
-    }
-
     initApplication() {
       Polymer.RenderStatus.afterNextRender(this, () => this.updateStyles({}));
       Polymer.RenderStatus.afterNextRender(this, () => this.setupAnalytics());
       Polymer.RenderStatus.afterNextRender(this, () => this._requestAuthToken(false));
-    }
-
-    _reportComponentLoadingError(url) {
-      console.error(`Unable to load component from ${url}`);
-    }
-
-    _handleNavigation(e) {
-      const params = e.detail;
-      let url;
-      switch (params.base) {
-        case 'default': url = '/request/latest/0/new'; break;
-        case 'history': url = '/history'; break;
-        case 'settings': url = '/settings'; break;
-        case 'about': url = '/about'; break;
-        case 'socket': url = '/socket'; break;
-        case 'saved': url = '/saved'; break;
-        case 'dataimport': url = '/dataimport'; break;
-        case 'project':
-          if (params.id) {
-            url = '/project/' + params.id;
-          }
-        break;
-        case 'request':
-          const type = params.type || 'new';
-          let id = params.id || 'new';
-          url = '/request/' + type + '/' + encodeURIComponent(id) + '/';
-          // if (e.detail.tab !== undefined) {
-          //   url += e.detail.tab;
-          // } else if (type !== 'latest') {
-          //   url += 'new';
-          // }
-        break;
-        case 'drive': url = '/drive'; break;
-        case 'cookie-manager': url = '/cookie-manager'; break;
-        case 'api-console':
-          let acId;
-          if (params.id) {
-            acId = encodeURIComponent(params.id);
-          } else {
-            acId = 'current';
-          }
-          url = '/api-console/' + acId;
-        break;
-        case 'rest-projects': url = '/rest-projects'; break;
-        case 'exchange-search': url = '/exchange-search'; break;
-        case 'hosts-rules': url = '/hosts-rules'; break;
-        case 'themes-panel': url = '/themes-panel'; break;
-      }
-      if (url) {
-        this.set('route.path', url);
-        this._telemetryScreen();
-      } else {
-        // this.fire('send-analytics', {
-        //   type: 'exception',
-        //   description: 'Route not handled' + JSON.stringify(params),
-        //   fatal: false
-        // });
-        throw new Error('The route is not handled correctly', params);
-      }
     }
 
     _setupRequest(params) {
@@ -520,300 +333,6 @@
       ipc.send('open-web-url', e.detail.url, e.detail.purpose);
     }
 
-    closeWorkspaceTab(index) {
-      index = Number(index);
-      this.$.workspace.removeRequest(index);
-    }
-
-    closeAllWorkspaceTabs() {
-      this.$.workspace.clearWorkspace();
-    }
-
-    closeOtherWorkspaceTabs(index) {
-      index = Number(index);
-      const active = this.$.workspace.activeRequests;
-      for (let i = active.length - 1; i >= 0; i--) {
-        if (i !== index) {
-          this.$.workspace.removeRequest(i, true);
-        }
-      }
-      this.$.workspace.selected = 0;
-    }
-
-    /**
-     * Returns number of currently opened tabs
-     *
-     * @return {Number} Number of opened tabs in request workspace.
-     */
-    getTabsCount() {
-      const workspace = this.$.workspace;
-      if (!workspace || !workspace.activeRequests) {
-        return 0;
-      }
-      return workspace.activeRequests.length;
-    }
-
-    /**
-     * Updates a request object in this window for a specific tab.
-     *
-     * @param {Object} request ARC request obejct
-     * @param {?Number} index Tab index to update. If not provided (or not a number)
-     * it uses current active tab.
-     */
-    updateRequestTab(request, index) {
-      /* global log */
-      log.info('Updating request object...');
-      const workspace = this.$.workspace;
-      if (typeof index !== 'number') {
-        log.info('Tab not provided. Using current selection...');
-        index = workspace.selected;
-      }
-      workspace.updateRequestObject(request, index);
-    }
-
-    _dispatchNavigate(detail) {
-      this.dispatchEvent(new CustomEvent('navigate', {
-        bubbles: true,
-        composed: true,
-        detail
-      }));
-    }
-
-    // Navigate to the cookie manager
-    openCookieManager() {
-      this._dispatchNavigate({
-        base: 'cookie-manager'
-      });
-    }
-
-    openExchangeSearch() {
-      this._dispatchNavigate({
-        base: 'exchange-search'
-      });
-    }
-
-    openThemesPanel() {
-      this._dispatchNavigate({
-        base: 'themes-panel'
-      });
-    }
-
-    openAbout() {
-      this._dispatchNavigate({
-        base: 'about'
-      });
-    }
-
-    openDrivePicker() {
-      this._dispatchNavigate({
-        base: 'drive'
-      });
-    }
-    /**
-     * Opens the import / export panel
-     */
-    openImportExport() {
-      this._dispatchNavigate({
-        base: 'dataimport'
-      });
-    }
-    /**
-     * Opens the settings panel.
-     */
-    openSettings() {
-      this._dispatchNavigate({
-        base: 'settings'
-      });
-    }
-    /**
-     * Opens the host rules editor.
-     */
-    openHostRules() {
-      this._dispatchNavigate({
-        base: 'hosts-rules'
-      });
-    }
-
-    openImport() {
-      this._dispatchNavigate({
-        base: 'dataimport'
-      });
-      // var panel = this.$$('data-import-export-panel');
-      // panel.hideExport = true;
-      // panel.hideImport = false;
-    }
-
-    openExport() {
-      this._dispatchNavigate({
-        base: 'dataimport'
-      });
-      // var panel = this.$$('data-import-export-panel');
-      // panel.hideExport = false;
-      // panel.hideImport = true;
-    }
-    /**
-     * Opens web socket panel.
-     */
-    openWebSocket() {
-      this._dispatchNavigate({
-        base: 'socket'
-      });
-    }
-    /**
-     * Opens saved requests screen
-     */
-    openSaved() {
-      this._dispatchNavigate({
-        base: 'saved'
-      });
-    }
-    /**
-     * Opens history requests screen
-     */
-    openHistory() {
-      this._dispatchNavigate({
-        base: 'history'
-      });
-    }
-    /**
-     * Opens requests workspace component.
-     */
-    openWorkspace() {
-      this.page = 'request';
-    }
-    /**
-     * Opens new tab in the request workspace.
-     */
-    newRequestTab() {
-      if (this.routeData.base !== 'request') {
-        return;
-      }
-      this.$.workspace.addEmptyRequest();
-    }
-    /**
-     * Sends currently opened request.
-     */
-    sendCurrentTab() {
-      if (this.routeData.base !== 'request') {
-        return;
-      }
-      this.$.workspace.sendCurrent();
-    }
-
-    /**
-     * Reads current settings and enables Google Analytics if it's not
-     * disabled by the uers.
-     *
-     * @return {Promise}
-     */
-    setupAnalytics() {
-      const e = new CustomEvent('settings-read', {
-        composed: true,
-        cancelable: true,
-        bubbles: true,
-        detail: {}
-      });
-      this.dispatchEvent(e);
-      if (!e.defaultPrevented) {
-        // throw new Error('Settings provider not found.');
-        log.warn(`[arc-electron-app] Settings provider not found`);
-        return;
-      }
-      return e.detail.result
-      .then((settings) => {
-        if (settings.telemetry === false) {
-          this._analyticsDisabled();
-        } else {
-          this._analyticsEnabled();
-          setTimeout(() => this._telemetryScreen(), 20);
-        }
-      });
-    }
-    /**
-     * Enables Google Analytics.
-     *
-     * Until settings status is checked Google Analytics components is not
-     * even in the DOM. Once the `telemetry` flag is set analytics elements
-     * are attached to the DOM and start handling events.
-     *
-     * This can be disabled by calling `_analyticsDisabled` or by sending
-     * `settings-changed` custom event with `telemetry` key.
-     */
-    _analyticsEnabled() {
-      this.telemetry = true;
-      if (this.gaCustomDimensions) {
-        return;
-      }
-      /* global versionInfo */
-      this.gaCustomDimensions = [];
-      this.push('gaCustomDimensions', {
-        index: 1,
-        value: versionInfo.chrome
-      });
-      this.push('gaCustomDimensions', {
-        index: 2,
-        value: this.appVersion
-      });
-      this.push('gaCustomDimensions', {
-        index: 5,
-        value: 'stable'
-      });
-    }
-    // To be called if GA is disabled to remove GA elements from the DOM.
-    _analyticsDisabled() {
-      this.telemetry = false;
-    }
-    /**
-     * Handles settings change event.
-     * If changed setting is `telemetry` then it upodates GA state.
-     *
-     * @param {CustomEvent} e
-     */
-    _settingChanged(e) {
-      if (e.detail.name !== 'telemetry') {
-        return;
-      }
-      let value = e.detail.value;
-      if (typeof value !== 'boolean') {
-        value = value === 'false' ? false : true;
-      }
-      if (value) {
-        this._analyticsEnabled();
-      } else {
-        this._analyticsDisabled();
-      }
-    }
-    _telemetryScreen() {
-      let screenName = '[unknown]';
-      switch (this.page) {
-        case 'history': screenName = 'History'; break;
-        case 'settings': screenName = 'Settings'; break;
-        case 'about': screenName = 'About'; break;
-        case 'socket': screenName = 'Socket'; break;
-        case 'saved': screenName = 'Saved'; break;
-        case 'dataimport': screenName = 'Data import / export'; break;
-        case 'project': screenName = 'Project details'; break;
-        case 'default':
-        case 'request': screenName = 'Request panel'; break;
-        case 'drive': screenName = 'Drive selector'; break;
-        case 'cookie-manager': screenName = 'Cookie manager'; break;
-        case 'api-console': screenName = 'API Console'; break;
-        case 'rest-projects': screenName = 'REST APIs list'; break;
-        case 'exchange-search': screenName = 'Exchange search'; break;
-        case 'hosts-rules': screenName = 'Hosts rules'; break;
-        case 'themes-panel': screenName = 'Themes panel'; break;
-      }
-      this.dispatchEvent(new CustomEvent('send-analytics', {
-        composed: true,
-        cancelable: true,
-        bubbles: true,
-        detail: {
-          type: 'screenview',
-          name: screenName
-        }
-      }));
-    }
-
     _requestAuthToken(interactive, scope) {
       if (this.__requestingToken) {
         return;
@@ -859,19 +378,6 @@
       ipc.on('oauth-2-token-error', rejected);
     }
     /**
-     * Saves currently opened requests.
-     *
-     * @param {?Object} opts Optional options object. It can contain `source`
-     * property with value of `shortcut` to indicate that the shortcut was
-     * used and the app can automatically save current request
-     */
-    saveOpened(opts) {
-      if (this.routeData.base !== 'request') {
-        return;
-      }
-      this.$.workspace.saveOpened(opts);
-    }
-    /**
      * Sets `newMessages` propert depending if messaging service detected
      * new messages.
      *
@@ -911,13 +417,6 @@
       ipcRenderer.send('open-external-url', e.detail.url);
     }
     /**
-     * Handles ARC components event for application version.
-     * @param {CustomEvent} e
-     */
-    _appVersionRequestHandler(e) {
-      e.detail.version = this.appVersion;
-    }
-    /**
      * Handles new window open request.
      */
     onNewWindow() {
@@ -939,11 +438,6 @@
      */
     updateInstall() {
       ipcRenderer.send('install-update');
-    }
-
-    _googleOauthTokenRequested(e) {
-      const scope = e.detail.scope.split(' ');
-      this._requestAuthToken(true, scope);
     }
 
     _apiDataHandler(e) {
@@ -1005,25 +499,6 @@
         }
       })
       .catch((cause) => this.notifyError(cause.message));
-    }
-
-    _isSingleRequest(data) {
-      if (!data.requests || !data.requests.length) {
-        return false;
-      }
-      if (data.requests.length !== 1) {
-        return false;
-      }
-      if (data.projects && data.projects.length === 0) {
-        delete data.projects;
-      }
-      if (data.history && data.history.length === 0) {
-        delete data.history;
-      }
-      if (Object.keys(data).length === 4) {
-        return true;
-      }
-      return false;
     }
 
     notifyError(message) {
