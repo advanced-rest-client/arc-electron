@@ -67,6 +67,16 @@
       position: relative;
       z-index: 1;
     }
+
+    api-navigation {
+      height: var(--arc-menu-height, 100vh);
+      background-color: var(--arc-menu-background-color, inherit);
+      --paper-tab-content-unselected_-_color: var(--arc-menu-tabs-color-unselected);
+    }
+
+    .nav-action-button {
+      background-color: var(--arc-toolbar-action-button-background-color, #fff);
+    }
     </style>
     <!-- Routing -->
     <app-location route="{{route}}" use-hash-as-path></app-location>
@@ -95,36 +105,49 @@
     <arc-messages-service platform="electron" on-unread-changed="_unreadMessagesChanged" messages="{{appMessages}}" id="msgService"></arc-messages-service>
     <!-- Helper components -->
     <web-url-input id="webUrlInput" purpose="web-session" on-open-web-url="_openWebUrlHandler"></web-url-input>
+    <raml-aware id="aware" scope="apic"></raml-aware>
     <!-- Application views -->
     <app-header-layout has-scrolling-region id="scrollingRegion">
       <app-header slot="header" fixed shadow scroll-target="scrollingRegion">
         <app-toolbar>
           <paper-icon-button icon="arc:menu" on-click="toggleDrawer" title="Toggle drawer"></paper-icon-button>
-          <div main-title>ARC</div>
+          <div main-title>[[_computeAppTitle(isApiConsole)]]</div>
           <template is="dom-if" if="[[newMessages]]">
             <paper-icon-button class="nav-notification-button" icon="arc:info-outline" on-click="openInfoCenter" toggles active="[[messageCenterOpened]]" title="See what's new in the app"></paper-icon-button>
           </template>
           <template is="dom-if" if="[[hasAppUpdate]]">
             <paper-icon-button icon="arc:file-download" class="nav-notification-button" on-click="updateInstall" title="Restart and install update"></paper-icon-button>
           </template>
-          <div class="env-container">
-            <span class="env-label">Environment:</span>
-            <environment-selector no-label-float></environment-selector>
-            <paper-icon-button class="var-info-button" id="varToggleButton" icon="arc:info-outline" title="Open variables list" on-click="_openVariablesList"></paper-icon-button>
-            <variables-preview-overlay
-              class="var-panel"
-              position-target="[[_variablesButton]]"
-              dynamic-align
-              horizontal-align="auto"
-              vertical-align="auto"
-              vertical-offset="44"
-              on-open-variables-editor="_variablesOpenRequest"></variables-preview-overlay>
-          </div>
+          <template is="dom-if" if="[[isApiConsole]]">
+            <div class="env-container">
+              <paper-button on-click="closeApiConsole" class="nav-action-button" raised>Close</paper-button>
+            </div>
+          </template>
+          <template is="dom-if" if="[[!isApiConsole]]">
+            <div class="env-container">
+              <span class="env-label">Environment:</span>
+              <environment-selector no-label-float></environment-selector>
+              <paper-icon-button class="var-info-button" id="varToggleButton" icon="arc:info-outline" title="Open variables list" on-click="_openVariablesList"></paper-icon-button>
+              <variables-preview-overlay
+                class="var-panel"
+                position-target="[[_variablesButton]]"
+                dynamic-align
+                horizontal-align="auto"
+                vertical-align="auto"
+                vertical-offset="44"
+                on-open-variables-editor="_variablesOpenRequest"></variables-preview-overlay>
+            </div>
+          </template>
         </app-toolbar>
       </app-header>
       <section role="main" class="main-container">
         <nav>
-          <arc-menu rest-api></arc-menu>
+          <template is="dom-if" if="[[isApiConsole]]">
+            <api-navigation aware="apic" summary endpoints-opened></api-navigation>
+          </template>
+          <template is="dom-if" if="[[!isApiConsole]]">
+            <arc-menu rest-api></arc-menu>
+          </template>
         </nav>
         <div class="pages">
           <iron-pages id="pages" class="mainPages" attr-for-selected="data-route" selected-attribute="opened" selected="[[page]]">
@@ -143,7 +166,18 @@
               access-token="[[driveAccessToken]]"
               on-drive-file-picker-data="_openDriveRequest"></google-drive-browser>
             <cookie-manager data-route="cookie-manager"></cookie-manager>
-            <api-console id="apic" data-route="api-console" scroll-target="[[_scrollTarget]]"></api-console>
+
+            <api-documentation
+              data-route="api-console"
+              data-page="docs"
+              aware="apic"
+              id="apic"
+              handle-navigation-events
+              inline-methods
+              redirect-uri="https://auth.advancedrestclient.com/oauth-popup.html"
+              narrow="[[narrow]]"
+              scroll-target="[[_scrollTarget]]"></api-documentation>
+
             <rest-apis-list-panel data-route="rest-projects" render-explore></rest-apis-list-panel>
             <exchange-search-panel
               data-route="exchange-search"
@@ -215,9 +249,14 @@
         log: {
           type: Object,
           value: function() {
+            /* global log */
             return log;
           }
-        }
+        },
+        /**
+         * When true it is rendering API console view.
+         */
+        isApiConsole: {type: Boolean, value: false, readOnly: true}
       };
     }
 
@@ -444,10 +483,13 @@
       const api = e.detail.api;
       this._loadComponent('api-console/api-console')
       .then(() => {
-        this.$.apic.amfModel = api;
+        this.$.aware.raml = api;
         this._dispatchNavigate({
           base: 'api-console'
         });
+        this._setIsApiConsole(true);
+        this.$.apic.selected = 'summary';
+        this.$.apic.selectedType = 'summary';
       })
       .catch((cmp) => this._reportComponentLoadingError(cmp));
     }
@@ -504,6 +546,17 @@
     notifyError(message) {
       this.$.errorToast.text = message;
       this.$.errorToast.opened = true;
+    }
+
+    _computeAppTitle(isApic) {
+      return isApic ? 'API console' : 'Advanced REST Client';
+    }
+    /**
+     * Closes API console view
+     */
+    closeApiConsole() {
+      this._setIsApiConsole(false);
+      this.page = 'request';
     }
   }
   window.customElements.define(ArcElectron.is, ArcElectron);
