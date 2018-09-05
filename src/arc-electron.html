@@ -22,20 +22,25 @@
 
     .pages {
       @apply --layout-flex;
-      padding: 12px 24px 12px 24px;
+      @apply --layout-vertical;
+      padding: 0 24px;
       background-color: #fff;
       @apply --shadow-elevation-4dp;
       position: relative;
       z-index: 3;
       margin-left: var(--app-drawer-width);
+      width: -webkit-fill-available;
     }
 
     #pages {
-      height: 100%;
+      @apply --layout-flex;
+      @apply --layout-vertical;
+      box-sizing: border-box;
     }
 
     #pages > * {
       height: 100%;
+      box-sizing: border-box;
     }
 
     nav {
