@@ -82,6 +82,22 @@
     .nav-action-button {
       background-color: var(--arc-toolbar-action-button-background-color, #fff);
     }
+
+    paper-icon-button[active] {
+      color: var(--accent-color);
+    }
+
+    .nav-notification-button {
+      @apply --navigation-notification-button;
+    }
+
+    .nav-notification-button:hover {
+      @apply --navigation-notification-button-hover;
+    }
+
+    .nav-notification-button[active] {
+      @apply --navigation-notification-button-active;
+    }
     </style>
     <!-- Routing -->
     <app-location route="{{route}}" use-hash-as-path></app-location>
