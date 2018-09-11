@@ -113,6 +113,7 @@
     <request-model id="requestModel"></request-model>
     <authorization-data-saver></authorization-data-saver>
     <websocket-url-history-model></websocket-url-history-model>
+    <variables-model></variables-model>
     <!-- Data import / export -->
     <arc-data-export app-version="[[appVersion]]" electron-cookies></arc-data-export>
     <arc-data-import></arc-data-import>
@@ -121,7 +122,7 @@
     <arc-request-logic></arc-request-logic>
     <request-hooks-logic></request-hooks-logic>
     <electron-http-transport></electron-http-transport>
-    <variables-manager></variables-manager>
+    <variables-manager system-variables="[[sysVars]]"></variables-manager>
     <variables-evaluator no-before-request></variables-evaluator>
     <!-- Info center -->
     <arc-messages-service platform="electron" on-unread-changed="_unreadMessagesChanged" messages="{{appMessages}}" id="msgService"></arc-messages-service>
@@ -149,7 +150,13 @@
             <div class="env-container">
               <span class="env-label">Environment:</span>
               <environment-selector no-label-float></environment-selector>
-              <paper-icon-button class="var-info-button" id="varToggleButton" icon="arc:info-outline" title="Open variables list" on-click="_openVariablesList"></paper-icon-button>
+              <paper-icon-button
+                class="var-info-button"
+                id="varToggleButton"
+                icon="arc:info-outline"
+                title="Open variables list"
+                active="{{_variablesOverlayOpened}}"
+                toggles></paper-icon-button>
               <variables-preview-overlay
                 class="var-panel"
                 position-target="[[_variablesButton]]"
@@ -157,7 +164,8 @@
                 horizontal-align="auto"
                 vertical-align="auto"
                 vertical-offset="44"
-                on-open-variables-editor="_variablesOpenRequest"></variables-preview-overlay>
+                on-open-variables-editor="_variablesOpenRequest"
+                opened="[[_variablesOverlayOpened]]"></variables-preview-overlay>
             </div>
           </template>
         </app-toolbar>
@@ -282,7 +290,20 @@
         /**
          * When true it is rendering API console view.
          */
-        isApiConsole: {type: Boolean, value: false, readOnly: true}
+        isApiConsole: {type: Boolean, value: false, readOnly: true},
+        /**
+         * System variables
+         */
+        sysVars: {
+          type: Object,
+          value: function() {
+            return process.env;
+          }
+        },
+        _variablesOverlayOpened: {
+          type: Boolean,
+          observer: '_varsOverlayChanged'
+        }
       };
     }
 
@@ -302,11 +323,13 @@
 
     connectedCallback() {
       super.connectedCallback();
-      this._variablesButton = this.$.varToggleButton;
       window.addEventListener('open-external-url', this._openExternalHandler);
       window.addEventListener('content-copy', this._copyContentHandler);
       window.addEventListener('api-data-ready', this._apiDataHandler);
-      this._scrollTarget = this.$.scrollingRegion.$.contentContainer;
+      Polymer.RenderStatus.afterNextRender(this, () => {
+        this._variablesButton = this.shadowRoot.querySelector('#varToggleButton');
+        this._scrollTarget = this.$.scrollingRegion.$.contentContainer;
+      });
     }
 
     _baseRouteChanged(base) {
@@ -367,14 +390,23 @@
         }
       });
     }
-
-    _openVariablesList() {
-      const panel = this.shadowRoot.querySelector('variables-preview-overlay');
-      panel.opened = !panel.opened;
+    /**
+     * The overlay is not included by default in the view so it loads the
+     * component first and then renders it. Subsequent opens do not require
+     * inluding the comonent.
+     *
+     * @param {Boolean} val
+     */
+    _varsOverlayChanged(val) {
+      if (val && !customElements.get('variables-preview-overlay')) {
+        this._loadComponent('variables-preview-overlay/variables-preview-overlay')
+        .catch((cmp) => this._reportComponentLoadingError(cmp));
+      }
     }
 
     _variablesOpenRequest(e) {
       e.stopPropagation();
+      this._variablesOverlayOpened = false;
       this._loadComponent('variables-drawer-editor/variables-drawer-editor')
       .then(() => {
         this.$.environmentsDrawer.opened = true;
