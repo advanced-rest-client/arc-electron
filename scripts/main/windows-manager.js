@@ -41,7 +41,7 @@ class ArcWindowsManager {
     const win = this.windows && this.windows.length &&
       this.windows[this.windows.length - 1];
     if (win) {
-      if (win.isDestroyed) {
+      if (win.isDestroyed()) {
         this.windows.pop();
         this.open();
       } else {
