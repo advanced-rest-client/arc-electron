@@ -105,7 +105,7 @@ class ArcInit {
    * @return {Promise}
    */
   initApp() {
-    console.info('Initializing renderer window...');
+    // console.info('Initializing renderer window...');
     const opts = {};
     if (this.initConfig.workspacePath) {
       opts.filePath = this.initConfig.workspacePath;
@@ -135,13 +135,13 @@ class ArcInit {
     if (this.created) {
       return Promise.resolve();
     }
-    console.log('Importing components from ', this.initConfig.importFile);
+    // console.log('Importing components from ', this.initConfig.importFile);
     return this._importHref(this.initConfig.importFile)
     .catch(() => {
       throw new Error('Unable to load components import file.');
     })
     .then(() => {
-      console.log('Importing arc-electron component');
+      // console.log('Importing arc-electron component');
       return new Promise((resolve, reject) => {
         Polymer.importHref('src/arc-electron.html', () => {
           resolve();
@@ -151,7 +151,7 @@ class ArcInit {
       });
     })
     .then(() => {
-      console.info('Initializing arc-electron element...');
+      // console.info('Initializing arc-electron element...');
       const app = document.createElement('arc-electron');
       app.id = 'app';
       this._setupApp(app);
@@ -192,7 +192,7 @@ class ArcInit {
    * @param {ArcElectron} app App electron element.
    */
   _setupApp(app) {
-    console.info('Initializing ARC app');
+    // console.info('Initializing ARC app');
     app.componentsDir = this.initConfig.appComponents;
     app.appVersion = versionInfo.appVersion;
     app.browserVersion = versionInfo.chrome;
@@ -216,7 +216,7 @@ class ArcInit {
    */
   updateEventHandler(sender, message) {
     const app = this.app;
-    console.log('updateEventHandler', message);
+    // console.log('updateEventHandler', message);
     app.updateState = message;
     if (message[0] === 'update-downloaded') {
       app.hasAppUpdate = true;
@@ -230,7 +230,7 @@ class ArcInit {
    * @param {Array} args
    */
   commandHandler(e, action, ...args) {
-    console.info('Renderer command handled: ', action);
+    // console.info('Renderer command handled: ', action);
     const app = this.app;
     switch (action) {
       case 'show-settings': app.openSettings(); break;
@@ -300,7 +300,7 @@ class ArcInit {
    * @param {String} action Action name to perform.
    */
   execRequestAction(e, action, ...args) {
-    console.info('Renderer request command handled: ', action);
+    // console.info('Renderer request command handled: ', action);
     const app = this.app;
     switch (action) {
       case 'save':
