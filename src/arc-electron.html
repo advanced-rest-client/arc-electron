@@ -356,8 +356,8 @@
     }
 
     initApplication() {
+      Polymer.RenderStatus.afterNextRender(this, () => this.initSettings({}));
       Polymer.RenderStatus.afterNextRender(this, () => this.updateStyles({}));
-      Polymer.RenderStatus.afterNextRender(this, () => this.setupAnalytics());
       Polymer.RenderStatus.afterNextRender(this, () => this._requestAuthToken(false));
     }
 
