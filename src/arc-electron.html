@@ -165,6 +165,7 @@
                 vertical-align="auto"
                 vertical-offset="44"
                 on-open-variables-editor="_variablesOpenRequest"
+                on-iron-overlay-closed="_variablesPreviewClosed"
                 opened="[[_variablesOverlayOpened]]"></variables-preview-overlay>
             </div>
           </template>
@@ -412,6 +413,12 @@
         this.$.environmentsDrawer.opened = true;
       })
       .catch((cmp) => this._reportComponentLoadingError(cmp));
+    }
+
+    _variablesPreviewClosed() {
+      if (this._variablesOverlayOpened) {
+        this._variablesOverlayOpened = false;
+      }
     }
     /**
      * Loads `web-url-input` component and runs it to ask the user for the URL
