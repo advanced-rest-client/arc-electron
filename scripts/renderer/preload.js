@@ -13,7 +13,13 @@ const {FilesystemProxy} = require('./filesystem-proxy');
 const {ElectronAmfService} = require('@advanced-rest-client/electron-amf-service');
 const setImmediateFn = setImmediate;
 const versions = process.versions;
-const env = process.env;
+const env = {};
+Object.keys(process.env).forEach((key) => {
+  if (key.indexOf('npm_') === 0) {
+    return;
+  }
+  env[key] = process.env[key];
+});
 process.once('loaded', () => {
   global.ipcRenderer = ipc;
   global.ipc = ipc;
