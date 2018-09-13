@@ -26,7 +26,6 @@
   "devDependencies": {
     "bower": "^1.8.2",
     "chai": "^4.1.2",
-    "chance": "^1.0.13",
     "electron": "^2.0.8",
     "electron-builder": "^20.27.1",
     "electron-mocha": "^5.0.0",
@@ -34,8 +33,7 @@
     "eslint-config-google": "^0.9.1",
     "glob": "^7.1.2",
     "mocha": "^4.1.0",
-    "spectron": "^3.8.0",
-    "ssl-root-cas": "^1.2.5"
+    "spectron": "^4.0.0"
   },
   "dependencies": {
     "@advanced-rest-client/arc-electron-preferences": "1.0.0-rc1",
@@ -53,11 +51,7 @@
     "fs-extra": "^4.0.3",
     "node-fetch": "^1.7.3",
     "ntlm": "^0.1.3",
-    "parse5": "^4.0.0",
-    "polymer-analyzer": "^2.7.0",
-    "polymer-bundler": "^4.0.2",
-    "shady-css-parser": "^0.1.0",
-    "uuid": "^3.2.1"
+    "parse5": "^4.0.0"
   },
   "build": {
     "appId": "com.mulesoft.arc",

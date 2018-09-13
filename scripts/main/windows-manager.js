@@ -149,7 +149,7 @@ class ArcWindowsManager {
       const win = this.__getNewWindow(index, data);
       win.__arcSession = session;
       this.__loadPage(win, path);
-      win.webContents.openDevTools();
+      // win.webContents.openDevTools();
       this.__attachListeners(win);
       this.windows.push(win);
       return this.recorder.record()
