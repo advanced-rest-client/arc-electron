@@ -8,7 +8,7 @@ const {PreferencesManager} = require('@advanced-rest-client/arc-electron-prefere
 const {SessionManager} = require('@advanced-rest-client/electron-session-state/main');
 const {AppOptions} = require('./scripts/main/app-options');
 const {RemoteApi} = require('./scripts/main/remote-api');
-const {ContentSearchService} = require('./scripts/main/search-service');
+const {ContentSearchService} = require('@advanced-rest-client/arc-electron-search-service/main');
 const {AppPrompts} = require('./scripts/main/app-prompts.js');
 const {SourcesManager} = require('@advanced-rest-client/arc-electron-sources-manager/main');
 const log = require('electron-log');
@@ -86,6 +86,7 @@ class Arc {
       this._initializeUpdateStatus();
       this._initializeGoogleDriveIntegration();
       this._initializeSessionManager();
+      this._initializeSearchService();
       this.remote = new RemoteApi(this.wm);
       log.info('Application is now ready');
       this.wm.open();
@@ -130,6 +131,14 @@ class Arc {
     ]});
     this.sm.listen();
     this.sm.on('cookie-changed', (cookies) => this.wm.notifyAll('cookie-changed', cookies));
+  }
+  /**
+   * Initializes `ContentSearchService` from `@advanced-rest-client/arc-electron-search-service`
+   */
+  _initializeSearchService() {
+    ContentSearchService.prefsManager = this.prefs;
+    ContentSearchService.startupOptions = this.initOptions;
+    ContentSearchService.listen(this.menu);
   }
 
   _initializeWindowsManager() {
@@ -208,21 +217,6 @@ class Arc {
       case 'web-session-help':
         let {HelpManager} = require('./scripts/main/help-manager');
         HelpManager.helpWith(action);
-      break;
-      case 'find':
-        if (win.webContents.getURL().indexOf('search-bar') !== -1) {
-          // ctrl+f from search bar.
-          return;
-        }
-        let srv = ContentSearchService.getService(win);
-        if (srv && srv.isOpened()) {
-          srv.focus();
-          return;
-        }
-        if (!srv) {
-          srv = new ContentSearchService(win);
-        }
-        srv.open();
       break;
       default:
         win.webContents.send(windowCommand, action);

@@ -1,16 +1,18 @@
 const {ipcRenderer: ipc, clipboard} = require('electron');
 const {app} = require('electron').remote;
 const log = require('electron-log');
-const {ArcElectronDrive} = require('@advanced-rest-client/electron-drive/renderer');
-const {OAuth2Handler} = require('@advanced-rest-client/electron-oauth2/renderer');
-const {WorkspaceManager} = require('@advanced-rest-client/arc-electron-preferences/renderer');
-const {ArcPreferencesProxy} = require('@advanced-rest-client/arc-electron-preferences/renderer');
-const {ThemeManager} = require('@advanced-rest-client/arc-electron-sources-manager/renderer');
-const {SocketRequest} = require('@advanced-rest-client/electron-request');
-const {CookieBridge} = require('@advanced-rest-client/electron-session-state/renderer');
+const prefix = '@advanced-rest-client/';
+const {ArcElectronDrive} = require(prefix + 'electron-drive/renderer');
+const {OAuth2Handler} = require(prefix + 'electron-oauth2/renderer');
+const {WorkspaceManager} = require(prefix + 'arc-electron-preferences/renderer');
+const {ArcPreferencesProxy} = require(prefix + 'arc-electron-preferences/renderer');
+const {ThemeManager} = require(prefix + 'arc-electron-sources-manager/renderer');
+const {SocketRequest} = require(prefix + 'electron-request');
+const {CookieBridge} = require(prefix + 'electron-session-state/renderer');
 const {ArcContextMenu} = require('./context-menu');
 const {FilesystemProxy} = require('./filesystem-proxy');
-const {ElectronAmfService} = require('@advanced-rest-client/electron-amf-service');
+const {ElectronAmfService} = require(prefix + 'electron-amf-service');
+const {WindowSearchService} = require(prefix + 'arc-electron-search-service/renderer');
 const setImmediateFn = setImmediate;
 const versions = process.versions;
 const env = {};
@@ -35,6 +37,7 @@ process.once('loaded', () => {
   global.setImmediate = setImmediateFn;
   global.FilesystemProxy = FilesystemProxy;
   global.ElectronAmfService = ElectronAmfService;
+  global.WindowSearchService = WindowSearchService;
   global.versionInfo = {
     chrome: versions.chrome,
     appVersion: app.getVersion()
