@@ -64,7 +64,8 @@
     "about-arc-electron": "advanced-rest-client/about-arc-electron#2.0.0-preview",
     "websocket-panel": "advanced-rest-client/websocket-panel#2.0.0-preview",
     "google-drive-browser": "advanced-rest-client/google-drive-browser#2.0.0-preview",
-    "arc-app-mixin": "advanced-rest-client/arc-app-mixin#2.0.0-preview"
+    "arc-app-mixin": "advanced-rest-client/arc-app-mixin#2.0.0-preview",
+    "response-history-saver": "advanced-rest-client/response-history-saver#2.0.0-preview"
   },
   "devDependencies": {
     "web-component-tester": "^6.0.0",
