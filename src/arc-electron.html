@@ -304,6 +304,9 @@
       this._openExternalHandler = this._openExternalHandler.bind(this);
       this._copyContentHandler = this._copyContentHandler.bind(this);
       this._apiDataHandler = this._apiDataHandler.bind(this);
+      this._processStartHandler = this._processStartHandler.bind(this);
+      this._processStopHandler = this._processStopHandler.bind(this);
+      this._processErrorHandler = this._processErrorHandler.bind(this);
     }
 
     static get observers() {
@@ -317,6 +320,9 @@
       window.addEventListener('open-external-url', this._openExternalHandler);
       window.addEventListener('content-copy', this._copyContentHandler);
       window.addEventListener('api-data-ready', this._apiDataHandler);
+      window.addEventListener('process-loading-start', this._processStartHandler);
+      window.addEventListener('process-loading-stop', this._processStopHandler);
+      window.addEventListener('process-error', this._processErrorHandler);
       Polymer.RenderStatus.afterNextRender(this, () => {
         this._variablesButton = this.shadowRoot.querySelector('#varToggleButton');
         this._scrollTarget = this.$.scrollingRegion.$.contentContainer;
@@ -613,6 +619,71 @@
     closeApiConsole() {
       this._setIsApiConsole(false);
       this.page = 'request';
+    }
+    /**
+     * Handler for `process-loading-start` custom event.
+     * Renders toast with message.
+     * @param {CustomEvent} e
+     */
+    _processStartHandler(e) {
+      const {id, message, indeterminate} = e.detail;
+      if (!id) {
+        console.warn('Invalid use of `process-loading-start` event');
+        return;
+      }
+      const toast = document.createElement('paper-toast');
+      toast.dataset.processId = id;
+      if (indeterminate) {
+        toast.duration = 0;
+      }
+      const container = document.createElement('dis');
+      container.style.display = 'flex';
+      container.style.flexDirection = 'row';
+      container.style.alignItems = 'center';
+      const label = document.createElement('span');
+      label.innerText = message;
+      label.style.flex = 1;
+      label.style.flexBasis = '0.000000001px';
+      container.appendChild(label);
+      const spinner = document.createElement('paper-spinner');
+      spinner.active = true;
+      container.appendChild(spinner);
+      toast.appendChild(container);
+      document.body.appendChild(toast);
+      toast.opened = true;
+    }
+    /**
+     * Handler for `process-loading-stop` custom event.
+     * Removes previously set toast
+     * @param {CustomEvent} e
+     */
+    _processStopHandler(e) {
+      const {id} = e.detail;
+      if (!id) {
+        console.warn('Invalid use of `process-loading-stop` event');
+        return;
+      }
+      const node = document.body.querySelector(`[data-process-id="${id}"]`);
+      if (!node) {
+        return;
+      }
+      node.opened = false;
+      node.addEventListener('iron-overlay-closed', function f() {
+        node.removeEventListener('iron-overlay-closed', f);
+        node.parentNode.removeChild(node);
+      });
+    }
+    /**
+     * Handler for `process-error` custom event.
+     * Removes previously set progress toasts and adds new with error.
+     * @param {CustomEvent} e
+     */
+    _processErrorHandler(e) {
+      const nodes = document.body.querySelector(`[data-process-id]`);
+      for (let i = nodes.length - 1; i >= 0; i--) {
+        nodes[i].parentNode.removeChild(nodes[i]);
+      }
+      this.notifyError(e.detail.message);
     }
   }
   window.customElements.define(ArcElectron.is, ArcElectron);
