@@ -96,11 +96,6 @@
       @apply --navigation-notification-button-active;
     }
     </style>
-    <!-- Routing -->
-    <app-location route="{{route}}" use-hash-as-path></app-location>
-    <app-route route="{{route}}" pattern="/:base" data="{{routeData}}"></app-route>
-    <app-route route="{{route}}" pattern="/:base/:id" data="{{commonRoute}}"></app-route>
-    <app-route route="{{route}}" pattern="/:base/:type/:id" data="{{typeRoute}}"></app-route>
     <!-- Database support -->
     <auth-data-model></auth-data-model>
     <project-model></project-model>
@@ -269,13 +264,11 @@
     static get is() {return 'arc-electron';}
     static get properties() {
       return {
-        commonRoute: Object,
         /**
          * A reference to the variables open button.
          * @type {String}
          */
         _variablesButton: Object,
-        typeRoute: Object,
         /**
          * A logger
          */
@@ -315,8 +308,7 @@
 
     static get observers() {
       return [
-        '_baseRouteChanged(routeData.base)',
-        '_commonRouteChanged(commonRoute.*)'
+        '_routeDataChanged(page, routeParams.*)'
       ];
     }
 
@@ -331,26 +323,15 @@
       });
     }
 
-    _baseRouteChanged(base) {
-      if (this.page !== base) {
-        this.page = base;
-      }
-      switch (base) {
+    _routeDataChanged(page, changeRecord) {
+      const params = changeRecord.base;
+      switch (page) {
         case 'request':
-          this._setupRequest(this.typeRoute);
+          this._setupRequest(params);
           break;
-      }
-    }
-
-    _commonRouteChanged(record) {
-      const base = record.base;
-      if (!base) {
-        return;
-      }
-      switch (base.base) {
         case 'project':
-          this.$.projectDetails.projectId = decodeURIComponent(base.id);
-        break;
+          this._setupProject(params);
+          break;
       }
     }
 
@@ -366,19 +347,21 @@
       }
       const {id, type} = params;
       if (!type || !this.$.workspace.addEmptyRequest) {
+        this.log.info('Missing use case implementation?');
         return;
       }
-      if (type === 'new') {
+      if (!type || type === 'new') {
         if (this.$.workspace.addEmptyRequest) {
           this.$.workspace.addEmptyRequest();
+        } else {
+          this.log.info('Missing use case implementation?');
         }
         return;
       }
       if (params.type === 'latest' || !params.id) {
-        console.warn(`Unsupported navigation ${type}, ${id}`);
         return;
       }
-      this.$.requestModel.read(type, decodeURIComponent(id))
+      this.$.requestModel.read(type, id)
       .then((request) => {
         const index = this.$.workspace.findRequestIndex(request._id);
         if (index === -1) {
@@ -387,7 +370,17 @@
           this.$.workspace.updateRequestObject(request, index);
           this.$.workspace.selected = index;
         }
+      })
+      .catch((cause) => {
+        this.log.warn('Restoring request:', cause);
       });
+    }
+
+    _setupProject(params) {
+      if (!params) {
+        return;
+      }
+      this.$.projectDetails.projectId = params.id;
     }
     /**
      * The overlay is not included by default in the view so it loads the
