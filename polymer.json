@@ -17,7 +17,8 @@
     "components/default/bower_components/web-url-input/web-url-input.html",
     "components/default/bower_components/variables-drawer-editor/variables-drawer-editor.html",
     "components/default/bower_components/google-drive-browser/google-drive-browser.html",
-    "components/default/bower_components/variables-preview-overlay/variables-preview-overlay.html"
+    "components/default/bower_components/variables-preview-overlay/variables-preview-overlay.html",
+    "components/default/bower_components/arc-license-dialog/arc-license-dialog.html"
   ],
   "sources": [
     "app/src/**/*"

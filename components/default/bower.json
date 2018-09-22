@@ -43,7 +43,7 @@
     "export-panel": "advanced-rest-client/export-panel#2.0.0-preview",
     "arc-menu": "advanced-rest-client/arc-menu#2.0.0-preview",
     "arc-icons": "advanced-rest-client/arc-icons#^2.0.0",
-    "arc-license-dialog": "advanced-rest-client/arc-license-dialog#^2.0.0",
+    "arc-license-dialog": "advanced-rest-client/arc-license-dialog#^2.0.3",
     "arc-messages-service": "advanced-rest-client/arc-messages-service#^2.0.3",
     "arc-info-messages": "advanced-rest-client/arc-info-messages#^2.0.2",
     "variables-drawer-editor": "advanced-rest-client/variables-drawer-editor#2.0.0-preview",

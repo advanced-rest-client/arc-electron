@@ -254,6 +254,7 @@
         </template>
       </app-analytics>
     </template>
+    <arc-license-dialog></arc-license-dialog>
     <paper-toast id="errorToast" duration="5000"></paper-toast>
   </template>
   <script>
@@ -687,6 +688,17 @@
       }
       this.notifyError(e.detail.message);
     }
+    /**
+     * Opens license dialog.
+     */
+    openLicense() {
+      this._loadComponent('arc-license-dialog/arc-license-dialog')
+      .then(() => {
+        const node = this.shadowRoot.querySelector('arc-license-dialog');
+        node.opened = true;
+      })
+      .catch((cmp) => this._reportComponentLoadingError(cmp));
+    }
   }
   window.customElements.define(ArcElectron.is, ArcElectron);
     //   listeners: {
@@ -755,11 +767,5 @@
     //     }
     //     return clazz;
     //   }
-    //   openLicense() {
-    //     var dialog = Polymer.dom(this.root).querySelector('arc-license-dialog');
-    //     dialog.opened = true;
-    //   }
-    //
-
   </script>
 </dom-module>
