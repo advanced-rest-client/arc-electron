@@ -250,7 +250,7 @@
      */
     translateCpuMetrics(cpu) {
       return {
-        usage: this.computePercents(cpu.percentCPUUsage),
+        usage: Math.round(cpu.percentCPUUsage),
         usageCompare: cpu.percentCPUUsage
         // wakeups: cpu.idleWakeupsPerSecond
       };
@@ -286,14 +286,9 @@
       }
       const k = 1024;
       const dm = decimals || 2;
-      const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+      const sizes = ['KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
       const i = Math.floor(Math.log(bytes) / Math.log(k));
       return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-    }
-
-    computePercents(usage) {
-      usage = usage * 100;
-      return Math.round(usage);
     }
 
     _computeOrderIcon(direction) {
