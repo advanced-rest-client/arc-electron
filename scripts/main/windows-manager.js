@@ -168,14 +168,14 @@ class ArcWindowsManager {
       this._tmWin.focus();
       return;
     }
-    let win = new BrowserWindow({
+    const win = new BrowserWindow({
       backgroundColor: '#00A2DF',
       webPreferences: {
         partition: 'persist:arc-task-manager'
       }
     });
-    let dest = path.join(__dirname, '..', '..', 'task-manager.html');
-    let full = url.format({
+    const dest = path.join(__dirname, '..', '..', 'task-manager.html');
+    const full = url.format({
       pathname: dest,
       protocol: 'file:',
       slashes: true
@@ -184,6 +184,7 @@ class ArcWindowsManager {
     win.on('closed', () => {
       this._tmWin = null;
     });
+    win.setMenu(null);
     this._tmWin = win;
   }
   /**
