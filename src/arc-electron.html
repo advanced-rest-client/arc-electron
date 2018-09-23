@@ -561,51 +561,21 @@
 
     /**
      * Handles opening a file from Google Drive.
-     * Normalizes content to the import object and opens import panel
-     * if the data is import data or a request if import data contains single
-     * request.
+     * Dispatches `import-process-file` so the import module processes the data
      *
      * @param {CustomEvent} e
      */
     _openDriveRequest(e) {
-      const opts = {
-        diveId: e.detail.diveId
-      };
-      this._processIcomingData(e.detail.content, opts);
-    }
-
-    _processIcomingData(data, opts) {
-      if (!data) {
-        return;
-      }
-      opts = opts || {};
-      const e = new CustomEvent('import-normalize', {
+      const file = new Blob([e.detail.content], {type: 'application/json'});
+      this.dispatchEvent(new CustomEvent('import-process-file', {
         bubbles: true,
         composed: true,
         cancelable: true,
         detail: {
-          content: data
+          file,
+          diveId: e.detail.diveId
         }
-      });
-      this.dispatchEvent(e);
-      e.detail.result
-      .then((data) => {
-        if (this._isSingleRequest(data)) {
-          const obj = data.requests[0];
-          if (opts.diveId) {
-            obj.driveId = opts.diveId;
-          }
-          this.openWorkspace();
-          this.$.workspace.appendRequest(obj);
-        } else {
-          console.warn('Implement me');
-          // let panel = Polymer.dom(this.root).querySelector('data-import-export-panel');
-          // panel.importObject = data;
-          // panel.importPage = 3;
-          // this.openImportExport();
-        }
-      })
-      .catch((cause) => this.notifyError(cause.message));
+      }));
     }
 
     notifyError(message) {
@@ -705,16 +675,6 @@
     //     'process-incoming-data': '_processIcomingDataHandler',
     //     'pick-google-drive-item': 'openDrivePicker',
     //     'open-drive-selector': 'openDrivePicker',
-    //   },
-    //   /**
-    //    * Called by the application window main script when all
-    //    * setup is ready and the application can be initialized.
-    //    */
-    //   initApplication() {
-    //     this.listen(document.body, 'display-license', 'openLicense');
-    //     const {WindowSearchHelper} = require('./scripts/renderer/window-search.js');
-    //     this.windowSearch = new WindowSearchHelper();
-    //     this.windowSearch.listen();
     //   },
     //
     //   _driveFileRouteChanged(initialized, record) {
