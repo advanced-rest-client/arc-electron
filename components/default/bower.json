@@ -16,7 +16,7 @@
     "polymer": "Polymer/polymer#^2.0.0",
     "app-layout": "PolymerElements/app-layout#^2.0.0",
     "app-route": "PolymerElements/app-route#^2.0.0",
-    "font-roboto-local": "PolymerElements/font-roboto-local##^2.0.0",
+    "font-roboto-local": "PolymerElements/font-roboto-local#^1.1.0",
     "paper-icon-button": "PolymerElements/paper-icon-button#^2.0.0",
     "paper-listbox": "PolymerElements/paper-listbox#^2.0.0",
     "paper-item": "PolymerElements/paper-item#^2.0.0",
