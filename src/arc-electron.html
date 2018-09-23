@@ -672,7 +672,6 @@
   }
   window.customElements.define(ArcElectron.is, ArcElectron);
     //   listeners: {
-    //     'process-incoming-data': '_processIcomingDataHandler',
     //     'pick-google-drive-item': 'openDrivePicker',
     //     'open-drive-selector': 'openDrivePicker',
     //   },
@@ -705,19 +704,6 @@
     //       picker._isOpened = true;
     //       picker._downloadFile(id);
     //     });
-    //   },
-    //
-    //   _processIcomingDataHandler(e) {
-    //     if (e.detail.type === 'json') {
-    //       this._processIcomingData(e.detail.data);
-    //     } else if (e.detail.type === 'raml') {
-    //       this.$.processingRamlToast.opened = true;
-    //       let parser = this.$$('raml-js-parser');
-    //       if (e.detail.filesystem) {
-    //         parser.files = e.detail.filesystem;
-    //       }
-    //       parser.loadFiles(e.detail.file);
-    //     }
     //   },
     //
     //   _computePinDrawerClass(forceNarrowLayout, narrowLayout, drawerOpened) {
