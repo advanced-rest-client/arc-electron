@@ -25,7 +25,12 @@ class AppMenuService {
     ipcMain.on('popup-app-menu', this._popupAppMenuHandler);
     ipcMain.on('popup-app-menu-nav', this._popupNavHandler);
   }
-
+  /**
+   * Handler for `popup-app-menu` event dispatched by ARC windows.
+   * @param {Event} e
+   * @param {String} type Menu type
+   * @param {?Object} sizing `width` and `height`
+   */
   _popupAppMenuHandler(e, type, sizing) {
     if (this.menuWindows.has(type)) {
       const menu = this.menuWindows.get(type);
@@ -34,7 +39,12 @@ class AppMenuService {
     }
     this.createMenuWindow(type, sizing);
   }
-
+  /**
+   * Creates menu window object.
+   * If the `type` already exists then nothing happens.
+   * @param {String} type Menu type
+   * @param {Object} sizing `width` and `height`
+   */
   createMenuWindow(type, sizing) {
     if (this.menuWindows.has(type)) {
       return;
@@ -46,6 +56,7 @@ class AppMenuService {
       const importFile = path.join(opts.importDir, 'import-app-menu.html');
       this.__loadPage(type, bw, opts.themeFile, importFile);
       this.__attachListeners(bw);
+      this.wm.notifyAll('popup-app-menu-opened', type);
     });
   }
 
@@ -111,14 +122,30 @@ class AppMenuService {
    */
   __windowClosed(e) {
     const bw = e.sender;
+    const type = bw.__menuType;
     this.__dettachListeners(bw);
-    this.menuWindows.delete(bw.__menuType);
+    this.menuWindows.delete(type);
+    this.wm.notifyAll('popup-app-menu-closed', type);
   }
-
+  /**
+   * Handler for an event dispatched by popup menu when navigation action was
+   * performed.
+   * @param {Event} e
+   * @param {Object} detail Event detail
+   */
   _popupNavHandler(e, detail) {
-    if (!this.wm.hasWindow()) {
+    if (!this.wm.hasWindow) {
       return;
     }
+    let win = this.wm.lastFocused;
+    if (!win) {
+      win = this.wm.lastActive;
+    }
+    if (!win) {
+      console.warn('Unable to perform navigation. No active window found.');
+      return;
+    }
+    win.webContents.send('app-navigate', detail);
   }
 }
 

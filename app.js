@@ -67,6 +67,9 @@ class ArcInit {
     ipc.on('request-action', this.execRequestAction.bind(this));
     ipc.on('theme-editor-preview', this._themePreviewHandler.bind(this));
     ipc.on('window-state-info', this._stateInfoHandler.bind(this));
+    ipc.on('app-navigate', this._appNavHandler.bind(this));
+    ipc.on('popup-app-menu-opened', this._popupMenuOpened.bind(this));
+    ipc.on('popup-app-menu-closed', this._popupMenuClosed.bind(this));
   }
   /**
    * Requests initial state information from the main process for current
@@ -335,6 +338,48 @@ class ArcInit {
    */
   _themePreviewHandler(e, stylesMap) {
     this.themeLoader.previewThemes(stylesMap);
+  }
+  /**
+   * Handler for `app-navigare` event dispatched by the IO process.
+   * It dispatches navigate event recognized by ARC to perform navigation
+   * action.
+   *
+   * @param {Object} e
+   * @param {Object} detail
+   */
+  _appNavHandler(e, detail) {
+    this.app.dispatchEvent(new CustomEvent('navigate', {
+      bubbles: true,
+      cancelable: true,
+      detail
+    }));
+  }
+
+  _popupMenuOpened(e, type) {
+    this._menuToggleOption(type, true);
+  }
+
+  _popupMenuClosed(e, type) {
+    this._menuToggleOption(type, false);
+  }
+
+  _menuToggleOption(type, value) {
+    const app = this.app;
+    if (!app.menuConfig) {
+      app.menuConfig = {};
+    }
+    let key;
+    switch (type) {
+      case 'history-menu': key = 'hideHistory'; break;
+      case 'saved-menu': key = 'hideSaved'; break;
+      case 'projects-menu': key = 'hideProjects'; break;
+      case 'rest-api-menu': key = 'cnf.hideApis'; break;
+      default:
+        key = 'menuDisabled';
+        value = !value;
+    }
+    app.set(`menuConfig.${key}`, value);
+    // app.set('menuConfig', cnf);
   }
 }
 

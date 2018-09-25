@@ -21,18 +21,53 @@ class ArcWindowsManager {
     this.__windowClosed = this.__windowClosed.bind(this);
     this.__windowMoved = this.__windowMoved.bind(this);
     this.__windowResized = this.__windowResized.bind(this);
+    this.__windowFocused = this.__windowFocused.bind(this);
     this.__windowOpenedPopup = this.__windowOpenedPopup.bind(this);
     this.__contextMenuHandler = this.__contextMenuHandler.bind(this);
     this._settingChangedHandler = this._settingChangedHandler.bind(this);
     this.recorder = new ArcSessionRecorder();
     this.contextActions = new ContextActions();
     this.sourcesManager = sm;
+    /**
+     * Pointer to last focused window.
+     * @type {BrowserWindow}
+     */
+    this._lastFocused = undefined;
   }
   /**
    * @return {Boolean} True if has at leas one window.
    */
   get hasWindow() {
     return this.windows.length > 0;
+  }
+  /**
+   * @return {BrowserWindow|undefined} Reference to last focused browser window
+   * or undefined if the window is destroyed or undefined.
+   */
+  get lastFocused() {
+    if (!this._lastFocused) {
+      return;
+    }
+    if (this._lastFocused.isDestroyed()) {
+      this._lastFocused = undefined;
+      return;
+    }
+    return this._lastFocused;
+  }
+  /**
+   * @return {BrowserWindow} Returns reference to last created and still active
+   * window object.
+   */
+  get lastActive() {
+    const ws = this.windows;
+    if (!ws || !ws.length) {
+      return;
+    }
+    for (let i = ws.length; i >= 0; i--) {
+      if (!ws[i].isDestroyed()) {
+        return ws[i];
+      }
+    }
   }
   /**
    * Restores latest window is any present.
@@ -266,6 +301,7 @@ class ArcWindowsManager {
     win.addListener('closed', this.__windowClosed);
     win.addListener('move', this.__windowMoved);
     win.addListener('resize', this.__windowResized);
+    win.addListener('focus', this.__windowFocused);
     win.once('ready-to-show', this.__readyShowHandler.bind(this));
     win.webContents.on('new-window', this.__windowOpenedPopup);
     win.webContents.on('arc-context-menu', this.__contextMenuHandler);
@@ -294,6 +330,9 @@ class ArcWindowsManager {
    * @param {Event} e Event emitted by the window.
    */
   __windowClosed(e) {
+    if (this._lastFocused === e.sender) {
+      this._lastFocused = undefined;
+    }
     const index = this._findWindowImdex(e.sender);
     if (index === -1) {
       return;
@@ -321,6 +360,14 @@ class ArcWindowsManager {
     const win = e.sender;
     const size = win.getSize();
     win.__arcSession.updateSize(size[0], size[1]);
+  }
+  /**
+   * Handler for the focus event on the BrowserWindow object.
+   * Sets `_lastFocused` property.
+   * @param {Event} e
+   */
+  __windowFocused(e) {
+    this._lastFocused = e.sender;
   }
   /**
    * Handler for BrowserWindow `ready-to-show` event.
