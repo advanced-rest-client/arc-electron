@@ -115,9 +115,11 @@
     <oauth1-authorization></oauth1-authorization>
     <arc-request-logic></arc-request-logic>
     <request-hooks-logic></request-hooks-logic>
-    <response-history-saver></response-history-saver>
+    <template is="dom-if" if="[[historyEnabled]]" restamp="true">
+      <response-history-saver></response-history-saver>
+    </template>
     <electron-http-transport></electron-http-transport>
-    <variables-manager system-variables="[[sysVars]]"></variables-manager>
+    <variables-manager system-variables="[[sysVars]]" sys-vars-disabled="[[!config.systemVariables]]"></variables-manager>
     <variables-evaluator no-before-request></variables-evaluator>
     <!-- Info center -->
     <arc-messages-service platform="electron" on-unread-changed="_unreadMessagesChanged" messages="{{appMessages}}" id="msgService"></arc-messages-service>
@@ -172,7 +174,7 @@
             <api-navigation aware="apic" summary endpoints-opened></api-navigation>
           </template>
           <template is="dom-if" if="[[!isApiConsole]]">
-            <arc-menu rest-api list-type="[[viewListTypeSettings]]"></arc-menu>
+            <arc-menu rest-api allow-popup list-type="[[config.viewListType]]" history-enabled="[[historyEnabled]]" on-popup-menu="_popupMenuHandler"></arc-menu>
           </template>
         </nav>
         <div class="pages">
@@ -668,6 +670,24 @@
         node.opened = true;
       })
       .catch((cmp) => this._reportComponentLoadingError(cmp));
+    }
+    /**
+     * Handler for `popup-menu`. Sends command to the IO process.
+     * IO process informs windows to hide the menu.
+     * @param {CustomEvent} e
+     */
+    _popupMenuHandler(e) {
+      const {type} = e.detail;
+      let sizing;
+      const menu = this.shadowRoot.querySelector('arc-menu');
+      if (menu) {
+        const rect = menu.getBoundingClientRect();
+        sizing = {
+          height: rect.height,
+          width: rect.width
+        };
+      }
+      ipcRenderer.send('popup-app-menu', type, sizing);
     }
   }
   window.customElements.define(ArcElectron.is, ArcElectron);

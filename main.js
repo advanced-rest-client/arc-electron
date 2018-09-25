@@ -1,6 +1,7 @@
 const {ipcMain, app, shell} = require('electron');
 const {ArcWindowsManager} = require('./scripts/main/windows-manager');
 const {UpdateStatus} = require('./scripts/main/update-status');
+const {AppMenuService} = require('./scripts/main/app-menu-service');
 const {ArcMainMenu} = require('./scripts/main/main-menu');
 const {Oauth2Identity} = require('@advanced-rest-client/electron-oauth2');
 const {DriveExport} = require('@advanced-rest-client/electron-drive');
@@ -87,6 +88,7 @@ class Arc {
       this._initializeGoogleDriveIntegration();
       this._initializeSessionManager();
       this._initializeSearchService();
+      this._initializeApplicationMenu();
       this.remote = new RemoteApi(this.wm);
       log.info('Application is now ready');
       this.wm.open();
@@ -130,10 +132,12 @@ class Arc {
       'advancedrestclient.com'
     ]});
     this.sm.listen();
-    this.sm.on('cookie-changed', (cookies) => this.wm.notifyAll('cookie-changed', cookies));
+    this.sm.on('cookie-changed', (cookies) =>
+      this.wm.notifyAll('cookie-changed', cookies));
   }
   /**
-   * Initializes `ContentSearchService` from `@advanced-rest-client/arc-electron-search-service`
+   * Initializes `ContentSearchService` from
+   * `@advanced-rest-client/arc-electron-search-service`
    */
   _initializeSearchService() {
     ContentSearchService.prefsManager = this.prefs;
@@ -149,6 +153,12 @@ class Arc {
   _initializeUpdateStatus() {
     this.us = new UpdateStatus(this.wm, this.menu);
     this.us.listen();
+  }
+
+  _initializeApplicationMenu() {
+    const instance = new AppMenuService(this.wm, this.sourcesManager);
+    instance.listen();
+    this.appMenuService = instance;
   }
   /**
    * Quits when all windows are closed.

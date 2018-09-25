@@ -142,8 +142,8 @@ class ArcWindowsManager {
    * @return {Promise} Resolved promise when the window is ready.
    */
   open(path) {
-    let index = this.windows.length;
-    let session = new ArcSessionControl(index);
+    const index = this.windows.length;
+    const session = new ArcSessionControl(index);
     return session.load()
     .then((data) => {
       const win = this.__getNewWindow(index, data);
@@ -224,8 +224,8 @@ class ArcWindowsManager {
       appPath = '#' + appPath;
     }
     win._startPath = appPath;
-    let dest = path.join(__dirname, '..', '..', 'app.html');
-    let full = url.format({
+    const dest = path.join(__dirname, '..', '..', 'app.html');
+    const full = url.format({
       pathname: dest,
       protocol: 'file:',
       slashes: true
@@ -294,7 +294,7 @@ class ArcWindowsManager {
    * @param {Event} e Event emitted by the window.
    */
   __windowClosed(e) {
-    let index = this._findWindowImdex(e.sender);
+    const index = this._findWindowImdex(e.sender);
     if (index === -1) {
       return;
     }
@@ -307,8 +307,8 @@ class ArcWindowsManager {
    * @param {Event} e Event emitted by the window.
    */
   __windowMoved(e) {
-    let win = e.sender;
-    let pos = win.getPosition();
+    const win = e.sender;
+    const pos = win.getPosition();
     win.__arcSession.updatePosition(pos[0], pos[1]);
   }
   /**
@@ -318,8 +318,8 @@ class ArcWindowsManager {
    * @param {Event} e Event emitted by the window.
    */
   __windowResized(e) {
-    let win = e.sender;
-    let size = win.getSize();
+    const win = e.sender;
+    const size = win.getSize();
     win.__arcSession.updateSize(size[0], size[1]);
   }
   /**
@@ -337,8 +337,8 @@ class ArcWindowsManager {
    * @param {Event} e Event emitted by the window.
    */
   __windowReloading(e) {
-    let contents = e.sender;
-    let win = this.windows.find((item) => {
+    const contents = e.sender;
+    const win = this.windows.find((item) => {
       if (item.isDestroyed()) {
         return false;
       }

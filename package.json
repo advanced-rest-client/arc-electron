@@ -38,7 +38,7 @@
   "dependencies": {
     "@advanced-rest-client/arc-electron-preferences": "1.0.0-rc1",
     "@advanced-rest-client/arc-electron-search-service": "0.1.0-rc0",
-    "@advanced-rest-client/arc-electron-sources-manager": "0.1.0-rc4",
+    "@advanced-rest-client/arc-electron-sources-manager": "0.1.0-rc5",
     "@advanced-rest-client/electron-amf-service": "0.1.0-rc3",
     "@advanced-rest-client/electron-drive": "0.1.0-rc3",
     "@advanced-rest-client/electron-oauth2": "1.0.0-rc2",
