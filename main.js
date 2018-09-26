@@ -109,6 +109,17 @@ class Arc {
   _initializePreferencesManager() {
     this.prefs = new PreferencesManager(this.initOptions);
     this.prefs.observe();
+    this.prefs.load()
+    .then((settings) => {
+      if (settings.popupMenuExperimentEnabled) {
+        if (this.menu) {
+          this.menu.enableAppMenuPopup();
+        } else {
+          this.__menuAppPopupEnabled = true;
+        }
+      }
+    });
+    this.prefs.on('settings-changed', this._settingsChangeHandler.bind(this));
   }
 
   _initializeSourcesManager() {
@@ -119,6 +130,10 @@ class Arc {
   _initializeMenu() {
     this.menu = new ArcMainMenu();
     this.menu.build();
+    if (this.__menuAppPopupEnabled) {
+      this.__menuAppPopupEnabled = undefined;
+      this.menu.enableAppMenuPopup();
+    }
   }
 
   _initializeGoogleDriveIntegration() {
@@ -188,16 +203,17 @@ class Arc {
   /**
    * Event handler for menu actions.
    *
-   * @param {[type]} action [description]
-   * @param {[type]} win [description]
-   * @return {[type]} [description]
+   * @param {String} action Action type to perform
+   * @param {BrowserWindow} win
    */
   _menuHandler(action, win) {
     if (action.indexOf('application') === 0) {
-      return this._handleApplicationAction(action.substr(12), win);
+      this._handleApplicationAction(action.substr(12), win);
+      return;
     }
     if (action.indexOf('request') === 0) {
-      return win.webContents.send('request-action', action.substr(8));
+      win.webContents.send('request-action', action.substr(8));
+      return;
     }
   }
   /**
@@ -211,13 +227,13 @@ class Arc {
     switch (action) {
       case 'quit':
         app.quit();
-      break;
+        break;
       case 'new-window':
         this.wm.open();
-      break;
+        break;
       case 'task-manager':
         this.wm.openTaskManager();
-      break;
+        break;
       case 'open-privacy-policy':
       case 'open-documentation':
       case 'open-faq':
@@ -227,10 +243,12 @@ class Arc {
       case 'web-session-help':
         let {HelpManager} = require('./scripts/main/help-manager');
         HelpManager.helpWith(action);
-      break;
+        break;
+      case 'popup-menu':
+        this.appMenuService.togglePopupMenu();
+        break;
       default:
         win.webContents.send(windowCommand, action);
-      break;
     }
   }
   /**
@@ -251,6 +269,24 @@ class Arc {
       return;
     }
     shell.openExternal(url);
+  }
+  /**
+   * Handler for settings change.
+   * @param {String} name Changed property name
+   * @param {any} value Changed value
+   */
+  _settingsChangeHandler(name, value) {
+    switch (name) {
+      case 'popupMenuExperimentEnabled':
+        if (this.menu) {
+          if (value) {
+            this.menu.enableAppMenuPopup();
+          } else {
+            this.menu.disableAppMenuPopup();
+          }
+        }
+        break;
+    }
   }
 }
 

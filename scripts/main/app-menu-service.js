@@ -70,7 +70,7 @@ class AppMenuService {
   __getNewWindow(type, sizing) {
     const width = sizing && sizing.width ? sizing.width : 320;
     const height = sizing && sizing.height ? sizing.height : 800;
-    const mainWindow = new BrowserWindow({
+    const menuWindow = new BrowserWindow({
       width,
       height,
       backgroundColor: '#00A2DF',
@@ -82,8 +82,9 @@ class AppMenuService {
         preload: path.join(__dirname, '..', 'renderer', 'app-menu-preload.js')
       }
     });
-    mainWindow.__menuType = type;
-    return mainWindow;
+    menuWindow.setMenu(null);
+    menuWindow.__menuType = type;
+    return menuWindow;
   }
   /**
    * Creates application URL and loads app into the window.
@@ -146,6 +147,22 @@ class AppMenuService {
       return;
     }
     win.webContents.send('app-navigate', detail);
+  }
+
+  clear() {
+    for (let win of this.menuWindows.values()) {
+      win.destroy();
+    }
+  }
+
+  togglePopupMenu() {
+    const win = this.menuWindows.get('*');
+    if (win) {
+      win.destroy();
+    } else {
+      this.clear();
+      this.createMenuWindow('*');
+    }
   }
 }
 

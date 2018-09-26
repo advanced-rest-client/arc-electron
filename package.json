@@ -36,7 +36,7 @@
     "spectron": "^4.0.0"
   },
   "dependencies": {
-    "@advanced-rest-client/arc-electron-preferences": "1.0.0-rc1",
+    "@advanced-rest-client/arc-electron-preferences": "1.0.0-rc2",
     "@advanced-rest-client/arc-electron-search-service": "0.1.0-rc0",
     "@advanced-rest-client/arc-electron-sources-manager": "0.1.0-rc5",
     "@advanced-rest-client/electron-amf-service": "0.1.0-rc3",

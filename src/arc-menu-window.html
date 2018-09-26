@@ -108,8 +108,14 @@
           case 'projects-menu':
           case 'rest-api-menu':
             node = document.createElement(type);
-            node.listType = listType;
             node.id = 'menu';
+            node.listType = listType;
+            break;
+          case '*':
+            node = document.createElement('arc-menu');
+            node.id = 'menu';
+            node.listType = listType;
+            node.historyEnabled = true;
             break;
           default:
             console.error('Unknown menu object');

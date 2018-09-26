@@ -204,6 +204,15 @@
       },
       {
         "role": "front"
+      },
+      {
+        "type": "separator",
+        "visible": false
+      },
+      {
+        "label": "Popup application menu",
+        "command": "application:popup-menu",
+        "visible": false
       }
     ]
   }, {

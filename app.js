@@ -256,6 +256,7 @@ class ArcInit {
       case 'open-themes': app.openThemesPanel(); break;
       case 'open-requests-workspace': app.openWorkspace(); break;
       case 'open-web-socket': app.openWebSocket(); break;
+      case 'popup-menu': this._toggleMenuWindow(); break;
     }
   }
   /**
@@ -355,6 +356,15 @@ class ArcInit {
     }));
   }
 
+  _toggleMenuWindow() {
+    const app = this.app;
+    if (!app.menuConfig) {
+      app.menuConfig = {};
+    }
+    const state = !app.menuConfig.menuDisabled;
+    app.set(`menuConfig.menuDisabled`, state);
+  }
+
   _popupMenuOpened(e, type) {
     this._menuToggleOption(type, true);
   }
@@ -373,13 +383,13 @@ class ArcInit {
       case 'history-menu': key = 'hideHistory'; break;
       case 'saved-menu': key = 'hideSaved'; break;
       case 'projects-menu': key = 'hideProjects'; break;
-      case 'rest-api-menu': key = 'cnf.hideApis'; break;
+      case 'rest-api-menu': key = 'hideApis'; break;
+      case '*': key = 'menuDisabled'; break;
       default:
-        key = 'menuDisabled';
-        value = !value;
+        console.warn('Unknown menu state');
+        return;
     }
     app.set(`menuConfig.${key}`, value);
-    // app.set('menuConfig', cnf);
   }
 }
 

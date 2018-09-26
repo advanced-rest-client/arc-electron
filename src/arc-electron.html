@@ -10,6 +10,10 @@
       --app-drawer-width: 320px;
     }
 
+    [hidden] {
+      display: none !important;
+    }
+
     .main-container {
       @apply --layout-horizontal;
       min-height: 100%;
@@ -130,7 +134,7 @@
     <app-header-layout has-scrolling-region id="scrollingRegion">
       <app-header slot="header" fixed shadow scroll-target="scrollingRegion">
         <app-toolbar>
-          <paper-icon-button icon="arc:menu" on-click="toggleDrawer" title="Toggle drawer"></paper-icon-button>
+          <paper-icon-button icon="arc:menu" on-click="toggleDrawer" title="Toggle application menu" hidden$="[[appMenuDisabled]]"></paper-icon-button>
           <div main-title>[[_computeAppTitle(isApiConsole)]]</div>
           <template is="dom-if" if="[[newMessages]]">
             <paper-icon-button class="nav-notification-button" icon="arc:info-outline" on-click="openInfoCenter" toggles active="[[messageCenterOpened]]" title="See what's new in the app"></paper-icon-button>
@@ -176,6 +180,7 @@
           <template is="dom-if" if="[[!isApiConsole]]">
             <arc-menu
               rest-api
+              hidden$="[[appMenuDisabled]]"
               allow-popup="[[popupMenuExperimentEnabled]]"
               list-type="[[config.viewListType]]"
               history-enabled="[[historyEnabled]]"
@@ -311,6 +316,13 @@
         _variablesOverlayOpened: {
           type: Boolean,
           observer: '_varsOverlayChanged'
+        },
+
+        appMenuDisabled: {
+          type: Boolean,
+          reflectToAttribute: true,
+          computed: '_computeAppMenuDisabled(menuConfig.*)',
+          observer: '_menuDisabledChanged'
         }
       };
     }
@@ -699,6 +711,49 @@
         };
       }
       ipcRenderer.send('popup-app-menu', type, sizing);
+    }
+    /**
+     * Computes value for `appMenuDisabled` property.
+     * @param {Object} record Polymer's change record for `menuConfig`
+     * @return {Boolean}
+     */
+    _computeAppMenuDisabled(record) {
+      if (!record || !record.base) {
+        return false;
+      }
+      const mc = record.base;
+      if (mc.menuDisabled) {
+        return true;
+      }
+      if (mc.hideHistory && mc.hideSaved && mc.hideProjects && mc.hideApis) {
+        return true;
+      }
+      return false;
+    }
+    /**
+     * Toggles main page view margin when menu is hidden.
+     * @param {Boolean} value
+     */
+    _menuDisabledChanged(value) {
+      let newWidth;
+      if (value) {
+        this._oldDrawerWidth = this._getDrawerVidithValue();
+        newWidth = '0';
+      } else {
+        newWidth = this._oldDrawerWidth || '320px';
+      }
+      this.updateStyles({
+        '--app-drawer-width': newWidth
+      });
+    }
+
+    _getDrawerVidithValue() {
+      const prop = '--app-drawer-width';
+      if (window.ShadyCSS) {
+        return window.ShadyCSS.getComputedStyleValue(this, prop);
+      } else {
+        return getComputedStyle(this).getPropertyValue(prop);
+      }
     }
   }
   window.customElements.define(ArcElectron.is, ArcElectron);
