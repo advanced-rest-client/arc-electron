@@ -243,7 +243,7 @@ class ArcMainMenu extends EventEmitter {
     switch (process.platform) {
       case 'darwin':
         i = 4;
-        j = 4;
+        j = 5;
         break;
       case 'win32':
         i = 3;
