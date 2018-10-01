@@ -122,7 +122,7 @@
     <template is="dom-if" if="[[historyEnabled]]" restamp="true">
       <response-history-saver></response-history-saver>
     </template>
-    <electron-http-transport></electron-http-transport>
+    <electron-http-transport follow-redirects request-timeout$="[[config.requestDefaultTimeout]]" native-transport$="[[config.nativeTransport]]" validate-certificates$="[[config.validateCertificates]]" sent-message-limit$="[[config.sentMessageLimit]]"></electron-http-transport>
     <variables-manager system-variables="[[sysVars]]" sys-vars-disabled="[[!config.systemVariables]]"></variables-manager>
     <variables-evaluator no-before-request></variables-evaluator>
     <!-- Info center -->
