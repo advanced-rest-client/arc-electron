@@ -122,7 +122,7 @@
     <template is="dom-if" if="[[historyEnabled]]" restamp="true">
       <response-history-saver></response-history-saver>
     </template>
-    <electron-http-transport follow-redirects request-timeout$="[[config.requestDefaultTimeout]]" native-transport$="[[config.nativeTransport]]" validate-certificates$="[[config.validateCertificates]]" sent-message-limit$="[[config.sentMessageLimit]]"></electron-http-transport>
+    <electron-http-transport follow-redirects$=[[config.followRedirects]] request-timeout$="[[config.requestDefaultTimeout]]" native-transport$="[[config.nativeTransport]]" validate-certificates$="[[config.validateCertificates]]" sent-message-limit$="[[config.sentMessageLimit]]"></electron-http-transport>
     <variables-manager system-variables="[[sysVars]]" sys-vars-disabled="[[!config.systemVariables]]"></variables-manager>
     <variables-evaluator no-before-request></variables-evaluator>
     <!-- Info center -->
@@ -135,7 +135,7 @@
       <app-header slot="header" fixed shadow scroll-target="scrollingRegion">
         <app-toolbar>
           <template is="dom-if" if="[[renderBackButton]]">
-            <paper-icon-button icon="arc:arrow-back" on-click="openWorkspace" title="Go back to main screen"></paper-icon-button>
+            <paper-icon-button icon="arc:arrow-back" on-click="_backHandler" title="Go back to main screen"></paper-icon-button>
           </template>
           <template is="dom-if" if="[[!renderBackButton]]">
             <paper-icon-button icon="arc:menu" on-click="toggleDrawer" title="Toggle application menu" hidden$="[[appMenuDisabled]]"></paper-icon-button>
@@ -146,11 +146,6 @@
           </template>
           <template is="dom-if" if="[[hasAppUpdate]]">
             <paper-icon-button icon="arc:file-download" class="nav-notification-button" on-click="updateInstall" title="Restart and install update"></paper-icon-button>
-          </template>
-          <template is="dom-if" if="[[isApiConsole]]">
-            <div class="env-container">
-              <paper-button on-click="closeApiConsole" class="nav-action-button" raised>Close</paper-button>
-            </div>
           </template>
           <template is="dom-if" if="[[!isApiConsole]]">
             <div class="env-container">
@@ -227,6 +222,7 @@
               id="apic"
               handle-navigation-events
               inline-methods
+              narrow="[[narrow]]"
               redirect-uri="https://auth.advancedrestclient.com/oauth-popup.html"
               narrow="[[narrow]]"
               scroll-target="[[_scrollTarget]]"></api-documentation>
@@ -236,6 +232,7 @@
               data-route="exchange-search"
               scroll-target="[[_scrollTarget]]"
               anypoint-auth
+              columns$="[[_computeExchangeColumns(exchangeMedia1, exchangeMedia2, exchangeMedia3, exchangeMedia4)]]"
               exchange-redirect-uri="https://auth.advancedrestclient.com/oauth-popup.html"
               exchange-client-id="59KaqF90hLgZMJec"
               force-oauth-events></exchange-search-panel>
@@ -248,6 +245,12 @@
         </template>
       </section>
     </app-header-layout>
+    <!-- Media queries to control views -->
+    <iron-media-query query="(min-width: 1101px)" query-matches="{{exchangeMedia4}}"></iron-media-query>
+    <iron-media-query query="(max-width: 1100px)" query-matches="{{exchangeMedia3}}"></iron-media-query>
+    <iron-media-query query="(max-width: 900px)" query-matches="{{exchangeMedia2}}"></iron-media-query>
+    <iron-media-query query="(max-width: 700px)" query-matches="{{exchangeMedia1}}"></iron-media-query>
+    <iron-media-query query="(max-width: 700px)" query-matches="{{narrow}}"></iron-media-query>
     <!-- Components loded lazily -->
     <variables-drawer-editor id="environmentsDrawer" with-backdrop></variables-drawer-editor>
     <!-- Google Analytics -->
@@ -344,6 +347,15 @@
         narrowNavigation: {
           type: Boolean,
           observer: '_menuDisabledChanged'
+        },
+        /**
+         * Automatically set via media queries.
+         * When set it renders narrow wiew.
+         * This also affects API console.
+         */
+        narrow: {
+          type: Boolean,
+          observer: '_narrowChanged'
         }
       };
     }
@@ -795,6 +807,43 @@
 
     _computeMenuButtonHidden(appMenuDisabled, narrowNavigation) {
       return appMenuDisabled || narrowNavigation;
+    }
+    /**
+     * Computes number of columns to be set on Exchange lsit panel
+     * based on current media query state.
+     * @param {Boolean} exchangeMedia1
+     * @param {Boolean} exchangeMedia2
+     * @param {Boolean} exchangeMedia3
+     * @param {Boolean} exchangeMedia4
+     * @return {Number}
+     */
+    _computeExchangeColumns(exchangeMedia1, exchangeMedia2, exchangeMedia3, exchangeMedia4) {
+      if (exchangeMedia4) {
+        return 4;
+      }
+      if (exchangeMedia1 || exchangeMedia2) {
+        return 2;
+      }
+      if (exchangeMedia3) {
+        return 3;
+      }
+      return 4;
+    }
+    /**
+     * Handler for `narrow` attribute change.
+     * @param {Boolean} narrow
+     */
+    _narrowChanged(narrow) {
+      this.narrowNavigation = narrow;
+    }
+    /**
+     * Handler for the "back" icon click in main navigation.
+     */
+    _backHandler() {
+      if (this.isApiConsole) {
+        this._setIsApiConsole(false);
+      }
+      this.openWorkspace();
     }
   }
   window.customElements.define(ArcElectron.is, ArcElectron);
