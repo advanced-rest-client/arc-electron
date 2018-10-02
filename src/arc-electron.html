@@ -134,7 +134,12 @@
     <app-header-layout has-scrolling-region id="scrollingRegion">
       <app-header slot="header" fixed shadow scroll-target="scrollingRegion">
         <app-toolbar>
-          <paper-icon-button icon="arc:menu" on-click="toggleDrawer" title="Toggle application menu" hidden$="[[appMenuDisabled]]"></paper-icon-button>
+          <template is="dom-if" if="[[renderBackButton]]">
+            <paper-icon-button icon="arc:arrow-back" on-click="openWorkspace" title="Go back to main screen"></paper-icon-button>
+          </template>
+          <template is="dom-if" if="[[!renderBackButton]]">
+            <paper-icon-button icon="arc:menu" on-click="toggleDrawer" title="Toggle application menu" hidden$="[[appMenuDisabled]]"></paper-icon-button>
+          </template>
           <div main-title>[[_computeAppTitle(isApiConsole)]]</div>
           <template is="dom-if" if="[[newMessages]]">
             <paper-icon-button class="nav-notification-button" icon="arc:info-outline" on-click="openInfoCenter" toggles active="[[messageCenterOpened]]" title="See what's new in the app"></paper-icon-button>
@@ -180,7 +185,7 @@
           <template is="dom-if" if="[[!isApiConsole]]">
             <arc-menu
               rest-api
-              hidden$="[[appMenuDisabled]]"
+              hidden$="[[_computeMenuButtonHidden(appMenuDisabled, narrowNavigation)]]"
               allow-popup="[[popupMenuExperimentEnabled]]"
               list-type="[[config.viewListType]]"
               history-enabled="[[historyEnabled]]"
@@ -322,6 +327,22 @@
           type: Boolean,
           reflectToAttribute: true,
           computed: '_computeAppMenuDisabled(menuConfig.*)',
+          observer: '_menuDisabledChanged'
+        },
+        /**
+         * Computed value. When `true` it renders `back` button instead of menu.
+         * @type {Boolean}
+         */
+        renderBackButton: {
+          type: Boolean,
+          value: false,
+          computed: '_computeRenderBackButton(page)'
+        },
+        /**
+         * When set menu drawer is hidden.
+         */
+        narrowNavigation: {
+          type: Boolean,
           observer: '_menuDisabledChanged'
         }
       };
@@ -715,9 +736,13 @@
     /**
      * Computes value for `appMenuDisabled` property.
      * @param {Object} record Polymer's change record for `menuConfig`
+     * @param {Boolean} narrowNavigation
      * @return {Boolean}
      */
-    _computeAppMenuDisabled(record) {
+    _computeAppMenuDisabled(record, narrowNavigation) {
+      if (narrowNavigation) {
+        return true;
+      }
       if (!record || !record.base) {
         return false;
       }
@@ -754,6 +779,22 @@
       } else {
         return getComputedStyle(this).getPropertyValue(prop);
       }
+    }
+    /**
+     * Computes value for `renderBackButton` property.
+     * @param {String} page Current page value
+     * @return {Boolean}
+     */
+    _computeRenderBackButton(page) {
+      return !page || page !== 'request';
+    }
+
+    toggleDrawer() {
+      this.narrowNavigation = !this.narrowNavigation;
+    }
+
+    _computeMenuButtonHidden(appMenuDisabled, narrowNavigation) {
+      return appMenuDisabled || narrowNavigation;
     }
   }
   window.customElements.define(ArcElectron.is, ArcElectron);
