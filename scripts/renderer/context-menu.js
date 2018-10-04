@@ -78,6 +78,7 @@ class ArcContextMenu {
     }
     if (actions.length) {
       this._lastTarget = target;
+      this.removeActions();
       this.renderActions(actions, {
         x: e.x,
         y: e.y
