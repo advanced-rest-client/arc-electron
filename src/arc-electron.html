@@ -1,4 +1,6 @@
 <link rel="import" href="../components/default/import.html">
+<link rel="import" href="arc-api-processor/arc-api-processor.html">
+
 <dom-module id="arc-electron">
   <template>
     <style>
@@ -101,6 +103,10 @@
     .nav-notification-button[active] {
       @apply --navigation-notification-button-active;
     }
+
+    .toolbar-button {
+      background-color: #fff;
+    }
     </style>
     <!-- Database support -->
     <auth-data-model></auth-data-model>
@@ -130,6 +136,13 @@
     <arc-messages-service platform="electron" on-unread-changed="_unreadMessagesChanged" messages="{{appMessages}}" id="msgService"></arc-messages-service>
     <!-- Helper components -->
     <web-url-input id="webUrlInput" purpose="web-session" on-open-web-url="_openWebUrlHandler"></web-url-input>
+    <arc-api-processor aware="apic"
+      saved="{{apiIsSaved}}"
+      versions="{{apiVersions}}"
+      api-version="{{apiVersion}}"
+      can-save="{{canSaveApi}}"
+      version-saved="{{apiVersionSaved}}"
+      multi-version="{{apiMultiVersionVersion}}"></arc-api-processor>
     <raml-aware id="aware" scope="apic"></raml-aware>
     <!-- Application views -->
     <app-header-layout has-scrolling-region id="scrollingRegion">
@@ -148,6 +161,45 @@
           <template is="dom-if" if="[[hasAppUpdate]]">
             <paper-icon-button icon="arc:file-download" class="nav-notification-button" on-click="updateInstall" title="Restart and install update"></paper-icon-button>
           </template>
+          <!-- API console related toolbar options -->
+          <template is="dom-if" if="[[isApiConsole]]">
+            <template is="dom-if" if="[[!apiIsSaved]]">
+              <template is="dom-if" if="[[canSaveApi]]">
+                <paper-button class="toolbar-button" raised on-click="_saveApi">Save API</paper-button>
+              </template>
+            </template>
+            <template is="dom-if" if="[[apiIsSaved]]">
+              <template is="dom-if" if="[[apiMultiVersionVersion]]">
+                <paper-dropdown-menu label="API version">
+                  <paper-listbox id="apiVersionSelector" slot="dropdown-content" selected="[[apiVersion]]" attr-for-selected="data-version" on-selected-changed="_apiVersionMenuChanged">
+                    <template is="dom-repeat" items="[[apiVersions]]">
+                      <paper-item data-version$="[[item]]">[[item]]</paper-item>
+                    </template>
+                  </paper-listbox>
+                </paper-dropdown-menu>
+              </template>
+
+              <template is="dom-if" if="[[!apiVersionSaved]]">
+                <template is="dom-if" if="[[canSaveApi]]">
+                  <paper-button class="toolbar-button" raised on-click="_saveApi">Save API version</paper-button>
+                </template>
+              </template>
+
+              <paper-menu-button vertical-align="top" horizontal-align="auto">
+                <paper-icon-button icon="arc:more-vert" slot="dropdown-trigger"></paper-icon-button>
+                <paper-listbox slot="dropdown-content" on-selected-changed="_apiActionMenuChanged">
+                  <paper-item data-action="delete">Delete API</paper-item>
+                  <template is="dom-if" if="[[apiMultiVersionVersion]]">
+                    <paper-item data-action="delete-version">Delete version</paper-item>
+                  </template>
+                  <paper-item data-action="save-oas">Save as OAS</paper-item>
+                  <paper-item data-action="save-raml">Save as RAML</paper-item>
+                  <!-- <paper-item data-action="upload-exchange">Upload to Exchange</paper-item> -->
+                </paper-listbox>
+              </paper-menu-button>
+            </template>
+          </template>
+          <!-- Environment toolbar controls -->
           <template is="dom-if" if="[[!isApiConsole]]">
             <div class="env-container">
               <span class="env-label">Environment:</span>
@@ -400,6 +452,9 @@
         case 'project':
           this._setupProject(params);
           break;
+        case 'api-console':
+          this._setupApiConsole(params);
+          break;
       }
     }
 
@@ -415,14 +470,14 @@
       }
       const {id, type} = params;
       if (!type || !this.$.workspace.addEmptyRequest) {
-        this.log.info('Missing use case implementation?');
+        this.log.info('arc-electron::_setupRequest::Missing use case implementation?');
         return;
       }
       if (!type || type === 'new') {
         if (this.$.workspace.addEmptyRequest) {
           this.$.workspace.addEmptyRequest();
         } else {
-          this.log.info('Missing use case implementation?');
+          this.log.info('arc-electron::_setupRequest::Missing use case implementation?');
         }
         return;
       }
@@ -449,6 +504,22 @@
         return;
       }
       this.$.projectDetails.projectId = params.id;
+    }
+
+    _setupApiConsole(params) {
+      if (!params) {
+        return;
+      }
+      const {id, version} = params;
+      if (!id) {
+        return;
+      }
+      this.shadowRoot.querySelector('arc-api-processor')
+      .getApi(id, version)
+      .then((api) => this._setApiData(api))
+      .catch((cause) => {
+        this.notifyError(cause.message);
+      });
     }
     /**
      * The overlay is not included by default in the view so it loads the
@@ -605,15 +676,21 @@
 
     _apiDataHandler(e) {
       const api = e.detail.api;
-      this._loadComponent('api-console/api-console')
+      this._setApiData(api)
       .then(() => {
-        this.$.aware.raml = api;
         this._dispatchNavigate({
           base: 'api-console'
         });
-        this._setIsApiConsole(true);
+      });
+    }
+
+    _setApiData(api) {
+      return this._loadComponent('api-console/api-console')
+      .then(() => {
+        this.$.aware.raml = api;
         this.$.apic.selected = 'summary';
         this.$.apic.selectedType = 'summary';
+        this._setIsApiConsole(true);
       })
       .catch((cmp) => this._reportComponentLoadingError(cmp));
     }
@@ -845,6 +922,55 @@
         this._setIsApiConsole(false);
       }
       this.openWorkspace();
+    }
+
+    _saveApi() {
+      this.shadowRoot.querySelector('arc-api-processor').save();
+    }
+
+    _apiActionMenuChanged(e) {
+      const selected = e.detail.value;
+      if (selected === undefined || selected === -1) {
+        return;
+      }
+      const item = e.target.selectedItem;
+      const action = item.dataset.action;
+      let p;
+      switch (action) {
+        case 'delete':
+          p = this.shadowRoot.querySelector('arc-api-processor').delete();
+          break;
+        case 'delete-version':
+          const v = this.shadowRoot.querySelector('#apiVersionSelector').selected;
+          p = this.shadowRoot.querySelector('arc-api-processor').deleteVersion(v);
+          break;
+        case 'save-oas':
+          this.shadowRoot.querySelector('arc-api-processor').saveAs('oas');
+          break;
+        case 'save-raml':
+          this.shadowRoot.querySelector('arc-api-processor').saveAs('raml');
+          break;
+        case 'upload-exchange':
+          log.info('Not yet supported.');
+          break;
+      }
+      e.target.selected = undefined;
+      if (p) {
+        p.catch((cause) => this.notifyError(cause.message));
+      }
+    }
+
+    _apiVersionMenuChanged(e) {
+      const {value} = e.detail;
+      if (!value) {
+        return;
+      }
+      const id = this.shadowRoot.querySelector('arc-api-processor').apiInfo._id;
+      const params = {
+        id,
+        version: value
+      };
+      this._setupApiConsole(params);
     }
   }
   window.customElements.define(ArcElectron.is, ArcElectron);
