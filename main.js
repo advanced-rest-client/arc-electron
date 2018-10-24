@@ -1,4 +1,5 @@
 const {ipcMain, app, shell} = require('electron');
+const {ThemesProtocolHandler} = require('./scripts/main/theme-protocol');
 const {ArcWindowsManager} = require('./scripts/main/windows-manager');
 const {UpdateStatus} = require('./scripts/main/update-status');
 const {AppMenuService} = require('./scripts/main/app-menu-service');
@@ -42,6 +43,7 @@ class Arc {
    * Google Drive menu.
    */
   _registerProtocols() {
+    // protocol.registerStandardSchemes(['themes']);
     log.info('Registering arc-file protocol');
     app.setAsDefaultProtocolClient('arc-file');
     app.on('open-url', (event, url) => {
@@ -59,6 +61,15 @@ class Arc {
     });
   }
   /**
+   * Registers protocols that can be registered only after the `ready`
+   * event is dispatched.
+   */
+  _initializeProtocolsReady() {
+    const tp = new ThemesProtocolHandler();
+    tp.register();
+    this.themesProtocol = tp;
+  }
+  /**
    * Processes start arguments
    * @return {Object} [description]
    */
@@ -72,11 +83,14 @@ class Arc {
    * @return {Promise}
    */
   _readyHandler() {
-    this._initializePreferencesManager();
-    this._initializeSourcesManager();
-    const {AppDefaults} = require('./scripts/main/app-defaults');
-    const defaults = new AppDefaults();
-    return defaults.prepareEnvironment(this.sourcesManager)
+    return this._initializePreferencesManager()
+    .then(() => {
+      this._initializeSourcesManager();
+      this._initializeProtocolsReady();
+      const {AppDefaults} = require('./scripts/main/app-defaults');
+      const defaults = new AppDefaults();
+      return defaults.prepareEnvironment(this.sourcesManager);
+    })
     .catch((cause) => {
       log.error('Unable to prepare the environment.', cause.message);
       log.error(cause);
@@ -109,7 +123,9 @@ class Arc {
   _initializePreferencesManager() {
     this.prefs = new PreferencesManager(this.initOptions);
     this.prefs.observe();
-    this.prefs.load()
+    this.prefs.on('settings-changed', this._settingsChangeHandler.bind(this));
+    global.arcPreferences = this.prefs;
+    return this.prefs.load()
     .then((settings) => {
       if (settings.popupMenuExperimentEnabled) {
         if (this.menu) {
@@ -119,12 +135,12 @@ class Arc {
         }
       }
     });
-    this.prefs.on('settings-changed', this._settingsChangeHandler.bind(this));
   }
 
   _initializeSourcesManager() {
     this.sourcesManager = new SourcesManager(this.prefs, this.initOptions);
     this.sourcesManager.listen();
+    global.arcSources = this.sourcesManager;
   }
 
   _initializeMenu() {
