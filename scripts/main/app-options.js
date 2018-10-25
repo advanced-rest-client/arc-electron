@@ -31,6 +31,11 @@ class AppOptions {
       name: '--disable-log',
       shortcut: '-l',
       type: Boolean
+    }, {
+      // Opens ARC in dev mode (opened console, verbose log)
+      name: '--debug',
+      shortcut: '-d',
+      type: Boolean
     }];
   }
   /**
