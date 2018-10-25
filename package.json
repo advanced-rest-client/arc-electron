@@ -26,14 +26,14 @@
   "devDependencies": {
     "bower": "^1.8.2",
     "chai": "^4.1.2",
-    "electron": "^2.0.10",
+    "electron": "^3.0.6",
     "electron-builder": "^20.28.4",
-    "electron-mocha": "^5.0.0",
+    "electron-mocha": "^6.0.4",
     "eslint": "^4.18.1",
     "eslint-config-google": "^0.9.1",
     "glob": "^7.1.2",
     "mocha": "^4.1.0",
-    "spectron": "^4.0.0"
+    "spectron": "^5.0.0"
   },
   "dependencies": {
     "@advanced-rest-client/arc-electron-preferences": "1.0.0-rc2",
@@ -45,8 +45,8 @@
     "@advanced-rest-client/electron-request": "1.0.0-rc6",
     "@advanced-rest-client/electron-session-state": "1.0.0-rc1",
     "camelcase": "^4.1.0",
-    "electron-log": "^2.2.16",
-    "electron-updater": "^3.1.1",
+    "electron-log": "^2.2.17",
+    "electron-updater": "^3.1.2",
     "form-data": "^2.3.2",
     "fs-extra": "^4.0.3",
     "node-fetch": "^1.7.3",
