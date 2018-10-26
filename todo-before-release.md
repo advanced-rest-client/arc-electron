@@ -2,5 +2,4 @@
 
 -   Saved screen
 -   History screen
--   APIs list screen
 -   Unified application search - single search bar instead of separate search bars in each list
