@@ -409,7 +409,12 @@
         narrow: {
           type: Boolean,
           observer: '_narrowChanged'
-        }
+        },
+        /**
+         * Currently opened application screen
+         * @type {String}
+         */
+        page: {type: String, value: 'request', observer: '_pageChanged'}
       };
     }
 
@@ -456,6 +461,78 @@
           this._setupApiConsole(params);
           break;
       }
+    }
+
+    /**
+     * Loads a page component when page changes.
+     * @param {String} page Current page
+     */
+    _pageChanged(page) {
+      let id;
+      let path;
+      switch (page) {
+        case 'request':
+          id = 'arc-request-workspace';
+          path = 'arc-request-workspace/arc-request-workspace';
+          break;
+        case 'project':
+          id = 'project-details';
+          path = 'project-details/project-details';
+          break;
+        case 'hosts-rules':
+          id = 'host-rules-editor';
+          path = 'host-rules-editor/host-rules-editor';
+          break;
+        case 'cookie-manager':
+          id = 'cookie-manager';
+          path = 'cookie-manager/cookie-manager';
+          break;
+        case 'settings':
+          id = 'arc-settings-panel';
+          path = 'arc-settings-panel/arc-settings-panel';
+          break;
+        case 'about':
+          id = 'about-arc-electron';
+          path = 'about-arc-electron/about-arc-electron';
+          break;
+        case 'socket':
+          id = 'websocket-panel';
+          path = 'websocket-panel/websocket-panel';
+          break;
+        case 'exchange-search':
+          id = 'exchange-search-panel';
+          path = 'exchange-search-panel/exchange-search-panel';
+          break;
+        case 'api-console':
+          id = 'api-console';
+          path = 'api-console/api-console';
+          break;
+        case 'drive':
+          id = 'google-drive-browser';
+          path = 'google-drive-browser/google-drive-browser';
+          break;
+        case 'data-import':
+          id = 'import-panel';
+          path = 'import-panel/import-panel';
+          break;
+        case 'data-export':
+          id = 'export-panel';
+          path = 'export-panel/export-panel';
+          break;
+        case 'rest-projects':
+          id = 'rest-apis-list-panel';
+          path = 'rest-apis-list-panel/rest-apis-list-panel';
+          break;
+        default:
+          console.error(`The base route ${page} is not recognized`);
+          return;
+      }
+      const cls = window.customElements.get(id);
+      if (cls) {
+        return;
+      }
+      this._loadComponent(path)
+      .catch((cmp) => this._reportComponentLoadingError(cmp));
     }
 
     initApplication() {
