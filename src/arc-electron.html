@@ -523,6 +523,10 @@
           id = 'rest-apis-list-panel';
           path = 'rest-apis-list-panel/rest-apis-list-panel';
           break;
+        case 'history':
+          id = 'history-panel';
+          path = 'history-panel/history-panel';
+          break;
         default:
           console.error(`The base route ${page} is not recognized`);
           return;
@@ -547,14 +551,14 @@
       }
       const {id, type} = params;
       if (!type || !this.$.workspace.addEmptyRequest) {
-        this.log.info('arc-electron::_setupRequest::Missing use case implementation?');
+        this.log.info('arc-electron(app)::_setupRequest::Missing use case implementation?');
         return;
       }
       if (!type || type === 'new') {
         if (this.$.workspace.addEmptyRequest) {
           this.$.workspace.addEmptyRequest();
         } else {
-          this.log.info('arc-electron::_setupRequest::Missing use case implementation?');
+          this.log.info('arc-electron(app)::_setupRequest::Missing use case implementation?');
         }
         return;
       }

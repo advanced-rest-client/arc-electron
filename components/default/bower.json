@@ -68,7 +68,8 @@
     "response-history-saver": "advanced-rest-client/response-history-saver#2.0.0-preview",
     "arc-electron-experiment-settings": "advanced-rest-client/arc-electron-experiment-settings#2.0.0-preview",
     "iron-media-query": "PolymerElements/iron-media-query#^2.1.0",
-    "rest-apis-list-panel": "advanced-rest-client/rest-apis-list-panel#2.0.0-preview"
+    "rest-apis-list-panel": "advanced-rest-client/rest-apis-list-panel#2.0.0-preview",
+    "history-panel": "advanced-rest-client/history-panel#2.0.0-preview"
   },
   "devDependencies": {
     "web-component-tester": "^6.0.0",
