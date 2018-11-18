@@ -59,6 +59,7 @@ class ThemesProtocolHandler {
 
   _requestHandler(request, callback) {
     const url = request.url.substr(9);
+    log.debug('ThemesProtocolHandler::_requestHandler::' + url);
     if (url.indexOf('/') === -1) {
       return this._loadInstalledTheme(url, callback);
     }
@@ -66,16 +67,20 @@ class ThemesProtocolHandler {
   }
 
   _loadInstalledTheme(location, callback) {
+    log.debug('ThemesProtocolHandler::loading theme from ' + location);
     return this._loadThemeInfo()
     .then((themes) => {
+      log.debug('Got themes list');
       const theme = this._findThemeInfo(location, themes);
       if (theme) {
+        log.debug('Theme found. Reading theme file.');
         const file = path.join(theme.path, theme.main);
         return fs.readFile(file, 'utf8');
       }
     })
     .then((data) => {
       if (data) {
+        log.debug('Sending theme file to renderer.');
         callback({
           data,
           mimeType: 'text/html',
@@ -95,6 +100,7 @@ class ThemesProtocolHandler {
   }
 
   _loadFileTheme(location, callback) {
+    log.debug('ThemesProtocolHandler::loading theme from ' + location);
     return fs.readFile(location, 'utf8')
     .then((data) => {
       callback({

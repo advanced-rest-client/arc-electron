@@ -65,7 +65,9 @@ class Arc {
    * event is dispatched.
    */
   _initializeProtocolsReady() {
-    const tp = new ThemesProtocolHandler();
+    const tp = new ThemesProtocolHandler({
+      debug: this.initOptions.debug
+    });
     tp.register();
     this.themesProtocol = tp;
   }
