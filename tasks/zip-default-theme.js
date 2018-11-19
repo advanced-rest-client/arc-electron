@@ -51,7 +51,7 @@ class ThemeArchive {
   }
 }
 const args = process.argv.splice(2);
-var theme;
+let theme;
 if (args[0] === 'anypoint') {
   theme = 'anypoint-theme';
 } else {

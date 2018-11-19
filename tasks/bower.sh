@@ -1,5 +1,3 @@
-cd components/anypoint
-bower update
-cd ../default
+cd components/default
 bower update
 cd ../../
