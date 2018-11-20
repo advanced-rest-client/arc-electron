@@ -58,12 +58,16 @@ class ThemesProtocolHandler {
   }
 
   _requestHandler(request, callback) {
-    const url = request.url.substr(9);
+    let url = request.url.substr(9);
     log.debug('ThemesProtocolHandler::_requestHandler::' + url);
-    if (url.indexOf('/') === -1) {
-      return this._loadInstalledTheme(url, callback);
+    try {
+      fs.accessSync(url, fs.constants.R_OK | fs.constants.X_OK);
+      return this._loadFileTheme(url, callback);
+    } catch (_) {}
+    if (url === 'dd1b715f-af00-4ee8-8b0c-2a262b3cf0c8') {
+      url = 'advanced-rest-client/arc-electron-default-theme';
     }
-    return this._loadFileTheme(url, callback);
+    return this._loadInstalledTheme(url, callback);
   }
 
   _loadInstalledTheme(location, callback) {
@@ -73,8 +77,8 @@ class ThemesProtocolHandler {
       log.debug('Got themes list');
       const theme = this._findThemeInfo(location, themes);
       if (theme) {
-        log.debug('Theme found. Reading theme file.');
-        const file = path.join(theme.path, theme.main);
+        const file = path.join(this.themesBasePath, theme.mainFile);
+        log.debug('Theme found. Reading theme file: ' + file);
         return fs.readFile(file, 'utf8');
       }
     })
