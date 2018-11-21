@@ -12,7 +12,7 @@ const {AppOptions} = require('./scripts/main/app-options');
 const {RemoteApi} = require('./scripts/main/remote-api');
 const {ContentSearchService} = require('@advanced-rest-client/arc-electron-search-service/main');
 const {AppPrompts} = require('./scripts/main/app-prompts.js');
-const {SourcesManager} = require('@advanced-rest-client/arc-electron-sources-manager/main');
+const {SourcesManager} = require('./scripts/packages/sources-manager/main');
 const log = require('electron-log');
 /**
  * Main application object controling app's lifecycle.

@@ -38,7 +38,6 @@
   "dependencies": {
     "@advanced-rest-client/arc-electron-preferences": "1.0.0-rc2",
     "@advanced-rest-client/arc-electron-search-service": "0.1.0-rc0",
-    "@advanced-rest-client/arc-electron-sources-manager": "0.1.0-rc8",
     "@advanced-rest-client/arc-electron-plugin-manager": "0.1.0-rc",
     "@advanced-rest-client/electron-amf-service": "0.1.0-rc3",
     "@advanced-rest-client/electron-drive": "0.1.0-rc3",
@@ -53,7 +52,8 @@
     "live-plugin-manager": "^0.12.0",
     "node-fetch": "^1.7.3",
     "ntlm": "^0.1.3",
-    "parse5": "^4.0.0"
+    "parse5": "^4.0.0",
+    "semver": "^5.6.0"
   },
   "build": {
     "appId": "com.mulesoft.arc",
