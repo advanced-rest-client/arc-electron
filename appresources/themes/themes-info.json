@@ -6,7 +6,8 @@
     "version": "2.0.0-preview",
     "location": "@advanced-rest-client/arc-electron-default-theme",
     "mainFile": "@advanced-rest-client/arc-electron-default-theme/arc-electron-default-theme.html",
-    "description": "Advanced REST Client default theme"
+    "description": "Advanced REST Client default theme",
+    "isDefault": true
   },
   {
     "_id": "advanced-rest-client/arc-electron-anypoint-theme",
@@ -15,7 +16,8 @@
     "version": "2.0.0-preview",
     "location": "@advanced-rest-client/arc-electron-anypoint-theme",
     "mainFile": "@advanced-rest-client/arc-electron-anypoint-theme/arc-electron-anypoint-theme.html",
-    "description": "Advanced REST Client anypoint theme"
+    "description": "Advanced REST Client anypoint theme",
+    "isDefault": true
   },
   {
     "_id": "advanced-rest-client/arc-electron-dark-theme",
@@ -24,6 +26,7 @@
     "version": "2.0.0-preview",
     "location": "@advanced-rest-client/arc-electron-dark-theme",
     "mainFile": "@advanced-rest-client/arc-electron-dark-theme/arc-electron-dark-theme.html",
-    "description": "Advanced REST Client dark theme"
+    "description": "Advanced REST Client dark theme",
+    "isDefault": true
   }
 ]

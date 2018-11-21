@@ -310,7 +310,7 @@
               exchange-client-id="59KaqF90hLgZMJec"
               force-oauth-events></exchange-search-panel>
             <host-rules-editor data-route="hosts-rules"></host-rules-editor>
-            <themes-panel data-route="themes-panel"></themes-panel>
+            <themes-panel data-route="themes-panel" add-enabled></themes-panel>
           </iron-pages>
         </div>
         <template is="dom-if" if="[[messageCenterOpened]]">
@@ -550,6 +550,10 @@
         case 'saved':
           id = 'saved-requests-panel';
           path = 'saved-requests-panel/saved-requests-panel';
+          break;
+        case 'themes-panel':
+          id = 'themes-panel';
+          path = 'themes-panel/themes-panel';
           break;
         default:
           console.error(`The base route ${page} is not recognized`);
