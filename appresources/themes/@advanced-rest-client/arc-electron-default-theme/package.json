@@ -1,6 +1,6 @@
 {
   "name": "@advanced-rest-client/arc-electron-default-theme",
-  "description": "A default theme definition for API console",
+  "description": "A default theme definition for Advanced REST Client",
   "version": "2.0.0-preview",
   "license": "Apache-2.0",
   "main": "arc-electron-default-theme.html",

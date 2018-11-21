@@ -1,6 +1,6 @@
 {
   "name": "@advanced-rest-client/arc-electron-anypoint-theme",
-  "description": "Anypoint theme definition for API console",
+  "description": "Anypoint theme definition for Advanced REST Client",
   "version": "2.0.0-preview",
   "license": "Apache-2.0",
   "main": "arc-electron-anypoint-theme.html",

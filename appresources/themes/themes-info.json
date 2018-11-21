@@ -1,4 +1,5 @@
-[{
+[
+  {
     "_id": "advanced-rest-client/arc-electron-default-theme",
     "title": "Default theme",
     "name": "@advanced-rest-client/arc-electron-default-theme",
@@ -15,5 +16,14 @@
     "location": "@advanced-rest-client/arc-electron-anypoint-theme",
     "mainFile": "@advanced-rest-client/arc-electron-anypoint-theme/arc-electron-anypoint-theme.html",
     "description": "Advanced REST Client anypoint theme"
+  },
+  {
+    "_id": "advanced-rest-client/arc-electron-dark-theme",
+    "title": "Dark theme",
+    "name": "@advanced-rest-client/arc-electron-dark-theme",
+    "version": "2.0.0-preview",
+    "location": "@advanced-rest-client/arc-electron-dark-theme",
+    "mainFile": "@advanced-rest-client/arc-electron-dark-theme/arc-electron-dark-theme.html",
+    "description": "Advanced REST Client dark theme"
   }
 ]

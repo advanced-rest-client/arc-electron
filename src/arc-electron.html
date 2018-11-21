@@ -8,7 +8,6 @@
       display: block;
       -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
       @apply --layout-fit;
-      background-color: var(--primary-background-color);
       --app-drawer-width: 320px;
     }
 
@@ -25,6 +24,7 @@
       display: flex;
       padding: 0 24px;
       background-color: #fff;
+      background-color: var(--primary-background-color, #fff);
       @apply --shadow-elevation-4dp;
       position: relative;
       z-index: 3;
@@ -47,9 +47,21 @@
 
     nav {
       width: var(--app-drawer-width);
-      background-color: #fff;
+      color: var(--arc-menu-color);
+      background-color: var(--primary-background-color, #fff);
       position: fixed;
       z-index: 2;
+      --paper-item-body-secondary-color: var(--arc-menu-paper-item-body-secondary-color);
+      --paper-item: {
+        border-left: none;
+        border-right: none;
+        padding: 0 15px;
+      }
+    }
+
+    app-toolbar {
+      background-color: var(--arc-toolbar-background-color);
+      color: var(--arc-toolbar-color);
     }
 
     .env-container {
@@ -61,12 +73,19 @@
     environment-selector {
       margin-left: 8px;
       max-width: 120px;
+      --paper-input-container-input-color: var(--arc-toolbar-environment-selector-input-color);
+    }
+
+    .api-version-selector {
+      --paper-input-container-input-color: var(--arc-toolbar-api-version-selector-color);
+      --paper-input-container-color: var(--arc-toolbar-api-version-selector-label-color);
     }
 
     .var-panel {
       max-width: calc(100vw - var(--app-drawer-width, 0) - 32px);
       max-height: calc(100vh - 64px - 32px);
-      background-color: #fff;
+      background-color: var(--arc-toolbar-variables-panel-background, #fff);
+      color: var(--arc-toolbar-variables-panel-color);
     }
 
     arc-info-messages {
@@ -89,7 +108,7 @@
     }
 
     paper-icon-button[active] {
-      color: var(--accent-color);
+      color: var(--arc-toolbar-paper-icon-button-active-color, var(--accent-color));
     }
 
     .nav-notification-button {
@@ -105,7 +124,8 @@
     }
 
     .toolbar-button {
-      background-color: #fff;
+      background-color: var(--arc-toolbar-button-background-color, #fff);
+      color: var(--arc-toolbar-button-color, inherit);
     }
     </style>
     <!-- Database support -->
@@ -170,7 +190,7 @@
             </template>
             <template is="dom-if" if="[[apiIsSaved]]">
               <template is="dom-if" if="[[apiMultiVersionVersion]]">
-                <paper-dropdown-menu label="API version">
+                <paper-dropdown-menu label="API version" class="api-version-selector">
                   <paper-listbox id="apiVersionSelector" slot="dropdown-content" selected="[[apiVersion]]" attr-for-selected="data-version" on-selected-changed="_apiVersionMenuChanged">
                     <template is="dom-repeat" items="[[apiVersions]]">
                       <paper-item data-version$="[[item]]">[[item]]</paper-item>

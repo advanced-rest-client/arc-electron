@@ -117,12 +117,25 @@ class ArcInit {
     }
     this.workspaceManager = new WorkspaceManager(this.workspaceIndex, opts);
     this.workspaceManager.observe();
+
     return this._createApp()
-    .then(() => this.themeManager.loadTheme(this.initConfig.theme))
-    .catch(() => {
-      if (this.initConfig.theme !== 'dd1b715f-af00-4ee8-8b0c-2a262b3cf0c8') {
-        return this.themeManager.loadTheme(this.initConfig.theme);
+    .then(() => this.prefProxy.load())
+    .then((conf) => {
+      const defaultTheme = 'advanced-rest-client/arc-electron-default-theme';
+      let theme = conf.theme;
+      if (!theme || theme === 'dd1b715f-af00-4ee8-8b0c-2a262b3cf0c8') {
+        theme = defaultTheme;
+      } else if (theme === '859e0c71-ce8b-44df-843b-bca602c13d06') {
+         theme = 'advanced-rest-client/arc-electron-anypoint-theme';
       }
+      return this.themeManager.loadTheme(theme)
+      .catch(() => {
+        if (theme !== defaultTheme) {
+          return this.themeManager.loadTheme(defaultTheme);
+        }
+      })
+      // Theme is not a fatal error
+      .catch(() => {});
     })
     .catch((cause) => this.reportFatalError(cause));
   }

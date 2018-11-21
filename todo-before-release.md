@@ -4,3 +4,6 @@
 -   themes-panel
 -   Remove `anypoint` components and maintain single build
 -   REST APIs - storing unresolved model and resolving it when rendering API console. This way it enables API editing (in the future)
+
+
+ln -s /Users/ppsztyc/workspace/arc/arc-electron/appresources/themes/@advanced-rest-client/arc-electron-dark-theme ./arc-electron-dark-theme
