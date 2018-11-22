@@ -80,7 +80,7 @@ to all elements.
       @apply --paper-font-body2;
     }
 
-    --arc-font-caption: {
+    --arc-font-caption: {-code-mirror-property-color
       @apply --paper-font-caption;
     }
 
@@ -190,6 +190,7 @@ to all elements.
     --arc-request-workspace-tab-dragging-background-color: #607D8B;
     --arc-request-workspace-tabs-close-color: #B0BEC5;
     --arc-request-workspace-tabs-add-color: #ECEFF1;
+    --arc-request-workspace-tabs-add-color-hover: #fff;
     --arc-request-workspace-tabs-color: #B0BEC5;
 
     --paper-input-container-input-color: #fff;
@@ -235,6 +236,7 @@ to all elements.
     --response-status-view-toggle-icon-color: rgba(255, 255, 255, 0.54);
     --response-status-view-toggle-icon-hover-color: rgba(255, 255, 255, 0.78);
     --response-status-view-badge-color: #000;
+    --request-timings-progress-background: #CFD8DC;
     --context-menu-item-background-color-hover: #607D8B;
     --paper-autocomplete-background-color: #455A64;
     --paper-chip-autocomplete-background-color: #455A64;
@@ -276,6 +278,9 @@ to all elements.
     --google-drive-list-view-file-icon-color:  rgba(255,255,255,.64);
     --google-drive-list-view-search-icon-color:  rgba(255,255,255,.64);
     --google-drive-list-view-selected-background-color: var(--list-item-selection-color);
+    --arc-settings-panel-icon-color: rgba(255, 255, 255, 0.54);
+    --arc-settings-panel-description-color: rgba(255, 255, 255, 0.78);
+    --arc-settings-panel-card-background-color: #263238;
 
     --secondary-action-button-color: #fff;
     --action-button: {
@@ -325,6 +330,16 @@ to all elements.
     --http-code-snippets: {
       color: #fff;
     }
+
+    --code-mirror-background-color: var(--code-background-color);
+    --code-mirror-punctuation-color: #fff;
+    --code-mirror-string-color: var(--code-type-text-value-color);
+    --code-mirror-number-color: var(--code-type-number-value-color);
+    --code-mirror-atom-color: var(--code-type-boolean-value-color);
+    --code-mirror-cursor-color: #fff;
+    --code-mirror-variable-color: #FFC107;
+
+    --arc-status-code-color-300: #3F51B5;
   }
   </style>
 </custom-style>
