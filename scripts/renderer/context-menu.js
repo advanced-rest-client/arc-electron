@@ -169,6 +169,9 @@ class ArcContextMenu {
       case 'request-panel-close-other-tabs':
         this.app.closeOtherWorkspaceTabs(this._getTabIndex());
         break;
+      case 'request-panel-duplicate-tab':
+        this.app.duplicateWorkspaceTab(this._getTabIndex());
+        break;
     }
   }
 
