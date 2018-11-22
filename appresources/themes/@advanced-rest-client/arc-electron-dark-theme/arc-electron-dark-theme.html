@@ -19,15 +19,12 @@ to all elements.
 -->
 <custom-style>
   <style>
-  html {
-    color: #fff;
-  }
   :root {
     --primary-color: #00A2DF;
-    --primary-text-color: rgba(0, 0, 0, 0.87);
+    --primary-text-color: rgba(255, 255, 255, 0.87);
     --primary-background-color: #37474F;
     --secondary-color: #506773;
-    --secondary-text-color: #737373;
+    --secondary-text-color: #9E9E9E;
     --disabled-text-color: #9b9b9b;
     --divider-color: #dbdbdb;
 
@@ -201,6 +198,9 @@ to all elements.
       padding: 0 16px;
     }
 
+    --list-item-selection-color: #607D8B;
+    --list-item-dragging-color: #263238;
+
     --paper-listbox-color: #fff;
     --paper-listbox-background-color: #455A64;
     --paper-dropdown-menu-color: #fff;
@@ -255,7 +255,29 @@ to all elements.
     --saved-request-editor-caption-icon-color: rgba(255,255,255,.64);
     --saved-panel-list-secondary-action-color: #fff;
     --history-panel-list-secondary-action-color: #fff;
+    --project-requests-list-secondary-action-color: #fff;
+    --cookies-list-item-secondary-action-color: #fff;
+    --project-details-action-button-color: #fff;
+    --project-details-description-button-color: #fff;
     --paper-item-body-secondary-color: #E0E0E0;
+    --arc-menu-paper-item-body-secondary-color: var(--secondary-text-color);
+    --project-details-description-color: var(--primary-text-color);
+    --project-requests-list-item-dragging-background-color: var(--list-item-dragging-color);
+    --projects-menu-requests-item-dragging-background-color: var(--list-item-dragging-color);
+    --project-requests-list-item-selected-background-color: var(--list-item-selection-color);
+    --cookies-list-item-selected-background-color: var(--list-item-selection-color);
+    --websocket-history-time-label: rgba(255,255,255,.64);
+    --websocket-data-view-table-color: #fff;
+    --web-url-input-background-color: #546E7A;
+    --import-data-inspector-meta-color: rgba(255, 255, 255, 0.78);
+    --import-table-auth-no-info-color: rgba(255, 255, 255, 0.78);
+    --import-panel-action-button: #fff;
+    --import-table-title-request-project-background-color: #263238;
+    --google-drive-list-view-file-icon-color:  rgba(255,255,255,.64);
+    --google-drive-list-view-search-icon-color:  rgba(255,255,255,.64);
+    --google-drive-list-view-selected-background-color: var(--list-item-selection-color);
+
+    --secondary-action-button-color: #fff;
     --action-button: {
       background-color: #F5F5F5;
       color: #607D8B;
