@@ -117,12 +117,15 @@ class ArcInit {
     }
     this.workspaceManager = new WorkspaceManager(this.workspaceIndex, opts);
     this.workspaceManager.observe();
-
-    return this._createApp()
-    .then(() => this.prefProxy.load())
-    .then((conf) => {
+    let appConfig;
+    return this.prefProxy.load()
+    .then((cnf) => {
+      appConfig = cnf;
+      return this._createApp(cnf, opts);
+    })
+    .then(() => {
       const defaultTheme = 'advanced-rest-client/arc-electron-default-theme';
-      let theme = conf.theme;
+      let theme = appConfig.theme;
       if (!theme || theme === 'dd1b715f-af00-4ee8-8b0c-2a262b3cf0c8') {
         theme = defaultTheme;
       } else if (theme === '859e0c71-ce8b-44df-843b-bca602c13d06') {
@@ -154,12 +157,13 @@ class ArcInit {
    * @return {Promise} Promise resolved when element is loaded and ready
    * rendered.
    */
-  _createApp() {
+  _createApp(config, opts) {
     if (this.created) {
       return Promise.resolve();
     }
     // console.log('Importing components from ', this.initConfig.importFile);
-    return this._importHref(this.initConfig.importFile)
+    const file = opts.importFile || './import.html';
+    return this._importHref(file)
     .catch(() => {
       throw new Error('Unable to load components import file.');
     })
@@ -177,6 +181,7 @@ class ArcInit {
       // console.info('Initializing arc-electron element...');
       const app = document.createElement('arc-electron');
       app.id = 'app';
+      app.config = config;
       this._setupApp(app);
       document.body.appendChild(app);
       this.created = true;
@@ -216,7 +221,7 @@ class ArcInit {
    */
   _setupApp(app) {
     // console.info('Initializing ARC app');
-    app.componentsDir = this.initConfig.appComponents;
+    // app.componentsDir = this.initConfig.appComponents;
     app.appVersion = versionInfo.appVersion;
     app.browserVersion = versionInfo.chrome;
     app.initApplication();
