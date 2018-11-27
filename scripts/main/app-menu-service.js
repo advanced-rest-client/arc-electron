@@ -49,15 +49,11 @@ class AppMenuService {
     if (this.menuWindows.has(type)) {
       return;
     }
-    this.sourcesManager.getAppConfig()
-    .then((opts) => {
-      const bw = this.__getNewWindow(type, sizing);
-      this.menuWindows.set(type, bw);
-      const importFile = path.join(opts.importDir, 'import-app-menu.html');
-      this.__loadPage(type, bw, opts.themeFile, importFile);
-      this.__attachListeners(bw);
-      this.wm.notifyAll('popup-app-menu-opened', type);
-    });
+    const bw = this.__getNewWindow(type, sizing);
+    this.menuWindows.set(type, bw);
+    this.__loadPage(type, bw);
+    this.__attachListeners(bw);
+    this.wm.notifyAll('popup-app-menu-opened', type);
   }
 
   /**
@@ -90,10 +86,8 @@ class AppMenuService {
    * Creates application URL and loads app into the window.
    * @param {String} type
    * @param {BrowserWindow} bw
-   * @param {String} themeFile
-   * @param {String} importFile
    */
-  __loadPage(type, bw, themeFile, importFile) {
+  __loadPage(type, bw) {
     const dest = path.join(__dirname, '..', '..', 'src',
       'arc-menu-window.html');
     const full = url.format({
@@ -101,9 +95,7 @@ class AppMenuService {
       protocol: 'file:',
       slashes: true,
       query: {
-        type,
-        themeFile,
-        importFile
+        type
       }
     });
     bw.loadURL(full);

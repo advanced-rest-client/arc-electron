@@ -34,11 +34,6 @@ class SourcesManager {
      */
     this.themesBasePath = path.join(app.getPath('userData'), 'themes');
     /**
-     * A base path to the application sources components.
-     * @type {String}
-     */
-    this.sourcesBasePath = 'components';
-    /**
      * Location of the installed themes info file.
      * @type {String}
      */
@@ -133,58 +128,9 @@ class SourcesManager {
     }
     const so = this.startupOptions;
     const result = {
-      appComponents: this._getAppComponentsLocation(settings, so),
-      importDir: this._getImportDirLocation(settings),
-      importFile: this._getImportFileLocation(settings, so),
-      searchFile: this._getSearchFileLocation(settings, so),
-      theme: settings.theme || this.defaultTheme
+      searchFile: this._getSearchFileLocation(settings, so)
     };
     return result;
-  }
-  /**
-   * Returns name for the main theme location.
-   * @return {String} Path component to the theme main folder.
-   */
-  _getThemePathComponent() {
-    return 'default';
-  }
-  /**
-   * Reads application web components location.
-   * Startup options are tested first for appComponents path.
-   * Then it checks which theme is loaded and based on this information
-   * it creates a path.
-   * @param {Object} settings Current application settings.
-   * @param {Object} so Startup options
-   * @return {String} Path to application component.
-   */
-  _getAppComponentsLocation(settings, so) {
-    if (so.appComponents) {
-      return this.resolvePath(so.appComponents);
-    }
-    const theme = this._getThemePathComponent(settings);
-    return path.join(this.sourcesBasePath, theme);
-  }
-  /**
-   * Reads folder location with import files.
-   * @param {Object} settings Current application settings.
-   * @return {String}
-   */
-  _getImportDirLocation(settings) {
-    const theme = this._getThemePathComponent(settings);
-    return path.join(this.root, this.sourcesBasePath, theme);
-  }
-  /**
-   * Reads web components import file location.
-   * @param {Object} settings Current application settings.
-   * @param {Object} so Startup options
-   * @return {String} Path to web component import file
-   */
-  _getImportFileLocation(settings, so) {
-    if (so.importFile) {
-      return this.resolvePath(so.importFile);
-    }
-    const theme = this._getThemePathComponent(settings);
-    return path.join(this.root, this.sourcesBasePath, theme, this.importFileName);
   }
   /**
    * Reads web components import file location for search window.
@@ -196,8 +142,7 @@ class SourcesManager {
     if (so.searchFile) {
       return this.resolvePath(so.searchFile);
     }
-    const theme = this._getThemePathComponent(settings);
-    return path.join(this.root, this.sourcesBasePath, theme, this.searchFileName);
+    return path.join(this.root, this.searchFileName);
   }
 
   _findThemeInfo(id, themes) {

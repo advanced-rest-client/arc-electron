@@ -155,9 +155,29 @@ class ThemeManager {
   /**
    * Loads theme file and activates it.
    * @param {String} themeId ID of installed theme of location of theme file.
+   *
+   * @param {Boolean} noFallback By default the manager will try to revert to default
+   * theme when passed theme cannot be loaded. When this opttion is set then
+   * it will throw error instead of loading default theme.
    * @return {Promise}
    */
-  loadTheme(themeId) {
+  loadTheme(themeId, noFallback) {
+    const defaultTheme = 'advanced-rest-client/arc-electron-default-theme';
+    if (!themeId || themeId === 'dd1b715f-af00-4ee8-8b0c-2a262b3cf0c8') {
+      themeId = defaultTheme;
+    } else if (themeId === '859e0c71-ce8b-44df-843b-bca602c13d06') {
+      themeId = 'advanced-rest-client/arc-electron-anypoint-theme';
+    }
+    return this._loadTheme(themeId)
+    .catch((cause) => {
+      if (!noFallback && themeId !== defaultTheme) {
+        return this._loadTheme(defaultTheme);
+      }
+      throw cause;
+    });
+  }
+
+  _loadTheme(themeId) {
     return new Promise((resolve) => {
       // Apparently Polymer handles imports with `<custom-styles>`
       // automatically and inserts it into the head section

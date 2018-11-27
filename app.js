@@ -117,23 +117,14 @@ class ArcInit {
     }
     this.workspaceManager = new WorkspaceManager(this.workspaceIndex, opts);
     this.workspaceManager.observe();
-
-    return this._createApp()
-    .then(() => this.prefProxy.load())
-    .then((conf) => {
-      const defaultTheme = 'advanced-rest-client/arc-electron-default-theme';
-      let theme = conf.theme;
-      if (!theme || theme === 'dd1b715f-af00-4ee8-8b0c-2a262b3cf0c8') {
-        theme = defaultTheme;
-      } else if (theme === '859e0c71-ce8b-44df-843b-bca602c13d06') {
-         theme = 'advanced-rest-client/arc-electron-anypoint-theme';
-      }
-      return this.themeManager.loadTheme(theme)
-      .catch(() => {
-        if (theme !== defaultTheme) {
-          return this.themeManager.loadTheme(defaultTheme);
-        }
-      })
+    let appConfig;
+    return this.prefProxy.load()
+    .then((cnf) => {
+      appConfig = cnf;
+      return this._createApp(cnf);
+    })
+    .then(() => {
+      return this.themeManager.loadTheme(appConfig.theme)
       // Theme is not a fatal error
       .catch(() => {});
     })
@@ -151,32 +142,19 @@ class ArcInit {
   /**
    * Creates application main element.
    *
+   * @param {Object} config Current configuration.
    * @return {Promise} Promise resolved when element is loaded and ready
    * rendered.
    */
-  _createApp() {
+  _createApp(config) {
     if (this.created) {
       return Promise.resolve();
     }
-    // console.log('Importing components from ', this.initConfig.importFile);
-    return this._importHref(this.initConfig.importFile)
-    .catch(() => {
-      throw new Error('Unable to load components import file.');
-    })
+    return this._importHref('src/arc-electron.html')
     .then(() => {
-      // console.log('Importing arc-electron component');
-      return new Promise((resolve, reject) => {
-        Polymer.importHref('src/arc-electron.html', () => {
-          resolve();
-        }, () => {
-          reject(new Error('Unable to load ARC app'));
-        });
-      });
-    })
-    .then(() => {
-      // console.info('Initializing arc-electron element...');
       const app = document.createElement('arc-electron');
       app.id = 'app';
+      app.config = config;
       this._setupApp(app);
       document.body.appendChild(app);
       this.created = true;
@@ -216,7 +194,7 @@ class ArcInit {
    */
   _setupApp(app) {
     // console.info('Initializing ARC app');
-    app.componentsDir = this.initConfig.appComponents;
+    // app.componentsDir = this.initConfig.appComponents;
     app.appVersion = versionInfo.appVersion;
     app.browserVersion = versionInfo.chrome;
     app.initApplication();

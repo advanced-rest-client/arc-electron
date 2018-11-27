@@ -1,9 +1,10 @@
-Advanced Rest Client Application
+# Advanced Rest Client Application
 =================
 
 Welcome to the ARC's project repository. Please, read [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) and [ROADMAP.md](ROADMAP.md) files for more information.
 
 ## Development
+
 You are welcome to contribute to the project. To start developing use following instructions.
 
 I assume you have [Node.js][1] already installed on your machine.
@@ -27,16 +28,12 @@ cd arc-electron
 ```
 
 Then install dependencies:
+
 ```shell
 npm install && bower install
 ```
 
-Take a coffee break. It will take a while... You can also install [gifi][gifi], a wrapper for `npm install` that will display a random gif while waiting for npm:
-
-![](https://raw.githubusercontent.com/vdemedes/gifi/master/media/demo.gif)
-
-
-When all dependencies are finally installed run
+When all dependencies are installed run:
 
 ```shell
 npm start
@@ -53,4 +50,3 @@ Please, read wiki in this repository.
 
 
  [1]: https://docs.npmjs.com/getting-started/installing-node "Install Node.js"
- [gifi]: https://github.com/vdemedes/gifi "watch GIFs while running npm install"

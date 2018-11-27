@@ -36,6 +36,10 @@ class AppOptions {
       name: '--debug',
       shortcut: '-d',
       type: Boolean
+    }, {
+      name: '--import-file',
+      shortcut: '-i',
+      type: String
     }];
   }
   /**
