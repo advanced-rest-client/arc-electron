@@ -62,7 +62,6 @@
 <link rel="import" href="../bower_components/bottom-sheet/bottom-sheet.html">
 <link rel="import" href="../bower_components/http-code-snippets/http-code-snippets.html">
 <link rel="import" href="../bower_components/arc-electron-experiment-settings/arc-electron-experiment-settings.html">
-<link rel="import" href="arc-api-processor/arc-api-processor.html">
 
 <dom-module id="arc-electron">
   <template>
@@ -219,14 +218,7 @@
     <arc-messages-service platform="electron" on-unread-changed="_unreadMessagesChanged" messages="{{appMessages}}" id="msgService"></arc-messages-service>
     <!-- Helper components -->
     <web-url-input id="webUrlInput" purpose="web-session" on-open-web-url="_openWebUrlHandler"></web-url-input>
-    <arc-api-processor aware="apic"
-      saved="{{apiIsSaved}}"
-      versions="{{apiVersions}}"
-      api-version="{{apiVersion}}"
-      can-save="{{canSaveApi}}"
-      version-saved="{{apiVersionSaved}}"
-      multi-version="{{apiMultiVersionVersion}}"></arc-api-processor>
-    <raml-aware id="aware" scope="apic"></raml-aware>
+
     <!-- Application views -->
     <app-header-layout has-scrolling-region id="scrollingRegion">
       <app-header slot="header" fixed shadow scroll-target="scrollingRegion">
@@ -351,7 +343,7 @@
               on-drive-file-picker-data="_openDriveRequest"></google-drive-browser>
             <cookie-manager data-route="cookie-manager"></cookie-manager>
 
-            <api-documentation
+            <apic-electron
               data-route="api-console"
               data-page="docs"
               aware="apic"
@@ -361,7 +353,13 @@
               narrow="[[narrow]]"
               redirect-uri="https://auth.advancedrestclient.com/oauth-popup.html"
               narrow="[[narrow]]"
-              scroll-target="[[_scrollTarget]]"></api-documentation>
+              scroll-target="[[_scrollTarget]]"
+              saved="{{apiIsSaved}}"
+              versions="{{apiVersions}}"
+              api-version="{{apiVersion}}"
+              can-save="{{canSaveApi}}"
+              version-saved="{{apiVersionSaved}}"
+              multi-version="{{apiMultiVersionVersion}}"></apic-electron>
 
             <rest-apis-list-panel data-route="rest-projects" render-explore></rest-apis-list-panel>
             <exchange-search-panel
@@ -686,9 +684,9 @@
       if (!id) {
         return;
       }
-      this.shadowRoot.querySelector('arc-api-processor')
-      .getApi(id, version)
-      .then((api) => this._setApiData(api))
+      return this._loadApic()
+      .then(() => this.$.apic.open(id, version))
+      .then(() => this._setIsApiConsole(true))
       .catch((cause) => {
         this.notifyError(cause.message);
       });
@@ -701,7 +699,7 @@
      * @param {Boolean} val
      */
     _varsOverlayChanged(val) {
-      if (val && !customElements.get('variables-preview-overlay')) {
+      if (val && !window.customElements.get('variables-preview-overlay')) {
         this._loadComponent('variables-preview-overlay/variables-preview-overlay')
         .catch((cmp) => this._reportComponentLoadingError(cmp));
       }
@@ -847,8 +845,8 @@
     }
 
     _apiDataHandler(e) {
-      const api = e.detail.api;
-      this._setApiData(api)
+      const {model, type} = e.detail;
+      this._setApiData(model, type.type)
       .then(() => {
         this._dispatchNavigate({
           base: 'api-console'
@@ -856,15 +854,28 @@
       });
     }
 
-    _setApiData(api) {
-      return this._loadComponent('api-console/api-console')
+    _loadApic() {
+      return new Promise((resolve, reject) => {
+        Polymer.importHref('src/apic-electron/apic-electron.html', () => {
+          this._loadingSources = false;
+          resolve();
+        }, () => {
+          this._loadingSources = false;
+          this._reportComponentLoadingError('apic-electron');
+          reject();
+        }, true);
+      });
+    }
+
+    _setApiData(api, type) {
+      return this._loadApic()
       .then(() => {
-        this.$.aware.raml = api;
         this.$.apic.selected = 'summary';
         this.$.apic.selectedType = 'summary';
+        this.$.apic.amf = api;
+        this.$.apic.apiType = type;
         this._setIsApiConsole(true);
-      })
-      .catch((cmp) => this._reportComponentLoadingError(cmp));
+      });
     }
 
     /**
@@ -917,7 +928,7 @@
       if (indeterminate) {
         toast.duration = 0;
       }
-      const container = document.createElement('dis');
+      const container = document.createElement('div');
       container.style.display = 'flex';
       container.style.flexDirection = 'row';
       container.style.alignItems = 'center';
@@ -1097,7 +1108,7 @@
     }
 
     _saveApi() {
-      this.shadowRoot.querySelector('arc-api-processor').save();
+      this.$.apic.save();
     }
 
     _apiActionMenuChanged(e) {
@@ -1110,17 +1121,17 @@
       let p;
       switch (action) {
         case 'delete':
-          p = this.shadowRoot.querySelector('arc-api-processor').delete();
+          p = this.$.apic.delete();
           break;
         case 'delete-version':
           const v = this.shadowRoot.querySelector('#apiVersionSelector').selected;
-          p = this.shadowRoot.querySelector('arc-api-processor').deleteVersion(v);
+          p = this.$.apic.deleteVersion(v);
           break;
         case 'save-oas':
-          this.shadowRoot.querySelector('arc-api-processor').saveAs('oas');
+          this.$.apic.saveAs('oas');
           break;
         case 'save-raml':
-          this.shadowRoot.querySelector('arc-api-processor').saveAs('raml');
+          this.$.apic.saveAs('raml');
           break;
         case 'upload-exchange':
           log.info('Not yet supported.');
@@ -1137,7 +1148,7 @@
       if (!value) {
         return;
       }
-      const id = this.shadowRoot.querySelector('arc-api-processor').apiInfo._id;
+      const id = this.$.apic.apiInfo._id;
       const params = {
         id,
         version: value
