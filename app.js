@@ -1,22 +1,37 @@
-const ipc = require('electron').ipcRenderer;
-const log = require('electron-log');
-const {ArcPreferencesRenderer} = require('./scripts/renderer/arc-preferences');
-const {ThemeLoader} = require('./scripts/renderer/theme-loader');
-const {ArcContextMenu} = require('./scripts/renderer/context-menu');
+// Scrips are moved to scripts/renderer/preload.js so node integration can be disabled
+// in the application window.
 /**
  * Class responsible for initializing the main ARC elements
  * and setup base options.
- * Also serves as a communication bridge etween main process and app window.
+ * Also serves as a communication bridge between main process and app window.
+ *
+ * This is only supported in the Electron platform.
+ *
+ * In ARC node integration is disabled as responses received from the server
+ * can be executed in preview window. Any script would instantly get access
+ * to whole electron and node environment. As a consequence the script
+ * would have access to user system. Classes that need access to electron / node
+ * API are loaded in sandbox in the preload script and initialized here.
+ * Scripts can't use `require()` or any other node function.
  */
 class ArcInit {
   /**
    * @constructor
    */
   constructor() {
+    /* global ipc, ArcContextMenu, ArcElectronDrive, OAuth2Handler,
+    ThemeManager, ArcPreferencesProxy, CookieBridge, WorkspaceManager,
+    FilesystemProxy, ElectronAmfService, versionInfo, WindowSearchService */
     this.created = false;
-    this.workspaceScript = undefined;
-    this.settingsScript = undefined;
-    this.themeLoader = new ThemeLoader();
+    this.contextActions = new ArcContextMenu();
+    this.driveBridge = new ArcElectronDrive();
+    this.oauth2Proxy = new OAuth2Handler();
+    this.themeManager = new ThemeManager();
+    this.prefProxy = new ArcPreferencesProxy();
+    this.cookieBridge = new CookieBridge();
+    this.fs = new FilesystemProxy();
+    this.amfService = new ElectronAmfService();
+    this.search = new WindowSearchService();
   }
   /**
    * Reference to the main application window.
@@ -31,10 +46,17 @@ class ArcInit {
    * bridge between main process and the app.
    */
   listen() {
-    this.contextActions = new ArcContextMenu();
-    ipc.on('window-state-info', this._stateInfoHandler.bind(this));
+    this.contextActions.listenMainEvents();
     window.onbeforeunload = this.beforeUnloadWindow.bind(this);
     const updateHandler = this.updateEventHandler.bind(this);
+    this.driveBridge.listen();
+    this.oauth2Proxy.listen();
+    this.themeManager.listen();
+    this.prefProxy.observe();
+    this.cookieBridge.listen();
+    this.fs.listen();
+    this.amfService.listen();
+    this.search.listen();
     ipc.on('checking-for-update', updateHandler);
     ipc.on('update-available', updateHandler);
     ipc.on('update-not-available', updateHandler);
@@ -44,7 +66,10 @@ class ArcInit {
     ipc.on('command', this.commandHandler.bind(this));
     ipc.on('request-action', this.execRequestAction.bind(this));
     ipc.on('theme-editor-preview', this._themePreviewHandler.bind(this));
-    this.themeLoader.listen();
+    ipc.on('window-state-info', this._stateInfoHandler.bind(this));
+    ipc.on('app-navigate', this._appNavHandler.bind(this));
+    ipc.on('popup-app-menu-opened', this._popupMenuOpened.bind(this));
+    ipc.on('popup-app-menu-closed', this._popupMenuClosed.bind(this));
   }
   /**
    * Requests initial state information from the main process for current
@@ -66,14 +91,18 @@ class ArcInit {
    */
   _stateInfoHandler(e, info) {
     info = info || {};
-    if (info.settingsFile) {
-      this.settingsScript = info.settingsFile;
+    const initConfig = info;
+    if (!initConfig.workspaceIndex) {
+      initConfig.workspaceIndex = 0;
     }
-    if (info.workspaceFile) {
-      this.workspaceScript = info.workspaceFile;
-      this.themeLoader.setupSettingsFile(this.workspaceScript);
+    this.workspaceIndex = initConfig.workspaceIndex;
+    if (!window.ArcConfig) {
+      window.ArcConfig = {};
     }
-    this.initApp();
+    this.initConfig = initConfig;
+    window.ArcConfig.initConfig = initConfig;
+    this.initApp()
+    .then(() => console.log('Application window is now ready.'));
   }
   /**
    * Initialized the application when window is ready.
@@ -81,10 +110,24 @@ class ArcInit {
    * @return {Promise}
    */
   initApp() {
-    log.info('Initializing renderer window...');
-    return this.initPreferences()
-    .then((settings) => this.themeApp(settings))
-    .then(() => this._createApp())
+    // console.info('Initializing renderer window...');
+    const opts = {};
+    if (this.initConfig.workspacePath) {
+      opts.filePath = this.initConfig.workspacePath;
+    }
+    this.workspaceManager = new WorkspaceManager(this.workspaceIndex, opts);
+    this.workspaceManager.observe();
+    let appConfig;
+    return this.prefProxy.load()
+    .then((cnf) => {
+      appConfig = cnf;
+      return this._createApp(cnf);
+    })
+    .then(() => {
+      return this.themeManager.loadTheme(appConfig.theme)
+      // Theme is not a fatal error
+      .catch(() => {});
+    })
     .catch((cause) => this.reportFatalError(cause));
   }
   /**
@@ -93,70 +136,55 @@ class ArcInit {
    * @param {Error} err Error object
    */
   reportFatalError(err) {
+    console.error(err);
     ipc.send('fatal-error', err.message);
   }
   /**
    * Creates application main element.
    *
+   * @param {Object} config Current configuration.
    * @return {Promise} Promise resolved when element is loaded and ready
    * rendered.
    */
-  _createApp() {
+  _createApp(config) {
     if (this.created) {
       return Promise.resolve();
     }
-    return new Promise((resolve, reject) => {
-      Polymer.Base.importHref('src/arc-electron.html', () => {
-        resolve();
-      }, () => {
-        reject(new Error('Unable to load ARC app'));
-      });
-    })
+    return this._importHref('src/arc-electron.html')
     .then(() => {
-      log.info('Initializing arc-electron element...');
       const app = document.createElement('arc-electron');
       app.id = 'app';
+      app.config = config;
       this._setupApp(app);
       document.body.appendChild(app);
       this.created = true;
     });
   }
-  /**
-   * Initializes and reads application settings.
-   *
-   * @return {Promise} Promise resolved to current settings.
-   */
-  initPreferences() {
-    log.info('Initializing app preferences...');
-    this.__prefs = new ArcPreferencesRenderer(this.settingsScript);
-    this.__prefs.observe();
-    return this.__prefs.loadSettings();
-  }
-  /**
-   * Sets up application theme.
-   *
-   * @param {String} settings Current application settings.
-   * @return {Promise} Promise resolved when the application theme is
-   * set and ready.
-   */
-  themeApp(settings) {
-    log.info('Initializing app theme.');
-    let id;
-    if (settings.theme) {
-      id = settings.theme;
-    } else {
-      id = this.themeLoader.defaultTheme;
-    }
-    return this.themeLoader.activateTheme(id)
-    .catch((cause) => {
-      if (id === this.themeLoader.defaultTheme) {
-        log.error('Unable to load theme file.', cause);
-        return;
-      }
-      return this.themeLoader.activateTheme(this.themeLoader.defaultTheme);
-    })
-    .catch((cause) => {
-      log.error('Unable to load default theme file.', cause);
+
+  _importHref(href) {
+    return new Promise((resolve, reject) => {
+      const link = document.createElement('link');
+      link.rel = 'import';
+      link.href = href;
+      link.setAttribute('import-href', '');
+      link.setAttribute('async', '');
+      const callbacks = {
+        load: function() {
+          callbacks.cleanup();
+          resolve();
+        },
+        error: function() {
+          callbacks.cleanup();
+          reject();
+        },
+        cleanup: function() {
+          link.removeEventListener('load', callbacks.load);
+          link.removeEventListener('error', callbacks.error);
+        }
+      };
+      link.addEventListener('load', callbacks.load);
+      link.addEventListener('error', callbacks.error);
+      document.head.appendChild(link);
     });
   }
   /**
@@ -165,13 +193,10 @@ class ArcInit {
    * @param {ArcElectron} app App electron element.
    */
   _setupApp(app) {
-    if (this.workspaceScript) {
-      app.workspaceScript = this.workspaceScript;
-    }
-    if (this.settingsScript) {
-      app.settingsScript = this.settingsScript;
-    }
-    log.info('Initializing ARC app');
+    // console.info('Initializing ARC app');
+    // app.componentsDir = this.initConfig.appComponents;
+    app.appVersion = versionInfo.appVersion;
+    app.browserVersion = versionInfo.chrome;
     app.initApplication();
   }
   /**
@@ -192,7 +217,7 @@ class ArcInit {
    */
   updateEventHandler(sender, message) {
     const app = this.app;
-    console.log('updateEventHandler', message);
+    // console.log('updateEventHandler', message);
     app.updateState = message;
     if (message[0] === 'update-downloaded') {
       app.hasAppUpdate = true;
@@ -206,7 +231,7 @@ class ArcInit {
    * @param {Array} args
    */
   commandHandler(e, action, ...args) {
-    log.info('Renderer command handled: ', action);
+    // console.info('Renderer command handled: ', action);
     const app = this.app;
     switch (action) {
       case 'show-settings': app.openSettings(); break;
@@ -225,6 +250,9 @@ class ArcInit {
       case 'activate-tab': this.activateTab(e, args[0], args[1]); break;
       case 'get-request-data': this.getRequestData(e, args[0], args[1]); break;
       case 'open-themes': app.openThemesPanel(); break;
+      case 'open-requests-workspace': app.openWorkspace(); break;
+      case 'open-web-socket': app.openWebSocket(); break;
+      case 'popup-menu': this._toggleMenuWindow(); break;
     }
   }
   /**
@@ -274,7 +302,7 @@ class ArcInit {
    * @param {String} action Action name to perform.
    */
   execRequestAction(e, action, ...args) {
-    log.info('Renderer request command handled: ', action);
+    // console.info('Renderer request command handled: ', action);
     const app = this.app;
     switch (action) {
       case 'save':
@@ -307,6 +335,57 @@ class ArcInit {
    */
   _themePreviewHandler(e, stylesMap) {
     this.themeLoader.previewThemes(stylesMap);
+  }
+  /**
+   * Handler for `app-navigare` event dispatched by the IO process.
+   * It dispatches navigate event recognized by ARC to perform navigation
+   * action.
+   *
+   * @param {Object} e
+   * @param {Object} detail
+   */
+  _appNavHandler(e, detail) {
+    this.app.dispatchEvent(new CustomEvent('navigate', {
+      bubbles: true,
+      cancelable: true,
+      detail
+    }));
+  }
+
+  _toggleMenuWindow() {
+    const app = this.app;
+    if (!app.menuConfig) {
+      app.menuConfig = {};
+    }
+    const state = !app.menuConfig.menuDisabled;
+    app.set(`menuConfig.menuDisabled`, state);
+  }
+
+  _popupMenuOpened(e, type) {
+    this._menuToggleOption(type, true);
+  }
+
+  _popupMenuClosed(e, type) {
+    this._menuToggleOption(type, false);
+  }
+
+  _menuToggleOption(type, value) {
+    const app = this.app;
+    if (!app.menuConfig) {
+      app.menuConfig = {};
+    }
+    let key;
+    switch (type) {
+      case 'history-menu': key = 'hideHistory'; break;
+      case 'saved-menu': key = 'hideSaved'; break;
+      case 'projects-menu': key = 'hideProjects'; break;
+      case 'rest-api-menu': key = 'hideApis'; break;
+      case '*': key = 'menuDisabled'; break;
+      default:
+        console.warn('Unknown menu state');
+        return;
+    }
+    app.set(`menuConfig.${key}`, value);
   }
 }
 

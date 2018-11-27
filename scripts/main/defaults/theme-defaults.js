@@ -1,4 +1,3 @@
-const {ThemeLoader} = require('../../renderer/theme-loader');
 const fs = require('fs-extra');
 const path = require('path');
 const log = require('electron-log');
@@ -7,8 +6,12 @@ const log = require('electron-log');
  * A class that is responsible for setting up theme defaults.
  */
 class ThemeDefaults {
-  constructor() {
-    this.themePath = new ThemeLoader().basePath;
+  /**
+   * @param {SourcesManager} sm
+   */
+  constructor(sm) {
+    this.themePath = sm.themesBasePath;
+    this.infoFilePath = sm.infoFilePath;
   }
   /**
    * Sets defaults if the defaults are not yet set.
@@ -18,75 +21,95 @@ class ThemeDefaults {
    * @return {Promise} Resolved promise when the defaults are stored.
    */
   prepareEnvironment() {
-    return this._setDefaultTheme()
-    .then(() => this._setAnypointTheme())
+    return this._readDefaultThemesPackages()
+    .then((names) => this._ensureThemes(names))
     .then(() => this._setThemeInfo());
   }
 
-  /**
-   * Copies the default theme data to themes folder if not created
-   */
-  _setDefaultTheme() {
-    const themePath = 'default-theme';
-    const themeFile = 'default-theme.html';
-    return this._ensureTheme(themePath, themeFile);
-  }
-
-  _setAnypointTheme() {
-    const themePath = 'anypoint-theme';
-    const themeFile = 'anypoint-theme.html';
-    return this._ensureTheme(themePath, themeFile);
-  }
-
-  _ensureTheme(themePath, themeFile) {
-    const file = path.join(this.themePath, themePath, themeFile);
-    return fs.pathExists(file)
-    .then(exists => {
-      if (exists) {
-        return;
-      }
-      return this._copyThemeFiles(themePath, themeFile);
+  _readDefaultThemesPackages() {
+    const source = path.join(__dirname, '..', '..', '..', 'appresources', 'themes');
+    return fs.readdir(source)
+    .then((items) => {
+      const themePaths = [];
+      items.forEach((name) => {
+        const loc = path.join(source, name);
+        const stats = fs.statSync(loc);
+        if (stats.isDirectory()) {
+          themePaths[themePaths.length] = {
+            name,
+            location: loc
+          };
+        }
+      });
+      return themePaths;
     });
   }
 
-  _copyThemeFiles(theme, file) {
-    const source = path.join(__dirname, '..', '..', '..', 'appresources', 'themes', theme);
-    const dest = path.join(this.themePath, theme);
-    const pkg = 'package.json';
+  _ensureThemes(themes) {
+    const item = themes.shift();
+    if (!item) {
+      return Promise.resolve();
+    }
+    return this._ensureTheme(item)
+    .then(() => this._ensureThemes(themes))
+    .catch(() => this._ensureThemes(themes));
+  }
+
+  _ensureTheme(info) {
+    const file = path.join(this.themePath, info.name);
+    return fs.pathExists(file)
+    .then((exists) => {
+      if (exists) {
+        return;
+      }
+      return this._copyThemeFiles(info);
+    });
+  }
+
+  _copyThemeFiles(info) {
+    const dest = path.join(this.themePath, info.name);
     return fs.ensureDir(dest)
-    .then(() => fs.copy(path.join(source, file), path.join(dest, file)))
-    .then(() => fs.copy(path.join(source, pkg), path.join(dest, pkg)))
-    .catch(cause => {
-      log.error('Unable to copy default theme from ', source, 'to', dest, cause);
+    .then(() => fs.copy(info.location, dest))
+    .catch((cause) => {
+      log.error('Unable to copy default theme from ', info.location, 'to', dest, cause);
     });
   }
   // Setups theme info file if missing
   _setThemeInfo() {
     const file = path.join(this.themePath, 'themes-info.json');
     return fs.pathExists(file)
-    .then(exists => {
+    .then((exists) => {
       if (exists) {
-        return;
+        return this._ensureThemesInfoVersion(file);
       }
       log.info('Creating themes-info.json file');
-      return this._copyThemesInfo();
+      return this._copyInfoFile();
     });
   }
 
-  _copyThemesInfo() {
+  _ensureThemesInfoVersion(file) {
+    return fs.readJson(file, {throws: false})
+    .then((data) => {
+      if (!data || !data.length) {
+        return this._copyInfoFile();
+      }
+      const item = data[0];
+      if (!item.location) {
+        return this._copyInfoFile();
+      }
+    });
+  }
+
+  _copyInfoFile() {
     const source =
       path.join(__dirname, '..', '..', '..', 'appresources', 'themes', 'themes-info.json');
-    const dest = path.join(this.themePath, 'themes-info.json');
+    const dest = this.infoFilePath;
     return fs.readJson(source, {throws: false})
-    .then(info => {
+    .then((info) => {
       info = info || [];
-      info = info.map(i => {
-        i.path = path.join(this.themePath, i.path);
-        return i;
-      });
       return info;
     })
-    .then(info => fs.writeJson(dest, info));
+    .then((info) => fs.writeJson(dest, info));
   }
 }
 exports.ThemeDefaults = ThemeDefaults;

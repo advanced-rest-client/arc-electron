@@ -1,6 +1,6 @@
 const log = require('electron-log');
 const camelCase = require('camelcase');
-log.transports.file.level = 'info';
+// log.transports.file.level = 'info';
 
 /**
  * A class describing and processing application initial options.
@@ -22,8 +22,8 @@ class AppOptions {
       shortcut: '-s',
       type: String
     }, {
-      // Path to the workspace state file. Overrides default location.
-      name: '--workspace-file',
+      // Path to the workspace state files path. Overrides default location.
+      name: '--workspace-path',
       shortcut: '-w',
       type: String
     }, {
@@ -31,6 +31,15 @@ class AppOptions {
       name: '--disable-log',
       shortcut: '-l',
       type: Boolean
+    }, {
+      // Opens ARC in dev mode (opened console, verbose log)
+      name: '--debug',
+      shortcut: '-d',
+      type: Boolean
+    }, {
+      name: '--import-file',
+      shortcut: '-i',
+      type: String
     }];
   }
   /**
@@ -40,7 +49,9 @@ class AppOptions {
   getOptions() {
     let result = {};
     for (let prop in this) {
-      result[prop] = this[prop];
+      if (this.hasOwnProperty(prop)) {
+        result[prop] = this[prop];
+      }
     }
     return result;
   }

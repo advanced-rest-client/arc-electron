@@ -1,16 +1,29 @@
 {
   "lint": {
-    "rules": ["polymer-1"]
+    "rules": ["polymer-2"]
   },
   "entrypoint": "app/index.html",
   "shell": "app/src/index.html",
   "fragments": [
-
+    "components/default/bower_components/arc-request-workspace/arc-request-workspace.html",
+    "components/default/bower_components/project-details/project-details.html",
+    "components/default/bower_components/host-rules-editor/host-rules-editor.html",
+    "components/default/bower_components/cookie-manager/cookie-manager.html",
+    "components/default/bower_components/arc-settings-panel/arc-settings-panel.html",
+    "components/default/bower_components/about-arc-electron/about-arc-electron.html",
+    "components/default/bower_components/websocket-panel/websocket-panel.html",
+    "components/default/bower_components/exchange-search-panel/exchange-search-panel.html",
+    "components/default/bower_components/api-console/api-console.html",
+    "components/default/bower_components/web-url-input/web-url-input.html",
+    "components/default/bower_components/variables-drawer-editor/variables-drawer-editor.html",
+    "components/default/bower_components/google-drive-browser/google-drive-browser.html",
+    "components/default/bower_components/variables-preview-overlay/variables-preview-overlay.html",
+    "components/default/bower_components/arc-license-dialog/arc-license-dialog.html"
   ],
   "sources": [
     "app/src/**/*"
   ],
   "extraDependencies": [
-    "app/bower_components/webcomponentsjs/*"
+    "components/default/bower_components/webcomponentsjs/*"
   ]
 }

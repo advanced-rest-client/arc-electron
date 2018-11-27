@@ -4,11 +4,6 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
   <title>Search</title>
-  <script>
-    window.Polymer = {
-      dom: 'shadow'
-    };
-  </script>
   <style>
   body {
     -webkit-user-select: none;
@@ -23,85 +18,82 @@
     overflow: hidden;
   }
   </style>
-  <style is="custom-style">
-  .container {
-    @apply --arc-font-body1;
-    @apply --layout-horizontal;
-    @apply --layout-center;
-    background-color: var(--search-bar-background-color, #fff);
-    padding: 8px 12px;
-    @apply --search-bar;
-  }
+  <link rel="import" href="../bower_components/polymer/polymer-element.html">
+  <link rel="import" href="../bower_components/shadycss/apply-shim.html">
+  <link rel="import" href="../bower_components/polymer/lib/elements/custom-style.html">
+  <link rel="import" href="../bower_components/polymer/lib/elements/dom-bind.html">
+  <link rel="import" href="../bower_components/font-roboto-local/roboto.html">
+  <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+  <link rel="import" href="../bower_components/arc-icons/arc-icons.html">
+  <link rel="import" href="../bower_components/paper-input/paper-input.html">
+  <link rel="import" href="../bower_components/iron-a11y-keys/iron-a11y-keys.html">
+  <link rel="import" href="../bower_components/iron-overlay-behavior/iron-overlay-behavior.html">
+  <link rel="import" href="../bower_components/iron-resizable-behavior/iron-resizable-behavior.html">
+  <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+  <custom-style>
+    <style>
+    :root {
+      --paper-input-container-color: transparent;
+      --paper-input-container-focus-color: #e5e5e5;
+    }
+    .container {
+      @apply --arc-font-body1;
+      @apply --layout-horizontal;
+      @apply --layout-center;
+      background-color: var(--search-bar-background-color, #fff);
+      padding: 8px 12px;
+      @apply --search-bar;
+    }
 
-  .container[data-anypoint] {
-    padding: 0 12px;
-  }
+    .container[data-anypoint] {
+      padding: 0 12px;
+    }
 
-  .container .counters {
-    @apply --arc-font-body1;
-    color: var(--search-bar-counters-color, #9b9b9b);
-    font-size: 14px;
-  }
+    .container .counters {
+      @apply --arc-font-body1;
+      color: var(--search-bar-counters-color, #9E9E9E);
+      font-size: 14px;
+    }
 
-  .controls {
-    @apply --layout-horizontal;
-    @apply --layout-center;
-    margin-left: 8px;
-    padding-left: 8px;
-    border-left: 1px var(--search-bar-counters-color, #9b9b9b) solid;
-  }
+    .controls {
+      @apply --layout-horizontal;
+      @apply --layout-center;
+      margin-left: 8px;
+      padding-left: 8px;
+      border-left: 1px var(--search-bar-counters-color, #e0e0e0) solid;
+    }
 
-  paper-icon-button {
-    color: var(--search-bar-action-button-color, #616161);
-  }
+    paper-icon-button {
+      color: var(--search-bar-action-button-color, #616161);
+      width: 36px;
+      height: 36px;
+    }
 
-  paper-input {
-    @apply --layout-flex;
-  }
-  </style>
+    paper-input {
+      @apply --layout-flex;
+    }
+    </style>
+  </custom-style>
 </head>
 <body>
-  <script src="search-bar/main.js"></script>
-  <template is="dom-bind" id="bar">
-    <div class="container" data-anypoint$="[[isAnypoint]]">
-      <paper-input label="Search text" no-label-float value="{{value}}" on-input="query">
-        <template is="dom-if" if="[[hasValue]]">
-          <div suffix class="counters">[[selected]]/[[searchCount]]</div>
-        </template>
-      </paper-input>
-      <div class="controls">
-        <paper-icon-button icon="arc:keyboard-arrow-up" title="Previous" on-tap="highlightPrevious" disabled="[[!hasValue]]"></paper-icon-button>
-        <paper-icon-button icon="arc:keyboard-arrow-down" title="Next" on-tap="highlightNext" disabled="[[!hasValue]]"></paper-icon-button>
-        <paper-icon-button icon="arc:close" title="Close" on-tap="close"></paper-icon-button>
+  <dom-bind id="bar">
+    <template>
+      <div class="container" data-anypoint$="[[isAnypoint]]">
+        <paper-input placeholder="Search text" no-label-float value="{{value}}" on-input="query" autofocus>
+          <template is="dom-if" if="[[hasValue]]">
+            <div slot="suffix" class="counters">[[selected]]/[[searchCount]]</div>
+          </template>
+        </paper-input>
+        <div class="controls">
+          <paper-icon-button icon="arc:keyboard-arrow-up" title="Previous" on-tap="highlightPrevious" disabled="[[!hasValue]]"></paper-icon-button>
+          <paper-icon-button icon="arc:keyboard-arrow-down" title="Next" on-tap="highlightNext" disabled="[[!hasValue]]"></paper-icon-button>
+          <paper-icon-button icon="arc:close" title="Close" on-tap="close"></paper-icon-button>
+        </div>
       </div>
-    </div>
-    <iron-a11y-keys id="a11y" target="[[input]]" keys="enter" on-keys-pressed="query"></iron-a11y-keys>
-    <iron-a11y-keys id="a11y" target="[[input]]" keys="esc" on-keys-pressed="close"></iron-a11y-keys>
-  </template>
-  <script>
-  (function(scope) {
-  scope.selected = 0;
-  scope.searchCount = 0;
-  scope.value = '';
-  scope.hasValue = false;
-  scope.isAnypoint = false;
-  scope.observers = ['valueChanged(value)'];
-  scope.valueChanged = function(value) {
-    scope.hasValue = !!value;
-  };
-  scope.close = function() {
-    initScript.close();
-  };
-  scope.query = function () {
-    initScript.query(scope.value);
-  };
-  scope.highlightNext = function() {
-    initScript.highlightNext();
-  };
-  scope.highlightPrevious = function () {
-    initScript.highlightPrevious();
-  };
-  })(document.getElementById('bar'));
-  </script>
+      <iron-a11y-keys id="a11y" target="[[input]]" keys="enter" on-keys-pressed="query"></iron-a11y-keys>
+      <iron-a11y-keys id="a11y" target="[[input]]" keys="esc" on-keys-pressed="close"></iron-a11y-keys>
+    </template>
+  </dom-bind>
+  <script src="search-bar.js"></script>
 </body>
 </html>

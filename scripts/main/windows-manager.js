@@ -1,21 +1,19 @@
 const {BrowserWindow, dialog, ipcMain} = require('electron');
 const path = require('path');
 const url = require('url');
-const {ArcSessionControl} = require('./session-control');
+const {ArcSessionControl} = require('@advanced-rest-client/arc-electron-preferences/main');
 const {ArcSessionRecorder} = require('./arc-session-recorder');
-const {ArcPreferences} = require('./arc-preferences');
 const {ContextActions} = require('./context-actions');
 /**
  * A class that manages opened app windows.
  */
 class ArcWindowsManager {
   /**
-   * @constructor
-   *
-   * @param {?Object} startupOptions Application startup object. See
+   * @param {Object} startupOptions Application startup object. See
    * `AppOptions` for more details.
+   * @param {SourcesManager} sm
    */
-  constructor(startupOptions) {
+  constructor(startupOptions, sm) {
     this.startupOptions = startupOptions || {};
     this.windows = [];
     // Task manager window reference.
@@ -23,12 +21,18 @@ class ArcWindowsManager {
     this.__windowClosed = this.__windowClosed.bind(this);
     this.__windowMoved = this.__windowMoved.bind(this);
     this.__windowResized = this.__windowResized.bind(this);
+    this.__windowFocused = this.__windowFocused.bind(this);
     this.__windowOpenedPopup = this.__windowOpenedPopup.bind(this);
     this.__contextMenuHandler = this.__contextMenuHandler.bind(this);
     this._settingChangedHandler = this._settingChangedHandler.bind(this);
-    this._prefs = new ArcPreferences(startupOptions.settingsFile);
     this.recorder = new ArcSessionRecorder();
     this.contextActions = new ContextActions();
+    this.sourcesManager = sm;
+    /**
+     * Pointer to last focused window.
+     * @type {BrowserWindow}
+     */
+    this._lastFocused = undefined;
   }
   /**
    * @return {Boolean} True if has at leas one window.
@@ -36,9 +40,41 @@ class ArcWindowsManager {
   get hasWindow() {
     return this.windows.length > 0;
   }
-
+  /**
+   * @return {BrowserWindow|undefined} Reference to last focused browser window
+   * or undefined if the window is destroyed or undefined.
+   */
+  get lastFocused() {
+    if (!this._lastFocused) {
+      return;
+    }
+    if (this._lastFocused.isDestroyed()) {
+      this._lastFocused = undefined;
+      return;
+    }
+    return this._lastFocused;
+  }
+  /**
+   * @return {BrowserWindow} Returns reference to last created and still active
+   * window object.
+   */
+  get lastActive() {
+    const ws = this.windows;
+    if (!ws || !ws.length) {
+      return;
+    }
+    for (let i = ws.length; i >= 0; i--) {
+      if (!ws[i].isDestroyed()) {
+        return ws[i];
+      }
+    }
+  }
+  /**
+   * Restores latest window is any present.
+   */
   restoreLast() {
-    const win = this.windows && this.windows.length && this.windows[this.windows.length - 1];
+    const win = this.windows && this.windows.length &&
+      this.windows[this.windows.length - 1];
     if (win) {
       if (win.isDestroyed()) {
         this.windows.pop();
@@ -141,14 +177,16 @@ class ArcWindowsManager {
    * @return {Promise} Resolved promise when the window is ready.
    */
   open(path) {
-    let index = this.windows.length;
-    let session = new ArcSessionControl(index);
-    return session.restore()
+    const index = this.windows.length;
+    const session = new ArcSessionControl(index);
+    return session.load()
     .then((data) => {
-      let win = this.__getNewWindow(index, data);
+      const win = this.__getNewWindow(index, data);
       win.__arcSession = session;
       this.__loadPage(win, path);
-      // win.webContents.openDevTools();
+      if (this.startupOptions.debug) {
+        win.webContents.openDevTools();
+      }
       this.__attachListeners(win);
       this.windows.push(win);
       return this.recorder.record()
@@ -167,14 +205,14 @@ class ArcWindowsManager {
       this._tmWin.focus();
       return;
     }
-    let win = new BrowserWindow({
+    const win = new BrowserWindow({
       backgroundColor: '#00A2DF',
       webPreferences: {
         partition: 'persist:arc-task-manager'
       }
     });
-    let dest = path.join(__dirname, '..', '..', 'task-manager.html');
-    let full = url.format({
+    const dest = path.join(__dirname, '..', '..', 'task-manager.html');
+    const full = url.format({
       pathname: dest,
       protocol: 'file:',
       slashes: true
@@ -183,6 +221,7 @@ class ArcWindowsManager {
     win.on('closed', () => {
       this._tmWin = null;
     });
+    win.setMenu(null);
     this._tmWin = win;
   }
   /**
@@ -202,7 +241,9 @@ class ArcWindowsManager {
       show: false,
       webPreferences: {
         partition: 'persist:arc-window',
-        nativeWindowOpen: true
+        nativeWindowOpen: true,
+        nodeIntegration: false,
+        preload: path.join(__dirname, '..', 'renderer', 'preload.js')
       }
     });
     mainWindow.__arcIndex = index;
@@ -220,8 +261,8 @@ class ArcWindowsManager {
       appPath = '#' + appPath;
     }
     win._startPath = appPath;
-    let dest = path.join(__dirname, '..', '..', 'app.html');
-    let full = url.format({
+    const dest = path.join(__dirname, '..', '..', 'app.html');
+    const full = url.format({
       pathname: dest,
       protocol: 'file:',
       slashes: true
@@ -235,19 +276,23 @@ class ArcWindowsManager {
    * @param {Event} ev
    */
   _winStateRequestHandler(ev) {
-    let contents = ev.sender;
-    let opts = Object.assign({}, this.startupOptions);
-    let win = this.windows.find((item) => {
+    const contents = ev.sender;
+    const win = this.windows.find((item) => {
       if (item.isDestroyed()) {
         return false;
       }
       return item.id === contents.id;
     });
-    if (win) {
-      opts.startPath = win._startPath;
-    }
-    this.contextActions.registerDefaultActions(win.webContents);
-    contents.send('window-state-info', opts);
+    this.sourcesManager.getAppConfig()
+    .then((opts) => {
+      if (win) {
+        opts.workspaceIndex = win.__arcIndex;
+        this.contextActions.registerDefaultActions(win.webContents);
+      } else {
+        opts.workspaceIndex = 0;
+      }
+      contents.send('window-state-info', opts);
+    });
   }
   /**
    * Attaches listeners to the window object.
@@ -258,6 +303,7 @@ class ArcWindowsManager {
     win.addListener('closed', this.__windowClosed);
     win.addListener('move', this.__windowMoved);
     win.addListener('resize', this.__windowResized);
+    win.addListener('focus', this.__windowFocused);
     win.once('ready-to-show', this.__readyShowHandler.bind(this));
     win.webContents.on('new-window', this.__windowOpenedPopup);
     win.webContents.on('arc-context-menu', this.__contextMenuHandler);
@@ -286,7 +332,10 @@ class ArcWindowsManager {
    * @param {Event} e Event emitted by the window.
    */
   __windowClosed(e) {
-    let index = this._findWindowImdex(e.sender);
+    if (this._lastFocused === e.sender) {
+      this._lastFocused = undefined;
+    }
+    const index = this._findWindowImdex(e.sender);
     if (index === -1) {
       return;
     }
@@ -299,8 +348,8 @@ class ArcWindowsManager {
    * @param {Event} e Event emitted by the window.
    */
   __windowMoved(e) {
-    let win = e.sender;
-    let pos = win.getPosition();
+    const win = e.sender;
+    const pos = win.getPosition();
     win.__arcSession.updatePosition(pos[0], pos[1]);
   }
   /**
@@ -310,9 +359,17 @@ class ArcWindowsManager {
    * @param {Event} e Event emitted by the window.
    */
   __windowResized(e) {
-    let win = e.sender;
-    let size = win.getSize();
+    const win = e.sender;
+    const size = win.getSize();
     win.__arcSession.updateSize(size[0], size[1]);
+  }
+  /**
+   * Handler for the focus event on the BrowserWindow object.
+   * Sets `_lastFocused` property.
+   * @param {Event} e
+   */
+  __windowFocused(e) {
+    this._lastFocused = e.sender;
   }
   /**
    * Handler for BrowserWindow `ready-to-show` event.
@@ -329,8 +386,8 @@ class ArcWindowsManager {
    * @param {Event} e Event emitted by the window.
    */
   __windowReloading(e) {
-    let contents = e.sender;
-    let win = this.windows.find((item) => {
+    const contents = e.sender;
+    const win = this.windows.find((item) => {
       if (item.isDestroyed()) {
         return false;
       }

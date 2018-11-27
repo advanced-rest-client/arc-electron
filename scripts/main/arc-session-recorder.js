@@ -1,15 +1,15 @@
-const {ArcMeta} = require('./arc-meta');
+const {ArcMeta} = require('@advanced-rest-client/arc-electron-preferences/main');
 const _FormData = require('form-data');
 const _fetch = require('node-fetch');
 const log = require('electron-log');
-log.transports.file.level = 'info';
+// log.transports.file.level = 'info';
 /**
  * Session recorder.
  *
  * @deprecated
  * This class is useless. No one reads the data. There's no enough
  * will to do something useful for the app or users with it.
- * The ARC analytics service will be closed soon.
+ * The ARC analytics service will be closed eventually.
  */
 class ArcSessionRecorder {
   /**
@@ -17,7 +17,7 @@ class ArcSessionRecorder {
    */
   constructor() {
     this.meta = new ArcMeta();
-    this.endpoint = 'https://advancedrestclient-1155.appspot.com/analytics/record';
+    this.endpoint = 'https://app.advancedrestclient.com/analytics/record';
   }
   /**
    * Pings the server to record the session.
@@ -41,10 +41,14 @@ class ArcSessionRecorder {
     const d = new Date();
     data.append('aid', id); // anonymousId
     data.append('tz', d.getTimezoneOffset()); // timezone
-    return _fetch(this.endpoint, {
-      method: 'POST',
-      body: data
-    });
+    try {
+      return _fetch(this.endpoint, {
+        method: 'POST',
+        body: data
+      });
+    } catch (e) {
+      return Promise.rejec(e);
+    }
   }
 }
 exports.ArcSessionRecorder = ArcSessionRecorder;

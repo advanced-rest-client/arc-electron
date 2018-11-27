@@ -159,11 +159,23 @@
       },
       {
         "role": "front"
+      },
+      {
+        "type": "separator",
+        "visible": false
+      },
+      {
+        "label": "Popup application menu",
+        "command": "application:popup-menu",
+        "visible": false
       }
     ]
   }, {
     "label": "Request",
     "submenu": [{
+      "label": "Open requests workspace",
+      "command": "application:open-requests-workspace"
+    }, {
       "label": "Run current tab",
       "command": "request:send-current",
       "accelerator": "CommandOrControl+Shift+r"
@@ -190,6 +202,11 @@
     }, {
       "label": "Hosts",
       "command": "application:open-hosts-editor"
+    }, {
+      "type": "separator"
+    }, {
+      "label": "Web socket request",
+      "command": "application:open-web-socket"
     }]
   }, {
     "label": "Help",

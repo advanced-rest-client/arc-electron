@@ -1,17 +1,32 @@
-[{
-    "name": "Default theme",
-    "main": "default-theme.html",
-    "path": "default-theme",
+[
+  {
+    "_id": "advanced-rest-client/arc-electron-default-theme",
+    "title": "Default theme",
+    "name": "@advanced-rest-client/arc-electron-default-theme",
+    "version": "2.0.0-preview",
+    "location": "@advanced-rest-client/arc-electron-default-theme",
+    "mainFile": "@advanced-rest-client/arc-electron-default-theme/arc-electron-default-theme.html",
     "description": "Advanced REST Client default theme",
-    "version": "0.0.1",
-    "_id": "dd1b715f-af00-4ee8-8b0c-2a262b3cf0c8"
+    "isDefault": true
   },
   {
-    "name": "Anypoint theme",
-    "main": "anypoint-theme.html",
-    "path": "anypoint-theme",
-    "description": "Anypoint theme for Advanced REST Client",
-    "version": "0.0.1",
-    "_id": "859e0c71-ce8b-44df-843b-bca602c13d06"
+    "_id": "advanced-rest-client/arc-electron-anypoint-theme",
+    "title": "Anypoint theme",
+    "name": "@advanced-rest-client/arc-electron-anypoint-theme",
+    "version": "2.0.0-preview",
+    "location": "@advanced-rest-client/arc-electron-anypoint-theme",
+    "mainFile": "@advanced-rest-client/arc-electron-anypoint-theme/arc-electron-anypoint-theme.html",
+    "description": "Advanced REST Client anypoint theme",
+    "isDefault": true
+  },
+  {
+    "_id": "advanced-rest-client/arc-electron-dark-theme",
+    "title": "Dark theme",
+    "name": "@advanced-rest-client/arc-electron-dark-theme",
+    "version": "2.0.0-preview",
+    "location": "@advanced-rest-client/arc-electron-dark-theme",
+    "mainFile": "@advanced-rest-client/arc-electron-dark-theme/arc-electron-dark-theme.html",
+    "description": "Advanced REST Client dark theme",
+    "isDefault": true
   }
 ]

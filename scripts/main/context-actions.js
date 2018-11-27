@@ -13,6 +13,7 @@ class ContextActions {
     this._addCloseTab(webContents);
     this._addCloseAllTabs(webContents);
     this._addCloseOtherTabs(webContents);
+    this._addDuplicateTab(webContents);
   }
   /**
    * Adds default action to close request workspace tab.
@@ -48,6 +49,19 @@ class ContextActions {
       label: 'Close other tabs',
       selector: 'paper-tab > span.tab-name',
       action: 'request-panel-close-other-tabs'
+    });
+  }
+
+  /**
+   * Adds default action to close all request workspace tab.
+   *
+   * @param {Object} webContents
+   */
+  _addDuplicateTab(webContents) {
+    webContents.send('register-context-action', {
+      label: 'Duplicate tab',
+      selector: 'paper-tab > span.tab-name',
+      action: 'request-panel-duplicate-tab'
     });
   }
 }

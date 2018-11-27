@@ -9,10 +9,12 @@ class AppDefaults {
   /**
    * Prepares environemt files while opening the application.
    * Copies application themes to themes location.
+   *
+   * @param {SourcesManager} sm
    * @return {Promise}
    */
-  prepareEnvironment() {
-    const td = new ThemeDefaults();
+  prepareEnvironment(sm) {
+    const td = new ThemeDefaults(sm);
     return td.prepareEnvironment();
   }
 }

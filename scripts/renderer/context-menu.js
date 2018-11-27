@@ -13,7 +13,6 @@ class ArcContextMenu {
     this._contextMenuHandler = this._contextMenuHandler.bind(this);
     this._selectionHandler = this._selectionHandler.bind(this);
     this._clickHandler = this._clickHandler.bind(this);
-    this.listenMainEvents();
   }
   /**
    * Reference to the main application window.
@@ -110,6 +109,7 @@ class ArcContextMenu {
    * @param {Object} xy An object with `x` and `y` coordinates of click.
    */
   renderActions(actions, xy) {
+    this.removeActions();
     const box = document.createElement('paper-listbox');
     box.addEventListener('selected-changed', this._selectionHandler);
     actions.forEach((action) => {
@@ -161,15 +161,23 @@ class ArcContextMenu {
   _handleAction(action) {
     switch (action.action) {
       case 'request-panel-close-tab':
-        this.app.closeRequestTabByLocal(this._lastTarget.dataset.index);
+        this.app.closeWorkspaceTab(this._getTabIndex());
         break;
       case 'request-panel-close-all-tabs':
-        this.app.closeAllRequestTabs();
+        this.app.closeAllWorkspaceTabs();
         break;
       case 'request-panel-close-other-tabs':
-        this.app.closeOtherRequestTabs(this._lastTarget.dataset.index);
+        this.app.closeOtherWorkspaceTabs(this._getTabIndex());
+        break;
+      case 'request-panel-duplicate-tab':
+        this.app.duplicateWorkspaceTab(this._getTabIndex());
         break;
     }
+  }
+
+  _getTabIndex() {
+    const tab = this._lastTarget.parentElement;
+    return Array.from(tab.parentElement.children).indexOf(tab);
   }
   /**
    * Closes menu action.

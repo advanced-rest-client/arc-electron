@@ -1,9 +1,9 @@
-<link rel="import" href="../components/default/bower_components/polymer/polymer.html">
-<link rel="import" href="../components/default/bower_components/font-roboto-local/roboto.html">
-<link rel="import" href="../components/default/bower_components/paper-item/paper-item.html">
-<link rel="import" href="../components/default/bower_components/iron-flex-layout/iron-flex-layout.html">
-<link rel="import" href="../components/default/bower_components/iron-icon/iron-icon.html">
-<link rel="import" href="../components/default/bower_components/arc-icons/arc-icons.html">
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/font-roboto-local/roboto.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../bower_components/arc-icons/arc-icons.html">
 <dom-module id="arc-task-manager">
   <template>
     <style>
@@ -77,37 +77,39 @@
     }
     </style>
     <div class="th">
-      <div class="title" ordered$="[[orderTitle]]" on-tap="_changeOrder" data-order-property="title">
+
+      <div class="title" ordered$="[[orderTitle]]" on-click="_changeOrder" data-order-property="title">
         <span class="label">Process</span>
         <template is="dom-if" if="[[orderTitle]]" restamp>
           <iron-icon icon="[[_computeOrderIcon(orderDirection)]]"></iron-icon>
         </template>
       </div>
-      <div class="pid" ordered$="[[orderPid]]" on-tap="_changeOrder" data-order-property="pid">
+
+      <div class="pid" ordered$="[[orderPid]]" on-click="_changeOrder" data-order-property="pid">
         <span class="label">Pid</span>
         <template is="dom-if" if="[[orderPid]]" restamp>
           <iron-icon icon="[[_computeOrderIcon(orderDirection)]]"></iron-icon>
         </template>
       </div>
-      <div class="cpu-usage" ordered$="[[orderCpu]]" on-tap="_changeOrder" data-order-property="cpu-usage">
+      <div class="cpu-usage" ordered$="[[orderCpu]]" on-click="_changeOrder" data-order-property="cpu-usage">
         <span class="label">CPU</span>
         <template is="dom-if" if="[[orderCpu]]" restamp>
           <iron-icon icon="[[_computeOrderIcon(orderDirection)]]"></iron-icon>
         </template>
       </div>
-      <div class="memory-working-size" ordered$="[[orderMemWorkingSize]]" on-tap="_changeOrder" data-order-property="memory-working">
+      <div class="memory-working-size" ordered$="[[orderMemWorkingSize]]" on-click="_changeOrder" data-order-property="memory-working">
         <span class="label">Memory</span>
         <template is="dom-if" if="[[orderMemWorkingSize]]" restamp>
           <iron-icon icon="[[_computeOrderIcon(orderDirection)]]"></iron-icon>
         </template>
       </div>
-      <div class="memory-private-size" ordered$="[[orderMemPrivateSize]]" on-tap="_changeOrder" data-order-property="memory-private">
+      <div class="memory-private-size" ordered$="[[orderMemPrivateSize]]" on-click="_changeOrder" data-order-property="memory-private">
         <span class="label">Private memory</span>
         <template is="dom-if" if="[[orderMemPrivateSize]]" restamp>
           <iron-icon icon="[[_computeOrderIcon(orderDirection)]]"></iron-icon>
         </template>
       </div>
-      <div class="memory-shared-size" ordered$="[[orderMemSharedSize]]" on-tap="_changeOrder" data-order-property="memory-shared">
+      <div class="memory-shared-size" ordered$="[[orderMemSharedSize]]" on-click="_changeOrder" data-order-property="memory-shared">
         <span class="label">Shared memory</span>
         <template is="dom-if" if="[[orderMemSharedSize]]" restamp>
           <iron-icon icon="[[_computeOrderIcon(orderDirection)]]"></iron-icon>
@@ -126,57 +128,71 @@
     </template>
   </template>
   <script>
-  const {app} = require('electron').remote;
-  Polymer({
-    is: 'arc-task-manager',
-    properties: {
-      // List of items to display in the table.
-      items: Array,
-      // True if the window is active.
-      active: Boolean,
-      // True if ordering by title is enabled
-      orderTitle: Boolean,
-      // True if ordering by pid is enabled
-      orderPid: Boolean,
-      // True if ordering by cpu is enabled
-      orderCpu: Boolean,
-      // True if ordering by memory working size is enabled
-      orderMemWorkingSize: Boolean,
-      // True if ordering by memory private size is enabled
-      orderMemPrivateSize: Boolean,
-      // True if ordering by memory shared size is enabled
-      orderMemSharedSize: Boolean,
-      // Order direction. `acs` or `desc`.
-      orderDirection: {
-        type: String,
-        value: 'asc'
-      },
-      // Order property name
-      orderProperty: String
-    },
+  const {app, BrowserWindow} = require('electron').remote;
+  class ArcTaskManager extends Polymer.Element {
+    static get is() {return 'arc-task-manager';}
+    static get properties() {
+      return {
+        // List of items to display in the table.
+        items: Array,
+        // True if the window is active.
+        active: Boolean,
+        // True if ordering by title is enabled
+        orderTitle: Boolean,
+        // True if ordering by pid is enabled
+        orderPid: Boolean,
+        // True if ordering by cpu is enabled
+        orderCpu: Boolean,
+        // True if ordering by memory working size is enabled
+        orderMemWorkingSize: Boolean,
+        // True if ordering by memory private size is enabled
+        orderMemPrivateSize: Boolean,
+        // True if ordering by memory shared size is enabled
+        orderMemSharedSize: Boolean,
+        // Order direction. `acs` or `desc`.
+        orderDirection: {
+          type: String,
+          value: 'asc'
+        },
+        // Order property name
+        orderProperty: String,
+        mainId: {
+          type: Number,
+          value: function() {
+            return require('electron').remote.process.pid;
+          }
+        },
+        thisPid: {
+          type: Number,
+          value: function() {
+            return process.pid;
+          }
+        }
+      };
+    }
 
-    ready: function() {
+    connectedCallback() {
+      super.connectedCallback();
       this.active = true;
       Polymer.RenderStatus.afterNextRender(this, () => {
         this.refresh();
       });
-    },
+    }
 
-    detached: function() {
+    disconnectedCallback() {
+      super.disconnectedCallback();
       this.active = false;
-    },
+    }
 
-    refresh: function() {
+    refresh() {
       if (!this.active) {
         return;
       }
-      var metrics = app.getAppMetrics();
+      let metrics = app.getAppMetrics();
       metrics = this.translateMetrics(metrics);
       this.set('items', metrics);
-      this.async(function() {
-        this.refresh();
-      }, 2000);
-    },
+      setTimeout(() => this.refresh(), 2000);
+    }
 
     /**
      * Translates electron app metrics into the data model.
@@ -184,53 +200,68 @@
      * @param {Array<Object>} metrics List of current metrics
      * @return {Array} Internal data model.
      */
-    translateMetrics: function(metrics) {
-      var result = metrics.map(metric => {
-        let cpu = this.translateCpuMetrics(metric.cpu);
-        let memory = this.translateMemoryMetrics(metric.memory);
-        let title = this.translateMetricTitle(metric.type);
+    translateMetrics(metrics) {
+      const result = metrics.map((metric) => {
+        const cpu = this.translateCpuMetrics(metric.cpu);
+        const memory = this.translateMemoryMetrics(metric.memory);
+        const title = this.translateMetricTitle(metric.type, metric.pid);
         return {
           pid: metric.pid,
-          memory: memory,
-          cpu: cpu,
-          title: title
+          memory,
+          cpu,
+          title
         };
       });
-
       return result;
-    },
+    }
     /**
      * Translates `type` property of the metric to a title to display
      * @param {String} type Metric type value
+     * @param {Number} pid OS process id
      * @return {String} Title related to the type.
      */
-    translateMetricTitle: function(type) {
+    translateMetricTitle(type, pid) {
+      if (this.mainId === pid) {
+        return 'Application main thread';
+      }
+      if (this.thisPid === pid) {
+        return 'Task manager';
+      }
+      const windows = BrowserWindow.getAllWindows();
+      for (let i = 0; i < windows.length; i++) {
+        if (windows[i].webContents.getOSProcessId() === pid) {
+          let title = windows[i].getTitle();
+          if (title) {
+            return title;
+          }
+        }
+      }
       switch (type) {
         case 'Tab': return 'Application window';
         case 'Browser': return 'Application';
         default: return type;
       }
-    },
+    }
     /**
      * Creates a data model for the CPU usage.
      *
      * @param {Object} cpu CPU metric
      * @return {Object} Data model for CPU metrics
      */
-    translateCpuMetrics: function(cpu) {
+    translateCpuMetrics(cpu) {
       return {
-        usage: this.computePercents(cpu.percentCPUUsage),
+        usage: Math.round(cpu.percentCPUUsage),
         usageCompare: cpu.percentCPUUsage
-        //wakeups: cpu.idleWakeupsPerSecond
+        // wakeups: cpu.idleWakeupsPerSecond
       };
-    },
+    }
     /**
      * Creates a data model for memory usage metrics
      *
      * @param {Object} memory Memory metric
      * @return {Object} Memory usage metrics
      */
-    translateMemoryMetrics: function(memory) {
+    translateMemoryMetrics(memory) {
       return {
         // peak: peakWorkingSetSize
         workingSetSize: this.computeBytes(memory.workingSetSize),
@@ -240,7 +271,7 @@
         sharedBytes: this.computeBytes(memory.sharedBytes),
         sharedBytesCompare: memory.sharedBytes
       };
-    },
+    }
     /**
      * Computes readable value of bytes usage.
      * https://stackoverflow.com/a/18650828/1127848
@@ -249,29 +280,24 @@
      * @param {String} decimals Decimal number
      * @return {String} Size label
      */
-    computeBytes: function(bytes, decimals) {
+    computeBytes(bytes, decimals) {
       if (!bytes) {
         return '0 B';
       }
-      var k = 1024;
-      var dm = decimals || 2;
-      var sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-      var i = Math.floor(Math.log(bytes) / Math.log(k));
+      const k = 1024;
+      const dm = decimals || 2;
+      const sizes = ['KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
       return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-    },
+    }
 
-    computePercents: function(usage) {
-      usage = usage * 100;
-      return Math.round(usage);
-    },
-
-    _computeOrderIcon: function(direction) {
+    _computeOrderIcon(direction) {
       return direction === 'asc' ? 'arc:arrow-drop-down' : 'arc:arrow-drop-up';
-    },
+    }
 
-    _changeOrder: function(e) {
-      var target = e.currentTarget;
-      var property = target.dataset.orderProperty;
+    _changeOrder(e) {
+      const target = e.currentTarget;
+      const property = target.dataset.orderProperty;
       if (property === this.orderProperty) {
         this.toggleOrder();
         this.$.list.render();
@@ -300,10 +326,10 @@
       }
       this.orderProperty = property;
       this.$.list.render();
-    },
+    }
 
-    _cancelOrderProperty: function() {
-      var prop = this.orderProperty;
+    _cancelOrderProperty() {
+      const prop = this.orderProperty;
       switch (prop) {
         case 'title':
           this.orderTitle = false;
@@ -325,14 +351,14 @@
           break;
       }
       this.orderProperty = undefined;
-    },
+    }
 
-    toggleOrder: function() {
+    toggleOrder() {
       this.orderDirection = this.orderDirection === 'asc' ? 'desc' : 'asc';
-    },
+    }
 
-    _sortItems: function(a, b) {
-      var prop = this.orderProperty;
+    _sortItems(a, b) {
+      const prop = this.orderProperty;
       switch (prop) {
         case 'title': return this._sortTitle(a, b);
         case 'pid': return this._sortPid(a, b);
@@ -341,19 +367,19 @@
         case 'memory-private': return this._sortMemory(a, b, 'privateBytesCompare');
         case 'memory-working': return this._sortMemory(a, b, 'workingSetSizeCompare');
       }
-    },
+    }
 
-    _sortTitle: function(a, b) {
-      var dir = this.orderDirection;
-      var result = a.title.localeCompare(b.title);
+    _sortTitle(a, b) {
+      const dir = this.orderDirection;
+      const result = a.title.localeCompare(b.title);
       if (dir === 'desc') {
         return -result;
       }
       return result;
-    },
+    }
 
-    _sortPid: function(a, b) {
-      var result = 0;
+    _sortPid(a, b) {
+      let result = 0;
       if (a.pid > b.pid) {
         result = -1;
       }
@@ -364,10 +390,10 @@
         return result;
       }
       return this.orderDirection === 'asc' ? result : -result;
-    },
+    }
 
-    _sortCpu: function(a, b) {
-      var result = 0;
+    _sortCpu(a, b) {
+      let result = 0;
       if (a.cpu.usageCompare > b.cpu.usageCompare) {
         result = -1;
       }
@@ -378,12 +404,12 @@
         return result;
       }
       return this.orderDirection === 'asc' ? result : -result;
-    },
+    }
 
-    _sortMemory: function(a, b, property) {
-      var result = 0;
-      var aValue = a.memory[property];
-      var bValue = b.memory[property];
+    _sortMemory(a, b, property) {
+      let result = 0;
+      const aValue = a.memory[property];
+      const bValue = b.memory[property];
 
       if (aValue > bValue) {
         result = -1;
@@ -396,6 +422,7 @@
       }
       return this.orderDirection === 'asc' ? result : -result;
     }
-  });
+  }
+  window.customElements.define(ArcTaskManager.is, ArcTaskManager);
   </script>
 </dom-module>

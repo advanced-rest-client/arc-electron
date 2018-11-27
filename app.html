@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta http-equiv="Content-Security-Policy" content="default-src file: 'self' 'unsafe-inline'; script-src blob: themes: 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https: ws: wss: https://www.google-analytics.com https://app.advancedrestclient.com https://anypoint.mulesoft.com; img-src 'self' blob: data: https://exchange2-asset-manager-kprod.s3.amazonaws.com">
   <title>Advanced REST client</title>
   <script>
     window.Polymer = {
@@ -10,36 +11,63 @@
       lazyRegister: true
     };
   </script>
-  <style>
-  body {
-    font-family: Roboto, sans-serif;
-    color: #333;
-    margin: 0;
-    font-size: 14px;
-    line-height: 1.5;
+  <custom-style>
+    <style>
+    body {
+      font-family: Roboto, sans-serif;
+      color: #333;
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.5;
+      background-color: #e5e5e5;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
 
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-  }
-  html, body {
-    height: 100%;
-    margin: 0;
-  }
+    /* Context menu */
+    .arc-context-menu {
+      position: absolute;
+      /* background-color: #FAFAFA; */
+      color: var(--paper-listbox-color);
+      background-color: var(--paper-listbox-background-color, #FAFAFA);
+      box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12), 0 3px 5px -1px rgba(0, 0, 0, 0.4);
+    }
 
-  /* Context menu */
-  .arc-context-menu {
-    position: absolute;
-    background-color: #FAFAFA;
-    box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12), 0 3px 5px -1px rgba(0, 0, 0, 0.4);
-  }
+    .arc-context-menu iron-icon {
+      color: var(--context-menu-item-color);
+    }
 
-  .arc-context-menu paper-item {
-    cursor: pointer;
-    min-height: 40px;
-  }
-  </style>
+    .arc-context-menu paper-icon-item,
+    .arc-context-menu paper-item {
+      color: var(--context-menu-item-color);
+      background-color: var(--context-menu-item-background-color);
+      cursor: pointer;
+      min-height: 40px;
+    }
+
+    .arc-context-menu paper-icon-item:hover,
+    .arc-context-menu paper-item:hover {
+      color: var(--context-menu-item-color-hover);
+      background-color: var(--context-menu-item-background-color-hover);
+    }
+
+    .arc-context-menu paper-icon-item:hover iron-icon,
+    .arc-context-menu paper-item:hover iron-icon {
+      color: var(--context-menu-item-color-hover);
+    }
+
+    bottom-sheet {
+      width: var(--bottom-sheet-width, 100%);
+      max-width: var(--bottom-sheet-max-width, 700px);
+    }
+    </style>
+  </custom-style>
 </head>
 <body>
   <script src="app.js"></script>

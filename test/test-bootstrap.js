@@ -10,7 +10,7 @@ const appPath = path.join(__dirname, '..', 'main.js');
 
 function getApp(opts) {
   opts = opts || {};
-  let options = {
+  const options = {
     path: electronPath,
     startTimeout: 50000,
     waitTimeout: 50000,

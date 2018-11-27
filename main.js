@@ -1,17 +1,19 @@
-const {ipcMain, app} = require('electron');
+const {ipcMain, app, shell} = require('electron');
+const {ThemesProtocolHandler} = require('./scripts/main/theme-protocol');
 const {ArcWindowsManager} = require('./scripts/main/windows-manager');
 const {UpdateStatus} = require('./scripts/main/update-status');
+const {AppMenuService} = require('./scripts/main/app-menu-service');
 const {ArcMainMenu} = require('./scripts/main/main-menu');
-const {ArcIdentity} = require('./scripts/main/oauth2');
-const {DriveExport} = require('./scripts/main/drive-export');
-const {SessionManager} = require('./scripts/main/session-manager');
+const {Oauth2Identity} = require('@advanced-rest-client/electron-oauth2');
+const {DriveExport} = require('@advanced-rest-client/electron-drive');
+const {PreferencesManager} = require('@advanced-rest-client/arc-electron-preferences/main');
+const {SessionManager} = require('@advanced-rest-client/electron-session-state/main');
 const {AppOptions} = require('./scripts/main/app-options');
 const {RemoteApi} = require('./scripts/main/remote-api');
-const {AppDefaults} = require('./scripts/main/app-defaults');
-const {ContentSearchService} = require('./scripts/main/search-service');
+const {ContentSearchService} = require('./scripts/packages/search-service/main');
 const {AppPrompts} = require('./scripts/main/app-prompts.js');
+const {SourcesManager} = require('./scripts/packages/sources-manager/main');
 const log = require('electron-log');
-
 /**
  * Main application object controling app's lifecycle.
  */
@@ -20,16 +22,9 @@ class Arc {
    * @constructor
    */
   constructor() {
-    this._registerProtocols();
     const startupOptions = this._processArguments();
-    this.menu = new ArcMainMenu();
-    this.wm = new ArcWindowsManager(startupOptions.getOptions());
-    this.us = new UpdateStatus(this.wm, this.menu);
-    this.sm = new SessionManager(this.wm);
-    this.remote = new RemoteApi(this.wm);
-    this.prompts = new AppPrompts();
-    this.gdrive = new DriveExport();
-    this._listenMenu();
+    this.initOptions = startupOptions.getOptions();
+    this._registerProtocols();
   }
   /**
    * Attaches used event listeners to the `electron.app` object.
@@ -38,6 +33,8 @@ class Arc {
     app.on('ready', this._readyHandler.bind(this));
     app.on('window-all-closed', this._allClosedHandler.bind(this));
     app.on('activate', this._activateHandler.bind(this));
+    // The most general events
+    ipcMain.on('open-external-url', this._externalUrlHandler.bind(this));
   }
   /**
    * Registers application protocol and adds a handler.
@@ -46,6 +43,7 @@ class Arc {
    * Google Drive menu.
    */
   _registerProtocols() {
+    // protocol.registerStandardSchemes(['themes']);
     log.info('Registering arc-file protocol');
     app.setAsDefaultProtocolClient('arc-file');
     app.on('open-url', (event, url) => {
@@ -62,34 +60,135 @@ class Arc {
       }
     });
   }
-  // processes start arguments
+  /**
+   * Registers protocols that can be registered only after the `ready`
+   * event is dispatched.
+   */
+  _initializeProtocolsReady() {
+    const tp = new ThemesProtocolHandler({
+      debug: this.initOptions.debug
+    });
+    tp.register();
+    this.themesProtocol = tp;
+  }
+  /**
+   * Processes start arguments
+   * @return {Object} [description]
+   */
   _processArguments() {
     const startupOptions = new AppOptions();
     startupOptions.parse();
     return startupOptions;
   }
-
+  /**
+   * Called when the application is ready to start.
+   * @return {Promise}
+   */
   _readyHandler() {
-    const defaults = new AppDefaults();
-    return defaults.prepareEnvironment()
+    return this._initializePreferencesManager()
+    .then(() => {
+      this._initializeSourcesManager();
+      this._initializeProtocolsReady();
+      const {AppDefaults} = require('./scripts/main/app-defaults');
+      const defaults = new AppDefaults();
+      return defaults.prepareEnvironment(this.sourcesManager);
+    })
     .catch((cause) => {
       log.error('Unable to prepare the environment.', cause.message);
       log.error(cause);
     })
     .then(() => {
+      this._initializeMenu();
+      this._initializeWindowsManager();
+      this._initializeUpdateStatus();
+      this._initializeGoogleDriveIntegration();
+      this._initializeSessionManager();
+      this._initializeSearchService();
+      this._initializeApplicationMenu();
+      this.remote = new RemoteApi(this.wm);
       log.info('Application is now ready');
-      ArcIdentity.listen();
-      this.wm.listen();
-      this.prompts.listen();
-      this.us.listen();
-      this.gdrive.listen();
       this.wm.open();
       if (!this.isDebug()) {
         this.us.start();
       }
-      this.menu.build();
-      this.sm.start();
+      this.prompts = new AppPrompts();
+      this.prompts.listen();
+      this._listenMenu();
+      Oauth2Identity.listen();
+    })
+    .catch((cause) => {
+      log.error('Unable to start the application.', cause.message);
+      log.error(cause);
     });
+  }
+
+  _initializePreferencesManager() {
+    this.prefs = new PreferencesManager(this.initOptions);
+    this.prefs.observe();
+    this.prefs.on('settings-changed', this._settingsChangeHandler.bind(this));
+    global.arcPreferences = this.prefs;
+    return this.prefs.load()
+    .then((settings) => {
+      if (settings.popupMenuExperimentEnabled) {
+        if (this.menu) {
+          this.menu.enableAppMenuPopup();
+        } else {
+          this.__menuAppPopupEnabled = true;
+        }
+      }
+    });
+  }
+
+  _initializeSourcesManager() {
+    this.sourcesManager = new SourcesManager(this.prefs, this.initOptions);
+    this.sourcesManager.listen();
+    global.arcSources = this.sourcesManager;
+  }
+
+  _initializeMenu() {
+    this.menu = new ArcMainMenu();
+    this.menu.build();
+    if (this.__menuAppPopupEnabled) {
+      this.__menuAppPopupEnabled = undefined;
+      this.menu.enableAppMenuPopup();
+    }
+  }
+
+  _initializeGoogleDriveIntegration() {
+    this.gdrive = new DriveExport();
+    this.gdrive.listen();
+  }
+
+  _initializeSessionManager() {
+    this.sm = new SessionManager({appUrls: [
+      'https://advancedrestclient-1155.appspot.com',
+      'advancedrestclient.com'
+    ]});
+    this.sm.listen();
+    this.sm.on('cookie-changed', (cookies) =>
+      this.wm.notifyAll('cookie-changed', cookies));
+  }
+  /**
+   * Initializes `ContentSearchService`
+   */
+  _initializeSearchService() {
+    ContentSearchService.listen(this.menu);
+  }
+
+  _initializeWindowsManager() {
+    this.wm = new ArcWindowsManager(this.initOptions, this.sourcesManager);
+    this.wm.listen();
+  }
+
+  _initializeUpdateStatus() {
+    this.us = new UpdateStatus(this.wm, this.menu);
+    this.us.listen();
+  }
+
+  _initializeApplicationMenu() {
+    const instance = new AppMenuService(this.wm, this.sourcesManager);
+    instance.listen();
+    this.appMenuService = instance;
   }
   /**
    * Quits when all windows are closed.
@@ -119,16 +218,17 @@ class Arc {
   /**
    * Event handler for menu actions.
    *
-   * @param {[type]} action [description]
-   * @param {[type]} win [description]
-   * @return {[type]} [description]
+   * @param {String} action Action type to perform
+   * @param {BrowserWindow} win
    */
   _menuHandler(action, win) {
     if (action.indexOf('application') === 0) {
-      return this._handleApplicationAction(action.substr(12), win);
+      this._handleApplicationAction(action.substr(12), win);
+      return;
     }
     if (action.indexOf('request') === 0) {
-      return win.webContents.send('request-action', action.substr(8));
+      win.webContents.send('request-action', action.substr(8));
+      return;
     }
   }
   /**
@@ -142,25 +242,13 @@ class Arc {
     switch (action) {
       case 'quit':
         app.quit();
-      break;
-      case 'open-saved':
-      case 'open-history':
-      case 'open-drive':
-      case 'open-messages':
-      case 'show-settings':
-      case 'about':
-      case 'open-license':
-      case 'import-data':
-      case 'export-data':
-      case 'login-external-webservice':
-      case 'open-cookie-manager':
-      case 'open-hosts-editor':
-      case 'open-themes':
-        win.webContents.send(windowCommand, action);
-      break;
+        break;
       case 'new-window':
         this.wm.open();
-      break;
+        break;
+      case 'task-manager':
+        this.wm.openTaskManager();
+        break;
       case 'open-privacy-policy':
       case 'open-documentation':
       case 'open-faq':
@@ -170,25 +258,12 @@ class Arc {
       case 'web-session-help':
         let {HelpManager} = require('./scripts/main/help-manager');
         HelpManager.helpWith(action);
-      break;
-      case 'task-manager':
-        this.wm.openTaskManager();
-      break;
-      case 'find':
-        if (win.webContents.getURL().indexOf('search-bar') !== -1) {
-          // ctrl+f from search bar.
-          return;
-        }
-        let srv = ContentSearchService.getService(win);
-        if (srv && srv.isOpened()) {
-          srv.focus();
-          return;
-        }
-        if (!srv) {
-          srv = new ContentSearchService(win);
-        }
-        srv.open();
-      break;
+        break;
+      case 'popup-menu':
+        this.appMenuService.togglePopupMenu();
+        break;
+      default:
+        win.webContents.send(windowCommand, action);
     }
   }
   /**
@@ -198,6 +273,35 @@ class Arc {
    */
   isDebug() {
     return !!process.argv.find((i) => i.indexOf('--inspect') !== -1);
+  }
+  /**
+   * Handles opening an URL in a browser action.
+   * @param {Event} e
+   * @param {String} url The URL to open.
+   */
+  _externalUrlHandler(e, url) {
+    if (!url) {
+      return;
+    }
+    shell.openExternal(url);
+  }
+  /**
+   * Handler for settings change.
+   * @param {String} name Changed property name
+   * @param {any} value Changed value
+   */
+  _settingsChangeHandler(name, value) {
+    switch (name) {
+      case 'popupMenuExperimentEnabled':
+        if (this.menu) {
+          if (value) {
+            this.menu.enableAppMenuPopup();
+          } else {
+            this.menu.disableAppMenuPopup();
+          }
+        }
+        break;
+    }
   }
 }
 
@@ -213,11 +317,3 @@ if (process.env.NODE_ENV === 'test') {
 if (arcApp.isDebug()) {
   global.arcApp = arcApp;
 }
-// Dev...
-ipcMain.on('open-theme-editor', (event, data) => {
-  log.info('Starting theme editor');
-  const windowId = event.sender.id;
-  const {ThemesEditor} = require('./scripts/main/themes-editor.js');
-  const editor = new ThemesEditor(windowId, data);
-  editor.run();
-});

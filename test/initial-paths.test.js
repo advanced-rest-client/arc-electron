@@ -11,7 +11,18 @@ describe('Initial paths', function() {
     before(function() {
       this.app = bootstrap.getApp();
       return this.app.start()
-      .then(() => this.app.client.waitUntilWindowLoaded(10000));
+      .then(() => {
+        return this.app.client.waitUntilWindowLoaded(10000);
+      })
+      .catch((cause) => {
+        if (this.app && this.app.isRunning()) {
+          return this.app.stop()
+          .then(() => {
+            throw cause;
+          });
+        }
+        throw cause;
+      });
     });
 
     after(function() {
