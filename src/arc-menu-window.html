@@ -9,6 +9,19 @@
       dom: 'shadow'
     };
   </script>
+  <link rel="import" href="../bower_components/polymer/polymer-element.html">
+  <link rel="import" href="../bower_components/shadycss/apply-shim.html">
+  <link rel="import" href="../bower_components/polymer/lib/elements/custom-style.html">
+  <link rel="import" href="../bower_components/polymer/lib/elements/dom-bind.html">
+  <link rel="import" href="../bower_components/polymer/lib/utils/import-href.html">
+  <link rel="import" href="../bower_components/polymer/lib/utils/render-status.html">
+  <link rel="import" href="../bower_components/font-roboto-local/roboto.html">
+  <link rel="import" href="../bower_components/app-pouchdb/pouchdb.html">
+  <link rel="import" href="../bower_components/arc-models/rest-api-model.html">
+  <link rel="import" href="../bower_components/arc-models/project-model.html">
+  <link rel="import" href="../bower_components/arc-models/request-model.html">
+  <link rel="import" href="../bower_components/neon-animation/web-animations.html">
+  <link rel="import" href="../bower_components/arc-menu/arc-menu.html">
   <style>
   body {
     font-family: Roboto, sans-serif;
@@ -46,7 +59,6 @@
   <script>
   (function() {
     class ArcMenuWindow {
-
       constructor() {
         this._settingsHandler = this._settingsHandler.bind(this);
         this._navHandler = this._navHandler.bind(this);
@@ -60,16 +72,14 @@
         this.prefProxy.observe();
         const u = new URL(location.href);
         const type = u.searchParams.get('type');
-        const themeFile = u.searchParams.get('themeFile');
-        const importFile = u.searchParams.get('importFile');
-        const listStyle = u.searchParams.get('listStyle');
 
-        this._configure(type, listStyle);
-        return this._importHref(importFile)
-        .then(() => this.themeManager.loadTheme(themeFile))
+        return this.prefProxy.load()
+        .then((cnf) => {
+          this._configure(type, cnf.viewListType);
+          return this.themeManager.loadTheme(cnf.theme);
+        })
         .catch((cause) => {
-          console.error(cause);
-          throw new Error('Unable to load components import file.');
+          console.warn(cause);
         });
       }
 
@@ -109,18 +119,17 @@
           case 'rest-api-menu':
             node = document.createElement(type);
             node.id = 'menu';
-            node.listType = listType;
             break;
           case '*':
             node = document.createElement('arc-menu');
             node.id = 'menu';
-            node.listType = listType;
             node.historyEnabled = true;
             break;
           default:
             console.error('Unknown menu object');
             return;
         }
+        node.listType = listType;
         const container = document.getElementById('container');
         container.appendChild(node);
       }

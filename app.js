@@ -121,22 +121,10 @@ class ArcInit {
     return this.prefProxy.load()
     .then((cnf) => {
       appConfig = cnf;
-      return this._createApp(cnf, opts);
+      return this._createApp(cnf);
     })
     .then(() => {
-      const defaultTheme = 'advanced-rest-client/arc-electron-default-theme';
-      let theme = appConfig.theme;
-      if (!theme || theme === 'dd1b715f-af00-4ee8-8b0c-2a262b3cf0c8') {
-        theme = defaultTheme;
-      } else if (theme === '859e0c71-ce8b-44df-843b-bca602c13d06') {
-         theme = 'advanced-rest-client/arc-electron-anypoint-theme';
-      }
-      return this.themeManager.loadTheme(theme)
-      .catch(() => {
-        if (theme !== defaultTheme) {
-          return this.themeManager.loadTheme(defaultTheme);
-        }
-      })
+      return this.themeManager.loadTheme(appConfig.theme)
       // Theme is not a fatal error
       .catch(() => {});
     })
@@ -154,31 +142,16 @@ class ArcInit {
   /**
    * Creates application main element.
    *
+   * @param {Object} config Current configuration.
    * @return {Promise} Promise resolved when element is loaded and ready
    * rendered.
    */
-  _createApp(config, opts) {
+  _createApp(config) {
     if (this.created) {
       return Promise.resolve();
     }
-    // console.log('Importing components from ', this.initConfig.importFile);
-    const file = opts.importFile || './import.html';
-    return this._importHref(file)
-    .catch(() => {
-      throw new Error('Unable to load components import file.');
-    })
+    return this._importHref('src/arc-electron.html')
     .then(() => {
-      // console.log('Importing arc-electron component');
-      return new Promise((resolve, reject) => {
-        Polymer.importHref('src/arc-electron.html', () => {
-          resolve();
-        }, () => {
-          reject(new Error('Unable to load ARC app'));
-        });
-      });
-    })
-    .then(() => {
-      // console.info('Initializing arc-electron element...');
       const app = document.createElement('arc-electron');
       app.id = 'app';
       app.config = config;

@@ -10,7 +10,7 @@ const {PreferencesManager} = require('@advanced-rest-client/arc-electron-prefere
 const {SessionManager} = require('@advanced-rest-client/electron-session-state/main');
 const {AppOptions} = require('./scripts/main/app-options');
 const {RemoteApi} = require('./scripts/main/remote-api');
-const {ContentSearchService} = require('@advanced-rest-client/arc-electron-search-service/main');
+const {ContentSearchService} = require('./scripts/packages/search-service/main');
 const {AppPrompts} = require('./scripts/main/app-prompts.js');
 const {SourcesManager} = require('./scripts/packages/sources-manager/main');
 const log = require('electron-log');
@@ -169,12 +169,9 @@ class Arc {
       this.wm.notifyAll('cookie-changed', cookies));
   }
   /**
-   * Initializes `ContentSearchService` from
-   * `@advanced-rest-client/arc-electron-search-service`
+   * Initializes `ContentSearchService`
    */
   _initializeSearchService() {
-    ContentSearchService.prefsManager = this.prefs;
-    ContentSearchService.startupOptions = this.initOptions;
     ContentSearchService.listen(this.menu);
   }
 
