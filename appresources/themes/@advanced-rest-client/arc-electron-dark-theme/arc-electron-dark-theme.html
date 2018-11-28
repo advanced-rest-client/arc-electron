@@ -283,9 +283,13 @@ to all elements.
     --arc-settings-panel-card-background-color: #263238;
 
     --secondary-action-button-color: #fff;
+    --primary-button-hover-background-color: #F5F5F5;
+    --primary-button-background-color: #F5F5F5;
+    --primary-button-hover-color: #37474F;
+    --primary-button-color: #607D8B;
     --action-button: {
-      background-color: #F5F5F5;
-      color: #607D8B;
+      background-color: var(--primary-button-background-color);
+      color: var(--primary-button-color);
     }
 
     --bottom-sheet-box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14),
@@ -331,6 +335,7 @@ to all elements.
       color: #fff;
     }
 
+    --code-color: #fff;
     --code-mirror-background-color: var(--code-background-color);
     --code-mirror-punctuation-color: #fff;
     --code-mirror-string-color: var(--code-type-text-value-color);
@@ -340,6 +345,40 @@ to all elements.
     --code-mirror-variable-color: #FFC107;
 
     --arc-status-code-color-300: #3F51B5;
+
+    --exchange-search-panel-font-color: #fff;
+    --paper-input-container-input-color: #fff;
+    --paper-input-container-color: rgba(255, 255, 255, 0.54);
+    --exchange-search-panel-toggle-view-color: rgba(255, 255, 255, 0.64);
+    --exchange-search-panel-item-background-color: #546E7A;
+    --exchange-search-list-item-author-color: rgba(255, 255, 255, 0.74);
+    --paper-item-body-secondary-color: rgba(255, 255, 255, 0.64);
+    --exchange-search-panel-toggle-view-active-background-color: #ECEFF1;
+    --exchange-search-panel-toggle-view-active-color: #37474F;
+
+    --markdown-styles-code-text-shadow: none;
+    --http-code-snippet-code-text-shadow: none;
+    --http-code-snippet-code-function-color: #FF9800;
+    --http-code-snippet-code-keyword-color: #81D4FA;
+    --http-code-snippet-code-cdata-color: #B0BEC5;
+    --arc-toggle-view-icon-color: #B0BEC5;
+    --arc-toggle-view-icon-hover-color: var(--accent-color);
+    --api-type-document-property-parent-color: #CFD8DC;
+    --api-endpoint-documentation-bottom-navigation-color: #fff;
+    --api-endpoint-documentation-tryit-background-color: #263238;
+    --api-endpoint-documentation-tryit-panels-background-color: #37474F;
+    --api-endpoint-documentation-tryit-panels-border-color: transparent;
+    --api-property-form-item-input-label-required-color: rgba(255, 255, 255, 0.74);
+    --api-type-document-type-attribute-color: #B0BEC5;
+    --api-body-document-description-color: rgba(255, 255, 255, 0.74);
+    --api-url-params-editor-optional-checkbox-label-color: rgba(255, 255, 255, 0.74);
+    --api-type-documentation: {
+      @apply --arc-font-body1;
+    }
+
+    --api-navigation-path-label-color: #CFD8DC;
+    --arc-toolbar-button-background-color: #263238;
+    --auth-method-oauth2-redirect-info-color: rgba(255, 255, 255.74);
   }
   </style>
 </custom-style>
