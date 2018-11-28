@@ -12,35 +12,94 @@ License for the specific language governing permissions and limitations under
 the License.
 -->
 <link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/api-console/api-console.html">
 <link rel="import" href="../../bower_components/raml-aware/raml-aware.html">
-<dom-module id="arc-api-processor">
+<link rel="import" href="../../bower_components/amf-helper-mixin/amf-helper-mixin.html">
+<link rel="import" href="../../bower_components/paper-spinner/paper-spinner.html">
+<dom-module id="apic-electron">
   <template>
-    <style>:host {display: none !important;}</style>
-    <template is="dom-if" if="[[aware]]">
-      <raml-aware raml="{{amfModel}}" scope="[[aware]]"></raml-aware>
-    </template>
+    <style>
+    :host {
+      display: block;
+      @apply --apic-electron;
+    };
+
+    #processToast {
+      @apply --layout-horizontal;
+      @apply --layout-center;
+    }
+
+    paper-spinner {
+      margin-left: 8px;
+    }
+
+    .error-toast {
+      background-color: var(--warning-primary-color, #FF7043);
+      color: var(--warning-contrast-color, #fff);
+      @apply --error-toast;
+    }
+    </style>
+    <raml-aware scope="apic" raml="[[amfModel]]"></raml-aware>
+    <api-documentation
+      data-route="api-console"
+      data-page="docs"
+      aware="apic"
+      selected="[[selected]]"
+      selected-type="[[selectedType]]"
+      handle-navigation-events
+      inline-methods
+      redirect-uri="https://auth.advancedrestclient.com/oauth-popup.html"
+      narrow="[[narrow]]"
+      scroll-target="[[_scrollTarget]]"></api-documentation>
+    <paper-toast id="processToast" duration="0" opened="[[_apiProcessing]]">
+      <span>Preparing the API</span>
+      <paper-spinner active="[[_apiProcessing]]"></paper-spinner>
+    </paper-toast>
+    <paper-toast id="errorToast" class="error-toast" duration="5000"></paper-toast>
   </template>
   <script>
   /**
+   * It'a a wrapper for API console to render the console from unresolved
+   * AMF model.
    *
-   * @polymer
+   * ARC stores unresolved ld+json model of AMF so it is possible to generate
+   * RAML/OAS files from it later. Before API console can be used with data model
+   * it has to be resolved.
+   *
+   *
    * @customElement
-   * @memberof LogicElements
+   * @polymer
+   * @demo demo/index.html
+   * @memberof ApiElements
    */
-  class ArcApiProcessor extends ApiElements.AmfHelperMixin(Polymer.Element) {
+  class ApicElectron extends ApiElements.AmfHelperMixin(Polymer.Element) {
     static get is() {
-      return 'arc-api-processor';
+      return 'apic-electron';
     }
     static get properties() {
       return {
         /**
-         * `raml-aware` scope property to use.
+         * Unresolved AMF model.
          */
-        aware: String,
+        amf: String,
         /**
-         * API model
+         * API original type.
+         */
+        apiType: String,
+        /**
+         * Resolved AMF model.
          */
         amfModel: Object,
+        /**
+         * Passed to API console's `selected` property.
+         */
+        selected: String,
+        /**
+         * Passed to API console's `selectedType` property.
+         */
+        selectedType: String,
+        narrow: Boolean,
+        _scrollTarget: Object,
 
         baseUri: {
           type: String,
@@ -88,11 +147,77 @@ the License.
           type: Boolean,
           notify: true,
           computed: '_computeIsVersionSaved(versions, apiVersion)'
-        }
+        },
+
+        _apiProcessing: Boolean
       };
     }
 
+    static get observers() {
+      return [
+        '_amfChanged(amf, apiType)'
+      ];
+    }
 
+    constructor() {
+      super();
+      this._indexChangeHandler = this._indexChangeHandler.bind(this);
+    }
+
+    connectedCallback() {
+      super.connectedCallback();
+      window.addEventListener('api-index-changed', this._indexChangeHandler);
+      // window.addEventListener('api-version-deleted', this._indexChangeHandler);
+    }
+
+    disconnectedCallback() {
+      super.disconnectedCallback();
+      window.removeEventListener('api-index-changed', this._indexChangeHandler);
+    }
+
+    _amfChanged(amf, type) {
+      if (!amf || !type) {
+        this.amfModel = undefined;
+        return;
+      }
+      if (this.__processingResolve) {
+        clearTimeout(this.__processingResolve);
+      }
+      this.__processingResolve = setTimeout(() => {
+        this.__processingResolve = undefined;
+        this._processApi(amf, type);
+      });
+    }
+
+    _processApi(amf, type) {
+      this._apiProcessing = true;
+      const e = this._dispatchResolve(amf, type);
+      return e.detail.result
+      .then((model) => {
+        this.amfModel = JSON.parse(model);
+        this._apiProcessing = false;
+      })
+      .catch((cause) => {
+        this._apiProcessing = false;
+        this.$.errorToast.text = cause.message;
+        this.$.errorToast.opened = true;
+        console.error(cause);
+      });
+    }
+
+    _dispatchResolve(model, type) {
+      const e = new CustomEvent('api-resolve-model', {
+        bubbles: true,
+        composed: true,
+        cancelable: true,
+        detail: {
+          model,
+          type
+        }
+      });
+      this.dispatchEvent(e);
+      return e;
+    }
 
     /**
      * Computes model's base Uri
@@ -173,6 +298,31 @@ the License.
       }
       return versions.length > 1;
     }
+    /**
+     * Opens previously saved API.
+     * @param {String} id API database ID
+     * @param {?String} version API version. Default to latest version
+     * @return {Prommise} Promise resolved when API unresolved data are set.
+     * Note, property change observers will run model resolving API when
+     * unresolved model and type is set.
+     */
+    open(id, version) {
+      this.amf = undefined;
+      this.amfModel = undefined;
+
+      this._apiProcessing = true;
+      return this.getApi(id, version)
+      .then((result) => {
+        this.selected = 'summary';
+        this.selectedType = 'summary';
+        this.amf = result.api;
+        this.apiType = result.type;
+      })
+      .catch((cause) => {
+        this._apiProcessing = false;
+        throw cause;
+      });
+    }
 
     save() {
       if (!this.amfModel) {
@@ -202,7 +352,7 @@ the License.
         _id: baseUri,
         title,
         order: 0,
-        type: apiType
+        type: this.apiType
       };
       return this._saveVersion(info);
     }
@@ -212,11 +362,11 @@ the License.
       if (!version) {
         return Promise.reject(new Error('API version is missing.'));
       }
-      return this._updateInfoObject(apiInfo, version)
+      return this._updateVersionInfo(apiInfo, version)
       .then(() => this._updateDataObject(apiInfo._id, version));
     }
 
-    _updateInfoObject(apiInfo, version) {
+    _updateVersionInfo(apiInfo, version) {
       if (!(apiInfo.versions instanceof Array)) {
         apiInfo.versions = [];
       }
@@ -247,7 +397,7 @@ the License.
         detail: {
           indexId: id,
           version,
-          data: this.amfModel
+          data: this.amf
         },
         bubbles: true,
         cancelable: true,
@@ -334,11 +484,21 @@ the License.
       if (!id) {
         return Promise.reject(new Error('No API id given'));
       }
-      if (!version) {
-        return this._getApiInfo(id)
-        .then((doc) => this._requestApiVersion(id + '|' + doc.latest));
-      }
-      return this._requestApiVersion(id + '|' + version);
+      let apiType;
+      return this._getApiInfo(id)
+      .then((doc) => {
+        apiType = doc.type;
+        if (!version) {
+          version = doc.latest;
+        }
+        return this._requestApiVersion(id + '|' + version);
+      })
+      .then((api) => {
+        return {
+          api,
+          type: apiType
+        };
+      });
     }
 
     _requestApiVersion(versionId) {
@@ -369,6 +529,6 @@ the License.
       return info.versions;
     }
   }
-  window.customElements.define(ArcApiProcessor.is, ArcApiProcessor);
+  window.customElements.define(ApicElectron.is, ApicElectron);
   </script>
 </dom-module>
