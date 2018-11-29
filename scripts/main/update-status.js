@@ -4,8 +4,6 @@ const {dialog, nativeImage, ipcMain} = require('electron');
 const {ArcPreferences} = require('@advanced-rest-client/arc-electron-preferences');
 const log = require('./logger');
 const path = require('path');
-// autoUpdater.logger = log;
-// autoUpdater.logger.transports.file.level = 'info';
 
 /**
  * A module to check for updates.
@@ -71,7 +69,14 @@ class UpdateStatus extends ArcBase {
       break;
     }
   }
-
+  /**
+   * Checks if `channel` is a valid channel signature.
+   * @param {String} channel
+   * @return {Boolean}
+   */
+  isValidChannel(channel) {
+    return ['beta', 'alpha', 'latest'].indexOf(channel) !== -1;
+  }
   /**
    * Checks for app update.
    * This function **must** be called after the app ready event.
@@ -85,6 +90,11 @@ class UpdateStatus extends ArcBase {
     });
     return pref.load()
     .then((settings) => {
+      if (settings.releaseChannel) {
+        if (this.isValidChannel(settings.releaseChannel)) {
+          autoUpdater.channel = settings.releaseChannel;
+        }
+      }
       if (settings.autoUpdate === false) {
         log.debug('Auto Updater is disabled. Manual requests will still download the update.');
         autoUpdater.autoDownload = false;
@@ -95,6 +105,18 @@ class UpdateStatus extends ArcBase {
         this.check();
       }, 5000);
     });
+  }
+  /**
+   * Sets the channel value on auto updater
+   * @param {String} channel Channel name
+   */
+  updateReleaseChannel(channel) {
+    if (this.isValidChannel(channel)) {
+      log.debug('Setting release channel to' + channel);
+      autoUpdater.channel = channel;
+    } else {
+      log.warn('Channel ' + channel + ' is not valid application release channel.');
+    }
   }
   /**
    * Creates scoped event handlers for all events used in this class.

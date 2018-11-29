@@ -331,6 +331,9 @@ class Arc {
           }
         }
         break;
+      case 'releaseChannel':
+        this.us.updateReleaseChannel(value);
+        break;
     }
   }
 }

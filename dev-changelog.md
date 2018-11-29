@@ -27,6 +27,7 @@
 -   Added file log output. The log file location dependes on the OS. See [electronjs.org/docs/api/app](https://electronjs.org/docs/api/app#appgetpathname).
 -   Fixed units in Task manager
 -   Task manager now renders processes names more accurately
+-   Adding release channels. Now app support Stable, Beta, and Unstable release channels. Access settings in "About ARC" screen.
 
 ## Requests
 
