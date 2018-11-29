@@ -1,6 +1,7 @@
 const {BrowserWindow, ipcMain} = require('electron');
 const path = require('path');
 const url = require('url');
+const log = require('./logger');
 /**
  * Application menu by default is embedded in main application window.
  * User has an option to pop up menu to a new window. This class handles
@@ -22,6 +23,7 @@ class AppMenuService {
   }
 
   listen() {
+    log.debug('Listening for menu popup events');
     ipcMain.on('popup-app-menu', this._popupAppMenuHandler);
     ipcMain.on('popup-app-menu-nav', this._popupNavHandler);
   }
@@ -32,7 +34,9 @@ class AppMenuService {
    * @param {?Object} sizing `width` and `height`
    */
   _popupAppMenuHandler(e, type, sizing) {
+    log.debug('Handling menu popup event from app window.');
     if (this.menuWindows.has(type)) {
+      log.debug('Showing existing window.');
       const menu = this.menuWindows.get(type);
       menu.show();
       return;
@@ -49,6 +53,7 @@ class AppMenuService {
     if (this.menuWindows.has(type)) {
       return;
     }
+    log.debug('Creating menu popup window for type: ' + type);
     const bw = this.__getNewWindow(type, sizing);
     this.menuWindows.set(type, bw);
     this.__loadPage(type, bw);
@@ -127,7 +132,9 @@ class AppMenuService {
    * @param {Object} detail Event detail
    */
   _popupNavHandler(e, detail) {
+    log.debug('Handling popup menu event from the menu.');
     if (!this.wm.hasWindow) {
+      log.warn('Popup menu event handled without menu window registered.');
       return;
     }
     let win = this.wm.lastFocused;
@@ -135,19 +142,26 @@ class AppMenuService {
       win = this.wm.lastActive;
     }
     if (!win) {
-      console.warn('Unable to perform navigation. No active window found.');
+      log.warn('Unable to perform navigation. No active window found.');
       return;
     }
+    log.debug('Sending navigate event to the renderer process.');
     win.webContents.send('app-navigate', detail);
   }
-
+  /**
+   * Removes all generated menu windows.
+   */
   clear() {
+    log.debug('Removing all menu popup windows.');
     for (let win of this.menuWindows.values()) {
       win.destroy();
     }
   }
-
+  /**
+   * Toggles entitre menu window.
+   */
   togglePopupMenu() {
+    log.debug('Toggling menu popup window.');
     const win = this.menuWindows.get('*');
     if (win) {
       win.destroy();

@@ -1,6 +1,6 @@
 const fs = require('fs-extra');
 const path = require('path');
-const log = require('electron-log');
+const log = require('../logger');
 
 /**
  * A class that is responsible for setting up theme defaults.

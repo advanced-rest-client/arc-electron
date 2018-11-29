@@ -1,6 +1,6 @@
 const {session, app} = require('electron');
 const path = require('path');
-const log = require('electron-log');
+const log = require('./logger');
 const fs = require('fs-extra');
 /**
  * A class responsible for handling `themes:` protocol.
@@ -44,7 +44,7 @@ class ThemesProtocolHandler {
    * This must be called after the `ready` event.
    */
   register() {
-    log.info('Registering themes protocol');
+    log.debug('Registering themes protocol');
     session.fromPartition('persist:arc-window')
     .protocol
     .registerStringProtocol('themes', this._requestHandler, this._registrationHandler);

@@ -13,7 +13,7 @@ const {RemoteApi} = require('./scripts/main/remote-api');
 const {ContentSearchService} = require('./scripts/packages/search-service/main');
 const {AppPrompts} = require('./scripts/main/app-prompts.js');
 const {SourcesManager} = require('./scripts/packages/sources-manager/main');
-const log = require('electron-log');
+const log = require('./scripts/main/logger');
 /**
  * Main application object controling app's lifecycle.
  */
@@ -44,10 +44,10 @@ class Arc {
    */
   _registerProtocols() {
     // protocol.registerStandardSchemes(['themes']);
-    log.info('Registering arc-file protocol');
+    log.debug('Registering arc-file protocol');
     app.setAsDefaultProtocolClient('arc-file');
     app.on('open-url', (event, url) => {
-      log.info('arc-file protocol handles ', url);
+      log.debug('arc-file protocol handles ', url);
       event.preventDefault();
       let fileData = url.substr(11);
       let parts = fileData.split('/');
@@ -65,6 +65,7 @@ class Arc {
    * event is dispatched.
    */
   _initializeProtocolsReady() {
+    log.debug('Initializing themes protocol');
     const tp = new ThemesProtocolHandler({
       debug: this.initOptions.debug
     });
@@ -78,6 +79,9 @@ class Arc {
   _processArguments() {
     const startupOptions = new AppOptions();
     startupOptions.parse();
+    if (startupOptions.debug) {
+      log.level = 'debug';
+    }
     return startupOptions;
   }
   /**
@@ -85,8 +89,10 @@ class Arc {
    * @return {Promise}
    */
   _readyHandler() {
+    log.debug('Ready event handled. Initializing application.');
     return this._initializePreferencesManager()
     .then(() => {
+      log.debug('Preferences initialized');
       this._initializeSourcesManager();
       this._initializeProtocolsReady();
       const {AppDefaults} = require('./scripts/main/app-defaults');
@@ -98,6 +104,7 @@ class Arc {
       log.error(cause);
     })
     .then(() => {
+      log.debug('Protocols ready');
       this._initializeMenu();
       this._initializeWindowsManager();
       this._initializeUpdateStatus();
@@ -106,15 +113,14 @@ class Arc {
       this._initializeSearchService();
       this._initializeApplicationMenu();
       this.remote = new RemoteApi(this.wm);
-      log.info('Application is now ready');
       this.wm.open();
       if (!this.isDebug()) {
-        this.us.start();
+        this.us.start(this.initOptions.settingsFile);
       }
       this.prompts = new AppPrompts();
       this.prompts.listen();
-      this._listenMenu();
       Oauth2Identity.listen();
+      log.info('Application is now ready.');
     })
     .catch((cause) => {
       log.error('Unable to start the application.', cause.message);
@@ -123,13 +129,17 @@ class Arc {
   }
 
   _initializePreferencesManager() {
+    log.debug('Initializing preferences manager.');
     this.prefs = new PreferencesManager(this.initOptions);
     this.prefs.observe();
     this.prefs.on('settings-changed', this._settingsChangeHandler.bind(this));
     global.arcPreferences = this.prefs;
+    log.debug('Loading user configuration.');
     return this.prefs.load()
     .then((settings) => {
+      log.debug('User configuration ready.');
       if (settings.popupMenuExperimentEnabled) {
+        log.info('Enabling menu popup experiment.');
         if (this.menu) {
           this.menu.enableAppMenuPopup();
         } else {
@@ -140,26 +150,41 @@ class Arc {
   }
 
   _initializeSourcesManager() {
+    log.debug('Initializing sources manager.');
     this.sourcesManager = new SourcesManager(this.prefs, this.initOptions);
     this.sourcesManager.listen();
     global.arcSources = this.sourcesManager;
   }
 
   _initializeMenu() {
+    log.debug('Initializing application menu (system menu).');
     this.menu = new ArcMainMenu();
     this.menu.build();
+    log.debug('Listening for system menu events.');
+    this.menu.on('menu-action', (action, win) => {
+      this._menuHandler(action, win);
+    });
     if (this.__menuAppPopupEnabled) {
       this.__menuAppPopupEnabled = undefined;
       this.menu.enableAppMenuPopup();
     }
   }
 
+  _initializeApplicationMenu() {
+    log.debug('Initializing app menu service (popup listener).');
+    const instance = new AppMenuService(this.wm, this.sourcesManager);
+    instance.listen();
+    this.appMenuService = instance;
+  }
+
   _initializeGoogleDriveIntegration() {
+    log.debug('Initializing Google Drive integration.');
     this.gdrive = new DriveExport();
     this.gdrive.listen();
   }
 
   _initializeSessionManager() {
+    log.debug('Initializing session manager.');
     this.sm = new SessionManager({appUrls: [
       'https://advancedrestclient-1155.appspot.com',
       'advancedrestclient.com'
@@ -172,30 +197,31 @@ class Arc {
    * Initializes `ContentSearchService`
    */
   _initializeSearchService() {
+    log.debug('Initializing content search service.');
     ContentSearchService.listen(this.menu);
   }
 
   _initializeWindowsManager() {
+    log.debug('Initializing windows manager.');
     this.wm = new ArcWindowsManager(this.initOptions, this.sourcesManager);
     this.wm.listen();
   }
 
   _initializeUpdateStatus() {
+    log.info('Initializing update manager.');
     this.us = new UpdateStatus(this.wm, this.menu);
     this.us.listen();
-  }
-
-  _initializeApplicationMenu() {
-    const instance = new AppMenuService(this.wm, this.sourcesManager);
-    instance.listen();
-    this.appMenuService = instance;
   }
   /**
    * Quits when all windows are closed.
    */
   _allClosedHandler() {
+    log.debug('All windows are now closed.');
     if (process.platform !== 'darwin') {
+      log.debug('Quiting main thread.');
       app.quit();
+    } else {
+      log.debug('Keeping main thread running.');
     }
   }
   /**
@@ -203,17 +229,12 @@ class Arc {
    * dock icon is clicked and there are no other windows open.
    */
   _activateHandler() {
+    log.debug('Activating window.');
     if (!this.wm.hasWindow) {
       this.wm.open();
     } else {
       this.wm.restoreLast();
     }
-  }
-  /**
-   * Listens on menu actions.
-   */
-  _listenMenu() {
-    this.menu.on('menu-action', this._menuHandler.bind(this));
   }
   /**
    * Event handler for menu actions.
@@ -222,6 +243,7 @@ class Arc {
    * @param {BrowserWindow} win
    */
   _menuHandler(action, win) {
+    log.debug('Handing menu command: ' + action);
     if (action.indexOf('application') === 0) {
       this._handleApplicationAction(action.substr(12), win);
       return;
@@ -230,6 +252,7 @@ class Arc {
       win.webContents.send('request-action', action.substr(8));
       return;
     }
+    log.warn('Menu command not handled: ' + action);
   }
   /**
    * Handles `application` group of commands
@@ -241,12 +264,15 @@ class Arc {
     let windowCommand = 'command';
     switch (action) {
       case 'quit':
+        log.debug('Quiting the app.');
         app.quit();
         break;
       case 'new-window':
+        log.debug('Opening new window.');
         this.wm.open();
         break;
       case 'task-manager':
+        log.debug('Opening task manager.');
         this.wm.openTaskManager();
         break;
       case 'open-privacy-policy':
@@ -256,13 +282,16 @@ class Arc {
       case 'report-issue':
       case 'search-issues':
       case 'web-session-help':
+        log.debug('Running help action.');
         let {HelpManager} = require('./scripts/main/help-manager');
         HelpManager.helpWith(action);
         break;
       case 'popup-menu':
+        log.debug('Toggling popup menu.');
         this.appMenuService.togglePopupMenu();
         break;
       default:
+        log.debug('Sending action to the UI thred.', action);
         win.webContents.send(windowCommand, action);
     }
   }
@@ -283,6 +312,7 @@ class Arc {
     if (!url) {
       return;
     }
+    log.debug('Opening external URL: ' + url);
     shell.openExternal(url);
   }
   /**

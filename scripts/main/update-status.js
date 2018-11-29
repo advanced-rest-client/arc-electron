@@ -2,7 +2,7 @@ const {ArcBase} = require('./arc-base');
 const {autoUpdater} = require('electron-updater');
 const {dialog, nativeImage, ipcMain} = require('electron');
 const {ArcPreferences} = require('@advanced-rest-client/arc-electron-preferences');
-const log = require('electron-log');
+const log = require('./logger');
 const path = require('path');
 // autoUpdater.logger = log;
 // autoUpdater.logger.transports.file.level = 'info';
@@ -76,17 +76,21 @@ class UpdateStatus extends ArcBase {
    * Checks for app update.
    * This function **must** be called after the app ready event.
    *
+   * @param {?String} settingsFile Optional settings file for ArcPreferences class.
    * @return {Promise} Promise resolved when settings are loaded.
    */
-  start() {
-    let pref = new ArcPreferences();
-    return pref.loadSettings()
+  start(settingsFile) {
+    const pref = new ArcPreferences({
+      settingsFile
+    });
+    return pref.load()
     .then((settings) => {
       if (settings.autoUpdate === false) {
+        log.debug('Auto Updater is disabled. Manual requests will still download the update.');
         autoUpdater.autoDownload = false;
         return;
       }
-      log.info('Initializing Auto Updater...');
+      log.info('Initializing Auto Updater.');
       setTimeout(() => {
         this.check();
       }, 5000);
@@ -126,7 +130,7 @@ class UpdateStatus extends ArcBase {
   check(opts) {
     opts = opts || {};
     this.lastOptions = opts;
-    log.info('Checking for update');
+    log.info('Checking for application update.');
     autoUpdater.checkForUpdates();
   }
   /**
@@ -159,6 +163,7 @@ class UpdateStatus extends ArcBase {
    * @param {UpdateInfo} info Update info object. See class docs for details.
    */
   _updateAvailableHandler(info) {
+    log.debug('Update available.', info);
     this.state = 2;
     this.lastInfoObject = info;
     this.notifyWindows('update-available', info);
@@ -173,6 +178,7 @@ class UpdateStatus extends ArcBase {
    * @param {UpdateInfo} info Update info object. See class docs for details.
    */
   _updateNotAvailableHandler(info) {
+    log.debug('Update not available.', info);
     this.state = 3;
     this.lastInfoObject = info;
     this.notifyWindows('update-not-available', info);
@@ -186,6 +192,7 @@ class UpdateStatus extends ArcBase {
    * @param {Error} error Error from the library.
    */
   _updateErrorHandler(error) {
+    log.error('Update error', error);
     this.state = 4;
     this.lastInfoObject = error;
     this.notifyWindows('autoupdate-error', error);
@@ -210,6 +217,7 @@ class UpdateStatus extends ArcBase {
    * - transferred
    */
   _downloadProgressHandler(progressObj) {
+    log.debug('Update download progress', progressObj);
     this.state = 5;
     this.lastInfoObject = progressObj;
     this.notifyWindows('download-progress', progressObj);
@@ -220,6 +228,7 @@ class UpdateStatus extends ArcBase {
    * @param {UpdateInfo} info Update info object. See class docs for details.
    */
   _downloadReadyHandler(info) {
+    log.debug('Update download ready', info);
     this.state = 6;
     this.lastInfoObject = info;
     this.notifyWindows('update-downloaded', info);
@@ -229,6 +238,7 @@ class UpdateStatus extends ArcBase {
    * Quits the application and installs new update.
    */
   installUpdate() {
+    log.info('Initializing update process (quit & install)');
     autoUpdater.quitAndInstall();
   }
   /**

@@ -4,6 +4,7 @@ const url = require('url');
 const {ArcSessionControl} = require('@advanced-rest-client/arc-electron-preferences/main');
 const {ArcSessionRecorder} = require('./arc-session-recorder');
 const {ContextActions} = require('./context-actions');
+const log = require('./logger');
 /**
  * A class that manages opened app windows.
  */
@@ -23,7 +24,6 @@ class ArcWindowsManager {
     this.__windowResized = this.__windowResized.bind(this);
     this.__windowFocused = this.__windowFocused.bind(this);
     this.__windowOpenedPopup = this.__windowOpenedPopup.bind(this);
-    this.__contextMenuHandler = this.__contextMenuHandler.bind(this);
     this._settingChangedHandler = this._settingChangedHandler.bind(this);
     this.recorder = new ArcSessionRecorder();
     this.contextActions = new ContextActions();
@@ -119,6 +119,7 @@ class ArcWindowsManager {
    * @param {?String} message Message to display to the user.
    */
   _reloadRequiredHandler(e, message) {
+    log.debug('[WM] Rendering window reload required dialog.');
     message = message || 'To complete this action reload the application.';
     const win = BrowserWindow.fromWebContents(e.sender);
     dialog.showMessageBox(win, {
@@ -141,6 +142,7 @@ class ArcWindowsManager {
    * @param {?Array} args List of arguments.
    */
   notifyAll(type, args) {
+    log.debug('[WM] Notyfying all windows with type', type);
     this.windows.forEach((win, index) => {
       if (win.isDestroyed()) {
         this.windows.splice(index, 1);
@@ -177,6 +179,7 @@ class ArcWindowsManager {
    * @return {Promise} Resolved promise when the window is ready.
    */
   open(path) {
+    log.debug('[WM] Opening new window', path);
     const index = this.windows.length;
     const session = new ArcSessionControl(index);
     return session.load()
@@ -205,6 +208,7 @@ class ArcWindowsManager {
       this._tmWin.focus();
       return;
     }
+    log.debug('[WM] Opening task manager');
     const win = new BrowserWindow({
       backgroundColor: '#00A2DF',
       webPreferences: {
@@ -306,7 +310,6 @@ class ArcWindowsManager {
     win.addListener('focus', this.__windowFocused);
     win.once('ready-to-show', this.__readyShowHandler.bind(this));
     win.webContents.on('new-window', this.__windowOpenedPopup);
-    win.webContents.on('arc-context-menu', this.__contextMenuHandler);
   }
   /**
    * Finds window index position in windows array.
@@ -378,6 +381,7 @@ class ArcWindowsManager {
    * @param {Event} e Event emitted by the window.
    */
   __readyShowHandler(e) {
+    log.debug('[WM] Window is ready to show');
     e.sender.show();
   }
   /**
@@ -386,6 +390,7 @@ class ArcWindowsManager {
    * @param {Event} e Event emitted by the window.
    */
   __windowReloading(e) {
+    log.debug('[WM] Window is reloading');
     const contents = e.sender;
     const win = this.windows.find((item) => {
       if (item.isDestroyed()) {
@@ -424,6 +429,7 @@ class ArcWindowsManager {
    * Reloads all not destroyed wondows.
    */
   reloadWindows() {
+    log.debug('[WM] Reloading all windows.');
     this.windows.forEach((win, index) => {
       if (win.isDestroyed()) {
         this.windows.splice(index, 1);
@@ -448,10 +454,6 @@ class ArcWindowsManager {
       value: value,
       area: area
     }, event.sender);
-  }
-
-  __contextMenuHandler(event, params) {
-    console.log(event, params);
   }
 }
 

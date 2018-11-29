@@ -1,4 +1,5 @@
 const {dialog, ipcMain} = require('electron');
+const log = require('./logger');
 /**
  * Class responsible for displaying system dialogs and
  * to sends back resutls to the sender.
@@ -23,6 +24,7 @@ class AppPrompts {
    * - file {String} - File name to suggest to the user.
    */
   _saveDialogHandler(e, args) {
+    log.debug('Save dialog requested', args);
     args = args || {};
     const options = {
       title: 'Save to file'

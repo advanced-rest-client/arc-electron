@@ -2,8 +2,7 @@ const EventEmitter = require('events');
 const {app, Menu, MenuItem} = require('electron');
 const fs = require('fs-extra');
 const path = require('path');
-const log = require('electron-log');
-// log.transports.file.level = 'info';
+const log = require('./logger');
 
 /**
  * A module to handle app menu actions
@@ -21,11 +20,13 @@ class ArcMainMenu extends EventEmitter {
    * @return {Promise} Resolved when menu is created.
    */
   build() {
+    log.info('Building application menu from template');
     return this._getTemplate()
     .then((template) => this._createFromTemplate(template))
     .then(() => this._menuLoaded = true)
     .then(() => Menu.setApplicationMenu(this.topMenu))
     .then(() => {
+      log.info('Application menu is now set.');
       if (!this.pendingActions) {
         return;
       }
@@ -164,6 +165,7 @@ class ArcMainMenu extends EventEmitter {
    * @param {BrowserWindow} browserWindow Target window.
    */
   _itemAction(command, menuItem, browserWindow) {
+    log.info('Main menu action detected: ' + command);
     this.emit('menu-action', command, browserWindow);
   }
   /**
@@ -171,6 +173,7 @@ class ArcMainMenu extends EventEmitter {
    * @param {[type]} template [description]
    */
   _createFromTemplate(template) {
+    log.info('Creating menu instance');
     this._createMainMenu(template.menu);
     // TODO: Context menus.
   }
@@ -220,6 +223,7 @@ class ArcMainMenu extends EventEmitter {
   _getTemplate() {
     const name = this._platformToName(process.platform) + '.json';
     const file = path.join(__dirname, '..', '..', 'menus', name);
+    log.info('Menu template location', file);
     return fs.readJson(file);
   }
   /**

@@ -1,6 +1,5 @@
-const log = require('electron-log');
+const log = require('./logger');
 const camelCase = require('camelcase');
-// log.transports.file.level = 'info';
 
 /**
  * A class describing and processing application initial options.
@@ -39,6 +38,9 @@ class AppOptions {
     }, {
       name: '--import-file',
       shortcut: '-i',
+      type: String
+    }, {
+      name: '.', // from "npm start"
       type: String
     }];
   }
