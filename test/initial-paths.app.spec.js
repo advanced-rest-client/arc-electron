@@ -4,19 +4,18 @@ const fs = require('fs-extra');
 
 describe('Initial paths', function() {
   const settingsFilePath = 'test/test-settings.json';
-  const workspaceFilePath = 'test/test-workspace.json';
+  const workspaceFilePath = 'test/workspace';
 
   describe('Setups default file paths', function() {
     this.timeout(10000);
+    let app;
     before(function() {
-      this.app = bootstrap.getApp();
-      return this.app.start()
-      .then(() => {
-        return this.app.client.waitUntilWindowLoaded(10000);
-      })
+      app = bootstrap.getApp();
+      return app.start()
+      .then(() => app.client.waitUntilWindowLoaded(10000))
       .catch((cause) => {
-        if (this.app && this.app.isRunning()) {
-          return this.app.stop()
+        if (app && app.isRunning()) {
+          return app.stop()
           .then(() => {
             throw cause;
           });
@@ -26,21 +25,21 @@ describe('Initial paths', function() {
     });
 
     after(function() {
-      if (this.app && this.app.isRunning()) {
-        return this.app.stop();
+      if (app && app.isRunning()) {
+        return app.stop();
       }
     });
 
     it('Should not set settings file location', function() {
-      return this.app.electron.remote.app.
-      testsInterface('get-application-settings-file-location')
+      return app.electron.remote.app
+      .testsInterface('get-application-settings-file-location')
       .then((location) => {
         assert.equal(location, undefined);
       });
     });
 
     it('Should not set workspace file location', function() {
-      return this.app.electron.remote.app
+      return app.electron.remote.app
       .testsInterface('get-application-workspace-state-file-location')
       .then((location) => {
         assert.equal(location, undefined);
@@ -49,11 +48,11 @@ describe('Initial paths', function() {
 
     it('Should set settings default file location', function() {
       let fileLocation;
-      return this.app.electron.remote.app
+      return app.electron.remote.app
       .testsInterface('get-preferences-settings-location')
       .then((location) => {
         fileLocation = location;
-        return this.app.electron.remote.app.getPath('userData');
+        return app.electron.remote.app.getPath('userData');
       })
       .then((settingsPath) => {
         let finalLocation = settingsPath + '/settings.json';
@@ -64,26 +63,25 @@ describe('Initial paths', function() {
 
   describe('Setups configuration file paths', function() {
     this.timeout(10000);
-
     const opts = {
       args: [
         '--settings-file',
         settingsFilePath,
-        '--workspace-file',
+        '--workspace-path',
         workspaceFilePath
       ]
     };
-
+    let app;
     before(function() {
-      this.app = bootstrap.getApp(opts);
-      return this.app.start()
-      .then(() => this.app.client.waitUntilWindowLoaded(10000));
+      app = bootstrap.getApp(opts);
+      return app.start()
+      .then(() => app.client.waitUntilWindowLoaded(10000));
     });
 
     after(function() {
       let promise;
-      if (this.app && this.app.isRunning()) {
-        promise = this.app.stop();
+      if (app && app.isRunning()) {
+        promise = app.stop();
       } else {
         promise = Promise.resolve();
       }
@@ -93,7 +91,7 @@ describe('Initial paths', function() {
     });
 
     it('Should set settings file location', function() {
-      return this.app.electron.remote.app.
+      return app.electron.remote.app.
       testsInterface('get-application-settings-file-location')
       .then((location) => {
         assert.equal(location, settingsFilePath);
@@ -101,7 +99,7 @@ describe('Initial paths', function() {
     });
 
     it('Should set workspace file location', function() {
-      return this.app.electron.remote.app
+      return app.electron.remote.app
       .testsInterface('get-application-workspace-state-file-location')
       .then((location) => {
         assert.equal(location, workspaceFilePath);

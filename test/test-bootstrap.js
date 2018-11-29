@@ -1,8 +1,7 @@
 const path = require('path');
-const Application = require('spectron').Application;
+const {Application} = require('spectron');
 
-let electronPath = path.join(__dirname, '..', 'node_modules', '.bin',
-  'electron');
+let electronPath = path.join(__dirname, '..', 'node_modules', '.bin', 'electron');
 if (process.platform === 'win32') {
   electronPath += '.cmd';
 }
@@ -14,7 +13,8 @@ function getApp(opts) {
     path: electronPath,
     startTimeout: 50000,
     waitTimeout: 50000,
-    args: [appPath]
+    args: [appPath],
+    requireName: 'electronRequire'
   };
   if (opts.args) {
     options.args = options.args.concat(opts.args);

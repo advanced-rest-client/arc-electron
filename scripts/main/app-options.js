@@ -26,21 +26,13 @@ class AppOptions {
       shortcut: '-w',
       type: String
     }, {
-      // Disables console info output
-      name: '--disable-log',
-      shortcut: '-l',
-      type: Boolean
-    }, {
       // Opens ARC in dev mode (opened console, verbose log)
       name: '--debug',
       shortcut: '-d',
       type: Boolean
     }, {
-      name: '--import-file',
-      shortcut: '-i',
-      type: String
-    }, {
-      name: '.', // from "npm start"
+      name: '.', // from "npm start" to not print error
+      shortcut: '-dot',
       type: String
     }];
   }

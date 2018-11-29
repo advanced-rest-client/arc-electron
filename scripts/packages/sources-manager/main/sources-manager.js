@@ -19,8 +19,6 @@ class SourcesManager {
    * @param {PreferencesManager} pm ARC preferences manager module instance
    * @param {Object} so Applicartion startup options. It supports the following
    * keys:
-   * - themeFile (String) - Location of the theme file
-   * - importFile (String) - Location of the imports file for web components
    * - appComponents (String) - Location to the directory where application
    * web components are located. This path must contain `bower_components`
    * directory.
@@ -43,11 +41,6 @@ class SourcesManager {
      * @type {String}
      */
     this.defaultTheme = 'advanced-rest-client/arc-electron-default-theme';
-    /**
-     * Name of the default application import file.
-     * @type {String}
-     */
-    this.importFileName = 'import.html';
     /**
      * Name of application search page import file.
      * @type {String}
@@ -106,10 +99,7 @@ class SourcesManager {
   }
   /**
    * Returns application basic paths configuration.
-   * @return {Object} Path to:
-   * - appComponents - Where the web components are located
-   * - importFile - Where main web components import file is located
-   * - themeFile - A theme file to load.
+   * @return {Object}
    */
   getAppConfig() {
     return Promise.all([

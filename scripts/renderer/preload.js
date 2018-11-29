@@ -23,6 +23,9 @@ Object.keys(process.env).forEach((key) => {
   env[key] = process.env[key];
 });
 process.once('loaded', () => {
+  if (process.env.NODE_ENV === 'test') {
+    global.electronRequire = require;
+  }
   global.ipcRenderer = ipc;
   global.ipc = ipc;
   global.ArcElectronDrive = ArcElectronDrive;

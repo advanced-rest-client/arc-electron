@@ -1,9 +1,11 @@
 const assert = require('chai').assert;
 const fs = require('fs-extra');
+const path = require('path');
 const {ThemePluginsManager} = require('../main');
 
 describe('ThemePluginsManager - main process', function() {
-  const basePath = 'test/themes';
+  const basePath = path.join(__dirname, 'themes');
+
   describe('constructor()', function() {
     it('Sets default themesBasePath', function() {
       const instance = new ThemePluginsManager();
@@ -108,7 +110,7 @@ describe('ThemePluginsManager - main process', function() {
   });
 
   describe('_installLocalPackage()', () => {
-    const localPackage = 'test/local-package';
+    const localPackage = path.join(__dirname, 'local-package');
     afterEach(() => fs.remove(basePath));
 
     let instance;
@@ -118,7 +120,7 @@ describe('ThemePluginsManager - main process', function() {
 
     it('Creates a symlink', () => {
       return instance._installLocalPackage(localPackage)
-      .then(() => fs.pathExists('test/themes/test-package'))
+      .then(() => fs.pathExists(path.join(basePath, 'test-package')))
       .then((exists) => assert.isTrue(exists));
     });
 
@@ -174,7 +176,7 @@ describe('ThemePluginsManager - main process', function() {
     it('Installs GitHub package', function() {
       const instance = new ThemePluginsManager(basePath);
       return instance._installRemotePackage(pkgName, pkgVersion)
-      .then(() => fs.pathExists('test/themes/@advanced-rest-client/arc-electron-default-theme'))
+      .then(() => fs.pathExists(path.join(basePath, '@advanced-rest-client', 'arc-electron-default-theme')))
       .then((exists) => assert.isTrue(exists));
     });
 
@@ -201,8 +203,8 @@ describe('ThemePluginsManager - main process', function() {
       info = {
         name: 'test-name',
         version: 'test-version',
-        location: 'test/local-package',
-        mainFile: 'test/local-package/theme.js',
+        location: __dirname + '/local-package',
+        mainFile: __dirname + '/local-package/theme.js',
         isSymlink: true
       };
     });
@@ -280,8 +282,8 @@ describe('ThemePluginsManager - main process', function() {
         _id: 'test-id',
         name: 'test-name',
         version: 'test-version',
-        location: 'test/local-package',
-        mainFile: 'test/local-package/theme.js'
+        location: __dirname + '/local-package',
+        mainFile: __dirname + '/local-package/theme.js'
       };
     });
 
@@ -313,10 +315,10 @@ describe('ThemePluginsManager - main process', function() {
     });
   });
 
-  describe.only('uninstall()', () => {
+  describe('uninstall()', () => {
     describe('Local package', () => {
       let instance;
-      const localPackage = 'test/local-package';
+      const localPackage = path.join(__dirname, 'local-package');
       beforeEach(() => {
         instance = new ThemePluginsManager(basePath);
         return instance.install(localPackage);
@@ -325,18 +327,18 @@ describe('ThemePluginsManager - main process', function() {
       afterEach(() => fs.remove(basePath));
 
       it('Has package installed', () => {
-        return fs.pathExists('test/themes/test-package')
+        return fs.pathExists(path.join(basePath, 'test-package'))
         .then((exists) => assert.isTrue(exists));
       });
 
       it('Has entry in theme info file.', () => {
-        return fs.pathExists(basePath + '/themes-info.json')
+        return fs.pathExists(path.join(basePath, 'themes-info.json'))
         .then((exists) => assert.isTrue(exists));
       });
 
       it('Removes local package', () => {
         return instance.uninstall(localPackage)
-        .then(() => fs.pathExists('test/themes/test-package'))
+        .then(() => fs.pathExists(path.join(basePath, 'test-package')))
         .then((exists) => {
           assert.isFalse(exists);
         });
@@ -344,7 +346,7 @@ describe('ThemePluginsManager - main process', function() {
 
       it('Removes entry from info file.', () => {
         return instance.uninstall(localPackage)
-        .then(() => fs.readJson(basePath + '/themes-info.json'))
+        .then(() => fs.readJson(path.join(basePath, 'themes-info.json')))
         .then((data) => {
           assert.typeOf(data, 'array');
           assert.lengthOf(data, 0);
@@ -352,11 +354,11 @@ describe('ThemePluginsManager - main process', function() {
       });
     });
 
-    describe('Remove package', () => {
+    describe('Remote package', () => {
       let instance;
       const pkgName = 'advanced-rest-client/arc-electron-default-theme';
       const pkgVersion = '2.0.0-preview';
-      const installedLocation = 'test/themes/@advanced-rest-client/arc-electron-default-theme';
+      const installedLocation = path.join(basePath, '@advanced-rest-client', 'arc-electron-default-theme');
 
       before(() => {
         instance = new ThemePluginsManager(basePath);
@@ -371,7 +373,7 @@ describe('ThemePluginsManager - main process', function() {
       });
 
       it('Has entry in theme info file.', () => {
-        return fs.pathExists(basePath + '/themes-info.json')
+        return fs.pathExists(path.join(basePath, 'themes-info.json'))
         .then((exists) => assert.isTrue(exists));
       });
 
@@ -384,7 +386,7 @@ describe('ThemePluginsManager - main process', function() {
       });
 
       it('Removes entry from info file.', () => {
-        return fs.readJson(basePath + '/themes-info.json')
+        return fs.readJson(path.join(basePath, 'themes-info.json'))
         .then((data) => {
           assert.typeOf(data, 'array');
           assert.lengthOf(data, 0);

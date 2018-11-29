@@ -271,6 +271,7 @@ class ArcWindowsManager {
       protocol: 'file:',
       slashes: true
     }) + appPath;
+    log.debug('Loading page: ' + full);
     win.loadURL(full);
   }
   /**

@@ -14,7 +14,10 @@
   "scripts": {
     "start": "electron . --debug --workspace-path=\"~/arc-dev/workspace\" --settings-file=\"~/arc-dev/dev-settings.json\"",
     "postinstall": "electron-builder install-app-deps",
-    "test": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron electron-mocha test/**/*.test.js",
+    "test": "npm run test-main && npm run test-renderer && npm run test-app",
+    "test-main": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron electron-mocha test/**/*.main.spec.js scripts/packages/**/*.main.spec.js",
+    "test-renderer": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron electron-mocha --renderer test/**/*.renderer.spec.js scripts/packages/**/*.renderer.spec.js",
+    "test-app": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron mocha test/**.app.spec.js",
     "build-l": "npx electron-builder -l",
     "build-w": "npx electron-builder -w",
     "build-m": "npx electron-builder -m",
@@ -32,6 +35,7 @@
     "eslint-config-google": "^0.9.1",
     "glob": "^7.1.2",
     "mocha": "^4.1.0",
+    "sinon": "^7.1.1",
     "spectron": "^5.0.0"
   },
   "dependencies": {

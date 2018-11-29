@@ -1,4 +1,4 @@
-const assert = require('chai').assert;
+const {assert} = require('chai');
 const {AppOptions} = require('../../../scripts/main/app-options.js');
 
 describe('AppOptions', function() {
@@ -13,8 +13,8 @@ describe('AppOptions', function() {
       assert.typeOf(instance.availableOptions, 'array');
     });
 
-    it('Array has 2 items', function() {
-      assert.lengthOf(instance.availableOptions, 3);
+    it('Array has 4 items', function() {
+      assert.lengthOf(instance.availableOptions, 4);
     });
 
     it('Properties are set', function() {
@@ -48,7 +48,7 @@ describe('AppOptions', function() {
       });
 
       it('Workspace file is undefined', function() {
-        assert.isUndefined(instance.workspaceFile);
+        assert.isUndefined(instance.workspacePath);
       });
 
       it('disableLog is undefined', function() {
@@ -61,11 +61,11 @@ describe('AppOptions', function() {
         origArgV = process.argv;
         process.argv = [
           '/app/path',
-          '--disable-log',
           '--settings-file',
           'settings-file-test',
-          '--workspace-file',
-          'workspace-file-test',
+          '--workspace-path',
+          'workspace-path-test',
+          '--debug',
           '--invalid-option',
           'ivalid-value'
         ];
@@ -82,11 +82,11 @@ describe('AppOptions', function() {
       });
 
       it('Sets workspace file', function() {
-        assert.equal(instance.workspaceFile, 'workspace-file-test');
+        assert.equal(instance.workspacePath, 'workspace-path-test');
       });
 
-      it('Sets disableLog', function() {
-        assert.isTrue(instance.disableLog, 'disableLog is set');
+      it('Sets debug', function() {
+        assert.isTrue(instance.debug, 'debug is set');
       });
 
       it('invalidOption is not set', function() {
@@ -99,11 +99,11 @@ describe('AppOptions', function() {
         origArgV = process.argv;
         process.argv = [
           '/app/path',
-          '-l',
+          '-d',
           '-s',
           'settings-file-test',
           '-w',
-          'workspace-file-test'
+          'workspace-path-test'
         ];
         instance = new AppOptions();
         instance.parse();
@@ -118,11 +118,11 @@ describe('AppOptions', function() {
       });
 
       it('Sets workspace file', function() {
-        assert.equal(instance.workspaceFile, 'workspace-file-test');
+        assert.equal(instance.workspacePath, 'workspace-path-test');
       });
 
-      it('Sets disableLog', function() {
-        assert.isTrue(instance.disableLog, 'disableLog is set');
+      it('Sets debug', function() {
+        assert.isTrue(instance.debug, 'debug is set');
       });
     });
   });
@@ -241,11 +241,11 @@ describe('AppOptions', function() {
       origArgV = process.argv;
       process.argv = [
         '/app/path',
-        '--disable-log',
+        '--debug',
         '--settings-file',
         'settings-file-test',
-        '--workspace-file',
-        'workspace-file-test'
+        '--workspace-path',
+        'workspace-path-test'
       ];
       instance = new AppOptions();
       instance.parse();
@@ -268,8 +268,8 @@ describe('AppOptions', function() {
     it('Returns all properties', function() {
       const result = instance.getOptions();
       assert.equal(result.settingsFile, 'settings-file-test');
-      assert.equal(result.workspaceFile, 'workspace-file-test');
-      assert.isTrue(result.disableLog);
+      assert.equal(result.workspacePath, 'workspace-path-test');
+      assert.isTrue(result.debug);
     });
   });
 });

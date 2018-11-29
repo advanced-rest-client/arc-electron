@@ -4,8 +4,6 @@ const path = require('path');
 const fs = require('fs-extra');
 
 describe('File data processing', function() {
-  this.timeout(10000);
-
   describe('Blob data - parses to AMF', function() {
     [
       ['Single RAML file', 'single-file-api.raml'],
@@ -15,7 +13,7 @@ describe('File data processing', function() {
       ['Folder in the zip', 'inception.zip']
     ].forEach((item) => {
       it(item[0], function() {
-        const file = path.join('test', item[1]);
+        const file = path.join(__dirname, item[1]);
         let service;
         return fs.readFile(file)
         .then((data) => {
@@ -23,8 +21,12 @@ describe('File data processing', function() {
           service = new ElectronAmfService();
           return service.processApiFile(buff);
         })
-        .then((amf) => {
-          assert.typeOf(amf, 'array');
+        .then((result) => {
+          assert.typeOf(result, 'object', 'Returns an object');
+          assert.typeOf(result.model, 'string', 'Returns the model');
+          assert.typeOf(result.type, 'object', 'Returns type info');
+          assert.typeOf(result.type.type, 'string', 'API type is set');
+          assert.typeOf(result.type.contentType, 'string', 'API content-type is set');
           return service.unlisten();
         });
       });
@@ -40,14 +42,18 @@ describe('File data processing', function() {
       ['Folder in the zip', 'inception.zip']
     ].forEach((item) => {
       it(item[0], function() {
-        const file = path.join('test', item[1]);
+        const file = path.join(__dirname, item[1]);
         return fs.readFile(file)
         .then((data) => {
           const service = new ElectronAmfService();
           return service.processApiFile(data);
         })
-        .then((amf) => {
-          assert.typeOf(amf, 'array');
+        .then((result) => {
+          assert.typeOf(result, 'object', 'Returns an object');
+          assert.typeOf(result.model, 'string', 'Returns the model');
+          assert.typeOf(result.type, 'object', 'Returns type info');
+          assert.typeOf(result.type.type, 'string', 'API type is set');
+          assert.typeOf(result.type.contentType, 'string', 'API content-type is set');
         });
       });
     });
@@ -63,7 +69,7 @@ describe('File data processing', function() {
         e.detail.result = Promise.resolve();
       });
 
-      const file = path.join('test', 'multiple-entry-points.zip');
+      const file = path.join(__dirname, 'multiple-entry-points.zip');
       return fs.readFile(file)
       .then((data) => {
         const service = new ElectronAmfService();
@@ -74,4 +80,4 @@ describe('File data processing', function() {
       });
     });
   });
-});
+}).timeout(10000);
