@@ -7,7 +7,12 @@ const myFormat = printf((info) => {
   return `[${new Date(info.timestamp).toLocaleString()}]: ${info.level} ${info.message}`;
 });
 
-const logRoot = app.getPath('logs');
+let logRoot;
+try {
+  logRoot = app.getPath('logs');
+} catch (_) {
+  logRoot = app.getPath('userData');
+}
 const logPath = path.join(logRoot, 'log.log');
 const errorPath = path.join(logRoot, 'error.log');
 
