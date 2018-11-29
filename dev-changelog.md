@@ -16,10 +16,17 @@
     -   Navigation lists now comes with 3 size settings: default, comfortable, and compact (sounds like Gmail to you?). Change it in Settings > View
 -   New settings panel
 -   Parts of the application has been modularized and moved to external libraries (Payload processor, ARC preferences manager, Content search, Source manager, Cookie parser, Google Drive service, OAuth2 service, Request engine, Session manager)
--   Redesigned the way how themes are managed in the application. From the user perspective nothing has changed but it enables the app to install themes from ARC's (future) plugins registry
+-   Redesigning themes and sources loading process to support single components source. This simplifies application startup logic by a lot which makes it easier to test and maitain. Because of that the real Anypoint theme cannot be recreated (inputs, icons). Anypoint theme will use anypoint colors scheme only.
+-   Adding dark theme
+-   Adding an option to install theme from npm or GitHub repo.
 -   Variables are now part of the application main toolbar instead of a request
 -   Redesign of data models
 -   Redesign of import / export logic. Now export also includes internal entity ID that will be restored when importing back to the application. Conflicts are resolved to new accept incoming data.
+-   Duplicate request: new context menu option for request workspace tabs.
+-   The app now accept `--debug` command line switch to enable detailed message tracing
+-   Added file log output. The log file location dependes on the OS. See [electronjs.org/docs/api/app](https://electronjs.org/docs/api/app#appgetpathname).
+-   Fixed units in Task manager
+-   Task manager now renders processes names more accurately
 
 ## Requests
 
@@ -37,8 +44,6 @@
     -   Enable node native request instead of ARC's own HTTP client. Use it if you having trouble connecting to your web service. To manage this setting go to Settings > Experiments
 -   Redesigned "save" dialogs and added request details dialog with stored metadata
 -   When restoring workspace state latest response is also restored
--   Fixed units in Task manager
--   Task manager now renders processes names more accurately
 
 ## APIs
 
@@ -46,10 +51,12 @@
     -   This breaking change renders previously saved APIs incompatible with current version; APIs have to be re-imported
     -   API console now works with new AMF parser that allows to read RAML and OAS files
 -   Fixing Anypoint sign in process
+-   REST APIs stored before this version cannot be used with this version. Old console is not supported.
+-   REST APIs are now stored as AMF ld+json model which enables future API spec editing
 
 ## Roadmap (future releases)
 
--   ARC plug-ins registry - enables users to install pligins and themes and share their plugins with the community
+-   ARC plug-ins registry - enables users to install plugins and themes and share their plugins with the community
 -   API visual designer to replace projects - this allows to create more advanced projects that can be later on exported to RAML or OAS spec
 -   Exchange asset upload - adding created with visual designer APIs to Exchange
 -   Integration with API monitoring by MuleSoft - enables application users to upload API test definition to API Monitoring to run API tests
