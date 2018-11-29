@@ -103,7 +103,7 @@ class ArcContextMenu {
     this.contextActions.splice(index, 1);
   }
   /**
-   * Renderzs context menu actions.
+   * Renders context menu actions.
    *
    * @param {Array<Object>} actions List of actions to render
    * @param {Object} xy An object with `x` and `y` coordinates of click.
