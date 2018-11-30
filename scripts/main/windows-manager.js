@@ -170,6 +170,31 @@ class ArcWindowsManager {
       win.webContents.send(type, args);
     });
   }
+
+  _windowsSortIndex(a, b) {
+    if (a.__arcIndex > b.__arcIndex) {
+      return 1;
+    }
+    if (a.__arcIndex < b.__arcIndex) {
+      return -1;
+    }
+    return 0;
+  }
+
+  _getWindowIndex() {
+    const wins = this.windows;
+    if (!wins.length) {
+      return 0;
+    }
+    wins.sort(this._windowsSortIndex);
+    const len = wins.length;
+    for (let i = 0; i < len; i++) {
+      if (wins[i].__arcIndex !== i) {
+        return i;
+      }
+    }
+    return len;
+  }
   /**
    * Opens a new application window.
    *
@@ -178,18 +203,19 @@ class ArcWindowsManager {
    */
   open(path) {
     log.debug('[WM] Opening new window', path);
-    const index = this.windows.length;
+    const index = this._getWindowIndex();
+    log.debug('Generated index for the widnow: ' + index);
     const session = new ArcSessionControl(index);
     return session.load()
     .then((data) => {
       const win = this.__getNewWindow(index, data);
       win.__arcSession = session;
+      this.__attachListeners(win);
+      this.windows.push(win);
       this.__loadPage(win, path);
       if (this.startupOptions.debug) {
         win.webContents.openDevTools();
       }
-      this.__attachListeners(win);
-      this.windows.push(win);
       return this.recorder.record()
       .then(() => win);
     });
@@ -234,7 +260,7 @@ class ArcWindowsManager {
    * @return {BrowserWindow} Created window.
    */
   __getNewWindow(index, session) {
-    let mainWindow = new BrowserWindow({
+    const mainWindow = new BrowserWindow({
       width: session.size.width,
       height: session.size.height,
       x: session.position.x,
@@ -295,6 +321,8 @@ class ArcWindowsManager {
     } else {
       cnf.workspaceIndex = 0;
     }
+    log.debug('Sending window state info');
+    log.debug(JSON.stringify(cnf, null, 2));
     contents.send('window-state-info', cnf);
   }
   /**
@@ -317,12 +345,13 @@ class ArcWindowsManager {
    * @return {Number} Window position or `-1` if not found.
    */
   _findWindowImdex(win) {
-    if (win.isDestroyed()) {
-      return -1;
-    }
+    const noId = win.isDestroyed();
     return this.windows.findIndex((item) => {
       if (item.isDestroyed()) {
         return win === item;
+      }
+      if (noId) {
+        return false;
       }
       return item.id === win.id;
     });

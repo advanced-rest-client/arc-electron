@@ -59,7 +59,7 @@ class ArcPreferences extends EventEmitter {
         if (opts.appendFilePath) {
           dir = path.join(this.userSettingsDir, opts.filePath);
         } else {
-          dir = opts.filePath;
+          dir = this._resolvePath(opts.filePath);
         }
       } else {
         dir = this.userSettingsDir;
