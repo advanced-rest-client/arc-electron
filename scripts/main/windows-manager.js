@@ -3,7 +3,7 @@ const path = require('path');
 const url = require('url');
 const {ArcSessionControl} = require('@advanced-rest-client/arc-electron-preferences/main');
 const {ArcSessionRecorder} = require('./arc-session-recorder');
-const {ContextActions} = require('./context-actions');
+const {ContextActions} = require('../packages/context-actions/main');
 const log = require('./logger');
 /**
  * A class that manages opened app windows.

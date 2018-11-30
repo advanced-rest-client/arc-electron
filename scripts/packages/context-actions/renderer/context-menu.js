@@ -10,6 +10,7 @@ class ArcContextMenu {
   constructor() {
     this.contextActions = [];
     this._registerAction = this._registerAction.bind(this);
+    this._unregisterContextAction = this._unregisterContextAction.bind(this);
     this._contextMenuHandler = this._contextMenuHandler.bind(this);
     this._selectionHandler = this._selectionHandler.bind(this);
     this._clickHandler = this._clickHandler.bind(this);
@@ -27,6 +28,7 @@ class ArcContextMenu {
    */
   listenMainEvents() {
     ipc.on('register-context-action', this._registerAction);
+    ipc.on('unregister-context-action', this._unregisterContextAction);
     window.addEventListener('contextmenu', this._contextMenuHandler);
     document.body.addEventListener('click', this._clickHandler);
   }
@@ -37,11 +39,52 @@ class ArcContextMenu {
    * @param {Object} action
    */
   _registerAction(e, action) {
+    this.addAction(action);
+  }
+  /**
+   * Registers an action.
+   * @param {Object} action Description of the action. Each action has to contain
+   * the following propertues:
+   * - `label` String, laber to render in the context menu.
+   * - `selector` String, CSS selector to match the action.
+   * - `action` String Action name. If the module that adds the action is main
+   * process mo0dule it must prefix the action with `'main:`, then listen for
+   * `context-action:[action-name]` on the ipcMain. If the module works in the
+   * renderer process then it must prefix the action with `renderer:`, then
+   * handle a CustomEvent on the window object that is of a type of `context-action:[action-name]`.
+   * No additional arguments are provided for the event.
+   * @throws {Error} An error when the argument is invalid.
+   */
+  addAction(action) {
     if (!this._valid(action)) {
-      log.warn('Unable to register content action. Not valid', action);
-      return;
+      throw new Error('The context menu action is Not valid.');
     }
     this.contextActions.push(action);
+  }
+  /**
+   * Removes previously registered action.
+   * @param {String|Object} action An action object used to register an action
+   * or action's action property value.
+   * @return {Boolean} True if the action has been removed.
+   * @throws {Error} An error when the argument is invalid.
+   */
+  removeAction(action) {
+    if (!action) {
+      throw new Error('The "action" argument is required');
+    }
+    if (typeof action !== 'string') {
+      if (!this._valid(action)) {
+        throw new Error('The "action" argument is invalid');
+      }
+      action = action.action;
+    }
+    const index = this.contextActions.findIndex((i) => i.action === action);
+    if (index === -1) {
+      log.debug('Context menu action ' + action + ' is not registered.');
+      return false;
+    }
+    this.contextActions.splice(index, 1);
+    return true;
   }
   /**
    * Tests if passed action is a valid context action.
@@ -77,10 +120,8 @@ class ArcContextMenu {
     }
     if (actions.length) {
       this._lastTarget = target;
-      this.renderActions(actions, {
-        x: e.x,
-        y: e.y
-      });
+      const {x, y} = e;
+      this.renderActions(actions, {x, y});
     }
   }
   /**
@@ -90,17 +131,7 @@ class ArcContextMenu {
    * @param {Object} action
    */
   _unregisterContextAction(e, action) {
-    if (!this._valid(action)) {
-      log.warn('Unable to unregister content action. Not valid', action);
-      return;
-    }
-    const index = this.contextActions.findIndex((item) => {
-      return item.selector === action.selector && item.action === action.action;
-    });
-    if (index === -1) {
-      return;
-    }
-    this.contextActions.splice(index, 1);
+    this.removeAction(action);
   }
   /**
    * Renders context menu actions.
@@ -161,21 +192,66 @@ class ArcContextMenu {
   _handleAction(action) {
     switch (action.action) {
       case 'request-panel-close-tab':
-        this.app.closeWorkspaceTab(this._getTabIndex());
+        this.app.closeWorkspaceTab(this._getTabClickIndex());
         break;
       case 'request-panel-close-all-tabs':
         this.app.closeAllWorkspaceTabs();
         break;
       case 'request-panel-close-other-tabs':
-        this.app.closeOtherWorkspaceTabs(this._getTabIndex());
+        this.app.closeOtherWorkspaceTabs(this._getTabClickIndex());
         break;
       case 'request-panel-duplicate-tab':
-        this.app.duplicateWorkspaceTab(this._getTabIndex());
+        this.app.duplicateWorkspaceTab(this._getTabClickIndex());
+        break;
+      default:
+        this._handleDefaultAction(action.action);
         break;
     }
   }
 
-  _getTabIndex() {
+  _handleDefaultAction(action) {
+    const rIndex = action.indexOf('renderer:');
+    if (rIndex === 0) {
+      const actionName = action.substr(9);
+      this._dispatchRendererAction(actionName);
+      return;
+    }
+    const mIndex = action.indexOf('main:');
+    if (mIndex === 0) {
+      const actionName = action.substr(5);
+      this._dispatchMainAction(actionName);
+      return;
+    }
+    log.warn('Unknown context menu action: ' + action);
+  }
+  /**
+   * Dispatches web custom event with type as a comination of `context-action:`
+   * and `action`. Module that requested the action should listen on the
+   * window object for the event.
+   * @param {String} action Registered action name.
+   */
+  _dispatchRendererAction(action) {
+    const eventNamed = 'context-action:' + action;
+    document.body.dispatchEvent(new CustomEvent(eventNamed, {
+      bubbles: true,
+      cancelable: true
+    }));
+  }
+  /**
+   * Dispatches IPC event to the main process with name as a comination of `context-action:`
+   * and `action`. Module that requested the action should listen on ipcMain instance
+   * for the event.
+   * @param {String} action Registered action name.
+   */
+  _dispatchMainAction(action) {
+    const eventNamed = 'context-action:' + action;
+    ipc.send(eventNamed);
+  }
+  /**
+   * Gets an index of the tab which is the source of one of the pre-build actions.
+   * @return {Number} An index of the tab
+   */
+  _getTabClickIndex() {
     const tab = this._lastTarget.parentElement;
     return Array.from(tab.parentElement.children).indexOf(tab);
   }
@@ -185,8 +261,11 @@ class ArcContextMenu {
    * @param {MouseEvent} e
    */
   _clickHandler(e) {
+    if (!this._currentMenu) {
+      return;
+    }
     const path = e.composedPath();
-    let inside = path.some((item) => item === this._currentMenu);
+    const inside = path.some((item) => item === this._currentMenu);
     if (!inside) {
       this.removeActions();
       this._lastTarget = undefined;
