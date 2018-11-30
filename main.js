@@ -1,5 +1,6 @@
 const {ipcMain, app, shell} = require('electron');
 const {ThemesProtocolHandler} = require('./scripts/main/theme-protocol');
+const {ComponentsProtocolHandler} = require('./scripts/main/components-protocol');
 const {ArcWindowsManager} = require('./scripts/main/windows-manager');
 const {UpdateStatus} = require('./scripts/main/update-status');
 const {AppMenuService} = require('./scripts/main/app-menu-service');
@@ -66,11 +67,12 @@ class Arc {
    */
   _initializeProtocolsReady() {
     log.debug('Initializing themes protocol');
-    const tp = new ThemesProtocolHandler({
-      debug: this.initOptions.debug
-    });
+    const tp = new ThemesProtocolHandler();
     tp.register();
     this.themesProtocol = tp;
+    const cp = new ComponentsProtocolHandler();
+    cp.register();
+    this.componentsProtocol = cp;
   }
   /**
    * Processes start arguments
