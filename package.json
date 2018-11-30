@@ -16,7 +16,7 @@
     "postinstall": "electron-builder install-app-deps",
     "test": "npm run test-main && npm run test-renderer && npm run test-app",
     "test-main": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron electron-mocha test/**/*.main.spec.js scripts/packages/**/*.main.spec.js",
-    "test-renderer": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron electron-mocha --renderer test/**/*.renderer.spec.js scripts/packages/**/*.renderer.spec.js",
+    "test-renderer": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron electron-mocha --renderer scripts/packages/**/*.renderer.spec.js",
     "test-app": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron mocha test/**.app.spec.js",
     "build-l": "npx electron-builder -l",
     "build-w": "npx electron-builder -w",
