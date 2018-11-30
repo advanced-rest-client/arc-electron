@@ -11,5 +11,6 @@ shallow_clone: true
 clone_depth: 1
 test_script:
   - set NODE_ENV=test
-  - set ELECTRON_PATH=node_modules\\.bin\\electron
-  - node_modules\\.bin\\electron-mocha test\\**\\*.main.spec.js scripts\\packages\\**\\*.main.spec.js
+  - set ELECTRON_PATH=node_modules\.bin\electron
+  - node_modules\.bin\electron-mocha test\**\*.main.spec.js scripts\packages\**\*.main.spec.js
+  - node_modules\.bin\electron-mocha --renderer scripts\packages\**\*.renderer.spec.js
