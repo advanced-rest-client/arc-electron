@@ -1,7 +1,7 @@
 const {ArcBase} = require('./arc-base');
 const {autoUpdater} = require('electron-updater');
 const {dialog, nativeImage, ipcMain} = require('electron');
-const {ArcPreferences} = require('@advanced-rest-client/arc-electron-preferences');
+const {ArcPreferences} = require('../packages/arc-preferences');
 const log = require('./logger');
 const path = require('path');
 

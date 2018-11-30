@@ -1,7 +1,7 @@
 const {BrowserWindow, dialog, ipcMain} = require('electron');
 const path = require('path');
 const url = require('url');
-const {ArcSessionControl} = require('@advanced-rest-client/arc-electron-preferences/main');
+const {ArcSessionControl} = require('../packages/arc-preferences/main');
 const {ArcSessionRecorder} = require('./arc-session-recorder');
 const {ContextActions} = require('../packages/context-actions/main');
 const log = require('./logger');
@@ -12,9 +12,8 @@ class ArcWindowsManager {
   /**
    * @param {Object} startupOptions Application startup object. See
    * `AppOptions` for more details.
-   * @param {SourcesManager} sm
    */
-  constructor(startupOptions, sm) {
+  constructor(startupOptions) {
     this.startupOptions = startupOptions || {};
     this.windows = [];
     // Task manager window reference.
@@ -27,7 +26,6 @@ class ArcWindowsManager {
     this._settingChangedHandler = this._settingChangedHandler.bind(this);
     this.recorder = new ArcSessionRecorder();
     this.contextActions = new ContextActions();
-    this.sourcesManager = sm;
     /**
      * Pointer to last focused window.
      * @type {BrowserWindow}
@@ -142,7 +140,7 @@ class ArcWindowsManager {
    * @param {?Array} args List of arguments.
    */
   notifyAll(type, args) {
-    log.debug('[WM] Notyfying all windows with type', type);
+    log.debug('[WM] Notyfying all windows with type: ' + type);
     this.windows.forEach((win, index) => {
       if (win.isDestroyed()) {
         this.windows.splice(index, 1);
@@ -288,16 +286,16 @@ class ArcWindowsManager {
       }
       return item.id === contents.id;
     });
-    this.sourcesManager.getAppConfig()
-    .then((opts) => {
-      if (win) {
-        opts.workspaceIndex = win.__arcIndex;
-        this.contextActions.registerDefaultActions(win.webContents);
-      } else {
-        opts.workspaceIndex = 0;
-      }
-      contents.send('window-state-info', opts);
-    });
+    const cnf = {
+      workspacePath: this.startupOptions.workspacePath
+    };
+    if (win) {
+      cnf.workspaceIndex = win.__arcIndex;
+      this.contextActions.registerDefaultActions(win.webContents);
+    } else {
+      cnf.workspaceIndex = 0;
+    }
+    contents.send('window-state-info', cnf);
   }
   /**
    * Attaches listeners to the window object.

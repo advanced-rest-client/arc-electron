@@ -7,8 +7,8 @@ Creates a pop up window that mimics Chrome's search bar.
 In the main process:
 
 ```javascript
-const {ContentSearchService} = require('@advanced-rest-client/arc-electron-search-service/main');
-const {ArcPreferences} = require('@advanced-rest-client/arc-electron-preferences');
+const {ContentSearchService} = require('./search-service/main');
+const {ArcPreferences} = require('./arc-preferences');
 const startupOptions = {}; // Application start up options.
 const prefs = new ArcPreferences();
 
@@ -25,7 +25,7 @@ ARC electron has menu manager that does this.
 In the renderer process:
 
 ```javascript
-const {WindowSearchService} = require('@advanced-rest-client/arc-electron-search-service/renderer');
+const {WindowSearchService} = require('./search-service/renderer');
 const service = new WindowSearchService();
 service.listen();
 ```

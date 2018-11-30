@@ -1,7 +1,6 @@
 const assert = require('chai').assert;
 const {BrowserWindow} = require('electron');
 const {ContentSearchService} = require('../main');
-// const {ArcPreferences} = require('@advanced-rest-client/arc-electron-preferences');
 
 describe('ContentSearchService basic tests- main process', function() {
   describe('get / set / remove service', function() {

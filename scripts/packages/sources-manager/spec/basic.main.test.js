@@ -1,7 +1,7 @@
 const assert = require('chai').assert;
 const fs = require('fs-extra');
 const {SourcesManager} = require('../main');
-const {ArcPreferences} = require('@advanced-rest-client/arc-electron-preferences');
+const {ArcPreferences} = require('../../arc-preferences');
 
 describe('SourcesManager basic tests- main process', function() {
   const prefsFile = './test-prefs.json';

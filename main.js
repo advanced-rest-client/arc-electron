@@ -7,7 +7,7 @@ const {AppMenuService} = require('./scripts/main/app-menu-service');
 const {ArcMainMenu} = require('./scripts/main/main-menu');
 const {Oauth2Identity} = require('@advanced-rest-client/electron-oauth2');
 const {DriveExport} = require('@advanced-rest-client/electron-drive');
-const {PreferencesManager} = require('@advanced-rest-client/arc-electron-preferences/main');
+const {PreferencesManager} = require('./scripts/packages/arc-preferences/main');
 const {SessionManager} = require('@advanced-rest-client/electron-session-state/main');
 const {AppOptions} = require('./scripts/main/app-options');
 const {RemoteApi} = require('./scripts/main/remote-api');
@@ -205,7 +205,7 @@ class Arc {
 
   _initializeWindowsManager() {
     log.debug('Initializing windows manager.');
-    this.wm = new ArcWindowsManager(this.initOptions, this.sourcesManager);
+    this.wm = new ArcWindowsManager(this.initOptions);
     this.wm.listen();
   }
 

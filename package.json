@@ -43,7 +43,7 @@
     "spectron": "^5.0.0"
   },
   "dependencies": {
-    "@advanced-rest-client/arc-electron-preferences": "1.0.0-rc2",
+    "@advanced-rest-client/arc-electron-payload-processor": "^0.1.1",
     "@advanced-rest-client/electron-drive": "0.1.0-rc3",
     "@advanced-rest-client/electron-oauth2": "1.0.0-rc3",
     "@advanced-rest-client/electron-request": "1.0.0-rc6",
@@ -62,6 +62,7 @@
     "semver": "^5.6.0",
     "tmp": "0.0.33",
     "unzipper": "^0.9.4",
+    "uuid": "^3.3.2",
     "winston": "^3.1.0"
   },
   "build": {
