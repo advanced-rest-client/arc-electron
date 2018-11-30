@@ -1,7 +1,8 @@
-matrix:
-  allow_failures:
-    - nodejs_version: 8
-    - nodejs_version: 10
+environment:
+  matrix:
+    - nodejs_version: "8"
+    - nodejs_version: "10"
+
 install:
   - ps: Install-Product node $env:nodejs_version
   - set CI=true
@@ -15,5 +16,4 @@ test_script:
   - npm --version
   - set NODE_ENV=test
   - set ELECTRON_PATH=node_modules/.bin/electron
-  - node_modules/.bin/electron-mocha test/**/*.main.spec.js scripts/packages/**/*.main.spec.js
-  - node_modules/.bin/electron-mocha --renderer scripts/packages/**/*.renderer.spec.js
+  - npm run test-win-all
