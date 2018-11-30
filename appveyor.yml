@@ -15,5 +15,5 @@ test_script:
   - node --version
   - npm --version
   - set NODE_ENV=test
-  - set ELECTRON_PATH=node_modules/.bin/electron
+  - set ELECTRON_PATH=node_modules/.bin/electron.cmd
   - npm run test-win-all

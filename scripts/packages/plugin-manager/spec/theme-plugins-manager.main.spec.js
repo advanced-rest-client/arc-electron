@@ -155,14 +155,14 @@ describe('ThemePluginsManager - main process', function() {
     it('location is set', () => {
       return instance._installLocalPackage(localPackage)
       .then((result) => {
-        assert.equal(result.location, basePath + '/test-package');
+        assert.equal(result.location, path.join(basePath, 'test-package'));
       });
     });
 
-    it('location is set', () => {
+    it('mainFile is set', () => {
       return instance._installLocalPackage(localPackage)
       .then((result) => {
-        assert.equal(result.mainFile, basePath + '/test-package/theme.js');
+        assert.equal(result.mainFile, path.join(basePath, 'test-package', 'theme.js'));
       });
     });
   });
@@ -187,9 +187,9 @@ describe('ThemePluginsManager - main process', function() {
         assert.typeOf(result, 'object');
         assert.equal(result.name, '@advanced-rest-client/arc-electron-default-theme');
         assert.equal(result.version, pkgVersion);
-        assert.equal(result.location, basePath + '/@' + pkgName);
+        assert.equal(result.location, path.join(basePath, '@' + pkgName));
         assert.equal(result.mainFile,
-          basePath + '/@' + pkgName + '/arc-electron-default-theme.html');
+          path.join(basePath, '@' + pkgName, 'arc-electron-default-theme.html'));
       });
     });
   });

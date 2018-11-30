@@ -1,11 +1,9 @@
 const path = require('path');
 const {Application} = require('spectron');
+const electronPath = require('electron') ;// Require Electron from the binaries included in node_modules.
 
-let electronPath = path.join(__dirname, '..', 'node_modules', '.bin', 'electron');
-if (process.platform === 'win32') {
-  electronPath += '.cmd';
-}
 const appPath = path.join(__dirname, '..', 'main.js');
+console.log('App path ', appPath);
 
 function getApp(opts) {
   opts = opts || {};
