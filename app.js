@@ -217,6 +217,9 @@ class ArcInit {
    */
   updateEventHandler(sender, message) {
     const app = this.app;
+    if (!app) {
+      return;
+    }
     // console.log('updateEventHandler', message);
     app.updateState = message;
     if (message[0] === 'update-downloaded') {
