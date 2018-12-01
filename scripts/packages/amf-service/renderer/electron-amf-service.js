@@ -1,5 +1,6 @@
 const {AmfService} = require('../lib/amf-service');
-const {AmfConsoleResolver} = require('../lib/amf-console-resolver');
+const {fork} = require('child_process');
+const path = require('path');
 /**
  * A class to be used in the renderer process to download and extract RAML
  * data from Exchange asset.
@@ -287,7 +288,45 @@ class ElectronAmfService {
   }
 
   resolveAPiConsole(model, type) {
-    return AmfConsoleResolver.resolveApiConsole(model, type);
+    return new Promise((resolve, reject) => {
+      const proc = this._createResolverProcess();
+      const callbacks = {
+        onmessage: (result) => {
+          this._killResolver(proc);
+          if (result.error) {
+            reject(new Error(result.error));
+          } else {
+            resolve(result.api);
+          }
+        },
+        onerror: (err) => {
+          this._killResolver(proc);
+          reject(new Error(err.message || 'Unknown error'));
+        }
+      };
+      proc.on('message', callbacks.onmessage);
+      proc.on('error', callbacks.onerror);
+      proc.send({
+        model,
+        type
+      });
+    });
+  }
+
+  _createResolverProcess() {
+    const options = {
+      execArgv: []
+    };
+    return fork(path.join(__dirname, '..', 'lib', 'amf-resolver.js'), options);
+  }
+
+  _killResolver(proc) {
+    if (proc.connected) {
+      proc.disconnect();
+    }
+    proc.removeAllListeners('message');
+    proc.removeAllListeners('error');
+    proc.kill();
   }
 
   fire(type, detail) {

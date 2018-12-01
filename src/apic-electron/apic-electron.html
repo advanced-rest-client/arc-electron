@@ -16,18 +16,15 @@ the License.
 <link rel="import" href="../../bower_components/raml-aware/raml-aware.html">
 <link rel="import" href="../../bower_components/amf-helper-mixin/amf-helper-mixin.html">
 <link rel="import" href="../../bower_components/paper-spinner/paper-spinner.html">
+<link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
 <dom-module id="apic-electron">
   <template>
     <style>
     :host {
       display: block;
+      @apply --arc-font-body1;
       @apply --apic-electron;
     };
-
-    #processToast {
-      @apply --layout-horizontal;
-      @apply --layout-center;
-    }
 
     paper-spinner {
       margin-left: 8px;
@@ -37,6 +34,17 @@ the License.
       background-color: var(--warning-primary-color, #FF7043);
       color: var(--warning-contrast-color, #fff);
       @apply --error-toast;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    .loader {
+      height: 100%;
+      font-size: 16px;
+      @apply --layout-vertical;
+      @apply --layout-center-center;
     }
     </style>
     <raml-aware scope="apic" raml="[[amfModel]]"></raml-aware>
@@ -50,11 +58,14 @@ the License.
       inline-methods
       redirect-uri="https://auth.advancedrestclient.com/oauth-popup.html"
       narrow="[[narrow]]"
-      scroll-target="[[_scrollTarget]]"></api-documentation>
-    <paper-toast id="processToast" duration="0" opened="[[_apiProcessing]]">
-      <span>Preparing the API</span>
-      <paper-spinner active="[[_apiProcessing]]"></paper-spinner>
-    </paper-toast>
+      scroll-target="[[scrollTarget]]"
+      hidden$="[[apiProcessing]]"></api-documentation>
+    <template is="dom-if" if="[[apiProcessing]]">
+      <div class="loader">
+        <p class="wait-message">Preparing your API experience</p>
+        <paper-progress indeterminate></paper-progress>
+      </div>
+    </template>
     <paper-toast id="errorToast" class="error-toast" duration="5000"></paper-toast>
   </template>
   <script>
@@ -99,7 +110,7 @@ the License.
          */
         selectedType: String,
         narrow: Boolean,
-        _scrollTarget: Object,
+        scrollTarget: Object,
 
         baseUri: {
           type: String,
@@ -148,8 +159,10 @@ the License.
           notify: true,
           computed: '_computeIsVersionSaved(versions, apiVersion)'
         },
-
-        _apiProcessing: Boolean
+        /**
+         * When set the API is being processed.
+         */
+        apiProcessing: {type: Boolean, notify: true}
       };
     }
 
@@ -190,15 +203,15 @@ the License.
     }
 
     _processApi(amf, type) {
-      this._apiProcessing = true;
+      this.apiProcessing = true;
       const e = this._dispatchResolve(amf, type);
       return e.detail.result
       .then((model) => {
         this.amfModel = JSON.parse(model);
-        this._apiProcessing = false;
+        this.apiProcessing = false;
       })
       .catch((cause) => {
-        this._apiProcessing = false;
+        this.apiProcessing = false;
         this.$.errorToast.text = cause.message;
         this.$.errorToast.opened = true;
         console.error(cause);
@@ -310,7 +323,7 @@ the License.
       this.amf = undefined;
       this.amfModel = undefined;
 
-      this._apiProcessing = true;
+      this.apiProcessing = true;
       return this.getApi(id, version)
       .then((result) => {
         this.selected = 'summary';
@@ -319,7 +332,7 @@ the License.
         this.apiType = result.type;
       })
       .catch((cause) => {
-        this._apiProcessing = false;
+        this.apiProcessing = false;
         throw cause;
       });
     }
