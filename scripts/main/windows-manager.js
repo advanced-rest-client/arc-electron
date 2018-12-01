@@ -284,17 +284,13 @@ class ArcWindowsManager {
    * @param {String} appPath ARC internal routing path.
    */
   __loadPage(win, appPath) {
-    appPath = appPath || '#/request/latest/0';
-    if (appPath[0] === '/') {
-      appPath = '#' + appPath;
-    }
     win._startPath = appPath;
     const dest = path.join(__dirname, '..', '..', 'app.html');
     const full = url.format({
       pathname: dest,
       protocol: 'file:',
       slashes: true
-    }) + appPath;
+    });
     log.debug('Loading page: ' + full);
     win.loadURL(full);
   }
@@ -310,13 +306,14 @@ class ArcWindowsManager {
       if (item.isDestroyed()) {
         return false;
       }
-      return item.id === contents.id;
+      return item.webContents.id === contents.id;
     });
     const cnf = {
       workspacePath: this.startupOptions.workspacePath
     };
     if (win) {
       cnf.workspaceIndex = win.__arcIndex;
+      cnf.startPath = win._startPath;
       this.contextActions.registerDefaultActions(win.webContents);
     } else {
       cnf.workspaceIndex = 0;
