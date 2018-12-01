@@ -1,3 +1,4 @@
+const {RemoteApi} = require('../packages/communication-protocol/main/remote-api');
 
 module.exports = function(app, arcApp) {
   app.testsInterface = function(action, ...args) {

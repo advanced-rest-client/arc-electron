@@ -1,17 +1,10 @@
-const log = require('./logger');
+const log = require('../../../main/logger');
 const {BrowserWindow, ipcMain} = require('electron');
-const {ArcBase} = require('./arc-base');
+const {ArcBase} = require('../../../main/arc-base');
 /**
  * A class responsible for handling remote API operations.
  */
 class RemoteApi extends ArcBase {
-  /**
-   * @param {ArcWindowsManager} wm Window manager
-   */
-  constructor(wm) {
-    super();
-    this.wm = wm;
-  }
   /**
    * Returns focused, first available or newly created window (in that order).
    * New window is started when there's no winow opened.
@@ -30,7 +23,7 @@ class RemoteApi extends ArcBase {
       return Promise.resolve(wins[0]);
     }
     log.debug('No windows found. Creating a window.');
-    return this.wm.open();
+    return global.arc.wm.open();
   }
 
   /**

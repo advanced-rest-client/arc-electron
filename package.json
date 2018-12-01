@@ -12,7 +12,7 @@
     "url": "https://github.com/advanced-rest-client/arc-electron"
   },
   "scripts": {
-    "start": "electron . --debug --workspace-path=\"~/arc-dev/workspace\" --settings-file=\"~/arc-dev/dev-settings.json\"",
+    "start": "electron . --inspect --debug --workspace-path=\"~/arc-dev/workspace\" --settings-file=\"~/arc-dev/dev-settings.json\"",
     "postinstall": "electron-builder install-app-deps",
     "test": "npm run test-main && npm run test-renderer && npm run test-app",
     "test-main": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron electron-mocha test/**/*.main.spec.js scripts/packages/**/*.main.spec.js",
@@ -63,7 +63,8 @@
     "tmp": "0.0.33",
     "unzipper": "^0.9.4",
     "uuid": "^3.3.2",
-    "winston": "^3.1.0"
+    "winston": "^3.1.0",
+    "yargs": "^12.0.5"
   },
   "build": {
     "appId": "com.mulesoft.arc",

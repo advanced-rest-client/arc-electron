@@ -13,8 +13,8 @@ describe('AppOptions', function() {
       assert.typeOf(instance.availableOptions, 'array');
     });
 
-    it('Array has 4 items', function() {
-      assert.lengthOf(instance.availableOptions, 4);
+    it('Array is not empty', function() {
+      assert.isAbove(instance.availableOptions.length, 1);
     });
 
     it('Properties are set', function() {
