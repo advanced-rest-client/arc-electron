@@ -161,10 +161,11 @@ class AmfService {
   /**
    * Resolves the API structure and tries to find main API file.
    *
+   * @param {?String} mainFile API main file if known.
    * @return {Promise<Array<String>>} If promise resolves to an array it means
    * that API type could not be determined automatically.
    */
-  resolve() {
+  resolve(mainFile) {
     if (this._tmpIsFile) {
       return Promise.resolve();
     }
@@ -174,6 +175,17 @@ class AmfService {
     }
     if (this._mainFile) {
       return Promise.resolve();
+    }
+    if (mainFile) {
+      const file = path.join(this._workingDir, mainFile);
+      return fs.pathExists(file)
+      .then((exists) => {
+        if (exists) {
+          this._mainFile = mainFile;
+          return;
+        }
+        throw new Error('API main file does not exist.');
+      });
     }
     const search = new ApiSearch(this._workingDir);
     return search.findApiFile()

@@ -62,7 +62,7 @@
 <link rel="import" href="../bower_components/bottom-sheet/bottom-sheet.html">
 <link rel="import" href="../bower_components/http-code-snippets/http-code-snippets.html">
 <link rel="import" href="../bower_components/arc-electron-experiment-settings/arc-electron-experiment-settings.html">
-
+<link rel="import" href="../bower_components/api-candidates-dialog/api-candidates-dialog.html">
 <dom-module id="arc-electron">
   <template>
     <style>
@@ -325,7 +325,13 @@
       <section role="main" class="main-container">
         <nav>
           <template is="dom-if" if="[[isApiConsole]]">
-            <api-navigation aware="apic" summary endpoints-opened hidden$="[[apiProcessing]]"></api-navigation>
+            <api-navigation
+              aware="apic"
+              summary
+              endpoints-opened
+              hidden$="[[apiProcessing]]"
+              selected="[[apiSelected]]"
+              selected-type="[[apiSelectedType]]"></api-navigation>
             <template is="dom-if" if="[[apiProcessing]]">
               <div class="api-navigation-loader">
                 <p>Loading the API</p>
@@ -380,6 +386,8 @@
               data-page="docs"
               aware="apic"
               id="apic"
+              selected="[[apiSelected]]"
+              selected-type="[[apiSelectedType]]"
               handle-navigation-events
               inline-methods
               narrow="[[narrow]]"
@@ -448,6 +456,7 @@
       </app-analytics>
     </template>
     <arc-license-dialog></arc-license-dialog>
+    <api-candidates-dialog></api-candidates-dialog>
     <paper-toast id="errorToast" duration="5000"></paper-toast>
   </template>
   <script>
@@ -532,7 +541,9 @@
         /**
          * Set by API console wrapper. WHen set the API is being processed.
          */
-        apiProcessing: Boolean
+        apiProcessing: Boolean,
+        apiSelected: String,
+        apiSelectedType: String
       };
     }
 
@@ -544,6 +555,7 @@
       this._processStartHandler = this._processStartHandler.bind(this);
       this._processStopHandler = this._processStopHandler.bind(this);
       this._processErrorHandler = this._processErrorHandler.bind(this);
+      this._exchangeAssetHandler = this._exchangeAssetHandler.bind(this);
     }
 
     static get observers() {
@@ -556,10 +568,11 @@
       super.connectedCallback();
       window.addEventListener('open-external-url', this._openExternalHandler);
       window.addEventListener('content-copy', this._copyContentHandler);
-      window.addEventListener('api-data-ready', this._apiDataHandler);
       window.addEventListener('process-loading-start', this._processStartHandler);
       window.addEventListener('process-loading-stop', this._processStopHandler);
       window.addEventListener('process-error', this._processErrorHandler);
+      this.addEventListener('api-data-ready', this._apiDataHandler);
+      this.addEventListener('process-exchange-asset-data', this._exchangeAssetHandler);
       Polymer.RenderStatus.afterNextRender(this, () => {
         this._variablesButton = this.shadowRoot.querySelector('#varToggleButton');
         this._scrollTarget = this.$.scrollingRegion.$.contentContainer;
@@ -722,9 +735,20 @@
         return;
       }
       return this._loadApic()
-      .then(() => this.$.apic.open(id, version))
-      .then(() => this._setIsApiConsole(true))
+      .then(() => {
+        this.apiSelected = undefined;
+        this.apiSelectedType = undefined;
+        this._setIsApiConsole(true);
+        this.apiProcessing = true;
+        return this.$.apic.open(id, version);
+      })
+      .then(() => {
+        this.apiSelected = 'summary';
+        this.apiSelectedType = 'summary';
+      })
       .catch((cause) => {
+        this.apiProcessing = false;
+        this._setIsApiConsole(false);
         this.notifyError(cause.message);
       });
     }
@@ -891,6 +915,62 @@
       });
     }
 
+    _exchangeAssetHandler(e) {
+      if (e.defaultPrevented) {
+        return;
+      }
+      e.preventDefault();
+      const asset = e.detail;
+      let file;
+      const types = ['fat-raml', 'raml', 'oas'];
+      for (let i = 0, len = asset.files.length; i < len; i++) {
+        if (types.indexOf(asset.files[i].classifier) !== -1) {
+          file = asset.files[i];
+          break;
+        }
+      }
+      if (!file || !file.externalLink) {
+        this.notifyError('RAML data not found in the asset.');
+        return;
+      }
+      return this._loadApic()
+      .then(() => this._dispatchExchangeApiEvent(file))
+      .then((e) => {
+        if (!e.defaultPrevented) {
+          this.notifyError('API data processor not found.');
+        } else {
+          this._setIsApiConsole(true);
+          this.apiProcessing = true;
+          this._dispatchNavigate({
+            base: 'api-console'
+          });
+          return e.detail.result;
+        }
+      })
+      .then((api) => {
+        this._setApiData(api.model, api.type.type);
+      })
+      .catch((cause) => {
+        this.notifyError(cause.message);
+      });
+    }
+
+    _dispatchExchangeApiEvent(file) {
+      const e = new CustomEvent('api-process-link', {
+        bubbles: true,
+        composed: true,
+        cancelable: true,
+        detail: {
+          url: file.externalLink,
+          mainFile: file.mainFile,
+          md5: file.md5,
+          packaging: file.packaging
+        }
+      });
+      this.dispatchEvent(e);
+      return e;
+    }
+
     _loadApic() {
       return new Promise((resolve, reject) => {
         Polymer.importHref('src/apic-electron/apic-electron.html', () => {
@@ -907,11 +987,15 @@
     _setApiData(api, type) {
       return this._loadApic()
       .then(() => {
-        this.$.apic.selected = 'summary';
-        this.$.apic.selectedType = 'summary';
         this.$.apic.amf = api;
         this.$.apic.apiType = type;
         this._setIsApiConsole(true);
+        this.apiSelected = undefined;
+        this.apiSelectedType = undefined;
+        Polymer.RenderStatus.afterNextRender(this, () => {
+          this.apiSelected = 'summary';
+          this.apiSelectedType = 'summary';
+        });
       });
     }
 

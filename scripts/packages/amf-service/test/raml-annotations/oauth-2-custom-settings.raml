@@ -1,0 +1,158 @@
+#%RAML 1.0 AnnotationTypeDeclaration
+displayName: OAuth 2.0 custom settings
+description: |
+  OAuth 2.0 allows to extend the specification with custom access token types,
+  endpoint parameters, grant types or response types.
+  This annotation allows you to annotate the `settings` property of OAuth 2.0
+  security scheme type to inform applications about additional settings.
+
+  ## Use case
+  Let's say a authorization server requires to send a `resource` query parameter
+  with the authorization request. The `resource` parameter can be any string.
+  Currently it is impossible to define this property in RAML file.
+
+  Similar if the code exchange request requires to put the `resource` parameter
+  into the request body.
+
+  This annotation allows you to define this parameter with the RAML definition
+  and place the parameter in the right request.
+
+  ## Annotation Target
+  The [annotation target](https://github.com/raml-org/raml-spec/blob/master/versions/raml-10/raml-10.md#annotation-targets)
+  for those annotations is `SecuritySchemeSettings`.
+  You can only apply it to Security Scheme `settings` property.
+
+  ## Example
+  ```yaml
+  annotationTypes:
+    customSettings: !include oauth-2-custom-settings.raml
+  securitySchemes:
+    oauth2:
+      type: OAuth 2.0
+      describedBy:
+        headers:
+          Authorization:
+            example: "Bearer token"
+      settings:
+        (customSettings):
+          authorizationGrants: [custom_grant]
+          ignoreDefaultGrants:
+          authorizationSettings:
+            queryParameters:
+              resource:
+                type: string
+                required: true
+                description: |
+                  A resource ID that defines a domain of authorization.
+          accessTokenSettings:
+            body:
+              resource:
+                type: string
+                required: true
+                description: |
+                  A resource ID that defines a domain of authorization.
+            headers:
+              x-auth-resource:
+                type: string
+                required: false
+            queryParameters:
+              tokenResource:
+                type: string
+                displayName: Token resource
+                required: true
+        accessTokenUri: https://auth.domain.com/authorize
+        authorizationUri: https://auth.domain.com/token
+        authorizationGrants: [implicit]
+        scopes: profile
+  ```
+
+  ## API console
+  This annotation is recognized and respected by API console.
+allowedTargets: [ SecuritySchemeSettings ]
+properties:
+  authorizationSettings:
+    description: |
+      Settings to be applied to the `authorizationUri` GET request.
+      Define any query parameters or headers that are required by your OAuth 2.0
+      authorization server implementation.
+
+      This settings can be applied only to `token` and `code` requests
+    type: object
+    displayName: Authorization settings
+    required: false
+    properties:
+      queryParameters:
+        displayName: Authorization query parameters
+        description: |
+          Query parameters to be applied to the `authorizationUri`.
+          Use the same notation as RAML's `queryParameters`.
+
+          If you define a parameter that is already defined in OAuth 2.0 specification
+          (RFC6749) it should be ignored by the processor.
+        type: object
+        required: false
+        properties:
+          /a-zA-Z0-9\-\_/*:
+            type: object
+            required: false
+  accessTokenSettings:
+    displayName: Access token settings
+    description: |
+      Settings to be applied to the token endpoint POST request.
+      Define query parameters, headers or custom body paramaeters that should
+      be included into the request.
+
+      Note, as per RFC6749, the request content type is `application/x-www-form-urlencoded`
+      and the processor has to always assume this content type.
+    type: object
+    required: false
+    properties:
+      queryParameters:
+        displayName: Token query parameters
+        description: |
+          Query parameters to be applied to the `accessTokenUri`.
+          Use the same notation as RAML's `queryParameters`.
+
+          OAuth 2.0 specification does not specify any query parameters for this
+          type of request.
+        type: object
+        required: false
+        properties:
+          /a-zA-Z0-9\-\_/*:
+            type: object
+            required: false
+      headers:
+        displayName: Token request headers
+        description: |
+          Headers to be set on the token request.
+          Use the same notation as RAML's `headers`.
+        type: object
+        required: false
+        properties:
+          /a-zA-Z0-9\-\_/*:
+            type: object
+            required: false
+      body:
+        displayName: Token body parameters
+        description: |
+          Body parameters to be applied to the `accessTokenUri`.
+          Properties will be applied to the default set of OAuth 2.0 token request
+          parameters.
+          If you define a parameter that is already defined in OAuth 2.0 specification
+          (RFC6749) it should be ignored by the processor.
+        type: object
+        required: false
+  authorizationGrants:
+    type: string[]
+    displayName: Custom authorization grants
+    required: false
+    description: |
+      List of custom authorization granst supported by your OAuth 2.0 server
+  ignoreDefaultGrants:
+    type: nil
+    required: false
+    description: |
+      If set, the processor should not use any of the `authorizationGrants`
+      properties defined in the `settings` and should be replaced by
+      `authorizationGrants` defined in this annotation.
+      This can be used only if this annotation `authorizationGrants` is set.

@@ -17,6 +17,7 @@ the License.
 <link rel="import" href="../../bower_components/amf-helper-mixin/amf-helper-mixin.html">
 <link rel="import" href="../../bower_components/paper-spinner/paper-spinner.html">
 <link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../bower_components/arc-file-drop-mixin/arc-file-drop-mixin.html">
 <dom-module id="apic-electron">
   <template>
     <style>
@@ -46,6 +47,18 @@ the License.
       @apply --layout-vertical;
       @apply --layout-center-center;
     }
+    .drop-target {
+      display: none;
+    }
+
+    :host([dragging]) .drop-target {
+      display: block;
+      @apply --layout-fit;
+      @apply --layout-vertical;
+      @apply --layout-center;
+      background-color: #fff;
+      border: 4px var(--drop-file-importer-header-background-color, var(--primary-color)) solid;
+    }
     </style>
     <raml-aware scope="apic" raml="[[amfModel]]"></raml-aware>
     <api-documentation
@@ -67,6 +80,9 @@ the License.
       </div>
     </template>
     <paper-toast id="errorToast" class="error-toast" duration="5000"></paper-toast>
+    <section class="drop-target">
+      <p class="drop-message">Drop API file here</p>
+    </section>
   </template>
   <script>
   /**
@@ -83,7 +99,8 @@ the License.
    * @demo demo/index.html
    * @memberof ApiElements
    */
-  class ApicElectron extends ApiElements.AmfHelperMixin(Polymer.Element) {
+  class ApicElectron extends ArcComponents.ArcFileDropMixin(
+    ApiElements.AmfHelperMixin(Polymer.Element)) {
     static get is() {
       return 'apic-electron';
     }
@@ -322,12 +339,9 @@ the License.
     open(id, version) {
       this.amf = undefined;
       this.amfModel = undefined;
-
       this.apiProcessing = true;
       return this.getApi(id, version)
       .then((result) => {
-        this.selected = 'summary';
-        this.selectedType = 'summary';
         this.amf = result.api;
         this.apiType = result.type;
       })

@@ -156,12 +156,21 @@ class ApiSearch {
           contentType: 'application/raml'
         };
       }
-      if (header.indexOf('RAML 1.0 Overlay') === 0 ||
-        header.indexOf('RAML 1.0 Extension') === 0) {
-        return {
-          type: 'RAML 1.0',
-          contentType: 'application/raml'
-        };
+      switch (header) {
+        case 'RAML 1.0 Overlay':
+        case 'RAML 1.0 Extension':
+        case 'RAML 1.0 DataType':
+        case 'RAML 1.0 SecurityScheme':
+        case 'RAML 1.0 Trait':
+        case 'RAML 1.0 Library':
+        case 'RAML 1.0 NamedExample':
+        case 'RAML 1.0 DocumentationItem':
+        case 'RAML 1.0 ResourceType':
+        case 'RAML 1.0 AnnotationTypeDeclaration':
+          return {
+            type: 'RAML 1.0',
+            contentType: 'application/raml'
+          };
       }
       throw new Error('Unsupported API file');
     });
