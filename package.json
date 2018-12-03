@@ -50,6 +50,7 @@
     "electron-updater": "4.0.4",
     "form-data": "^2.3.3",
     "fs-extra": "^4.0.3",
+    "jexl": "^1.1.4",
     "live-plugin-manager": "^0.12.0",
     "node-fetch": "^1.7.3",
     "ntlm": "^0.1.3",

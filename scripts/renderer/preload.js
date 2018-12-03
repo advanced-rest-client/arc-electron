@@ -1,6 +1,7 @@
 const {ipcRenderer: ipc, clipboard} = require('electron');
 const {app} = require('electron').remote;
 const log = require('electron-log');
+const Jexl = require('Jexl');
 const prefix = '@advanced-rest-client/';
 const {ArcElectronDrive} = require(prefix + 'electron-drive/renderer');
 const {OAuth2Handler} = require(prefix + 'electron-oauth2/renderer');
@@ -42,6 +43,7 @@ process.once('loaded', () => {
   global.FilesystemProxy = FilesystemProxy;
   global.ElectronAmfService = ElectronAmfService;
   global.WindowSearchService = WindowSearchService;
+  global.Jexl = Jexl;
   global.versionInfo = {
     chrome: versions.chrome,
     appVersion: app.getVersion()
