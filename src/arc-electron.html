@@ -234,7 +234,7 @@
       <response-history-saver></response-history-saver>
     </template>
     <electron-http-transport follow-redirects$=[[config.followRedirects]] request-timeout$="[[config.requestDefaultTimeout]]" native-transport$="[[config.nativeTransport]]" validate-certificates$="[[config.validateCertificates]]" sent-message-limit$="[[config.sentMessageLimit]]"></electron-http-transport>
-    <variables-manager system-variables="[[sysVars]]" sys-variables-disabled="[[!config.systemVariablesEnabled]]" app-variables-disabled="[[!config.appVariablesEnabled]]"></variables-manager>
+    <variables-manager system-variables="[[sysVars]]" sys-variables-disabled="[[_computeVarDisabled(config.systemVariablesEnabled)]]" app-variables-disabled="[[_computeVarDisabled(config.appVariablesEnabled)]]"></variables-manager>
     <variables-evaluator no-before-request></variables-evaluator>
     <!-- Info center -->
     <arc-messages-service platform="electron" on-unread-changed="_unreadMessagesChanged" messages="{{appMessages}}" id="msgService"></arc-messages-service>
@@ -1284,6 +1284,13 @@
      */
     _computeVariablesDisabled(sysVars, appVars) {
       return !sysVars && !appVars;
+    }
+
+    _computeVarDisabled(enabled) {
+      if (enabled === undefined) {
+        return false;
+      }
+      return !enabled;
     }
   }
   window.customElements.define(ArcElectron.is, ArcElectron);

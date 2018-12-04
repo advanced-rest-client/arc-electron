@@ -1,7 +1,7 @@
 const {ipcRenderer: ipc, clipboard} = require('electron');
 const {app} = require('electron').remote;
 const log = require('electron-log');
-const Jexl = require('Jexl');
+const Jexl = require('jexl');
 const prefix = '@advanced-rest-client/';
 const {ArcElectronDrive} = require(prefix + 'electron-drive/renderer');
 const {OAuth2Handler} = require(prefix + 'electron-oauth2/renderer');
