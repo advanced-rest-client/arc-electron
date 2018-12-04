@@ -1,15 +1,15 @@
 const {ipcMain, app, shell} = require('electron');
 const {ThemesProtocolHandler} = require('./scripts/main/theme-protocol');
+const {ComponentsProtocolHandler} = require('./scripts/main/components-protocol');
 const {ArcWindowsManager} = require('./scripts/main/windows-manager');
 const {UpdateStatus} = require('./scripts/main/update-status');
 const {AppMenuService} = require('./scripts/main/app-menu-service');
 const {ArcMainMenu} = require('./scripts/main/main-menu');
 const {Oauth2Identity} = require('@advanced-rest-client/electron-oauth2');
 const {DriveExport} = require('@advanced-rest-client/electron-drive');
-const {PreferencesManager} = require('@advanced-rest-client/arc-electron-preferences/main');
+const {PreferencesManager} = require('./scripts/packages/arc-preferences/main');
 const {SessionManager} = require('@advanced-rest-client/electron-session-state/main');
 const {AppOptions} = require('./scripts/main/app-options');
-const {RemoteApi} = require('./scripts/main/remote-api');
 const {ContentSearchService} = require('./scripts/packages/search-service/main');
 const {AppPrompts} = require('./scripts/main/app-prompts.js');
 const {SourcesManager} = require('./scripts/packages/sources-manager/main');
@@ -22,6 +22,7 @@ class Arc {
    * @constructor
    */
   constructor() {
+    global.arc = this;
     const startupOptions = this._processArguments();
     this.initOptions = startupOptions.getOptions();
     this._registerProtocols();
@@ -66,11 +67,12 @@ class Arc {
    */
   _initializeProtocolsReady() {
     log.debug('Initializing themes protocol');
-    const tp = new ThemesProtocolHandler({
-      debug: this.initOptions.debug
-    });
+    const tp = new ThemesProtocolHandler();
     tp.register();
     this.themesProtocol = tp;
+    const cp = new ComponentsProtocolHandler();
+    cp.register();
+    this.componentsProtocol = cp;
   }
   /**
    * Processes start arguments
@@ -105,6 +107,9 @@ class Arc {
     })
     .then(() => {
       log.debug('Protocols ready');
+      if (this.initOptions.port) {
+        this._initializeCommunicationProtocol(this.initOptions.port);
+      }
       this._initializeMenu();
       this._initializeWindowsManager();
       this._initializeUpdateStatus();
@@ -112,7 +117,6 @@ class Arc {
       this._initializeSessionManager();
       this._initializeSearchService();
       this._initializeApplicationMenu();
-      this.remote = new RemoteApi(this.wm);
       this.wm.open();
       if (!this.isDebug()) {
         this.us.start(this.initOptions.settingsFile);
@@ -203,7 +207,7 @@ class Arc {
 
   _initializeWindowsManager() {
     log.debug('Initializing windows manager.');
-    this.wm = new ArcWindowsManager(this.initOptions, this.sourcesManager);
+    this.wm = new ArcWindowsManager(this.initOptions);
     this.wm.listen();
   }
 
@@ -211,6 +215,17 @@ class Arc {
     log.info('Initializing update manager.');
     this.us = new UpdateStatus(this.wm, this.menu);
     this.us.listen();
+  }
+
+  _initializeCommunicationProtocol(port) {
+    if (isNaN(port)) {
+      log.warn('The port ' + port + ' is not a number. Skipping.');
+      return;
+    }
+    port = Number(port);
+    const {CommunicationProtocol} = require('./scripts/packages/communication-protocol/main');
+    this.comm = new CommunicationProtocol(port);
+    this.comm.start();
   }
   /**
    * Quits when all windows are closed.

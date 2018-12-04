@@ -34,6 +34,10 @@ class AppOptions {
       name: '.', // from "npm start" to not print error
       shortcut: '-dot',
       type: String
+    }, {
+      name: '--port',
+      shortcut: '-p',
+      type: Number
     }];
   }
   /**

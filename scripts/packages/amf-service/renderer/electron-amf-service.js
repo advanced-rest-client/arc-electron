@@ -1,5 +1,7 @@
 const {AmfService} = require('../lib/amf-service');
-const {AmfConsoleResolver} = require('../lib/amf-console-resolver');
+const {fork} = require('child_process');
+const path = require('path');
+const crypto = require('crypto');
 /**
  * A class to be used in the renderer process to download and extract RAML
  * data from Exchange asset.
@@ -44,7 +46,7 @@ class ElectronAmfService {
    * Observes for ARC's DOM events
    */
   listen() {
-    window.addEventListener('process-exchange-asset-data', this._assetHandler);
+    window.addEventListener('api-process-link', this._assetHandler);
     window.addEventListener('api-process-file', this._fileHandler);
     window.addEventListener('api-resolve-model', this._resolveHandler);
   }
@@ -54,7 +56,7 @@ class ElectronAmfService {
    * @return {Promise}
    */
   unlisten() {
-    window.removeEventListener('process-exchange-asset-data', this._assetHandler);
+    window.removeEventListener('api-process-link', this._assetHandler);
     window.removeEventListener('api-process-file', this._fileHandler);
     window.removeEventListener('api-resolve-model', this._resolveHandler);
     return this.cleanup();
@@ -70,8 +72,12 @@ class ElectronAmfService {
     return Promise.resolve();
   }
   /**
-   * Handler for the `process-exchange-asset-data` custom event from Exchange
-   * asset search panel.
+   * Handler for the `api-process-link`. The event contains `url` of the asset
+   * to download and additional, helper properties:
+   * - mainFile {String} - API main file. If not set the program will try to discover
+   * main API file.
+   * - md5 {String} - File hash with md5. If not set the checksum is not tested.
+   * - packaging {String} Compression format. Default to zip.
    *
    * @param {CustomEvent} e
    */
@@ -80,24 +86,9 @@ class ElectronAmfService {
       return;
     }
     e.preventDefault();
-    const asset = e.detail;
-    let file = asset.files.find((i) => i.classifier === 'fat-raml');
-    if (!file) {
-      file = asset.files.find((i) => i.classifier === 'raml');
-    }
-    if (!file || !file.externalLink) {
-      this.notifyError('RAML data not found in the asset.');
-      return;
-    }
-    this.processApiLink(file.externalLink)
-    .then((result) => {
-      setTimeout(() => {
-        this.notifyApi(result);
-      });
-    })
-    .catch((cause) => {
-      this.notifyError(cause.message);
-    });
+    const {url, mainFile, md5, packaging} = e.detail;
+
+    e.detail.result = this.processApiLink(url, mainFile, md5, packaging);
   }
   /**
    * Handles `api-process-file` custom event.
@@ -144,12 +135,24 @@ class ElectronAmfService {
   /**
    * It downloads the file and processes it as a zipped API project.
    * @param {String} url API remote location.
+   * @param {?String} mainFile API main file. If not set the program will try to
+   * find the best match.
+   * @param {?String} md5 When set it will test data integrity with the hash
+   * @param {?String} packaging Default to `zip`.
    * @return {Promise<String>} Promise resolved to the AMF json-ld model.
    */
-  processApiLink(url) {
+  processApiLink(url, mainFile, md5, packaging) {
     this.loading = true;
+    const bufferOpts = {};
+    if (packaging && packaging === 'zip') {
+      bufferOpts.zip = true;
+    }
+    if (mainFile) {
+      bufferOpts.mainFile = mainFile;
+    }
     return this.downloadRamlData(url)
-    .then((buffer) => this.processBuffer(buffer))
+    .then((buffer) => this._checkIntegrity(buffer, md5))
+    .then((buffer) => this.processBuffer(buffer, bufferOpts))
     .then((result) => {
       this.loading = false;
       return result;
@@ -187,16 +190,17 @@ class ElectronAmfService {
    * @param {Buffer} buffer Buffer created from API file.
    * @param {Object} opts Processing options:
    * - zip {Boolean} If true the buffer represents zipped file.
+   * - mainFile {String} API main file if known
    * @return {Promise<String>} Promise resolved to the AMF json-ld model
    */
   processBuffer(buffer, opts) {
     if (!this.loading) {
       this.loading = true;
     }
-    if (this._bufferIsZip(buffer)) {
-      if (!opts) {
-        opts = {};
-      }
+    if (!opts) {
+      opts = {};
+    }
+    if (!opts.zip && this._bufferIsZip(buffer)) {
       opts.zip = opts;
     }
     if (!this.amfService) {
@@ -205,7 +209,7 @@ class ElectronAmfService {
       this.amfService.setSource(buffer, opts);
     }
     return this.amfService.prepare()
-    .then(() => this.amfService.resolve())
+    .then(() => this.amfService.resolve(opts.mainFile))
     .then((candidates) => {
       if (candidates) {
         return this.notifyApiCandidates(candidates)
@@ -286,8 +290,57 @@ class ElectronAmfService {
     .then((aBuffer) => Buffer.from(aBuffer));
   }
 
+  _checkIntegrity(buffer, md5) {
+    if (!md5) {
+      return buffer;
+    }
+    const hash = crypto.createHash('md5').update(buffer, 'utf8').digest('hex');
+    if (hash === md5) {
+      return buffer;
+    }
+    throw new Error('API file integrity test failed. Checksum missmatch.');
+  }
+
   resolveAPiConsole(model, type) {
-    return AmfConsoleResolver.resolveApiConsole(model, type);
+    return new Promise((resolve, reject) => {
+      const proc = this._createResolverProcess();
+      const callbacks = {
+        onmessage: (result) => {
+          this._killResolver(proc);
+          if (result.error) {
+            reject(new Error(result.error));
+          } else {
+            resolve(result.api);
+          }
+        },
+        onerror: (err) => {
+          this._killResolver(proc);
+          reject(new Error(err.message || 'Unknown error'));
+        }
+      };
+      proc.on('message', callbacks.onmessage);
+      proc.on('error', callbacks.onerror);
+      proc.send({
+        model,
+        type
+      });
+    });
+  }
+
+  _createResolverProcess() {
+    const options = {
+      execArgv: []
+    };
+    return fork(path.join(__dirname, '..', 'lib', 'amf-resolver.js'), options);
+  }
+
+  _killResolver(proc) {
+    if (proc.connected) {
+      proc.disconnect();
+    }
+    proc.removeAllListeners('message');
+    proc.removeAllListeners('error');
+    proc.kill();
   }
 
   fire(type, detail) {

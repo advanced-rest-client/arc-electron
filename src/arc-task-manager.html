@@ -128,7 +128,7 @@
     </template>
   </template>
   <script>
-  const {app, BrowserWindow} = require('electron').remote;
+  const {app, BrowserWindow, process} = require('electron').remote;
   class ArcTaskManager extends Polymer.Element {
     static get is() {return 'arc-task-manager';}
     static get properties() {
@@ -159,7 +159,7 @@
         mainId: {
           type: Number,
           value: function() {
-            return require('electron').remote.process.pid;
+            return process.pid;
           }
         },
         thisPid: {

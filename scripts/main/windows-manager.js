@@ -1,9 +1,9 @@
 const {BrowserWindow, dialog, ipcMain} = require('electron');
 const path = require('path');
 const url = require('url');
-const {ArcSessionControl} = require('@advanced-rest-client/arc-electron-preferences/main');
+const {ArcSessionControl} = require('../packages/arc-preferences/main');
 const {ArcSessionRecorder} = require('./arc-session-recorder');
-const {ContextActions} = require('./context-actions');
+const {ContextActions} = require('../packages/context-actions/main');
 const log = require('./logger');
 /**
  * A class that manages opened app windows.
@@ -12,9 +12,8 @@ class ArcWindowsManager {
   /**
    * @param {Object} startupOptions Application startup object. See
    * `AppOptions` for more details.
-   * @param {SourcesManager} sm
    */
-  constructor(startupOptions, sm) {
+  constructor(startupOptions) {
     this.startupOptions = startupOptions || {};
     this.windows = [];
     // Task manager window reference.
@@ -27,7 +26,6 @@ class ArcWindowsManager {
     this._settingChangedHandler = this._settingChangedHandler.bind(this);
     this.recorder = new ArcSessionRecorder();
     this.contextActions = new ContextActions();
-    this.sourcesManager = sm;
     /**
      * Pointer to last focused window.
      * @type {BrowserWindow}
@@ -142,7 +140,7 @@ class ArcWindowsManager {
    * @param {?Array} args List of arguments.
    */
   notifyAll(type, args) {
-    log.debug('[WM] Notyfying all windows with type', type);
+    log.debug('[WM] Notyfying all windows with type: ' + type);
     this.windows.forEach((win, index) => {
       if (win.isDestroyed()) {
         this.windows.splice(index, 1);
@@ -172,6 +170,31 @@ class ArcWindowsManager {
       win.webContents.send(type, args);
     });
   }
+
+  _windowsSortIndex(a, b) {
+    if (a.__arcIndex > b.__arcIndex) {
+      return 1;
+    }
+    if (a.__arcIndex < b.__arcIndex) {
+      return -1;
+    }
+    return 0;
+  }
+
+  _getWindowIndex() {
+    const wins = this.windows;
+    if (!wins.length) {
+      return 0;
+    }
+    wins.sort(this._windowsSortIndex);
+    const len = wins.length;
+    for (let i = 0; i < len; i++) {
+      if (wins[i].__arcIndex !== i) {
+        return i;
+      }
+    }
+    return len;
+  }
   /**
    * Opens a new application window.
    *
@@ -180,18 +203,19 @@ class ArcWindowsManager {
    */
   open(path) {
     log.debug('[WM] Opening new window', path);
-    const index = this.windows.length;
+    const index = this._getWindowIndex();
+    log.debug('Generated index for the widnow: ' + index);
     const session = new ArcSessionControl(index);
     return session.load()
     .then((data) => {
       const win = this.__getNewWindow(index, data);
       win.__arcSession = session;
+      this.__attachListeners(win);
+      this.windows.push(win);
       this.__loadPage(win, path);
       if (this.startupOptions.debug) {
         win.webContents.openDevTools();
       }
-      this.__attachListeners(win);
-      this.windows.push(win);
       return this.recorder.record()
       .then(() => win);
     });
@@ -236,7 +260,7 @@ class ArcWindowsManager {
    * @return {BrowserWindow} Created window.
    */
   __getNewWindow(index, session) {
-    let mainWindow = new BrowserWindow({
+    const mainWindow = new BrowserWindow({
       width: session.size.width,
       height: session.size.height,
       x: session.position.x,
@@ -260,17 +284,13 @@ class ArcWindowsManager {
    * @param {String} appPath ARC internal routing path.
    */
   __loadPage(win, appPath) {
-    appPath = appPath || '#/request/latest/0';
-    if (appPath[0] === '/') {
-      appPath = '#' + appPath;
-    }
     win._startPath = appPath;
     const dest = path.join(__dirname, '..', '..', 'app.html');
     const full = url.format({
       pathname: dest,
       protocol: 'file:',
       slashes: true
-    }) + appPath;
+    });
     log.debug('Loading page: ' + full);
     win.loadURL(full);
   }
@@ -286,18 +306,21 @@ class ArcWindowsManager {
       if (item.isDestroyed()) {
         return false;
       }
-      return item.id === contents.id;
+      return item.webContents.id === contents.id;
     });
-    this.sourcesManager.getAppConfig()
-    .then((opts) => {
-      if (win) {
-        opts.workspaceIndex = win.__arcIndex;
-        this.contextActions.registerDefaultActions(win.webContents);
-      } else {
-        opts.workspaceIndex = 0;
-      }
-      contents.send('window-state-info', opts);
-    });
+    const cnf = {
+      workspacePath: this.startupOptions.workspacePath
+    };
+    if (win) {
+      cnf.workspaceIndex = win.__arcIndex;
+      cnf.startPath = win._startPath;
+      this.contextActions.registerDefaultActions(win.webContents);
+    } else {
+      cnf.workspaceIndex = 0;
+    }
+    log.debug('Sending window state info');
+    log.debug(JSON.stringify(cnf, null, 2));
+    contents.send('window-state-info', cnf);
   }
   /**
    * Attaches listeners to the window object.
@@ -319,12 +342,13 @@ class ArcWindowsManager {
    * @return {Number} Window position or `-1` if not found.
    */
   _findWindowImdex(win) {
-    if (win.isDestroyed()) {
-      return -1;
-    }
+    const noId = win.isDestroyed();
     return this.windows.findIndex((item) => {
       if (item.isDestroyed()) {
         return win === item;
+      }
+      if (noId) {
+        return false;
       }
       return item.id === win.id;
     });

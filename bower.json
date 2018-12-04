@@ -72,7 +72,8 @@
     "history-panel": "advanced-rest-client/history-panel#2.0.0-preview",
     "saved-requests-panel": "advanced-rest-client/saved-requests-panel#2.0.0-preview",
     "arc-electron-default-theme": "advanced-rest-client/arc-electron-default-theme#2.0.0-preview",
-    "themes-panel": "advanced-rest-client/themes-panel#2.0.0-preview"
+    "themes-panel": "advanced-rest-client/themes-panel#2.0.0-preview",
+    "api-candidates-dialog": "advanced-rest-client/api-candidates-dialog#2.0.0-preview"
   },
   "devDependencies": {
     "web-component-tester": "^6.0.0",

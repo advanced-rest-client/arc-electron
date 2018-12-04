@@ -1,4 +1,4 @@
-// const {ipcMain} = require('electron');
+const log = require('../../../main/logger');
 /**
  * A class responsible for gathering information about registered context menu
  * actions and creating a configuration for opened windows.
@@ -10,6 +10,7 @@ class ContextActions {
    * @param {Object} webContents A web contents object of the renderer process
    */
   registerDefaultActions(webContents) {
+    log.debug('Registering window default context menu actions');
     this._addCloseTab(webContents);
     this._addCloseAllTabs(webContents);
     this._addCloseOtherTabs(webContents);

@@ -1,10 +1,11 @@
 const bootstrap = require('./test-bootstrap.js');
 const assert = require('assert');
 const fs = require('fs-extra');
+const path = require('path');
 
 describe('Initial paths', function() {
-  const settingsFilePath = 'test/test-settings.json';
-  const workspaceFilePath = 'test/workspace';
+  const settingsFilePath = path.join('test', 'test-settings.json');
+  const workspaceFilePath = path.join('test', 'workspace');
 
   describe('Setups default file paths', function() {
     this.timeout(10000);
