@@ -1,18 +1,18 @@
 const fs = require('fs-extra');
 const path = require('path');
 const log = require('../logger');
-
+const arcPaths = require('../arc-paths');
 /**
  * A class that is responsible for setting up theme defaults.
  */
 class ThemeDefaults {
-  /**
-   * @param {SourcesManager} sm
-   */
-  constructor(sm) {
-    this.themePath = sm.themesBasePath;
-    this.infoFilePath = sm.infoFilePath;
-  }
+  // /**
+  //  * @param {Object} sm
+  //  */
+  // constructor(initOptions) {
+  //   this.themePath = sm.themesBasePath;
+  //   this.infoFilePath = sm.infoFilePath;
+  // }
   /**
    * Sets defaults if the defaults are not yet set.
    * It copues anypoint and default theme to theme location
@@ -56,7 +56,8 @@ class ThemeDefaults {
   }
 
   _ensureTheme(info) {
-    const file = path.join(this.themePath, info.name);
+    // arcPaths
+    const file = path.join(arcPaths.themesBasePath, info.name);
     return fs.pathExists(file)
     .then((exists) => {
       if (exists) {
@@ -67,7 +68,7 @@ class ThemeDefaults {
   }
 
   _copyThemeFiles(info) {
-    const dest = path.join(this.themePath, info.name);
+    const dest = path.join(arcPaths.themesBasePath, info.name);
     return fs.ensureDir(dest)
     .then(() => fs.copy(info.location, dest))
     .catch((cause) => {
@@ -76,7 +77,7 @@ class ThemeDefaults {
   }
   // Setups theme info file if missing
   _setThemeInfo() {
-    const file = path.join(this.themePath, 'themes-info.json');
+    const file = path.join(arcPaths.themesBasePath, 'themes-info.json');
     return fs.pathExists(file)
     .then((exists) => {
       if (exists) {
@@ -103,7 +104,7 @@ class ThemeDefaults {
   _copyInfoFile() {
     const source =
       path.join(__dirname, '..', '..', '..', 'appresources', 'themes', 'themes-info.json');
-    const dest = this.infoFilePath;
+    const dest = arcPaths.themesSettings;
     return fs.readJson(source, {throws: false})
     .then((info) => {
       info = info || [];

@@ -1,7 +1,6 @@
 const {ipcMain: ipc, app} = require('electron');
 const path = require('path');
-const log = require('electron-log');
-const {ThemeInfo} = require('./theme-info');
+const {ThemeInfo} = require('../../../main/models/theme-info');
 const {ThemePluginsManager} = require('../../plugin-manager/main');
 /**
  * This is main process interface.
@@ -41,11 +40,6 @@ class SourcesManager {
      * @type {String}
      */
     this.defaultTheme = 'advanced-rest-client/arc-electron-default-theme';
-    /**
-     * Name of application search page import file.
-     * @type {String}
-     */
-    this.searchFileName = 'import-search-bar.html';
     /**
      * Main module (ARC's) path location to generate absolute URL
      * @type {String}
@@ -96,43 +90,6 @@ class SourcesManager {
       file = app.getPath('home') + file.substr(1);
     }
     return file;
-  }
-  /**
-   * Returns application basic paths configuration.
-   * @return {Object}
-   */
-  getAppConfig() {
-    return Promise.all([
-      this.prefsManager.load(),
-      this.themeInfo.load()
-    ])
-    .then((result) => this._getAppConfig(...result));
-  }
-
-  _getAppConfig(settings, themeInfo) {
-    if (!themeInfo) {
-      themeInfo = [];
-    }
-    if (!settings) {
-      settings = {};
-    }
-    const so = this.startupOptions;
-    const result = {
-      searchFile: this._getSearchFileLocation(settings, so)
-    };
-    return result;
-  }
-  /**
-   * Reads web components import file location for search window.
-   * @param {Object} settings Current application settings.
-   * @param {Object} so Startup options
-   * @return {String} Path to web component import file for search window
-   */
-  _getSearchFileLocation(settings, so) {
-    if (so.searchFile) {
-      return this.resolvePath(so.searchFile);
-    }
-    return path.join(this.root, this.searchFileName);
   }
 
   _findThemeInfo(id, themes) {

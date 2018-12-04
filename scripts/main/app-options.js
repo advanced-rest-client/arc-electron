@@ -26,6 +26,11 @@ class AppOptions {
       shortcut: '-w',
       type: String
     }, {
+      // Path to the workspace state files path. Overrides default location.
+      name: '--themes-path',
+      shortcut: '-t',
+      type: String
+    }, {
       // Opens ARC in dev mode (opened console, verbose log)
       name: '--debug',
       shortcut: '-d',
@@ -38,6 +43,11 @@ class AppOptions {
       name: '--port',
       shortcut: '-p',
       type: Number
+    }, {
+      name: '--open',
+      shortcut: '-o',
+      type: String,
+      allowArray: true
     }];
   }
   /**
@@ -57,10 +67,7 @@ class AppOptions {
    * Parses startup options.
    */
   parse() {
-    for (let i = 0; i < process.argv.length; i++) {
-      if (i === 0) {
-        continue;
-      }
+    for (let i = 1; i < process.argv.length; i++) {
       let arg = process.argv[i];
       if (arg[0] !== '-') {
         log.warn('Unknown startup option ', arg);
@@ -131,7 +138,7 @@ class AppOptions {
    * @return {String} Value for the argument.
    */
   getArgValue(arg) {
-    let index = arg.indexOf('=');
+    const index = arg.indexOf('=');
     if (index === -1) {
       return '';
     }
@@ -150,7 +157,16 @@ class AppOptions {
    */
   setProperty(def) {
     const name = camelCase(def.name);
-    this[name] = def.value;
+    if (this[name] && def.allowArray) {
+      let v = this[name];
+      if (!(v instanceof Array)) {
+        v = [v];
+      }
+      v.push(def.value);
+      this[name] = v;
+    } else {
+      this[name] = def.value;
+    }
   }
 }
 exports.AppOptions = AppOptions;

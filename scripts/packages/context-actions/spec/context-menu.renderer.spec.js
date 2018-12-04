@@ -2,7 +2,7 @@ const {assert} = require('chai');
 const {ArcContextMenu} = require('../renderer');
 const sinon = require('sinon');
 
-describe.only('ArcContextMenu', function() {
+describe('ArcContextMenu', function() {
   before(function() {
     const app = document.createElement('div');
     app.id = 'app';

@@ -1,12 +1,14 @@
 const log = require('./logger');
+const EventEmitter = require('events');
 /**
  * Base class for other classes containing utility functions.
  */
-class ArcBase {
+class ArcBase extends EventEmitter {
   /**
    * @constructor
    */
   constructor() {
+    super();
     this._ipcRequestId = 0;
     this._promises = [];
     this._debouncers = [];

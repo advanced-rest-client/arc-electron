@@ -28,29 +28,12 @@ class ContentSearchService {
     ContentSearchService.addService(this);
   }
   /**
-   * Listens for `menu-action` event dispatched by the menu manager.
-   * It handles `application:find` actions.
-   * Initializes the service for the window.
-   *
-   * @param {EventEmitter} emitter
-   */
-  static listen(emitter) {
-    emitter.on('menu-action', ContentSearchService._searchRequested);
-  }
-  /**
-   * Stops listening for `application:find` custom event.
-   * @param {EventEmitter} emitter
-   */
-  static unlisten(emitter) {
-    emitter.removeListener('menu-action', ContentSearchService._searchRequested);
-  }
-  /**
    * Event handler for menu actions.
    *
    * @param {String} action Menu action
    * @param {BrowserWindow} win Owner window
    */
-  static _searchRequested(action, win) {
+  static searchRequested(action, win) {
     if (action !== 'application:find') {
       return;
     }

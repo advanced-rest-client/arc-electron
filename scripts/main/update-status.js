@@ -1,7 +1,6 @@
 const {ArcBase} = require('./arc-base');
 const {autoUpdater} = require('electron-updater');
 const {dialog, nativeImage, ipcMain} = require('electron');
-const {ArcPreferences} = require('../packages/arc-preferences');
 const log = require('./logger');
 const path = require('path');
 
@@ -20,13 +19,10 @@ class UpdateStatus extends ArcBase {
   /**
    * @constructor
    *
-   * @param {ArcWindowsManager} windowManager Instance of ArcWindowsManager
-   * @param {ArcMainMenu} appMenu Instance of main menu
+   * @param {ArcEnvironment} app
    */
-  constructor(windowManager, appMenu) {
+  constructor() {
     super();
-    this.wm = windowManager;
-    this.menu = appMenu;
     this.state = 0;
     this.lastInfoObject = undefined;
     this._ensureScope();
@@ -38,7 +34,6 @@ class UpdateStatus extends ArcBase {
   listen() {
     ipcMain.on('check-for-update', this._checkUpdateHandler.bind(this));
     ipcMain.on('install-update', this.installUpdate);
-    this.menu.on('menu-action', this._menuActionHandler.bind(this));
   }
   /**
    * Handler for `check-for-update` event dispatech by the rendere.
@@ -54,7 +49,7 @@ class UpdateStatus extends ArcBase {
    *
    * @param {String} action Menu action
    */
-  _menuActionHandler(action) {
+  menuActionHandler(action) {
     if (action.indexOf('application') === -1) {
       return;
     }
@@ -81,30 +76,23 @@ class UpdateStatus extends ArcBase {
    * Checks for app update.
    * This function **must** be called after the app ready event.
    *
-   * @param {?String} settingsFile Optional settings file for ArcPreferences class.
-   * @return {Promise} Promise resolved when settings are loaded.
+   * @param {Object} settings Current application configuration.
    */
-  start(settingsFile) {
-    const pref = new ArcPreferences({
-      settingsFile
-    });
-    return pref.load()
-    .then((settings) => {
-      if (settings.releaseChannel) {
-        if (this.isValidChannel(settings.releaseChannel)) {
-          autoUpdater.channel = settings.releaseChannel;
-        }
+  start(settings) {
+    if (settings.releaseChannel) {
+      if (this.isValidChannel(settings.releaseChannel)) {
+        autoUpdater.channel = settings.releaseChannel;
       }
-      if (settings.autoUpdate === false) {
-        log.debug('Auto Updater is disabled. Manual requests will still download the update.');
-        autoUpdater.autoDownload = false;
-        return;
-      }
-      log.info('Initializing Auto Updater.');
-      setTimeout(() => {
-        this.check();
-      }, 5000);
-    });
+    }
+    if (settings.autoUpdate === false) {
+      log.debug('Auto Updater is disabled. Manual requests will still download the update.');
+      autoUpdater.autoDownload = false;
+      return;
+    }
+    log.info('Initializing Auto Updater.');
+    setTimeout(() => {
+      this.check();
+    }, 5000);
   }
   /**
    * Sets the channel value on auto updater
@@ -156,27 +144,13 @@ class UpdateStatus extends ArcBase {
     autoUpdater.checkForUpdates();
   }
   /**
-   * Notifies windows about update event.
-   *
-   * Windows receive a single detail object. It is an `Array` where first item
-   * is event type and any other items are event properties.
-   *
-   * @param {String} type Event type
-   * @param {Array<any>} args List of arguments to pass to the window.
-   */
-  notifyWindows(type, ...args) {
-    let data = [type];
-    data = data.concat(args);
-    this.wm.notifyAll(type, data);
-  }
-  /**
    * Emitted when checking if an update has started.
    */
   _checkingHandler() {
     this.state = 1;
     this.lastInfoObject = undefined;
-    this.notifyWindows('checking-for-update');
-    this.menu.updateStatusChnaged('checking-for-update');
+    this.emit('notify-windows', 'checking-for-update');
+    this.emit('status-changed', 'checking-for-update');
   }
   /**
    * Emitted when there is an available update. The update is downloaded
@@ -188,8 +162,8 @@ class UpdateStatus extends ArcBase {
     log.debug('Update available.', info);
     this.state = 2;
     this.lastInfoObject = info;
-    this.notifyWindows('update-available', info);
-    this.menu.updateStatusChnaged('download-progress');
+    this.emit('notify-windows', 'update-available', info);
+    this.emit('status-changed', 'download-progress');
     let detail = 'It will be downloaded automatically. The update will';
     detail += ' be applied after you restart the application.';
     this._notifyUser('New version available!', detail);
@@ -203,8 +177,8 @@ class UpdateStatus extends ArcBase {
     log.debug('Update not available.', info);
     this.state = 3;
     this.lastInfoObject = info;
-    this.notifyWindows('update-not-available', info);
-    this.menu.updateStatusChnaged('not-available');
+    this.emit('notify-windows', 'update-not-available', info);
+    this.emit('status-changed', 'not-available');
     this._notifyUser('No update available.',
       info.version + ' is the latest version.');
   }
@@ -217,8 +191,8 @@ class UpdateStatus extends ArcBase {
     log.error('Update error', error);
     this.state = 4;
     this.lastInfoObject = error;
-    this.notifyWindows('autoupdate-error', error);
-    this.menu.updateStatusChnaged('not-available');
+    this.emit('notify-windows', 'autoupdate-error', error);
+    this.emit('status-changed', 'not-available');
     if (error && error.code && error.code === 8) {
       let message = 'Unable to update the application when it runs in';
       message += ' read-only mode. Move the application to the Applications';
@@ -242,7 +216,7 @@ class UpdateStatus extends ArcBase {
     log.debug('Update download progress', progressObj);
     this.state = 5;
     this.lastInfoObject = progressObj;
-    this.notifyWindows('download-progress', progressObj);
+    this.emit('notify-windows', 'download-progress', progressObj);
   }
   /**
    * Emmited when new version is downloaded.
@@ -253,8 +227,8 @@ class UpdateStatus extends ArcBase {
     log.debug('Update download ready', info);
     this.state = 6;
     this.lastInfoObject = info;
-    this.notifyWindows('update-downloaded', info);
-    this.menu.updateStatusChnaged('update-downloaded');
+    this.emit('notify-windows', 'update-downloaded', info);
+    this.emit('status-changed', 'update-downloaded');
   }
   /**
    * Quits the application and installs new update.
@@ -275,14 +249,14 @@ class UpdateStatus extends ArcBase {
     if (!this.lastOptions.notify) {
       return;
     }
-    let dialogOpts = {
+    const dialogOpts = {
       type: isError ? 'error' : 'info',
       title: 'ARC updater',
       message: message,
       detail: detail
     };
     if (!isError) {
-      let imgPath = path.join(__dirname, '..', '..', 'assets', 'icon.iconset',
+      const imgPath = path.join(__dirname, '..', '..', 'assets', 'icon.iconset',
         'icon_512x512.png');
       dialogOpts.icon = nativeImage.createFromPath(imgPath);
     }

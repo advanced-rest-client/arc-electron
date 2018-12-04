@@ -115,6 +115,20 @@ class ArcPreferences extends EventEmitter {
     .then((data) => this._processSettings(data))
     .catch(() => this._processSettings());
   }
+
+  loadSync() {
+    let data;
+    try {
+      fs.ensureFileSync(this.settingsFile);
+      data = fs.readJsonSync(this.settingsFile, {throws: false});
+    } catch (_) {}
+    if (!data) {
+      data = {};
+    } else {
+      this.__settings = data;
+    }
+    return data;
+  }
   /**
    * Processes data from settings file. Creates default settings if settings
    * file do not exists.

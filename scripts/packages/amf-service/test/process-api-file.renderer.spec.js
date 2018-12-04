@@ -4,6 +4,23 @@ const path = require('path');
 const fs = require('fs-extra');
 
 describe('File data processing', function() {
+  function entryPointCallback(e) {
+    e.preventDefault();
+    e.detail.result = new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(e.detail.candidates[0]);
+      });
+    });
+  }
+
+  before(() => {
+    window.addEventListener('api-select-entrypoint', entryPointCallback);
+  });
+
+  after(() => {
+    window.removeEventListener('api-select-entrypoint', entryPointCallback);
+  });
+
   describe('Blob data - parses to AMF', function() {
     [
       ['Single RAML file', 'single-file-api.raml'],

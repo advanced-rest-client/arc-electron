@@ -216,7 +216,9 @@ class ElectronAmfService {
         .catch((cause) => {
           return this.amfService.cancel()
           .then(() => {
-            throw cause;
+            if (cause) {
+              throw cause;
+            }
           });
         })
         .then((file) => {

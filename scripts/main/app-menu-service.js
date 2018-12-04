@@ -9,12 +9,10 @@ const log = require('./logger');
  */
 class AppMenuService {
   /**
-   * @param {ArcWindowsManager} wm Window manager
-   * @param {SourcesManager} sm
+   * @param {ArcEnvironment} app
    */
-  constructor(wm, sm) {
-    this.wm = wm;
-    this.sourcesManager = sm;
+  constructor(app) {
+    this.app = app;
     this.menuWindows = new Map();
 
     this._popupAppMenuHandler = this._popupAppMenuHandler.bind(this);
@@ -58,7 +56,7 @@ class AppMenuService {
     this.menuWindows.set(type, bw);
     this.__loadPage(type, bw);
     this.__attachListeners(bw);
-    this.wm.notifyAll('popup-app-menu-opened', type);
+    this.app.wm.notifyAll('popup-app-menu-opened', type);
   }
 
   /**
@@ -93,8 +91,7 @@ class AppMenuService {
    * @param {BrowserWindow} bw
    */
   __loadPage(type, bw) {
-    const dest = path.join(__dirname, '..', '..', 'src',
-      'arc-menu-window.html');
+    const dest = path.join(__dirname, '..', '..', 'src', 'arc-menu-window.html');
     const full = url.format({
       pathname: dest,
       protocol: 'file:',
@@ -123,7 +120,7 @@ class AppMenuService {
     const type = bw.__menuType;
     this.__dettachListeners(bw);
     this.menuWindows.delete(type);
-    this.wm.notifyAll('popup-app-menu-closed', type);
+    this.app.wm.notifyAll('popup-app-menu-closed', type);
   }
   /**
    * Handler for an event dispatched by popup menu when navigation action was
@@ -133,13 +130,13 @@ class AppMenuService {
    */
   _popupNavHandler(e, detail) {
     log.debug('Handling popup menu event from the menu.');
-    if (!this.wm.hasWindow) {
+    if (!this.app.wm.hasWindow) {
       log.warn('Popup menu event handled without menu window registered.');
       return;
     }
-    let win = this.wm.lastFocused;
+    let win = this.app.wm.lastFocused;
     if (!win) {
-      win = this.wm.lastActive;
+      win = this.app.wm.lastActive;
     }
     if (!win) {
       log.warn('Unable to perform navigation. No active window found.');

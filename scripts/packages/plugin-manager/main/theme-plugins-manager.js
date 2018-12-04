@@ -2,7 +2,7 @@ const {app} = require('electron');
 const path = require('path');
 const log = require('electron-log');
 const fs = require('fs-extra');
-const {ThemeInfo} = require('./theme-info');
+const {ThemeInfo} = require('../../../main/models/theme-info');
 const {PluginManager} = require('live-plugin-manager');
 const semver = require('semver');
 /**

@@ -141,12 +141,19 @@ class ArcWindowsManager {
    */
   notifyAll(type, args) {
     log.debug('[WM] Notyfying all windows with type: ' + type);
+    if (!args) {
+      args = [];
+    }
     this.windows.forEach((win, index) => {
       if (win.isDestroyed()) {
         this.windows.splice(index, 1);
         return;
       }
-      win.webContents.send(type, args);
+      if (args instanceof Array) {
+        win.webContents.send(type, ...args);
+      } else {
+        win.webContents.send(type, args);
+      }
     });
   }
   /**
