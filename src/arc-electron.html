@@ -206,13 +206,13 @@
     <arc-data-import></arc-data-import>
     <!-- Request logic -->
     <oauth1-authorization></oauth1-authorization>
-    <arc-request-logic></arc-request-logic>
+    <arc-request-logic variables-disabled="[[_computeVariablesDisabled(config.systemVariablesEnabled, config.appVariablesEnabled)]]"></arc-request-logic>
     <request-hooks-logic></request-hooks-logic>
     <template is="dom-if" if="[[historyEnabled]]" restamp="true">
       <response-history-saver></response-history-saver>
     </template>
     <electron-http-transport follow-redirects$=[[config.followRedirects]] request-timeout$="[[config.requestDefaultTimeout]]" native-transport$="[[config.nativeTransport]]" validate-certificates$="[[config.validateCertificates]]" sent-message-limit$="[[config.sentMessageLimit]]"></electron-http-transport>
-    <variables-manager system-variables="[[sysVars]]" sys-vars-disabled="[[!config.systemVariables]]"></variables-manager>
+    <variables-manager system-variables="[[sysVars]]" sys-variables-disabled="[[!config.systemVariablesEnabled]]" app-variables-disabled="[[!config.appVariablesEnabled]]"></variables-manager>
     <variables-evaluator no-before-request></variables-evaluator>
     <!-- Info center -->
     <arc-messages-service platform="electron" on-unread-changed="_unreadMessagesChanged" messages="{{appMessages}}" id="msgService"></arc-messages-service>
@@ -1154,6 +1154,15 @@
         version: value
       };
       this._setupApiConsole(params);
+    }
+    /**
+     * Returns true when both types of variables are disabled.
+     * @param {Boolean} sysVars
+     * @param {Boolean} appVars
+     * @return {Boolean}
+     */
+    _computeVariablesDisabled(sysVars, appVars) {
+      return !sysVars && !appVars;
     }
   }
   window.customElements.define(ArcElectron.is, ArcElectron);
