@@ -2,9 +2,13 @@ const assert = require('chai').assert;
 const path = require('path');
 const fs = require('fs-extra');
 const {ArcPreferences} = require('../');
+const testPaths = require('../../../../test/setup-paths');
 
 describe('ArcPreferences class - main process', function() {
-  const file = path.join('test', 'test.json');
+  const basePath = testPaths.getBasePath();
+  const file = path.join(basePath, 'test.json');
+
+  after(() => fs.remove(basePath));
 
   describe('Setting up paths', function() {
     it('Sets default paths', function() {
@@ -35,27 +39,27 @@ describe('ArcPreferences class - main process', function() {
     });
 
     it('Accepts "filePath" option', function() {
-      const data = 'path/to/a/file/';
+      const data = path.join('path', 'to', 'a', 'file');
       const instance = new ArcPreferences({
         filePath: data
       });
-      assert.equal(instance.settingsFile, data + 'settings.json');
+      assert.equal(instance.settingsFile, path.join(data, 'settings.json'));
     });
 
     it('Accepts "filePath" and "fileName" option', function() {
-      const p = 'path/to/a';
+      const p = path.join('path', 'to', 'a');
       const f = 'file.json';
       const instance = new ArcPreferences({
         filePath: p,
         fileName: f
       });
-      assert.equal(instance.settingsFile, 'path/to/a/file.json');
+      assert.equal(instance.settingsFile, path.join('path', 'to', 'a', 'file.json'));
     });
 
     it('File overrides other options', function() {
-      const p = 'path/to/a';
+      const p = path.join('path', 'to', 'a');
       const f = 'file.json';
-      const data = 'path/to/a/file.json';
+      const data = path.join('path', 'to', 'a', 'file.json');
       const instance = new ArcPreferences({
         filePath: p,
         fileName: f,
@@ -67,7 +71,7 @@ describe('ArcPreferences class - main process', function() {
     it('Appends filePath to application dir', function() {
       const app = require('electron').app;
       const ud = app.getPath('userData');
-      const p = 'added/path';
+      const p = path.join('added', 'path');
       const f = 'file.json';
       const instance = new ArcPreferences({
         filePath: p,
@@ -94,7 +98,7 @@ describe('ArcPreferences class - main process', function() {
     });
 
     it('Returns the same path', function() {
-      const data = 'path/to/a/file.json';
+      const data = path.join('path', 'to', 'a', 'file.json');
       const result = instance._resolvePath(data);
       assert.equal(result, data);
     });

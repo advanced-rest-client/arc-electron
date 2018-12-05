@@ -220,7 +220,7 @@ class ArcWindowsManager {
       this.__attachListeners(win);
       this.windows.push(win);
       this.__loadPage(win, path);
-      if (this.startupOptions.debug) {
+      if (this.startupOptions.withDevtools) {
         win.webContents.openDevTools();
       }
       return this.recorder.record()

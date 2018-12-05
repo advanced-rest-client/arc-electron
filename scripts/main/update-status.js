@@ -191,7 +191,10 @@ class UpdateStatus extends ArcBase {
     log.error('Update error', error);
     this.state = 4;
     this.lastInfoObject = error;
-    this.emit('notify-windows', 'autoupdate-error', error);
+    this.emit('notify-windows', 'autoupdate-error', {
+      message: error.message,
+      code: error.code
+    });
     this.emit('status-changed', 'not-available');
     if (error && error.code && error.code === 8) {
       let message = 'Unable to update the application when it runs in';

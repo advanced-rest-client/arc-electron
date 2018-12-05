@@ -147,12 +147,12 @@ describe('AppOptions', function() {
     });
 
     it('Returns undefined for unknown name', function() {
-      const result = instance.findDefinnition('--test');
+      const result = instance.findDefinnition('--non-existing');
       assert.isUndefined(result);
     });
 
     it('Returns undefined for unknown shortcut', function() {
-      const result = instance.findDefinnition('-test');
+      const result = instance.findDefinnition('-non-existing');
       assert.isUndefined(result);
     });
   });

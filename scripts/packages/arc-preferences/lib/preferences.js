@@ -31,7 +31,7 @@ class ArcPreferences extends EventEmitter {
      * The application directory where user settings are stored.
      * @type {String}
      */
-    this.userSettingsDir = undefined;
+    this.userSettingsDir = process.env.ARC_HOME;
     /**
      * Full path to the preferences file where the data is stored.
      * @type {String}
@@ -48,24 +48,26 @@ class ArcPreferences extends EventEmitter {
     if (!opts) {
       opts = {};
     }
-    const app = (electron.app || electron.remote.app);
-    this.userSettingsDir = app.getPath('userData');
     if (opts.file) {
       this.settingsFile = this._resolvePath(opts.file);
     } else {
-      const file = opts.fileName || 'settings.json';
-      let dir;
-      if (opts.filePath) {
-        if (opts.appendFilePath) {
-          dir = path.join(this.userSettingsDir, opts.filePath);
-        } else {
-          dir = this._resolvePath(opts.filePath);
-        }
+      if (!opts.fileName && !opts.filePath) {
+        this.settingsFile = process.env.ARC_SETTINGS_FILE;
       } else {
-        dir = this.userSettingsDir;
+        const file = opts.fileName || 'settings.json';
+        let dir;
+        if (opts.filePath) {
+          if (opts.appendFilePath) {
+            dir = path.join(this.userSettingsDir, opts.filePath);
+          } else {
+            dir = this._resolvePath(opts.filePath);
+          }
+        } else {
+          dir = this.userSettingsDir;
+        }
+        this.userSettingsDir = dir;
+        this.settingsFile = path.join(dir, file);
       }
-      this.userSettingsDir = dir;
-      this.settingsFile = path.join(dir, file);
     }
   }
   /**

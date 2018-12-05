@@ -1,4 +1,4 @@
-const {session, app} = require('electron');
+const {session} = require('electron');
 const path = require('path');
 const log = require('./logger');
 const fs = require('fs-extra');
@@ -29,7 +29,7 @@ class ComponentsProtocolHandler {
      * Base path to the themes folder.
      * @type {String}
      */
-    this.modulesBasePath = path.join(app.getPath('userData'), 'modules');
+    this.componentsBasePath = process.env.ARC_COMPONENTS_PATH;
     /**
      * Base path to the themes folder.
      * @type {String}
@@ -62,7 +62,7 @@ class ComponentsProtocolHandler {
     log.debug('Handling component url: ' + url);
     const paths = [
       path.join(this.basePath, url),
-      path.join(this.modulesBasePath, url),
+      path.join(this.componentsBasePath, url),
       url
     ];
     let file;
@@ -85,9 +85,6 @@ class ComponentsProtocolHandler {
     const mimeType = mime.lookup(location) || 'application/octet-stream';
     return fs.readFile(location, 'utf8')
     .then((data) => {
-      console.log('SENDING DATA');
-      console.log(mimeType);
-      console.log(location);
       callback({
         data,
         mimeType,

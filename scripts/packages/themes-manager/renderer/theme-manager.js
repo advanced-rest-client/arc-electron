@@ -288,7 +288,7 @@ class ThemeManager {
     p.resolve(info);
   }
 
-  _ipcUninstalledHandler() {
+  _ipcUninstalledHandler(id) {
     const p = this._getPromise(id);
     if (!p) {
       log.error(`ThemeManager: Pending request ${id} do not exist.`);

@@ -1,4 +1,4 @@
-const {session, app} = require('electron');
+const {session} = require('electron');
 const path = require('path');
 const log = require('./logger');
 const fs = require('fs-extra');
@@ -27,17 +27,6 @@ class ThemesProtocolHandler {
   constructor() {
     this._requestHandler = this._requestHandler.bind(this);
     this._registrationHandler = this._registrationHandler.bind(this);
-
-    /**
-     * Base path to the themes folder.
-     * @type {String}
-     */
-    this.themesBasePath = path.join(app.getPath('userData'), 'themes');
-    /**
-     * Location of the installed themes info file.
-     * @type {String}
-     */
-    this.infoFilePath = path.join(this.themesBasePath, 'themes-info.json');
   }
   /**
    * Registers the protocol handler.
@@ -59,7 +48,7 @@ class ThemesProtocolHandler {
 
   _requestHandler(request, callback) {
     let url = request.url.substr(9);
-    log.debug('ThemesProtocolHandler::_requestHandler::' + url);
+    log.silly('ThemesProtocolHandler::_requestHandler::' + url);
     try {
       fs.accessSync(url, fs.constants.R_OK | fs.constants.X_OK);
       return this._loadFileTheme(url, callback);
@@ -71,20 +60,20 @@ class ThemesProtocolHandler {
   }
 
   _loadInstalledTheme(location, callback) {
-    log.debug('ThemesProtocolHandler::loading theme from ' + location);
+    log.silly('ThemesProtocolHandler::loading theme from ' + location);
     return this._loadThemeInfo()
     .then((themes) => {
       log.debug('Got themes list');
       const theme = this._findThemeInfo(location, themes);
       if (theme) {
-        const file = path.join(this.themesBasePath, theme.mainFile);
-        log.debug('Theme found. Reading theme file: ' + file);
+        const file = path.join(process.env.ARC_THEMES, theme.mainFile);
+        log.silly('Theme found. Reading theme file: ' + file);
         return fs.readFile(file, 'utf8');
       }
     })
     .then((data) => {
       if (data) {
-        log.debug('Sending theme file to renderer.');
+        log.silly('Sending theme file to renderer.');
         callback({
           data,
           mimeType: 'text/html',
@@ -104,7 +93,7 @@ class ThemesProtocolHandler {
   }
 
   _loadFileTheme(location, callback) {
-    log.debug('ThemesProtocolHandler::loading theme from ' + location);
+    log.silly('ThemesProtocolHandler::loading theme from ' + location);
     return fs.readFile(location, 'utf8')
     .then((data) => {
       callback({
@@ -122,9 +111,9 @@ class ThemesProtocolHandler {
   }
 
   _loadThemeInfo() {
-    return fs.readJson(this.infoFilePath, {throws: false})
+    return fs.readJson(process.env.ARC_THEMES_SETTINGS)
     .catch(() => {
-      log.warn('Theme file not found', this.infoFilePath);
+      log.warn('Theme file not found', process.env.ARC_THEMES_SETTINGS);
       return [];
     });
   }

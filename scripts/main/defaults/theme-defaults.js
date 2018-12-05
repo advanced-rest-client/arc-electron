@@ -1,18 +1,10 @@
 const fs = require('fs-extra');
 const path = require('path');
 const log = require('../logger');
-const arcPaths = require('../arc-paths');
 /**
  * A class that is responsible for setting up theme defaults.
  */
 class ThemeDefaults {
-  // /**
-  //  * @param {Object} sm
-  //  */
-  // constructor(initOptions) {
-  //   this.themePath = sm.themesBasePath;
-  //   this.infoFilePath = sm.infoFilePath;
-  // }
   /**
    * Sets defaults if the defaults are not yet set.
    * It copues anypoint and default theme to theme location
@@ -21,28 +13,58 @@ class ThemeDefaults {
    * @return {Promise} Resolved promise when the defaults are stored.
    */
   prepareEnvironment() {
-    return this._readDefaultThemesPackages()
-    .then((names) => this._ensureThemes(names))
+    log.debug('Preparing ARC environment.');
+    const names = this._readDefaultThemesPackages();
+    return this._ensureThemes(names)
     .then(() => this._setThemeInfo());
   }
 
   _readDefaultThemesPackages() {
     const source = path.join(__dirname, '..', '..', '..', 'appresources', 'themes');
-    return fs.readdir(source)
-    .then((items) => {
-      const themePaths = [];
-      items.forEach((name) => {
-        const loc = path.join(source, name);
-        const stats = fs.statSync(loc);
-        if (stats.isDirectory()) {
+    log.silly('Searching for default themes...');
+    const themes = this._listThemePackages(source);
+    log.silly(`Found ${themes.length} default themes.`);
+    return themes;
+  }
+
+  _listThemePackages(themePath, parent) {
+    let items;
+    try {
+      items = fs.readdirSync(themePath);
+    } catch (e) {
+      log.warn(`Unable to read themes path ${themePath}.`);
+      return;
+    }
+    let themePaths = [];
+    items.forEach((name) => {
+      const loc = path.join(themePath, name);
+      const stats = fs.statSync(loc);
+      if (stats.isDirectory()) {
+        const pkgFile = path.join(loc, 'package.json');
+        if (fs.pathExistsSync(pkgFile)) {
+          if (parent) {
+            name = path.join(parent, name);
+          }
+          log.silly('Found default theme: ' + name);
           themePaths[themePaths.length] = {
             name,
             location: loc
           };
+        } else {
+          log.silly(`Searching subdirectories of ${loc} for themes`);
+          if (parent) {
+            parent = path.join(parent, name);
+          } else {
+            parent = name;
+          }
+          const deepThemes = this._listThemePackages(loc, parent);
+          if (deepThemes) {
+            themePaths = themePaths.concat(deepThemes);
+          }
         }
-      });
-      return themePaths;
+      }
     });
+    return themePaths;
   }
 
   _ensureThemes(themes) {
@@ -56,31 +78,34 @@ class ThemeDefaults {
   }
 
   _ensureTheme(info) {
-    // arcPaths
-    const file = path.join(arcPaths.themesBasePath, info.name);
+    const file = path.join(process.env.ARC_THEMES, info.name);
     return fs.pathExists(file)
     .then((exists) => {
       if (exists) {
+        log.silly(`Theme ${file} exists. Skipping initialization.`);
         return;
       }
+      log.silly(`Theme ${file} do not exists. Initializing.`);
       return this._copyThemeFiles(info);
     });
   }
 
   _copyThemeFiles(info) {
-    const dest = path.join(arcPaths.themesBasePath, info.name);
+    const dest = path.join(process.env.ARC_THEMES, info.name);
     return fs.ensureDir(dest)
     .then(() => fs.copy(info.location, dest))
     .catch((cause) => {
-      log.error('Unable to copy default theme from ', info.location, 'to', dest, cause);
+      log.error('Unable to copy default theme from ' + info.location + ' to ' + dest);
+      log.error(cause);
     });
   }
   // Setups theme info file if missing
   _setThemeInfo() {
-    const file = path.join(arcPaths.themesBasePath, 'themes-info.json');
+    const file = path.join(process.env.ARC_THEMES, 'themes-info.json');
     return fs.pathExists(file)
     .then((exists) => {
       if (exists) {
+        log.debug(`theme-info.json exists. Skipping initialization.`);
         return this._ensureThemesInfoVersion(file);
       }
       log.info('Creating themes-info.json file');
@@ -104,7 +129,7 @@ class ThemeDefaults {
   _copyInfoFile() {
     const source =
       path.join(__dirname, '..', '..', '..', 'appresources', 'themes', 'themes-info.json');
-    const dest = arcPaths.themesSettings;
+    const dest = process.env.ARC_THEMES_SETTINGS;
     return fs.readJson(source, {throws: false})
     .then((info) => {
       info = info || [];

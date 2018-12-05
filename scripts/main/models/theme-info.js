@@ -3,9 +3,9 @@ const {ArcPreferences} = require('../../packages/arc-preferences');
  * A preferences class to store and read theme info file.
  */
 class ThemeInfo extends ArcPreferences {
-  constructor(file) {
+  constructor() {
     super({
-      file
+      file: process.env.ARC_THEMES_SETTINGS
     });
   }
 

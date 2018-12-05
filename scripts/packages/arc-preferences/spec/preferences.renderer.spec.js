@@ -7,17 +7,6 @@ describe('ArcPreferences class - renderer process', function() {
   const file = path.join('test', 'test.json');
 
   describe('Setting up paths', function() {
-    it('Sets default paths', function() {
-      const instance = new ArcPreferences();
-      assert.typeOf(instance.userSettingsDir, 'string');
-      assert.typeOf(instance.settingsFile, 'string');
-    });
-
-    it('Default file is settings.json', function() {
-      const instance = new ArcPreferences();
-      assert.notEqual(instance.settingsFile.indexOf('settings.json'), -1);
-    });
-
     it('Accepts "file" option', function() {
       const data = 'path/to/a/file.json';
       const instance = new ArcPreferences({

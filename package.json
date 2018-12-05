@@ -12,11 +12,11 @@
     "url": "https://github.com/advanced-rest-client/arc-electron"
   },
   "scripts": {
-    "start": "electron . --inspect --debug --workspace-path=\"~/arc-dev/workspace\" --settings-file=\"~/arc-dev/dev-settings.json\"",
+    "start": "electron . --inspect --debug --debug-level=\"silly\" --with-devtools --workspace-path=\"~/arc-dev/workspace\" --settings-file=\"~/arc-dev/dev-settings.json\" --themes-path=\"~/arc-dev/themes\"",
     "postinstall": "electron-builder install-app-deps",
     "test": "npm run test-main && npm run test-renderer && npm run test-app",
     "test-main": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron electron-mocha test/**/*.main.spec.js scripts/packages/**/*.main.spec.js",
-    "test-renderer": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron electron-mocha --renderer scripts/packages/**/*.renderer.spec.js",
+    "test-renderer": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron electron-mocha --renderer --require-main 'test/renderer-setup-paths.js' scripts/packages/**/*.renderer.spec.js",
     "test-app": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron mocha test/**.app.spec.js",
     "test-win-all": "npm run test-win-main && npm run test-win-renderer && npm run test-win-app",
     "test-win-main": "node node_modules/.bin/electron-mocha test/**/*.main.spec.js scripts/packages/**/*.main.spec.js",

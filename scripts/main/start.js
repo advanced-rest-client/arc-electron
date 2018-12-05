@@ -11,7 +11,6 @@ function getConfig(settingsFile) {
   const config = new PreferencesManager({
     file: settingsFile
   });
-
   return config.loadSync();
 }
 
@@ -42,7 +41,7 @@ module.exports = function(startTime) {
   const startupOptions = new AppOptions();
   startupOptions.parse();
   if (startupOptions.debug) {
-    log.level = 'debug';
+    log.level = startupOptions.debugLevel || 'warn';
   }
   const initOptions = startupOptions.getOptions();
   if (!initOptions.open) {
@@ -51,17 +50,18 @@ module.exports = function(startTime) {
 
   if (initOptions.userDataDir) {
     app.setPath('userData', initOptions.userDataDir);
-  } else if (initOptions.test) {
-    app.setPath('userData', temp.mkdirSync('atom-test-data'));
   }
+  // } else if (initOptions.test) {
+  //   app.setPath('userData', temp.mkdirSync('arc-test-data'));
+  // }
 
   arcPaths.setHome();
   arcPaths.setSettingsFile(initOptions.settingsFile);
   arcPaths.setWorkspacePath(initOptions.workspacePath);
   arcPaths.setThemesPath(initOptions.themesPath);
+  arcPaths.setComponentsPath(initOptions.componentsPath);
 
-  const currentConfig = getConfig();
-
+  const currentConfig = getConfig(arcPaths.settingsFile);
   const colorProfile = currentConfig.colorProfile;
   if (colorProfile && colorProfile !== 'default') {
     app.commandLine.appendSwitch('force-color-profile', colorProfile);
@@ -85,8 +85,10 @@ module.exports = function(startTime) {
   app.setAsDefaultProtocolClient('arc-file');
   app.on('open-url', addUrlToOpen);
   app.once('ready', function() {
+    global.appReadyTime = Date.now();
+    log.debug('Electron ready time: ' + (global.appReadyTime - global.shellStartTime));
     app.removeListener('open-url', addUrlToOpen);
-    const defaults = new AppDefaults(initOptions);
+    const defaults = new AppDefaults();
     defaults.prepareEnvironment()
     .then(() => {
       global.arc = new ArcEnvironment(initOptions, initOptions.open);
@@ -94,7 +96,39 @@ module.exports = function(startTime) {
       return global.arc.loadEnvironment();
     })
     .then(() => {
+      global.appLoadingTime = Date.now();
+      log.debug('App init time: ' + (global.appLoadingTime - global.appReadyTime));
       global.arc.open();
     });
   });
+
+  app.on('window-all-closed', () => {
+    if (!global.arc) {
+      return;
+    }
+    global.arc.allClosedHandler();
+  });
+
+  app.on('activate', () => {
+    if (!global.arc) {
+      return;
+    }
+    global.arc.activateHandler();
+  });
+
+  // Unit testing
+  if (process.env.NODE_ENV === 'test' || initOptions.test) {
+    app.testsInterface = function(action, ...args) {
+      switch (action) {
+        case 'get-application-settings-file-location':
+          return global.arc.wm.startupOptions.settingsFile;
+        case 'get-application-workspace-state-file-location':
+          return global.arc.wm.startupOptions.workspacePath;
+        case 'get-preferences-settings-location':
+          return global.arc.prefs.settingsFile;
+        case 'get-global-app':
+          return global.arc;
+      }
+    };
+  }
 };

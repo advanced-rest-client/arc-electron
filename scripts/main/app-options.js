@@ -31,9 +31,24 @@ class AppOptions {
       shortcut: '-t',
       type: String
     }, {
+      // Path to application components directory (with ARC components)
+      name: '--components-path',
+      shortcut: '-c',
+      type: String
+    }, {
       // Opens ARC in dev mode (opened console, verbose log)
       name: '--debug',
       shortcut: '-d',
+      type: Boolean
+    }, {
+      // Debug log level. Default to "debug". Only valid when `--debug` is set
+      name: '--debug-level',
+      shortcut: '-l',
+      type: String
+    }, {
+      // Opens ARC in dev mode (opened console, verbose log)
+      name: '--with-devtools',
+      shortcut: '-w',
       type: Boolean
     }, {
       name: '.', // from "npm start" to not print error
@@ -48,6 +63,10 @@ class AppOptions {
       shortcut: '-o',
       type: String,
       allowArray: true
+    }, {
+      name: '--test',
+      shortcut: '-test',
+      type: Boolean
     }];
   }
   /**

@@ -1,5 +1,5 @@
 const {ArcPreferences} = require('../lib/preferences');
-const {ipcMain, BrowserWindow} = require('electron');
+const {ipcMain} = require('electron');
 const log = require('electron-log');
 /**
  * A class handling queries from any application window (renderer) to read
@@ -86,11 +86,14 @@ class PreferencesManager extends ArcPreferences {
    */
   defaultSettings() {
     return Promise.resolve({
-      'useVariables': true,
-      'useCookieStorage': true,
-      'requestDefaultTimeout': 45,
-      'autoUpdate': true,
-      'telemetry': true
+      appVariablesEnabled: true,
+      systemVariablesEnabled: true,
+      historyEnabled: true,
+      requestDefaultTimeout: 45,
+      autoUpdate: true,
+      telemetry: true,
+      viewListType: 'default',
+      followRedirects: true
     });
   }
 }

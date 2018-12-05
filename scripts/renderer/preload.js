@@ -7,7 +7,7 @@ const {ArcElectronDrive} = require(prefix + 'electron-drive/renderer');
 const {OAuth2Handler} = require(prefix + 'electron-oauth2/renderer');
 const {WorkspaceManager} = require('../packages/arc-preferences/renderer');
 const {ArcPreferencesProxy} = require('../packages/arc-preferences/renderer');
-const {ThemeManager} = require('../packages/sources-manager/renderer');
+const {ThemeManager} = require('../packages/themes-manager/renderer');
 const {SocketRequest, ElectronRequest} = require(prefix + 'electron-request');
 const {CookieBridge} = require(prefix + 'electron-session-state/renderer');
 const {ArcContextMenu} = require('../packages/context-actions/renderer');
@@ -18,7 +18,7 @@ const setImmediateFn = setImmediate;
 const versions = process.versions;
 const env = {};
 Object.keys(process.env).forEach((key) => {
-  if (key.indexOf('npm_') === 0) {
+  if (key.indexOf('npm_') === 0 || key.indexOf('ARC_') === 0) {
     return;
   }
   env[key] = process.env[key];

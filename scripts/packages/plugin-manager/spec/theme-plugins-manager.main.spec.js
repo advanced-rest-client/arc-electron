@@ -2,26 +2,12 @@ const assert = require('chai').assert;
 const fs = require('fs-extra');
 const path = require('path');
 const {ThemePluginsManager} = require('../main');
+const testPaths = require('../../../../test/setup-paths');
 
 describe('ThemePluginsManager - main process', function() {
-  const basePath = path.join(__dirname, 'themes');
+  const basePath = testPaths.getBasePath();
 
-  describe('constructor()', function() {
-    it('Sets default themesBasePath', function() {
-      const instance = new ThemePluginsManager();
-      assert.typeOf(instance.themesBasePath, 'string');
-    });
-
-    it('Sets themesBasePath using passed argument', function() {
-      const instance = new ThemePluginsManager(basePath);
-      assert.equal(instance.themesBasePath.indexOf(basePath), 0);
-    });
-
-    it('Sets infoFilePath property', () => {
-      const instance = new ThemePluginsManager(basePath);
-      assert.notEqual(instance.infoFilePath.indexOf('themes-info.json'), -1);
-    });
-  });
+  after(() => fs.remove(basePath));
 
   describe('pluginManager getter', () => {
     let instance;
@@ -36,12 +22,12 @@ describe('ThemePluginsManager - main process', function() {
 
     it('cwd is set', function() {
       const result = instance.pluginManager;
-      assert.equal(result.options.cwd, instance.themesBasePath);
+      assert.equal(result.options.cwd, process.env.ARC_THEMES);
     });
 
     it('pluginsPath is set', function() {
       const result = instance.pluginManager;
-      assert.equal(result.options.pluginsPath, instance.themesBasePath);
+      assert.equal(result.options.pluginsPath, process.env.ARC_THEMES);
     });
 
     it('Always returns the same instance', () => {
@@ -64,7 +50,7 @@ describe('ThemePluginsManager - main process', function() {
 
     it('settingsFile is set', function() {
       const result = instance.themeInfo;
-      assert.equal(result.settingsFile, instance.infoFilePath);
+      assert.equal(result.settingsFile, process.env.ARC_THEMES_SETTINGS);
     });
 
     it('Always returns new instance', () => {
@@ -91,20 +77,20 @@ describe('ThemePluginsManager - main process', function() {
 
     let instance;
     beforeEach(() => {
-      instance = new ThemePluginsManager(basePath);
+      instance = new ThemePluginsManager();
     });
 
     it('Creates path to the location', () => {
-      const loc = basePath + '/a/b/c';
+      const loc = path.join(basePath, 'a', 'b', 'c');
       return instance._ensureSymlinkPath(loc)
-      .then(() => fs.pathExists(basePath + '/a/b'))
+      .then(() => fs.pathExists(path.join(basePath, 'a', 'b')))
       .then((exists) => assert.isTrue(exists));
     });
 
     it('Last folder is not created', () => {
       const loc = basePath + '/a/b/c';
       return instance._ensureSymlinkPath(loc)
-      .then(() => fs.pathExists(basePath + '/a/b/c'))
+      .then(() => fs.pathExists(path.join(basePath, 'a', 'b', 'c')))
       .then((exists) => assert.isFalse(exists));
     });
   });
@@ -115,12 +101,12 @@ describe('ThemePluginsManager - main process', function() {
 
     let instance;
     beforeEach(() => {
-      instance = new ThemePluginsManager(basePath);
+      instance = new ThemePluginsManager();
     });
 
     it('Creates a symlink', () => {
       return instance._installLocalPackage(localPackage)
-      .then(() => fs.pathExists(path.join(basePath, 'test-package')))
+      .then(() => fs.pathExists(path.join(process.env.ARC_THEMES, 'test-package')))
       .then((exists) => assert.isTrue(exists));
     });
 
@@ -155,14 +141,14 @@ describe('ThemePluginsManager - main process', function() {
     it('location is set', () => {
       return instance._installLocalPackage(localPackage)
       .then((result) => {
-        assert.equal(result.location, path.join(basePath, 'test-package'));
+        assert.equal(result.location, path.join(process.env.ARC_THEMES, 'test-package'));
       });
     });
 
     it('mainFile is set', () => {
       return instance._installLocalPackage(localPackage)
       .then((result) => {
-        assert.equal(result.mainFile, path.join(basePath, 'test-package', 'theme.js'));
+        assert.equal(result.mainFile, path.join(process.env.ARC_THEMES, 'test-package', 'theme.js'));
       });
     });
   });
@@ -174,22 +160,23 @@ describe('ThemePluginsManager - main process', function() {
     const pkgVersion = '2.0.0-preview';
 
     it('Installs GitHub package', function() {
-      const instance = new ThemePluginsManager(basePath);
+      const instance = new ThemePluginsManager();
       return instance._installRemotePackage(pkgName, pkgVersion)
-      .then(() => fs.pathExists(path.join(basePath, '@advanced-rest-client', 'arc-electron-default-theme')))
+      .then(() => fs.pathExists(
+        path.join(process.env.ARC_THEMES, '@advanced-rest-client', 'arc-electron-default-theme')))
       .then((exists) => assert.isTrue(exists));
     });
 
     it('Returns info object', function() {
-      const instance = new ThemePluginsManager(basePath);
+      const instance = new ThemePluginsManager();
       return instance._installRemotePackage(pkgName, pkgVersion)
       .then((result) => {
         assert.typeOf(result, 'object');
         assert.equal(result.name, '@advanced-rest-client/arc-electron-default-theme');
         assert.equal(result.version, pkgVersion);
-        assert.equal(result.location, path.join(basePath, '@' + pkgName));
+        assert.equal(result.location, path.join(process.env.ARC_THEMES, '@' + pkgName));
         assert.equal(result.mainFile,
-          path.join(basePath, '@' + pkgName, 'arc-electron-default-theme.html'));
+          path.join(process.env.ARC_THEMES, '@' + pkgName, 'arc-electron-default-theme.html'));
       });
     });
   });
@@ -199,7 +186,7 @@ describe('ThemePluginsManager - main process', function() {
     let instance;
     let info;
     beforeEach(() => {
-      instance = new ThemePluginsManager(basePath);
+      instance = new ThemePluginsManager();
       info = {
         name: 'test-name',
         version: 'test-version',
@@ -277,7 +264,7 @@ describe('ThemePluginsManager - main process', function() {
     let instance;
     let info;
     beforeEach(() => {
-      instance = new ThemePluginsManager(basePath);
+      instance = new ThemePluginsManager();
       info = {
         _id: 'test-id',
         name: 'test-name',
@@ -291,13 +278,13 @@ describe('ThemePluginsManager - main process', function() {
 
     it('Creates theme registry file', () => {
       return instance._addThemeEntry(info)
-      .then(() => fs.pathExists(basePath + '/themes-info.json'))
+      .then(() => fs.pathExists(process.env.ARC_THEMES_SETTINGS))
       .then((exists) => assert.isTrue(exists));
     });
 
     it('Adds info to theme registry file', () => {
       return instance._addThemeEntry(info)
-      .then(() => fs.readJson(basePath + '/themes-info.json'))
+      .then(() => fs.readJson(process.env.ARC_THEMES_SETTINGS))
       .then((data) => {
         assert.typeOf(data, 'array');
         assert.lengthOf(data, 1);
@@ -307,7 +294,7 @@ describe('ThemePluginsManager - main process', function() {
     it('Adds 2 info  objects to theme registry file', () => {
       return instance._addThemeEntry(info)
       .then(() => instance._addThemeEntry(info))
-      .then(() => fs.readJson(basePath + '/themes-info.json'))
+      .then(() => fs.readJson(process.env.ARC_THEMES_SETTINGS))
       .then((data) => {
         assert.typeOf(data, 'array');
         assert.lengthOf(data, 2);
@@ -320,25 +307,25 @@ describe('ThemePluginsManager - main process', function() {
       let instance;
       const localPackage = path.join(__dirname, 'local-package');
       beforeEach(() => {
-        instance = new ThemePluginsManager(basePath);
+        instance = new ThemePluginsManager();
         return instance.install(localPackage);
       });
 
       afterEach(() => fs.remove(basePath));
 
       it('Has package installed', () => {
-        return fs.pathExists(path.join(basePath, 'test-package'))
+        return fs.pathExists(path.join(process.env.ARC_THEMES, 'test-package'))
         .then((exists) => assert.isTrue(exists));
       });
 
       it('Has entry in theme info file.', () => {
-        return fs.pathExists(path.join(basePath, 'themes-info.json'))
+        return fs.pathExists(path.join(process.env.ARC_THEMES, 'themes-info.json'))
         .then((exists) => assert.isTrue(exists));
       });
 
       it('Removes local package', () => {
         return instance.uninstall(localPackage)
-        .then(() => fs.pathExists(path.join(basePath, 'test-package')))
+        .then(() => fs.pathExists(path.join(process.env.ARC_THEMES, 'test-package')))
         .then((exists) => {
           assert.isFalse(exists);
         });
@@ -346,7 +333,7 @@ describe('ThemePluginsManager - main process', function() {
 
       it('Removes entry from info file.', () => {
         return instance.uninstall(localPackage)
-        .then(() => fs.readJson(path.join(basePath, 'themes-info.json')))
+        .then(() => fs.readJson(process.env.ARC_THEMES_SETTINGS))
         .then((data) => {
           assert.typeOf(data, 'array');
           assert.lengthOf(data, 0);
@@ -358,10 +345,14 @@ describe('ThemePluginsManager - main process', function() {
       let instance;
       const pkgName = 'advanced-rest-client/arc-electron-default-theme';
       const pkgVersion = '2.0.0-preview';
-      const installedLocation = path.join(basePath, '@advanced-rest-client', 'arc-electron-default-theme');
+      let installedLocation;
 
       before(() => {
-        instance = new ThemePluginsManager(basePath);
+        installedLocation = path.join(
+          process.env.ARC_THEMES,
+          '@advanced-rest-client',
+          'arc-electron-default-theme');
+        instance = new ThemePluginsManager();
         return instance.install(pkgName, pkgVersion);
       });
 
@@ -373,7 +364,7 @@ describe('ThemePluginsManager - main process', function() {
       });
 
       it('Has entry in theme info file.', () => {
-        return fs.pathExists(path.join(basePath, 'themes-info.json'))
+        return fs.pathExists(process.env.ARC_THEMES_SETTINGS)
         .then((exists) => assert.isTrue(exists));
       });
 
@@ -386,7 +377,7 @@ describe('ThemePluginsManager - main process', function() {
       });
 
       it('Removes entry from info file.', () => {
-        return fs.readJson(path.join(basePath, 'themes-info.json'))
+        return fs.readJson(path.join(process.env.ARC_THEMES_SETTINGS))
         .then((data) => {
           assert.typeOf(data, 'array');
           assert.lengthOf(data, 0);

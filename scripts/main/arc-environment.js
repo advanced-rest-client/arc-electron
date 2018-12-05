@@ -5,6 +5,7 @@ const {AppMenuService} = require('./app-menu-service');
 const {DriveExport} = require('@advanced-rest-client/electron-drive');
 const {SessionManager} = require('@advanced-rest-client/electron-session-state/main');
 const {ContentSearchService} = require('../packages/search-service/main');
+const {ThemeManager} = require('../packages/themes-manager/main/');
 const {ArcWindowsManager} = require('./windows-manager');
 const {UpdateStatus} = require('./update-status');
 const {AppPrompts} = require('./app-prompts');
@@ -16,6 +17,7 @@ const log = require('./logger');
 class ArcEnvironment {
   constructor(params = {}) {
     this.isDebug = params.isDebug || false;
+    this.withDevtools = params.withDevtools || false;
     this._initializeConfiguration(params);
     this._initializeWindowsManager(params);
     this._initializeMenu();
@@ -24,7 +26,7 @@ class ArcEnvironment {
     this._initializeSessionManager();
     this._initializeApplicationMenu();
     this._initializeAppPrompts();
-
+    this._initializeThemes();
     Oauth2Identity.listen();
 
     // Remote commands protocol
@@ -148,6 +150,11 @@ class ArcEnvironment {
     this.prompts.listen();
   }
 
+  _initializeThemes() {
+    this.themes = new ThemeManager(this);
+    this.themes.listen();
+  }
+
   /**
    * Handler for settings change.
    * @param {String} name Changed property name
@@ -241,6 +248,29 @@ class ArcEnvironment {
     }
     log.debug('Opening external URL: ' + url);
     shell.openExternal(url);
+  }
+
+  allClosedHandler() {
+    log.debug('All windows are now closed.');
+    if (process.platform !== 'darwin') {
+      log.debug('Quiting main thread.');
+      app.quit();
+    } else {
+      log.debug('Keeping main thread running.');
+    }
+  }
+
+  /**
+   * On OS X it's common to re-create a window in the app when the
+   * dock icon is clicked and there are no other windows open.
+   */
+  activateHandler() {
+    log.debug('Activating window.');
+    if (!this.wm.hasWindow) {
+      this.wm.open();
+    } else {
+      this.wm.restoreLast();
+    }
   }
 }
 module.exports.ArcEnvironment = ArcEnvironment;

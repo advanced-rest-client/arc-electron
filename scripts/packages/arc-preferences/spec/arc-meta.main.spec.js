@@ -1,8 +1,12 @@
 const assert = require('chai').assert;
 const fs = require('fs-extra');
 const {ArcMeta} = require('../main');
+const testPaths = require('../../../../test/setup-paths');
 
 describe('ArcMeta class - main process', function() {
+  const basePath = testPaths.getBasePath();
+  after(() => fs.remove(basePath));
+
   describe('File path', function() {
     it('Sets correct file path', function() {
       const instance = new ArcMeta();

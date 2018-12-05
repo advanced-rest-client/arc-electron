@@ -32,7 +32,7 @@ class ArcPaths {
       }
     }
     if (!this._settingsFile) {
-      this._settingsFile = path.join(app.getPath('userData'), 'settings.json');
+      this._settingsFile = path.join(process.env.ARC_HOME, 'settings.json');
     }
     process.env.ARC_SETTINGS_FILE = this._settingsFile;
   }
@@ -90,7 +90,7 @@ class ArcPaths {
         console.warn(`Insufficient permission to themes installation location "${themesPath}".`);
       }
     }
-    if (!this._themesSettings) {
+    if (!this._themesBasePath) {
       this._themesBasePath = path.join(process.env.ARC_HOME, 'themes');
     }
     if (!themesSettingsFile) {
@@ -119,6 +119,25 @@ class ArcPaths {
     }
     process.env.ARC_WORKSPACE_PATH = this._workspacePath;
   }
+
+  get componentsPath() {
+    return this._componentsPath;
+  }
+
+  setComponentsPath(componentsPath) {
+    if (componentsPath) {
+      componentsPath = this._resolvePath(componentsPath);
+      try {
+        this._componentsPath = componentsPath;
+      } catch (_) {
+        console.warn(`Insufficient permission to components installation location "${componentsPath}".`);
+      }
+    }
+    if (!this._componentsPath) {
+      this._componentsPath = path.join(process.env.ARC_HOME, 'components');
+    }
+    process.env.ARC_COMPONENTS_PATH = this._componentsPath;
+  }
 }
 
 const paths = new ArcPaths();
@@ -128,6 +147,7 @@ module.exports = {
   setThemesPath: (themesPath, themesSettingsFil) => paths.setThemesPath(themesPath, themesSettingsFil),
   setHome: () => paths.setHome(),
   setWorkspacePath: (workspacePath) => paths.setWorkspacePath(workspacePath),
+  setComponentsPath: (componentsPath) => paths.setComponentsPath(componentsPath),
   get workspacePath() {
     return paths.workspacePath;
   },
@@ -139,5 +159,8 @@ module.exports = {
   },
   get settingsFile() {
     return paths.settingsFile;
+  },
+  get componentsPath() {
+    return paths.componentsPath;
   }
 };

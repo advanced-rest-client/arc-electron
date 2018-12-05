@@ -1,64 +1,30 @@
-const {ipcMain: ipc, app} = require('electron');
-const path = require('path');
+const {ipcMain: ipc} = require('electron');
 const {ThemeInfo} = require('../../../main/models/theme-info');
 const {ThemePluginsManager} = require('../../plugin-manager/main');
-/**
- * This is main process interface.
- *
- * Manages themes state for ARC application. It tells the application where
- * the application sources are.
- *
- * For most cases ARC uses the default web components path which is located
- * in application config directory (this is different depending on the OS).
- * This class tells the main application where the sources
- * are and which theme to load.
- */
-class SourcesManager {
-  /**
-   * @param {PreferencesManager} pm ARC preferences manager module instance
-   * @param {Object} so Applicartion startup options. It supports the following
-   * keys:
-   * - appComponents (String) - Location to the directory where application
-   * web components are located. This path must contain `bower_components`
-   * directory.
-   */
-  constructor(pm, so) {
-    this.prefsManager = pm;
-    this.startupOptions = so || {};
-    /**
-     * Base path to the themes folder.
-     * @type {String}
-     */
-    this.themesBasePath = path.join(app.getPath('userData'), 'themes');
-    /**
-     * Location of the installed themes info file.
-     * @type {String}
-     */
-    this.infoFilePath = path.join(this.themesBasePath, 'themes-info.json');
+
+class ThemeManager {
+  constructor(arcApp) {
+    this.arcApp = arcApp;
     /**
      * ARC default theme ID
      * @type {String}
      */
     this.defaultTheme = 'advanced-rest-client/arc-electron-default-theme';
-    /**
-     * Main module (ARC's) path location to generate absolute URL
-     * @type {String}
-     */
-    this.root = path.dirname(require.main.filename);
-
     this._listThemesHandler = this._listThemesHandler.bind(this);
     this._themeInfoHandler = this._themeInfoHandler.bind(this);
     this._activateHandler = this._activateHandler.bind(this);
     this._installHandler = this._installHandler.bind(this);
     this._uninstallHandler = this._uninstallHandler.bind(this);
   }
+
   /**
    * Creates a model for theme info file.
    * @return {ThemeInfo}
    */
   get themeInfo() {
-    return new ThemeInfo(this.infoFilePath);
+    return new ThemeInfo();
   }
+
   /**
    * Listens for the ipc events to suppot theme changes
    */
@@ -79,25 +45,7 @@ class SourcesManager {
     ipc.removeListener('theme-manager-install-theme', this._installHandler);
     ipc.removeListener('theme-manager-uninstall-theme', this._uninstallHandler);
   }
-  /**
-   * Resolves file path to correct path if it's starts with `~`.
-   *
-   * @param {String} file Settings file path
-   * @return {String} Path to the file.
-   */
-  resolvePath(file) {
-    if (file && file[0] === '~') {
-      file = app.getPath('home') + file.substr(1);
-    }
-    return file;
-  }
 
-  _findThemeInfo(id, themes) {
-    if (!themes || !themes.length) {
-      return;
-    }
-    return themes.find((item) => item._id === id);
-  }
   /**
    * A handler for the `theme-manager-list-themes` event from the renderer
    * process.
@@ -111,6 +59,7 @@ class SourcesManager {
     })
     .catch((cause) => this._handleError(e.sender, id, cause));
   }
+
   /**
    * A handler for the `theme-manager-active-theme-info` event from the renderer
    * process.
@@ -119,7 +68,7 @@ class SourcesManager {
    */
   _themeInfoHandler(e, id) {
     Promise.all([
-      this.prefsManager.load(),
+      this.arcApp.config.load(),
       this.themeInfo.load()
     ])
     .then((result) => {
@@ -145,6 +94,13 @@ class SourcesManager {
     })
     .catch((cause) => this._handleError(e.sender, id, cause));
   }
+
+  _findThemeInfo(id, themes) {
+    if (!themes || !themes.length) {
+      return;
+    }
+    return themes.find((item) => item._id === id);
+  }
   /**
    * A handler for the `theme-manager-activate-theme` event from the renderer
    * process.
@@ -153,14 +109,13 @@ class SourcesManager {
    * @param {String} themeId
    */
   _activateHandler(e, id, themeId) {
-    this.prefsManager.load()
+    this.arcApp.config.load()
     .then((settings) => {
       settings.theme = themeId;
-      return this.prefsManager.store();
+      return this.arcApp.config.store();
     })
-    .then(() => this.getAppConfig())
-    .then((config) => {
-      e.sender.send('theme-manager-theme-activated', id, config);
+    .then(() => {
+      e.sender.send('theme-manager-theme-activated', id);
     })
     .catch((cause) => this._handleError(e.sender, id, cause));
   }
@@ -206,5 +161,4 @@ class SourcesManager {
     sender.send('theme-manager-error', id, cause);
   }
 }
-
-module.exports.SourcesManager = SourcesManager;
+module.exports.ThemeManager = ThemeManager;

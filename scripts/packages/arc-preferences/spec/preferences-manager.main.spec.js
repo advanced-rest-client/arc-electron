@@ -25,11 +25,14 @@ describe('PreferencesManager class - main process', function() {
             setTimeout(() => {
               assert.equal(type, 'app-preferences', 'Type is set');
               assert.deepEqual(data, {
-                autoUpdate: true,
+                appVariablesEnabled: true,
+                systemVariablesEnabled: true,
+                historyEnabled: true,
                 requestDefaultTimeout: 45,
+                autoUpdate: true,
                 telemetry: true,
-                useCookieStorage: true,
-                useVariables: true
+                viewListType: 'default',
+                followRedirects: true
               }, 'Data has default values');
               assert.equal(_id, id, 'Returns the same id');
               done();

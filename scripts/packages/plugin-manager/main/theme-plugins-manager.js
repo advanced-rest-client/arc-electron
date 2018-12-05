@@ -13,31 +13,14 @@ const semver = require('semver');
  */
 class ThemePluginsManager {
   /**
-   * @param {?String} basePath Themes base location. If not set the default
-   * path is used.
-   */
-  constructor(basePath) {
-    /**
-     * Base path to the themes folder.
-     * @type {String}
-     */
-    this.themesBasePath = this.resolvePath(basePath) ||
-      path.join(app.getPath('userData'), 'themes');
-    /**
-     * Location of the installed themes info file.
-     * @type {String}
-     */
-    this.infoFilePath = path.join(this.themesBasePath, 'themes-info.json');
-  }
-  /**
    * Creates, if needed, the PluginManager and returns it.
    * @return {PluginManager}
    */
   get pluginManager() {
     if (!this.__pluginManager) {
       this.__pluginManager = new PluginManager({
-        cwd: this.themesBasePath,
-        pluginsPath: this.themesBasePath
+        cwd: process.env.ARC_THEMES,
+        pluginsPath: process.env.ARC_THEMES
       });
     }
     return this.__pluginManager;
@@ -47,7 +30,7 @@ class ThemePluginsManager {
    * @return {ThemeInfo}
    */
   get themeInfo() {
-    return new ThemeInfo(this.infoFilePath);
+    return new ThemeInfo();
   }
 
   /**
@@ -113,7 +96,7 @@ class ThemePluginsManager {
     .then((pkg) => {
       info.name = pkg.name;
       info.version = pkg.version;
-      info.location = path.join(this.themesBasePath, pkg.name);
+      info.location = path.join(process.env.ARC_THEMES, pkg.name);
       if (pkg.main) {
         info.mainFile = path.join(info.location, pkg.main);
       } else {

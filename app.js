@@ -48,7 +48,6 @@ class ArcInit {
   listen() {
     this.contextActions.listenMainEvents();
     window.onbeforeunload = this.beforeUnloadWindow.bind(this);
-    const updateHandler = this.updateEventHandler.bind(this);
     this.driveBridge.listen();
     this.oauth2Proxy.listen();
     this.themeManager.listen();
@@ -57,12 +56,25 @@ class ArcInit {
     this.fs.listen();
     this.amfService.listen();
     this.search.listen();
-    ipc.on('checking-for-update', updateHandler);
-    ipc.on('update-available', updateHandler);
-    ipc.on('update-not-available', updateHandler);
-    ipc.on('autoupdate-error', updateHandler);
-    ipc.on('download-progress', updateHandler);
-    ipc.on('update-downloaded', updateHandler);
+
+    ipc.on('checking-for-update', () => {
+      this.updateEventHandler('checking-for-update');
+    });
+    ipc.on('update-available', (info) => {
+      this.updateEventHandler('update-available', info);
+    });
+    ipc.on('update-not-available', () => {
+      this.updateEventHandler('update-not-available');
+    });
+    ipc.on('autoupdate-error', (error) => {
+      this.updateEventHandler('autoupdate-error', error);
+    });
+    ipc.on('download-progress', (progressObj) => {
+      this.updateEventHandler('download-progress', progressObj);
+    });
+    ipc.on('update-downloaded', (info) => {
+      this.updateEventHandler('update-downloaded', info);
+    });
     ipc.on('command', this.commandHandler.bind(this));
     ipc.on('request-action', this.execRequestAction.bind(this));
     ipc.on('theme-editor-preview', this._themePreviewHandler.bind(this));
@@ -208,21 +220,23 @@ class ArcInit {
   beforeUnloadWindow() {
     ipc.send('window-reloading');
   }
-
   /**
    * Handles events related to the application auto-update action.
    *
-   * @param {Object} sender
-   * @param {Array} message
+   * @param {String} type
+   * @param {Object|undefined} args
    */
-  updateEventHandler(sender, message) {
+  updateEventHandler(type, args) {
     const app = this.app;
     if (!app) {
       return;
     }
     // console.log('updateEventHandler', message);
-    app.updateState = message;
-    if (message[0] === 'update-downloaded') {
+    app.updateState = type;
+    if (args) {
+      console.log(type, args);
+    }
+    if (type === 'update-downloaded') {
       app.hasAppUpdate = true;
     }
   }

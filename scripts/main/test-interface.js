@@ -1,5 +1,5 @@
 const {RemoteApi} = require('../packages/communication-protocol/main/remote-api');
-
+const remote = new RemoteApi();
 module.exports = function(app, arcApp) {
   app.testsInterface = function(action, ...args) {
     switch (action) {
@@ -10,9 +10,9 @@ module.exports = function(app, arcApp) {
       case 'get-preferences-settings-location':
         return arcApp.prefs.settingsFile;
       case 'update-request-object':
-        return arcApp.remote.updateRequest(args[0], args[1]);
+        return remote.updateRequest(args[0], args[1]);
       case 'create-new-tab':
-        return arcApp.remote.newTab();
+        return remote.newTab();
     }
   };
 };

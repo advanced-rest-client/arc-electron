@@ -1,6 +1,6 @@
 const path = require('path');
 const {Application} = require('spectron');
-const electronPath = require('electron') ;// Require Electron from the binaries included in node_modules.
+const electronPath = require('electron');
 
 const appPath = path.join(__dirname, '..', 'main.js');
 console.log('App path ', appPath);
@@ -11,7 +11,7 @@ function getApp(opts) {
     path: electronPath,
     startTimeout: 50000,
     waitTimeout: 50000,
-    args: [appPath],
+    args: [appPath, '--test'],
     requireName: 'electronRequire'
   };
   if (opts.args) {

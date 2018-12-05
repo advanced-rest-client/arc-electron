@@ -1,11 +1,14 @@
 const bootstrap = require('./test-bootstrap.js');
-const assert = require('assert');
+const {assert} = require('chai');
 const fs = require('fs-extra');
 const path = require('path');
 
 describe('Initial paths', function() {
-  const settingsFilePath = path.join('test', 'test-settings.json');
-  const workspaceFilePath = path.join('test', 'workspace');
+  const basePath = path.join('test', 'tests-exe-dir');
+  const settingsFilePath = path.join(basePath, 'test-settings.json');
+  const workspaceFilePath = path.join(basePath, 'workspace');
+  const themesFilePath = path.join(basePath, 'themes');
+  const componentsFilePath = path.join(basePath, 'components');
 
   describe('Setups default file paths', function() {
     this.timeout(10000);
@@ -47,17 +50,52 @@ describe('Initial paths', function() {
       });
     });
 
-    it('Should set settings default file location', function() {
-      let fileLocation;
-      return app.electron.remote.app
-      .testsInterface('get-preferences-settings-location')
-      .then((location) => {
-        fileLocation = location;
-        return app.electron.remote.app.getPath('userData');
-      })
-      .then((settingsPath) => {
-        let finalLocation = settingsPath + '/settings.json';
-        assert.equal(fileLocation, finalLocation);
+    it('Sets ARC_HOME variable', () => {
+      return app.mainProcess.env()
+      .then((variables) => {
+        assert.typeOf(variables.ARC_HOME, 'string');
+      });
+    });
+
+    it('Sets ARC_SETTINGS_FILE variable', () => {
+      return app.mainProcess.env()
+      .then((variables) => {
+        assert.typeOf(variables.ARC_SETTINGS_FILE, 'string');
+      });
+    });
+
+    it('Sets default ARC_SETTINGS_FILE is in ARC_HOME', () => {
+      return app.mainProcess.env()
+      .then((variables) => {
+        assert.equal(variables.ARC_SETTINGS_FILE, path.join(variables.ARC_HOME, 'settings.json'));
+      });
+    });
+
+    it('Sets default ARC_THEMES in ARC_HOME', () => {
+      return app.mainProcess.env()
+      .then((variables) => {
+        assert.equal(variables.ARC_THEMES, path.join(variables.ARC_HOME, 'themes'));
+      });
+    });
+
+    it('Sets default ARC_THEMES_SETTINGS in ARC_THEMES', () => {
+      return app.mainProcess.env()
+      .then((variables) => {
+        assert.equal(variables.ARC_THEMES_SETTINGS, path.join(variables.ARC_THEMES, 'themes-info.json'));
+      });
+    });
+
+    it('Sets default ARC_WORKSPACE_PATH in ARC_HOME', () => {
+      return app.mainProcess.env()
+      .then((variables) => {
+        assert.equal(variables.ARC_WORKSPACE_PATH, path.join(variables.ARC_HOME, 'workspace'));
+      });
+    });
+
+    it('Sets default ARC_COMPONENTS_PATH in ARC_HOME', () => {
+      return app.mainProcess.env()
+      .then((variables) => {
+        assert.equal(variables.ARC_COMPONENTS_PATH, path.join(variables.ARC_HOME, 'components'));
       });
     });
   });
@@ -69,7 +107,11 @@ describe('Initial paths', function() {
         '--settings-file',
         settingsFilePath,
         '--workspace-path',
-        workspaceFilePath
+        workspaceFilePath,
+        '--themes-path',
+        themesFilePath,
+        '--components-path',
+        componentsFilePath
       ]
     };
     let app;
@@ -91,44 +133,39 @@ describe('Initial paths', function() {
       .then(() => fs.remove(workspaceFilePath));
     });
 
-    it('Should set settings file location', function() {
-      return app.electron.remote.app.
-      testsInterface('get-application-settings-file-location')
-      .then((location) => {
-        assert.equal(location, settingsFilePath);
+    it('Sets ARC_SETTINGS_FILE variable', () => {
+      return app.mainProcess.env()
+      .then((variables) => {
+        assert.equal(variables.ARC_SETTINGS_FILE, settingsFilePath);
       });
     });
 
-    it('Should set workspace file location', function() {
-      return app.electron.remote.app
-      .testsInterface('get-application-workspace-state-file-location')
-      .then((location) => {
-        assert.equal(location, workspaceFilePath);
+    it('Sets ARC_WORKSPACE_PATH variable', () => {
+      return app.mainProcess.env()
+      .then((variables) => {
+        assert.equal(variables.ARC_WORKSPACE_PATH, workspaceFilePath);
       });
     });
 
-    // function waitFor(time) {
-    //   return new Promise(resolve => {
-    //     setTimeout(resolve, time);
-    //   });
-    // }
-    //
-    // it('Application receives workspace-script attribute', function() {
-    //   return waitFor(1000)
-    //   .then(() => this.app.client.getAttribute('arc-electron',
-    //   'workspace-script'))
-    //   .then(value => {
-    //     assert.equal(value, workspaceFilePath);
-    //   });
-    // });
-    //
-    // it('Application receives settings-script attribute', function() {
-    //   return waitFor(1000)
-    //   .then(() => this.app.client.getAttribute('arc-electron',
-    //   'settings-script'))
-    //   .then(value => {
-    //     assert.equal(value, settingsFilePath);
-    //   });
-    // });
+    it('Sets ARC_COMPONENTS_PATH variable', () => {
+      return app.mainProcess.env()
+      .then((variables) => {
+        assert.equal(variables.ARC_COMPONENTS_PATH, componentsFilePath);
+      });
+    });
+
+    it('Sets ARC_THEMES variable', () => {
+      return app.mainProcess.env()
+      .then((variables) => {
+        assert.equal(variables.ARC_THEMES, themesFilePath);
+      });
+    });
+
+    it('Sets ARC_THEMES_SETTINGS variable', () => {
+      return app.mainProcess.env()
+      .then((variables) => {
+        assert.equal(variables.ARC_THEMES_SETTINGS, path.join(themesFilePath, 'themes-info.json'));
+      });
+    });
   });
 });
