@@ -1,6 +1,7 @@
 const {ipcMain: ipc} = require('electron');
 const {ThemeInfo} = require('../../../main/models/theme-info');
 const {ThemePluginsManager} = require('../../plugin-manager/main');
+const log = require('../../../main/logger');
 
 class ThemeManager {
   constructor(arcApp) {
@@ -15,8 +16,10 @@ class ThemeManager {
     this._activateHandler = this._activateHandler.bind(this);
     this._installHandler = this._installHandler.bind(this);
     this._uninstallHandler = this._uninstallHandler.bind(this);
-  }
 
+    this.manager = new ThemePluginsManager();
+    this._checkUpdates();
+  }
   /**
    * Creates a model for theme info file.
    * @return {ThemeInfo}
@@ -125,14 +128,13 @@ class ThemeManager {
       e.sender.send('theme-manager-error', id, {message: 'The name is not valid.'});
       return;
     }
-    const manager = new ThemePluginsManager();
     const index = name.indexOf('#');
     let version;
     if (index !== -1) {
       version = name.substr(index + 1);
       name = name.substr(0, index);
     }
-    manager.install(name, version)
+    this.manager.install(name, version)
     .then((info) => {
       e.sender.send('theme-manager-theme-installed', id, info);
     })
@@ -144,8 +146,7 @@ class ThemeManager {
       e.sender.send('theme-manager-error', id, {message: 'The name is not valid.'});
       return;
     }
-    const manager = new ThemePluginsManager();
-    manager.uninstall(name)
+    this.manager.uninstall(name)
     .then((info) => {
       e.sender.send('theme-manager-theme-installed', id, info);
     })
@@ -159,6 +160,36 @@ class ThemeManager {
       };
     }
     sender.send('theme-manager-error', id, cause);
+  }
+
+  _checkUpdates() {
+    setTimeout(() => {
+      this.__updateCheck();
+    }, 1000);
+  }
+
+  __updateCheck() {
+    log.debug('Checking for theme updates.');
+    return this.manager.checkForUpdates()
+    .then((info) => {
+      if (!info) {
+        log.debug('Update not available.');
+        return;
+      }
+      const themes = Object.keys(info);
+      if (!themes.length) {
+        log.debug('Update not available.');
+        return;
+      }
+      log.debug('Themes to update', themes);
+      return this.manager.update(info)
+      .then(() => {
+        log.info('Themes updated. The change will be applied with next app reload.');
+      });
+    })
+    .catch((cause) => {
+      log.error(cause);
+    });
   }
 }
 module.exports.ThemeManager = ThemeManager;
