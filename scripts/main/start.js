@@ -5,7 +5,7 @@ const log = require('./logger');
 const {ArcEnvironment} = require('./arc-environment');
 const {PreferencesManager} = require('../packages/arc-preferences/main');
 const {AppDefaults} = require('./app-defaults');
-const temp = require('temp').track();
+// const temp = require('temp').track();
 
 function getConfig(settingsFile) {
   const config = new PreferencesManager({
@@ -55,11 +55,18 @@ module.exports = function(startTime) {
   //   app.setPath('userData', temp.mkdirSync('arc-test-data'));
   // }
 
+  log.debug('Setting up the environment');
   arcPaths.setHome();
   arcPaths.setSettingsFile(initOptions.settingsFile);
   arcPaths.setWorkspacePath(initOptions.workspacePath);
   arcPaths.setThemesPath(initOptions.themesPath);
   arcPaths.setComponentsPath(initOptions.componentsPath);
+
+  // Overrides initial user path to processed by arcPaths
+  initOptions.workspacePath = arcPaths.workspacePath;
+  initOptions.settingsFile = arcPaths.settingsFile;
+  initOptions.themesPath = arcPaths.themesBasePath;
+  initOptions.componentsPath = arcPaths.componentsPath;
 
   const currentConfig = getConfig(arcPaths.settingsFile);
   const colorProfile = currentConfig.colorProfile;
@@ -67,8 +74,8 @@ module.exports = function(startTime) {
     app.commandLine.appendSwitch('force-color-profile', colorProfile);
   }
 
-  // NB: This prevents Win10 from showing dupe items in the taskbar
-  app.setAppUserModelId('com.squirrel.atom.' + process.arch);
+  // This prevents Win10 from showing dupe items in the taskbar
+  app.setAppUserModelId('com.squirrel.arc.' + process.arch);
 
   function addUrlToOpen(event, url) {
     event.preventDefault();
