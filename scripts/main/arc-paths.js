@@ -1,6 +1,7 @@
 const {app} = require('electron');
 const path = require('path');
 const fs = require('fs-extra');
+const log = require('./logger');
 
 class ArcPaths {
   /**
@@ -35,6 +36,7 @@ class ArcPaths {
       this._settingsFile = path.join(process.env.ARC_HOME, 'settings.json');
     }
     process.env.ARC_SETTINGS_FILE = this._settingsFile;
+    log.debug('ARC settings is set to: ' + process.env.ARC_SETTINGS_FILE);
   }
 
   getAppDirectory() {
@@ -63,13 +65,15 @@ class ArcPaths {
     if (fs.pathExistsSync(portableHomePath)) {
       if (this.hasWriteAccess(portableHomePath)) {
         process.env.ARC_HOME = portableHomePath;
-        return;
       } else {
         // A path exists so it was intended to be used but we didn't have rights, so warn.
         console.warn(`Insufficient permission to portable ARC home "${portableHomePath}".`);
       }
     }
-    process.env.ARC_HOME = app.getPath('userData');
+    if (!process.env.ARC_HOME) {
+      process.env.ARC_HOME = app.getPath('userData');
+    }
+    log.debug('ARC home is set to: ' + process.env.ARC_HOME);
   }
 
   get themesBasePath() {
@@ -99,6 +103,8 @@ class ArcPaths {
     this._themesSettings = path.join(this._themesBasePath, themesSettingsFile);
     process.env.ARC_THEMES = this._themesBasePath;
     process.env.ARC_THEMES_SETTINGS = this._themesSettings;
+    log.debug('ARC themes path is set to: ' + process.env.ARC_THEMES);
+    log.debug('ARC themes DB is set to: ' + process.env.ARC_THEMES_SETTINGS);
   }
 
   get workspacePath() {
@@ -118,6 +124,7 @@ class ArcPaths {
       this._workspacePath = path.join(process.env.ARC_HOME, 'workspace');
     }
     process.env.ARC_WORKSPACE_PATH = this._workspacePath;
+    log.debug('ARC workspace path is set to: ' + process.env.ARC_WORKSPACE_PATH);
   }
 
   get componentsPath() {
@@ -137,6 +144,7 @@ class ArcPaths {
       this._componentsPath = path.join(process.env.ARC_HOME, 'components');
     }
     process.env.ARC_COMPONENTS_PATH = this._componentsPath;
+    log.debug('ARC components path is set to: ' + process.env.ARC_COMPONENTS_PATH);
   }
 }
 
