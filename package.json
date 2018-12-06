@@ -83,6 +83,7 @@
       "package.json",
       "assets/",
       "bower_components/",
+      "node_modules/",
       "menus/",
       "scripts/",
       "src/",
@@ -143,10 +144,17 @@
             "x64",
             "ia32"
           ]
+        },
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
         }
       ],
       "vendor": "Mulesoft",
-      "synopsis": "A developert tool to test HTTP requests",
+      "synopsis": "A developer tool to test HTTP requests",
       "artifactName": "arc-linux-${version}-${arch}.${ext}"
     },
     "win": {
