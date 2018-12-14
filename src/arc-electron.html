@@ -1292,6 +1292,12 @@
       }
       return !enabled;
     }
+    /**
+     * @TODO: Move it to app mixin.
+     */
+    closeActiveTab() {
+      this.workspace.closeActiveTab();
+    }
   }
   window.customElements.define(ArcElectron.is, ArcElectron);
     //   listeners: {

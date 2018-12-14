@@ -326,19 +326,22 @@ class ArcInit {
         app.saveOpened({
           source: 'shortcut'
         });
-      break;
+        break;
       case 'save-as':
         app.saveOpened();
-      break;
+        break;
       case 'new-tab':
         app.newRequestTab();
-      break;
+        break;
       case 'send-current':
         app.sendCurrentTab();
-      break;
+        break;
       case 'update-request':
         app.updateRequestTab(args[0], args[1]);
-      break;
+        break;
+      case 'close-tab':
+        app.closeActiveTab();
+        break;
       default:
         throw new Error('Unrecognized action ' + action);
     }

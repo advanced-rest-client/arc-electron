@@ -6,6 +6,10 @@
         "command": "request:new-tab",
         "accelerator": "CommandOrControl+t"
       }, {
+        "label": "Close tab",
+        "command": "request:close-tab",
+        "accelerator": "CommandOrControl+w"
+      }, {
         "label": "New Window",
         "command": "application:new-window",
         "accelerator": "CommandOrControl+n"
