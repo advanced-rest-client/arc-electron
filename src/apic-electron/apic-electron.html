@@ -206,7 +206,7 @@ the License.
     }
 
     _amfChanged(amf, type) {
-      if (!amf || !type) {
+      if (!amf || typeof amf !== 'string' || !type) {
         this.amfModel = undefined;
         return;
       }
@@ -342,7 +342,11 @@ the License.
       this.apiProcessing = true;
       return this.getApi(id, version)
       .then((result) => {
-        this.amf = result.api;
+        let api = result.api;
+        if (api && typeof api !== 'string') {
+          api = JSON.stringify(api);
+        }
+        this.amf = api;
         this.apiType = result.type;
       })
       .catch((cause) => {
