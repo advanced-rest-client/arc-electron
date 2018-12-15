@@ -34,19 +34,19 @@ describe('Initial paths', function() {
       }
     });
 
-    it('Should not set settings file location', function() {
+    it('Should set default settings file location', function() {
       return app.electron.remote.app
       .testsInterface('get-application-settings-file-location')
       .then((location) => {
-        assert.equal(location, undefined);
+        assert.typeOf(location, 'string');
       });
     });
 
-    it('Should not set workspace file location', function() {
+    it('Should set default workspace file location', function() {
       return app.electron.remote.app
       .testsInterface('get-application-workspace-state-file-location')
       .then((location) => {
-        assert.equal(location, undefined);
+        assert.typeOf(location, 'string');
       });
     });
 
