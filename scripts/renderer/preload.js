@@ -14,6 +14,7 @@ const {ArcContextMenu} = require('../packages/context-actions/renderer');
 const {FilesystemProxy} = require('./filesystem-proxy');
 const {ElectronAmfService} = require('../packages/amf-service');
 const {WindowSearchService} = require('../packages/search-service/renderer');
+const {UpgradeHelper} = require('./upgrade-helper');
 const setImmediateFn = setImmediate;
 const versions = process.versions;
 const env = {};
@@ -44,6 +45,7 @@ process.once('loaded', () => {
   global.ElectronAmfService = ElectronAmfService;
   global.WindowSearchService = WindowSearchService;
   global.Jexl = Jexl;
+  global.UpgradeHelper = UpgradeHelper;
   global.versionInfo = {
     chrome: versions.chrome,
     appVersion: app.getVersion()

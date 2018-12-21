@@ -21,7 +21,8 @@ class ArcInit {
   constructor() {
     /* global ipc, ArcContextMenu, ArcElectronDrive, OAuth2Handler,
     ThemeManager, ArcPreferencesProxy, CookieBridge, WorkspaceManager,
-    FilesystemProxy, ElectronAmfService, versionInfo, WindowSearchService */
+    FilesystemProxy, ElectronAmfService, versionInfo, WindowSearchService,
+    UpgradeHelper */
     this.created = false;
     this.contextActions = new ArcContextMenu();
     this.driveBridge = new ArcElectronDrive();
@@ -114,6 +115,7 @@ class ArcInit {
     this.initConfig = initConfig;
     window.ArcConfig.initConfig = initConfig;
     this.initApp()
+    .then(() => this.upgradeApp())
     .then(() => this.removeLoader())
     .then(() => console.log('Application window is now ready.'));
   }
@@ -418,6 +420,19 @@ class ArcInit {
     setTimeout(() => {
       loader.parentNode.removeChild(loader);
     }, 150);
+  }
+
+  upgradeApp() {
+    return this.prefProxy.load()
+    .then((cnf) => {
+      const inst = new UpgradeHelper(cnf.upgrades);
+      const upgrades = inst.getUpgrades();
+      if (!upgrades || upgrades.length === 0) {
+        return;
+      }
+      console.info('Applying upgrades...');
+      return inst.upgrade(upgrades);
+    });
   }
 }
 
