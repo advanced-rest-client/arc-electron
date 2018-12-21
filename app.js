@@ -114,6 +114,7 @@ class ArcInit {
     this.initConfig = initConfig;
     window.ArcConfig.initConfig = initConfig;
     this.initApp()
+    .then(() => this.removeLoader())
     .then(() => console.log('Application window is now ready.'));
   }
   /**
@@ -406,6 +407,17 @@ class ArcInit {
         return;
     }
     app.set(`menuConfig.${key}`, value);
+  }
+
+  removeLoader() {
+    const loader = document.querySelector('.loader');
+    if (!loader) {
+      return;
+    }
+    loader.classList.add('end');
+    setTimeout(() => {
+      loader.parentNode.removeChild(loader);
+    }, 150);
   }
 }
 
