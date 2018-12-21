@@ -111,7 +111,6 @@ to all elements.
       font-weight: var(--arc-font-title-font-weight);
       line-height: var(--arc-font-title-line-height);
     }
-
     /* Headline: Add variables from --arc-font-common-base */
     --arc-font-headline-font-size: 24px
     --arc-font-headline-font-weight: 400;
@@ -178,7 +177,6 @@ to all elements.
       white-space: var(--arc-font-nowrap-white-space);
       overflow: var(--arc-font-nowrap-overflow);
       text-overflow: var(--arc-font-nowrap-text-overflow);
-
       font-size: var(--arc-font-caption-font-size);
       font-weight: var(--arc-font-caption-font-weight);
       line-height: var(--arc-font-caption-line-height);
@@ -462,6 +460,18 @@ to all elements.
 
     --api-endpoint-documentation-method-doc-max-width: 100%;
     --api-endpoint-documentation-tryit-max-width: auto;
+    --context-menu-item-background-color-hover: #e4e4e4;
+    --bottom-sheet-box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14),
+                    0 1px 18px 0 rgba(0, 0, 0, 0.12),
+                    0 3px 5px -1px rgba(0, 0, 0, 0.4);
+
+    --request-editor-tabs-container: {
+      background-color: #f5f2f0;
+    };
+    --request-actions-panel: {
+      padding: 12px;
+    };
+
   }
 
   [narrow] {
@@ -502,10 +512,6 @@ to all elements.
     /* Body documentation styles */
     --api-body-document-title-narrow: {
       font-size: 17px;
-    };
-
-    --request-editor-tabs-container: {
-      background-color: #ECEFF1 !important;
     };
 
     --api-console-main-content-margin-top: 12px;
