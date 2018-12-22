@@ -272,8 +272,7 @@ class UpdateStatus extends ArcBase {
 
   _updateAvailableDialog() {
     let msg = 'Application update is available. ';
-    msg += 'It will be installed automatically after application restart. ';
-    msg += 'Do you want to do this now?';
+    msg += 'Do you want to install it now?';
     dialog.showMessageBox({
       type: 'info',
       title: 'Application update',
