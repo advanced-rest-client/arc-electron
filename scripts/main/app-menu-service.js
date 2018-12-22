@@ -78,6 +78,7 @@ class AppMenuService {
         partition: 'persist:arc-window',
         nativeWindowOpen: true,
         nodeIntegration: false,
+        contextIsolation: false,
         preload: path.join(__dirname, '..', 'renderer', 'app-menu-preload.js')
       }
     });

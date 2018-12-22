@@ -32,8 +32,8 @@
   "devDependencies": {
     "bower": "^1.8.2",
     "chai": "^4.2.0",
-    "electron": "^3.0.12",
-    "electron-builder": "^20.38.3",
+    "electron": "^4.0.0",
+    "electron-builder": "^20.38.4",
     "electron-mocha": "^6.0.4",
     "eslint": "^4.18.1",
     "eslint-config-google": "^0.9.1",

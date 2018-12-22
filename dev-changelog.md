@@ -6,6 +6,7 @@
 
 ## General
 
+-   Upgraded Electron to version 4
 -   Upgraded components to Polymer 2.0; Components now use Web Components specification v1.
 -   Navigation now pop-ups from the application drawer (to enable go to Settings -> Experiments)
 -   Redesigned navigation:
