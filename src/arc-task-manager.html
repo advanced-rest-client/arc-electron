@@ -203,7 +203,13 @@
     translateMetrics(metrics) {
       const result = metrics.map((metric) => {
         const cpu = this.translateCpuMetrics(metric.cpu);
-        const memory = this.translateMemoryMetrics(metric.memory);
+        let memory;
+        // https://github.com/electron/electron/issues/16179
+        if (metric.memory) {
+          memory = this.translateMemoryMetrics(metric.memory);
+        } else {
+          memory = this._emptyMemoryInfo();
+        }
         const title = this.translateMetricTitle(metric.type, metric.pid);
         return {
           pid: metric.pid,
@@ -270,6 +276,17 @@
         privateBytesCompare: memory.privateBytes,
         sharedBytes: this.computeBytes(memory.sharedBytes),
         sharedBytesCompare: memory.sharedBytes
+      };
+    }
+
+    _emptyMemoryInfo() {
+      return {
+        workingSetSize: 'unknown',
+        workingSetSizeCompare: 0,
+        privateBytes: 'unknown',
+        privateBytesCompare: 0,
+        sharedBytes: 'unknown',
+        sharedBytesCompare: 0
       };
     }
     /**

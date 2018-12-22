@@ -243,7 +243,9 @@ class ArcWindowsManager {
     const win = new BrowserWindow({
       backgroundColor: '#00A2DF',
       webPreferences: {
-        partition: 'persist:arc-task-manager'
+        partition: 'persist:arc-task-manager',
+        nodeIntegration: true,
+        contextIsolation: false
       }
     });
     const dest = path.join(__dirname, '..', '..', 'task-manager.html');
