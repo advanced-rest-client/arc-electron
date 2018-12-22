@@ -165,11 +165,11 @@ class ThemeManager {
   _checkUpdates() {
     setTimeout(() => {
       this.__updateCheck();
-    }, 1000);
+    }, 10000);
   }
 
   __updateCheck() {
-    log.debug('Checking for theme updates.');
+    log.debug('Checking for themes updates.');
     return this.manager.checkForUpdates()
     .then((info) => {
       if (!info) {
