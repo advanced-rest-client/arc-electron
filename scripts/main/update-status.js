@@ -164,9 +164,10 @@ class UpdateStatus extends ArcBase {
     this.lastInfoObject = info;
     this.emit('notify-windows', 'update-available', info);
     this.emit('status-changed', 'download-progress');
-    let detail = 'It will be downloaded automatically. The update will';
-    detail += ' be applied after you restart the application.';
-    this._notifyUser('New version available!', detail);
+    if (!this.lastOptions.notify) {
+      return;
+    }
+    this._updateAvailableDialog();
   }
   /**
    * Emitted when there is no available update.
@@ -232,6 +233,9 @@ class UpdateStatus extends ArcBase {
     this.lastInfoObject = info;
     this.emit('notify-windows', 'update-downloaded', info);
     this.emit('status-changed', 'update-downloaded');
+    if (this.lastOptions.notify) {
+      setImmediate(() => autoUpdater.quitAndInstall());
+    }
   }
   /**
    * Quits the application and installs new update.
@@ -264,6 +268,22 @@ class UpdateStatus extends ArcBase {
       dialogOpts.icon = nativeImage.createFromPath(imgPath);
     }
     dialog.showMessageBox(dialogOpts);
+  }
+
+  _updateAvailableDialog() {
+    let msg = 'Application update is available. ';
+    msg += 'It will be installed automatically after application restart. ';
+    msg += 'Do you want to do this now?';
+    dialog.showMessageBox({
+      type: 'info',
+      title: 'Application update',
+      message: msg,
+      buttons: ['Yes', 'No']
+    }, (buttonIndex) => {
+      if (buttonIndex === 0) {
+        autoUpdater.downloadUpdate();
+      }
+    });
   }
 }
 exports.UpdateStatus = UpdateStatus;
