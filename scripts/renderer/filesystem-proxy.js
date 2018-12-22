@@ -1,5 +1,6 @@
 const {ipcRenderer: ipc} = require('electron');
 const fs = require('fs-extra');
+const path = require('path');
 /**
  * This class is a proxy to access user filesystem from the renderer process.
  *
@@ -75,6 +76,18 @@ class FilesystemProxy {
       case 'application/json': return JSON.stringify(data);
     }
     return data;
+  }
+  /**
+   * Allows to read file from user filesystem.
+   * @param {String} path File path to ready
+   * @return {Promise<Buffer>}
+   */
+  readFile(path) {
+    return fs.readFile(path);
+  }
+
+  extname(filePath) {
+    return path.extname(filePath);
   }
 }
 

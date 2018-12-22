@@ -571,7 +571,7 @@
       window.addEventListener('process-loading-start', this._processStartHandler);
       window.addEventListener('process-loading-stop', this._processStopHandler);
       window.addEventListener('process-error', this._processErrorHandler);
-      this.addEventListener('api-data-ready', this._apiDataHandler);
+      window.addEventListener('api-data-ready', this._apiDataHandler);
       this.addEventListener('process-exchange-asset-data', this._exchangeAssetHandler);
       Polymer.RenderStatus.afterNextRender(this, () => {
         this._variablesButton = this.shadowRoot.querySelector('#varToggleButton');
@@ -1297,6 +1297,12 @@
      */
     closeActiveTab() {
       this.workspace.closeActiveTab();
+    }
+
+    processExternalFile(file) {
+      if (!file) {
+        throw new Error('"file" argument is required.');
+      }
     }
   }
   window.customElements.define(ArcElectron.is, ArcElectron);

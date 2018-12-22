@@ -29,6 +29,8 @@
 -   Fixed units in Task manager
 -   Task manager now renders processes names more accurately
 -   Adding release channels. Now app support Stable, Beta, and Unstable release channels. Access settings in "About ARC" screen.
+-   Task manager may no show memory info [electron#16179](https://github.com/electron/electron/issues/16179)
+-   Adding new "File" menu entry to open a file from the filesystem [#111](https://github.com/advanced-rest-client/arc-electron/issues/111)
 
 ## Requests
 

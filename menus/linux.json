@@ -14,6 +14,10 @@
         "command": "application:new-window",
         "accelerator": "CommandOrControl+n"
       }, {
+        "label": "Open file",
+        "command": "application:open-file",
+        "accelerator": "CommandOrControl+Shift+o"
+      }, {
         "label": "Open saved request",
         "command": "application:open-saved",
         "accelerator": "CommandOrControl+o"

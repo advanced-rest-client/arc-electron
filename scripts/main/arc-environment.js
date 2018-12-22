@@ -12,6 +12,7 @@ const {AppPrompts} = require('./app-prompts');
 const {Oauth2Identity} = require('@advanced-rest-client/electron-oauth2');
 const {ThemesProtocolHandler} = require('./theme-protocol');
 const {ComponentsProtocolHandler} = require('./components-protocol');
+const {AssetImport} = require('./asset-import');
 const log = require('./logger');
 
 class ArcEnvironment {
@@ -215,6 +216,9 @@ class ArcEnvironment {
       case 'task-manager':
         log.debug('Opening task manager.');
         this.wm.openTaskManager();
+        break;
+      case 'open-file':
+        AssetImport.openAssetDialog(win);
         break;
       case 'open-privacy-policy':
       case 'open-documentation':

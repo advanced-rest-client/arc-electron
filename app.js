@@ -22,7 +22,7 @@ class ArcInit {
     /* global ipc, ArcContextMenu, ArcElectronDrive, OAuth2Handler,
     ThemeManager, ArcPreferencesProxy, CookieBridge, WorkspaceManager,
     FilesystemProxy, ElectronAmfService, versionInfo, WindowSearchService,
-    UpgradeHelper */
+    UpgradeHelper, ImportFilePrePprocessor */
     this.created = false;
     this.contextActions = new ArcContextMenu();
     this.driveBridge = new ArcElectronDrive();
@@ -33,6 +33,15 @@ class ArcInit {
     this.fs = new FilesystemProxy();
     this.amfService = new ElectronAmfService();
     this.search = new WindowSearchService();
+  }
+  /**
+   * @return {ImportFilePrePprocessor} Instance of import processor class.
+   */
+  get importPreprocessor() {
+    if (!this.__importPreprocessor) {
+      this.__importPreprocessor = new ImportFilePrePprocessor();
+    }
+    return this.__importPreprocessor;
   }
   /**
    * Reference to the main application window.
@@ -273,8 +282,20 @@ class ArcInit {
       case 'open-requests-workspace': app.openWorkspace(); break;
       case 'open-web-socket': app.openWebSocket(); break;
       case 'popup-menu': this._toggleMenuWindow(); break;
+      case 'process-external-file': this.processExternalFile(args[0]); break;
+      default:
+        console.warn('Unknown command', action, args);
     }
   }
+
+  processExternalFile(filePath) {
+    return this.importPreprocessor.processFile(filePath)
+    .catch((cause) => {
+      this.app.notifyError(cause.message);
+      console.error(cause);
+    });
+  }
+
   /**
    * Remote API command.
    * Sends number of tabs command to the main process.

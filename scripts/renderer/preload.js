@@ -15,6 +15,7 @@ const {FilesystemProxy} = require('./filesystem-proxy');
 const {ElectronAmfService} = require('../packages/amf-service');
 const {WindowSearchService} = require('../packages/search-service/renderer');
 const {UpgradeHelper} = require('./upgrade-helper');
+const {ImportFilePrePprocessor} = require('./import-file-preprocessor');
 const setImmediateFn = setImmediate;
 const versions = process.versions;
 const env = {};
@@ -46,6 +47,7 @@ process.once('loaded', () => {
   global.WindowSearchService = WindowSearchService;
   global.Jexl = Jexl;
   global.UpgradeHelper = UpgradeHelper;
+  global.ImportFilePrePprocessor = ImportFilePrePprocessor;
   global.versionInfo = {
     chrome: versions.chrome,
     appVersion: app.getVersion()
