@@ -107,6 +107,7 @@ class ArcContextMenu {
    * @param {MouseEvent} e
    */
   _contextMenuHandler(e) {
+    this.removeActions();
     const target = e.composedPath()[0];
     if (!target) {
       return;
