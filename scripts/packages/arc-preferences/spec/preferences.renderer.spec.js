@@ -5,6 +5,9 @@ const {ArcPreferences} = require('../');
 
 describe('ArcPreferences class - renderer process', function() {
   const file = path.join('test', 'test.json');
+  before(() => {
+    process.env.ARC_HOME = '~/test';
+  });
 
   describe('Setting up paths', function() {
     it('Accepts "file" option', function() {
