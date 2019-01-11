@@ -56,9 +56,9 @@
     "app-pouchdb": "PolymerElements/app-pouchdb#^2.1.1",
     "api-console": "mulesoft/api-console#5.0.0-preview",
     "electron-http-transport": "advanced-rest-client/electron-http-transport#2.0.0-preview",
-    "host-rules-editor": "advanced-rest-client/host-rules-editor#2.0.0-preview",
-    "cookie-manager": "advanced-rest-client/cookie-manager#2.0.0-preview",
-    "web-url-input": "advanced-rest-client/web-url-input#2.0.0-preview",
+    "host-rules-editor": "advanced-rest-client/host-rules-editor#^2.0.0",
+    "cookie-manager": "advanced-rest-client/cookie-manager#^2.0.0",
+    "web-url-input": "advanced-rest-client/web-url-input#^2.0.0",
     "arc-settings-panel": "advanced-rest-client/arc-settings-panel#2.0.0-preview",
     "about-arc-electron": "advanced-rest-client/about-arc-electron#2.0.0-preview",
     "websocket-panel": "advanced-rest-client/websocket-panel#2.0.0-preview",
@@ -72,7 +72,7 @@
     "saved-requests-panel": "advanced-rest-client/saved-requests-panel#^2.0.0",
     "arc-electron-default-theme": "advanced-rest-client/arc-electron-default-theme#2.0.0-preview",
     "themes-panel": "advanced-rest-client/themes-panel#2.0.0-preview",
-    "api-candidates-dialog": "advanced-rest-client/api-candidates-dialog#2.0.0-preview",
+    "api-candidates-dialog": "advanced-rest-client/api-candidates-dialog#^2.0.0",
     "pouchdb": "^7.0.0"
   },
   "devDependencies": {
