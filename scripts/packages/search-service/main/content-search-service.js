@@ -123,6 +123,7 @@ class ContentSearchService {
       parent: this.win,
       webPreferences: {
         nodeIntegration: false,
+        contextIsolation: false,
         preload
       }
     });
