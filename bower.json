@@ -42,7 +42,7 @@
     "arc-data-import": "advanced-rest-client/arc-data-import#2.0.0-preview",
     "import-panel": "advanced-rest-client/import-panel#2.0.0-preview",
     "export-panel": "advanced-rest-client/export-panel#2.0.0-preview",
-    "arc-menu": "advanced-rest-client/arc-menu#2.0.0-preview",
+    "arc-menu": "advanced-rest-client/arc-menu#^2.0.0",
     "arc-icons": "advanced-rest-client/arc-icons#^2.0.0",
     "arc-license-dialog": "advanced-rest-client/arc-license-dialog#^2.0.3",
     "arc-messages-service": "advanced-rest-client/arc-messages-service#^2.0.3",
@@ -70,7 +70,6 @@
     "rest-apis-list-panel": "advanced-rest-client/rest-apis-list-panel#^2.0.0",
     "history-panel": "advanced-rest-client/history-panel#^2.0.0",
     "saved-requests-panel": "advanced-rest-client/saved-requests-panel#^2.0.0",
-    "arc-electron-default-theme": "advanced-rest-client/arc-electron-default-theme#2.0.0-preview",
     "themes-panel": "advanced-rest-client/themes-panel#2.0.0-preview",
     "api-candidates-dialog": "advanced-rest-client/api-candidates-dialog#^2.0.0",
     "pouchdb": "^7.0.0"
