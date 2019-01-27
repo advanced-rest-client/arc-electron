@@ -107,6 +107,9 @@ describe('ArcPreferencesProxy class - renderer process', function() {
           .then((state) => {
             assert.deepEqual(state, data);
             done();
+          })
+          .catch((cause) => {
+            done(cause);
           });
         }, instance.storeDebounce + 1);
       });
