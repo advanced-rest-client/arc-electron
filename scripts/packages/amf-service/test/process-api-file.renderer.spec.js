@@ -59,6 +59,7 @@ describe('File data processing', function() {
       ['Folder in the zip', 'inception.zip']
     ].forEach((item) => {
       it(item[0], function() {
+        this.timeout(5000);
         const file = path.join(__dirname, item[1]);
         return fs.readFile(file)
         .then((data) => {
