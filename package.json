@@ -30,16 +30,16 @@
   },
   "main": "main.js",
   "devDependencies": {
-    "bower": "^1.8.2",
+    "bower": "^1.8.8",
     "chai": "^4.2.0",
-    "electron": "^4.0.0",
-    "electron-builder": "^20.38.4",
+    "electron": "^4.0.2",
+    "electron-builder": "^20.38.5",
     "electron-mocha": "^6.0.4",
     "eslint": "^4.18.1",
     "eslint-config-google": "^0.9.1",
     "glob": "^7.1.2",
     "mocha": "^4.1.0",
-    "sinon": "^7.2.2",
+    "sinon": "^7.2.3",
     "spectron": "^5.0.0"
   },
   "dependencies": {
@@ -48,7 +48,7 @@
     "@advanced-rest-client/electron-oauth2": "1.0.0-rc4",
     "@advanced-rest-client/electron-request": "1.0.0-rc9",
     "@advanced-rest-client/electron-session-state": "1.0.0-rc1",
-    "amf-client-js": "^3.1.0",
+    "amf-client-js": "^3.1.4",
     "camelcase": "^4.1.0",
     "electron-log": "^2.2.17",
     "electron-updater": "4.0.4",
@@ -63,9 +63,9 @@
     "semver": "^5.6.0",
     "temp": "^0.8.3",
     "tmp": "0.0.33",
-    "unzipper": "^0.9.5",
+    "unzipper": "^0.9.10",
     "uuid": "^3.3.2",
-    "winston": "^3.1.0",
+    "winston": "^3.2.0",
     "yargs": "^12.0.5"
   },
   "build": {
