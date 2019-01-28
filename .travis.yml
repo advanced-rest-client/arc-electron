@@ -6,15 +6,15 @@ node_js:
 - '10'
 sudo: required
 dist: trusty
-before_script:
+install:
 - npm install -g bower
 - bower i
 script: "./test/travis-build.sh"
 after_success:
 - openssl aes-256-cbc -K $encrypted_36ee0d5a95ce_key -iv $encrypted_36ee0d5a95ce_iv
-  -in advancedrestclient.pfx.enc -out advancedrestclient.pfx -d
+  -in tasks/advancedrestclient.pfx.enc -out tasks/advancedrestclient.pfx -d
 - openssl aes-256-cbc -K $encrypted_36ee0d5a95ce_key -iv $encrypted_36ee0d5a95ce_iv
-  -in mac-app-distribution-cert.p12.enc -out mac-app-distribution-cert.p12 -d
+  -in tasks/mac-app-distribution-cert.p12.enc -out tasks/mac-app-distribution-cert.p12 -d
 - ./tasks/install-build-deps.sh
 - node tasks/build-success.js
 env:
