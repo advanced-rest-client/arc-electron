@@ -220,8 +220,11 @@ describe('ArcSessionControl class - main process', function() {
           assert.equal(data.size.width, 1);
           assert.equal(data.size.height, 2);
           done();
+        })
+        .catch((cause) => {
+          done(cause);
         });
-      }, 5);
+      }, 15);
     });
   });
 
@@ -251,8 +254,11 @@ describe('ArcSessionControl class - main process', function() {
           assert.equal(data.position.x, 1);
           assert.equal(data.position.y, 2);
           done();
+        })
+        .catch((cause) => {
+          done(cause);
         });
-      }, 5);
+      }, 15);
     });
   });
 });
