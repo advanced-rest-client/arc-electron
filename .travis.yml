@@ -9,6 +9,7 @@ dist: trusty
 install:
 - npm install -g bower
 - bower i
+- npm ci
 script: "./test/travis-build.sh"
 after_success:
 - openssl aes-256-cbc -K $encrypted_36ee0d5a95ce_key -iv $encrypted_36ee0d5a95ce_iv
