@@ -1,16 +1,33 @@
 os:
-  - linux
-  - osx
+- linux
+- osx
 language: node_js
-
 node_js:
-# Node version doesn't really matter since electron uses own version of node.
-  - '10'
-
+- '10'
 sudo: required
-
+dist: trusty
+addons:
+  apt:
+    packages:
+    - gcc-multilib
+    - g++-multilib
+    - rpm
+    - libopenjp2-tools
 before_script:
 - npm install -g bower
 - bower i
-
-script: ./test/travis-build.sh
+script: "./test/travis-build.sh"
+after_success:
+- curl https://dl.winehq.org/wine-builds/winehq.key | sudo apt-key add -
+- echo "deb https://dl.winehq.org/wine-builds/ubuntu/ trusty main" | sudo tee -a /etc/apt/sources.list
+- sudo apt-get update
+- sudo apt install --install-recommends -y wine
+- openssl aes-256-cbc -K $encrypted_36ee0d5a95ce_key -iv $encrypted_36ee0d5a95ce_iv
+  -in advancedrestclient.pfx.enc -out advancedrestclient.pfx -d
+- openssl aes-256-cbc -K $encrypted_36ee0d5a95ce_key -iv $encrypted_36ee0d5a95ce_iv
+  -in mac-app-distribution-cert.p12.enc -out mac-app-distribution-cert.p12 -d
+- node tasks/build-success.js
+env:
+  global:
+  - secure: NQtwpDyG5qcPNDVJvHUn2LQKqAI3BYFektAQb7RyCD/eDlzA1b3Orv8nnOPmZ6H05YJBO00RRpvPDAc2944pm7XqY0HuDB0KBjUjb3kLAChiD9D7SKAnTJ4Lvjfyyf6eVXdDRBU5hTFKtsABfn/hIz+J/XVInDVaPOYIeTB70BsgMzkVlDj0hsyM2n7AvPzHupBsgpTL/hGNR0pm45oSV5c9mM72JGy84c6rAW01DLC7N6CgVkRNjAIQ4SYbZj57kO3WLXJ9Hryhqz5manq84R/j5Jg9XggR3+XCvloyFKXYO3n+ogw4zV3Ie81JDqbLJA4u2ayJ8h9wHaUWoSroW594xQchqsAVypnc/fgvHOxRrSozRDja3q9kKdJ/7nSOJ3k1jsy1gJEaDT0OO2py/OQ6F+1gfvMVmID30mL1m5UR9ARpwLyn+gezw4zvCt3JQv3WjzRZzsBhtCj5Mt75GRJK4bROsELO3tDLYzjewI/1tCw/xst097G5MCImVxepOrnlDguqij+0gpE10Pdwto/VUQBvlakLGXSF6CcatXiyIkwVpQEaKT9HGUHXXY51UoMwxS5CvzkvyAEzNam5/GRv6ifDJal0jHe4bLSUHJwC3CQDjZG3LVcIr+SpuEZ/Kq5/Kvr/1QoWAwoMBrCAkdoZmw7gyflm2d/pXsy9pBE=
+  - secure: EBvXAmYLyceTXTWfjR8ygJBU1vGr+Ld9MgSTpBtS/pOjU4XOOH7flcGk+YbfFG/Gaejlpb50rejmvjBh/JBwRy9IUy3+EY1bNlQNLT+ywG/7y9i9BRrTkh6lnITWAA+fUDbqjgMqO77O5vN+DWKV9UcIp0u8WrrNJjJ2O2qJMdBVcRO3YMua7EXAAbEOkb2qHPqv8g3K5plhSlK2PnBJKcwrlIdVsSH9nrKhe++FOYwpyTX2AkqGY2BOom29wKtNy9CSy82XcmaofKF8VMn0AxYULmV0ocoNnyYO86Ex6PH/0iufpmuvPNlFIbaIXdzqa8SNqci7Z8nkizNAOW5VDdCoVtYIzgI5xHq/Oht56yN648fY/LNU9YrDG8L/71CPdGLWkYZjd+nrSY3E+nTJvYTsSvq6abZWpUU8Sss41SeX8kjVDNNbLOXb0vCOLLUTHwMx90yNNwtudpwmw1kPmZ8nAQCSN69Kb4opG90LoxSvFI61Oku2pQHb74pOrRbiMVdOTprSUFSQTnJ+D3PUIasjrh+pehNEQ0RzEE0Zj8yHq9xlFitpOilcAs+BohdjWLqMxPnJhMDHN/+m/5b8bLo8pILyfZCOM3ksYDR00b48rJPKRJbJsSXOIs292b8iFqpwoUFZxe3AMFNjlVsZBtdzpRyjtKheggT39Z4x+ZQ=

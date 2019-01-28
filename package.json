@@ -1,8 +1,8 @@
 {
   "name": "advanced-rest-client",
   "description": "The Advanced REST Client desktop application.",
-  "version": "13.0.0-alpha.2",
-  "homepage": "https://advancedrestclient.com/",
+  "version": "13.0.0-alpha.3",
+  "homepage": "https://advancedrestclient.com",
   "license": "Apache-2.0",
   "author": {
     "name": "Pawel Psztyc",
@@ -75,6 +75,8 @@
     "asar": true,
     "copyright": "Copyright © 2018 Mulesoft",
     "generateUpdatesFilesForAllChannels": true,
+    "forceCodeSigning": true,
+    "detectUpdateChannel": true,
     "files": [
       "app.html",
       "app.js",
@@ -174,6 +176,12 @@
       "publisher": "CN=D213CA20-88CE-42AC-A9F2-C5D41BF04550",
       "publisherDisplayName": "Pawel Psztyc"
     },
+    "nsis": {
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "artifactName": "arc-setup-${arch}.${ext}",
+      "shortcutName": "ARC"
+    },
     "publish": [
       {
         "provider": "github",
@@ -186,12 +194,6 @@
       "schemes": [
         "arc-file"
       ]
-    },
-    "nsis": {
-      "installerIcon": "build/icon.ico",
-      "uninstallerIcon": "build/icon.ico",
-      "artifactName": "arc-setup-${arch}.${ext}",
-      "shortcutName": "ARC"
     }
   },
   "oauth2": {
