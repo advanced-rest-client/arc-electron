@@ -111,7 +111,7 @@ describe('ArcPreferencesProxy class - renderer process', function() {
           .catch((cause) => {
             done(cause);
           });
-        }, instance.storeDebounce + 1);
+        }, 150);
       });
     });
   });
