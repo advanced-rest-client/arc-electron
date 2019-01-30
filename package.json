@@ -202,8 +202,7 @@
     "redirect_uri": "https://auth.advancedrestclient.com/oauth2",
     "scopes": [
       "https://www.googleapis.com/auth/drive.file",
-      "https://www.googleapis.com/auth/drive.install",
-      "https://www.googleapis.com/auth/drive.metadata.readonly"
+      "https://www.googleapis.com/auth/drive.install"
     ]
   }
 }
