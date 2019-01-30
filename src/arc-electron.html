@@ -381,7 +381,6 @@
           <saved-requests-panel data-route="saved" list-type="[[config.viewListType]]"></saved-requests-panel>
           <import-panel
             data-route="data-import"
-            api-key="1076318174169-u4a5d3j2v0tbie1jnjgsluqk1ti7ged3.apps.googleusercontent.com"
             access-token="[[driveAccessToken]]"></import-panel>
           <export-panel data-route="data-export"></export-panel>
           <arc-settings-panel data-route="settings">
@@ -390,13 +389,10 @@
           <about-arc-electron data-route="about" app-version="[[appVersion]]"></about-arc-electron>
           <project-details data-route="project" id="projectDetails"></project-details>
           <google-drive-browser
-            mime-type="application/restclient+data"
             data-route="drive"
-            api-key="1076318174169-u4a5d3j2v0tbie1jnjgsluqk1ti7ged3.apps.googleusercontent.com"
             access-token="[[driveAccessToken]]"
             on-drive-file-picker-data="_openDriveRequest"></google-drive-browser>
           <cookie-manager data-route="cookie-manager"></cookie-manager>
-
           <apic-electron
             data-route="api-console"
             data-page="docs"
@@ -417,13 +413,12 @@
             version-saved="{{apiVersionSaved}}"
             multi-version="{{apiMultiVersionVersion}}"
             api-processing="{{apiProcessing}}"></apic-electron>
-
           <rest-apis-list-panel data-route="rest-projects" render-explore></rest-apis-list-panel>
           <exchange-search-panel
             data-route="exchange-search"
             scroll-target="[[_scrollTarget]]"
             anypoint-auth
-            columns$="[[_computeExchangeColumns(exchangeMedia1, exchangeMedia2, exchangeMedia3, exchangeMedia4)]]"
+            columns="auto"
             exchange-redirect-uri="https://auth.advancedrestclient.com/oauth-popup.html"
             exchange-client-id="59KaqF90hLgZMJec"
             force-oauth-events></exchange-search-panel>
@@ -432,11 +427,6 @@
         </iron-pages>
       </app-header-layout>
     </app-drawer-layout>
-    <!-- Media queries to control views -->
-    <iron-media-query query="(min-width: 1101px)" query-matches="{{exchangeMedia4}}"></iron-media-query>
-    <iron-media-query query="(max-width: 1100px)" query-matches="{{exchangeMedia3}}"></iron-media-query>
-    <iron-media-query query="(max-width: 900px)" query-matches="{{exchangeMedia2}}"></iron-media-query>
-    <iron-media-query query="(max-width: 700px)" query-matches="{{exchangeMedia1}}"></iron-media-query>
     <iron-media-query query="(max-width: 700px)" query-matches="{{narrow}}"></iron-media-query>
     <!-- Components loded lazily -->
     <variables-drawer-editor id="environmentsDrawer" with-backdrop></variables-drawer-editor>
@@ -572,6 +562,7 @@
       this._exchangeAssetHandler = this._exchangeAssetHandler.bind(this);
       this._innerOverlayOpened = this._innerOverlayOpened.bind(this);
       this._innerOverlayClosed = this._innerOverlayClosed.bind(this);
+      this.openWorkspace = this.openWorkspace.bind(this);
     }
 
     static get observers() {
@@ -591,6 +582,7 @@
       this.addEventListener('process-exchange-asset-data', this._exchangeAssetHandler);
       this.addEventListener('iron-overlay-opened', this._innerOverlayOpened);
       this.addEventListener('iron-overlay-closed', this._innerOverlayClosed);
+      this.addEventListener('request-workspace-append', this.openWorkspace);
       Polymer.RenderStatus.afterNextRender(this, () => {
         this._variablesButton = this.shadowRoot.querySelector('#varToggleButton');
         this._scrollTarget = this.$.scrollingRegion.$.contentContainer;
@@ -1166,27 +1158,6 @@
      */
     _computeRenderBackButton(page) {
       return !page || page !== 'request';
-    }
-    /**
-     * Computes number of columns to be set on Exchange lsit panel
-     * based on current media query state.
-     * @param {Boolean} exchangeMedia1
-     * @param {Boolean} exchangeMedia2
-     * @param {Boolean} exchangeMedia3
-     * @param {Boolean} exchangeMedia4
-     * @return {Number}
-     */
-    _computeExchangeColumns(exchangeMedia1, exchangeMedia2, exchangeMedia3, exchangeMedia4) {
-      if (exchangeMedia4) {
-        return 4;
-      }
-      if (exchangeMedia1 || exchangeMedia2) {
-        return 2;
-      }
-      if (exchangeMedia3) {
-        return 3;
-      }
-      return 4;
     }
     /**
      * Handler for the "back" icon click in main navigation.
