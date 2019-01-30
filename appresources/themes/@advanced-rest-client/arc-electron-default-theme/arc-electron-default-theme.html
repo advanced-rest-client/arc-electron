@@ -82,6 +82,7 @@ to all elements.
     };
 
     /* Display1: Add variables from --arc-font-common-base */
+
     --arc-font-display1-font-size: 34px;
     --arc-font-display1-font-weight: 400;
     --arc-font-display1-letter-spacing: -.01em;
@@ -112,14 +113,14 @@ to all elements.
       line-height: var(--arc-font-title-line-height);
     }
     /* Headline: Add variables from --arc-font-common-base */
-    --arc-font-headline-font-size: 24px
+    --arc-font-headline-font-size: 24px;
     --arc-font-headline-font-weight: 400;
     --arc-font-headline-letter-spacing: -.012em;
     --arc-font-headline-line-height: 32px;
 
     --arc-font-headline: {
       font-family: var(--arc-font-family);
-      -webkit-font-smoothing: var(--arc-font-font-smoothing);\
+      -webkit-font-smoothing: var(--arc-font-font-smoothing);
       font-size: var(--arc-font-headline-font-size);
       font-weight: var(--arc-font-headline-font-weight);
       letter-spacing: var(--arc-font-headline-letter-spacing);
@@ -441,8 +442,6 @@ to all elements.
     --method-display-head-color: #fff;
 
     /* HTTP methods colors in method documentation panel */
-    --http-method-label-border-radius: 2px;
-    --http-method-label-padding: 0;
     --http-method-label-get-background-color: var(--method-display-get-background-color);
     --http-method-label-get-color: var(--method-display-get-color);
     --http-method-label-post-background-color: var(--method-display-post-background-color);
