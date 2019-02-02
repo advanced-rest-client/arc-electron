@@ -1224,7 +1224,13 @@
      * @return {Boolean}
      */
     _computeVariablesDisabled(sysVars, appVars) {
-      return !sysVars && !appVars;
+      if (sysVars === undefined) {
+        sysVars = true;
+      }
+      if (appVars === undefined) {
+        appVars = true;
+      }
+      return !(sysVars && appVars);
     }
 
     _computeVarDisabled(enabled) {
