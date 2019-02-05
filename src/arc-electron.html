@@ -613,6 +613,7 @@
     _pageChanged(page) {
       let id;
       let path;
+      history.pushState({page}, null, '#' + page);
       switch (page) {
         case 'request':
           id = 'arc-request-workspace';
@@ -694,6 +695,10 @@
       Polymer.RenderStatus.afterNextRender(this, () => this.initSettings({}));
       Polymer.RenderStatus.afterNextRender(this, () => this.updateStyles({}));
       Polymer.RenderStatus.afterNextRender(this, () => this._requestAuthToken(false));
+      const hash = location.hash.substr(1);
+      if (hash) {
+        this.page = hash;
+      }
     }
 
     _setupRequest(params) {
