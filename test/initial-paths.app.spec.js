@@ -29,9 +29,14 @@ describe('Initial paths', function() {
     });
 
     after(function() {
+      let p;
       if (app && app.isRunning()) {
-        return app.stop();
+        p = app.stop();
+      } else {
+        p = Promise.resolve();
       }
+      const basePath = path.join('test', 'playground');
+      return p.then(() => fs.remove(basePath));
     });
 
     it('Should set default settings file location', function() {
@@ -67,28 +72,28 @@ describe('Initial paths', function() {
     it('Sets default ARC_SETTINGS_FILE is in ARC_HOME', () => {
       return app.mainProcess.env()
       .then((variables) => {
-        assert.equal(variables.ARC_SETTINGS_FILE, path.join(variables.ARC_HOME, 'settings.json'));
+        assert.equal(variables.ARC_SETTINGS_FILE, bootstrap.settingsFilePath);
       });
     });
 
     it('Sets default ARC_THEMES in ARC_HOME', () => {
       return app.mainProcess.env()
       .then((variables) => {
-        assert.equal(variables.ARC_THEMES, path.join(variables.ARC_HOME, 'themes'));
+        assert.equal(variables.ARC_THEMES, bootstrap.themesFilePath);
       });
     });
 
     it('Sets default ARC_THEMES_SETTINGS in ARC_THEMES', () => {
       return app.mainProcess.env()
       .then((variables) => {
-        assert.equal(variables.ARC_THEMES_SETTINGS, path.join(variables.ARC_THEMES, 'themes-info.json'));
+        assert.equal(variables.ARC_THEMES_SETTINGS, path.join(bootstrap.themesFilePath, 'themes-info.json'));
       });
     });
 
     it('Sets default ARC_WORKSPACE_PATH in ARC_HOME', () => {
       return app.mainProcess.env()
       .then((variables) => {
-        assert.equal(variables.ARC_WORKSPACE_PATH, path.join(variables.ARC_HOME, 'workspace'));
+        assert.equal(variables.ARC_WORKSPACE_PATH, bootstrap.workspaceFilePath);
       });
     });
 

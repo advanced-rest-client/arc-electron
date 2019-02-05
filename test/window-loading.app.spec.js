@@ -31,9 +31,14 @@ describe('Loading default window', function() {
     });
 
     after(function() {
+      let p;
       if (app && app.isRunning()) {
-        return app.stop();
+        p = app.stop();
+      } else {
+        p = Promise.resolve();
       }
+      const basePath = path.join('test', 'playground');
+      return p.then(() => fs.remove(basePath));
     });
 
     it('Loads app file from "file:" scheme', function() {
