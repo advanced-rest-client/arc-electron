@@ -585,6 +585,7 @@
       this.addEventListener('iron-overlay-opened', this._innerOverlayOpened);
       this.addEventListener('iron-overlay-closed', this._innerOverlayClosed);
       this.addEventListener('request-workspace-append', this.openWorkspace);
+      window.addEventListener('workspace-open-project-requests', this.openWorkspace);
       Polymer.RenderStatus.afterNextRender(this, () => {
         this._variablesButton = this.shadowRoot.querySelector('#varToggleButton');
         this._scrollTarget = this.$.scrollingRegion.$.contentContainer;
