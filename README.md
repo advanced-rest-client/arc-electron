@@ -28,7 +28,7 @@ cd arc-electron
 
 Then install dependencies:
 ```shell
-npm install && bower install
+npm install && npm run bower
 ```
 
 Take a coffee break. It will take a while... You can also install [gifi][gifi], a wrapper for `npm install` that will display a random gif while waiting for npm:
