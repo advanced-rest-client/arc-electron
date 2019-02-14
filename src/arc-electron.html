@@ -284,6 +284,7 @@
         <template is="dom-if" if="[[!isApiConsole]]">
           <arc-menu
             rest-api
+            draggable-enabled="[[config.draggableEnabled]]"
             allow-popup="[[popupMenuExperimentEnabled]]"
             list-type="[[config.viewListType]]"
             history-enabled="[[historyEnabled]]"
@@ -377,7 +378,7 @@
         </app-header>
 
         <iron-pages class="mainPages" attr-for-selected="data-route" selected-attribute="opened" selected="[[page]]">
-          <arc-request-workspace data-route="request" id="workspace"></arc-request-workspace>
+          <arc-request-workspace data-route="request" id="workspace" draggable-enabled="[[config.draggableEnabled]]" oauth2-redirect-uri="[[_oauth2redirectUri]]" narrow="[[narrow]]"></arc-request-workspace>
           <websocket-panel data-route="socket"></websocket-panel>
           <history-panel data-route="history" list-type="[[config.viewListType]]"></history-panel>
           <saved-requests-panel data-route="saved" list-type="[[config.viewListType]]"></saved-requests-panel>
@@ -405,8 +406,7 @@
             handle-navigation-events
             inline-methods
             narrow="[[narrow]]"
-            redirect-uri="https://auth.advancedrestclient.com/oauth-popup.html"
-            narrow="[[narrow]]"
+            redirect-uri="[[_oauth2redirectUri]]"
             scroll-target="[[_scrollTarget]]"
             saved="{{apiIsSaved}}"
             versions="{{apiVersions}}"
@@ -549,7 +549,14 @@
         /**
          * When set the infor center drawer is opened.
          */
-        messageCenterOpened: Boolean
+        messageCenterOpened: Boolean,
+        /**
+         * OAuth 2 redirect URI to be used when authorizing the request.
+         */
+        _oauth2redirectUri: {
+          type: String,
+          computed: '_computeRedirectUri(config.oauth2redirectUri)'
+        }
       };
     }
 
@@ -1270,6 +1277,15 @@
       if (this.hasAttribute('with-overlay')) {
         this.removeAttribute('with-overlay');
       }
+    }
+    /**
+     * Computes value for `oauth2RedirectUri` property. It is either configuration
+     * option or default value.
+     * @param {?String} redirectUri Configuration value for redirect URI.
+     * @return {String} Redirect URI to be used.
+     */
+    _computeRedirectUri(redirectUri) {
+      return redirectUri ? redirectUri : 'https://auth.advancedrestclient.com/oauth-popup.html';
     }
   }
   window.customElements.define(ArcElectron.is, ArcElectron);
