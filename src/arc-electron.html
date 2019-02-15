@@ -98,6 +98,11 @@
       padding: 4px;
     }
 
+    .mainPages,
+    app-header {
+      border-left: 1px var(--arc-layout-divider-color, #BDBDBD) solid;
+    }
+
     google-drive-browser {
       height: calc(100vh - 64px);
     }
@@ -223,11 +228,11 @@
     }
 
     app-drawer {
-      @apply --shadow-elevation-6dp;
+      z-index: 0;
     }
 
-    :host([with-overlay]) app-drawer {
-      z-index: 0;
+    :host([narrow-layout]) app-drawer {
+      z-index: 1;
     }
 
     .info-center-drawer {
@@ -263,7 +268,7 @@
     <!-- Helper components -->
     <web-url-input id="webUrlInput" purpose="web-session" on-open-web-url="_openWebUrlHandler"></web-url-input>
     <!-- Application views -->
-    <app-drawer-layout fullbleed narrow="{{narrowLayout}}" force-narrow="[[appMenuDisabled]]">
+    <app-drawer-layout fullbleed narrow="{{narrowLayout}}" force-narrow="[[appMenuDisabled]]" responsive-width="980px">
       <app-drawer slot="drawer" align="start">
         <template is="dom-if" if="[[isApiConsole]]">
           <div class="api-navigation">
@@ -569,8 +574,6 @@
       this._processStopHandler = this._processStopHandler.bind(this);
       this._processErrorHandler = this._processErrorHandler.bind(this);
       this._exchangeAssetHandler = this._exchangeAssetHandler.bind(this);
-      this._innerOverlayOpened = this._innerOverlayOpened.bind(this);
-      this._innerOverlayClosed = this._innerOverlayClosed.bind(this);
       this.openWorkspace = this.openWorkspace.bind(this);
     }
 
@@ -589,8 +592,6 @@
       window.addEventListener('process-error', this._processErrorHandler);
       window.addEventListener('api-data-ready', this._apiDataHandler);
       this.addEventListener('process-exchange-asset-data', this._exchangeAssetHandler);
-      this.addEventListener('iron-overlay-opened', this._innerOverlayOpened);
-      this.addEventListener('iron-overlay-closed', this._innerOverlayClosed);
       this.addEventListener('request-workspace-append', this.openWorkspace);
       window.addEventListener('workspace-open-project-requests', this.openWorkspace);
       Polymer.RenderStatus.afterNextRender(this, () => {
@@ -1264,18 +1265,6 @@
     processExternalFile(file) {
       if (!file) {
         throw new Error('"file" argument is required.');
-      }
-    }
-
-    _innerOverlayOpened() {
-      if (!this.hasAttribute('with-overlay')) {
-        this.setAttribute('with-overlay', '');
-      }
-    }
-
-    _innerOverlayClosed() {
-      if (this.hasAttribute('with-overlay')) {
-        this.removeAttribute('with-overlay');
       }
     }
     /**
