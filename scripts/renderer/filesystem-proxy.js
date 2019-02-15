@@ -40,11 +40,12 @@ class FilesystemProxy {
       return;
     }
     e.preventDefault();
+    const {content, file, options} = e.detail;
     ipc.send('save-dialog', {
-      file: e.detail.file
+      file
     });
-    this.lastContent = e.detail.content;
-    this.lastType = e.detail.contentType;
+    this.lastContent = content;
+    this.lastType = options && options.contentType;
     e.detail.result = new Promise((resolve, reject) => {
       this.lastResolve = resolve;
       this.lastReject = reject;
@@ -75,7 +76,7 @@ class FilesystemProxy {
     switch (this.lastType) {
       case 'application/json': return JSON.stringify(data);
     }
-    return data;
+    return String(data);
   }
   /**
    * Allows to read file from user filesystem.
