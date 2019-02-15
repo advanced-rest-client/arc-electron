@@ -174,7 +174,7 @@ the License.
         versionSaved: {
           type: Boolean,
           notify: true,
-          computed: '_computeIsVersionSaved(versions, apiVersion)'
+          computed: '_computeIsVersionSaved(versions.*, apiVersion)'
         },
         /**
          * When set the API is being processed.
@@ -315,7 +315,8 @@ the License.
       return e.detail.result;
     }
 
-    _computeIsVersionSaved(versions, apiVersion) {
+    _computeIsVersionSaved(record, apiVersion) {
+      const versions = record && record.base;
       if (!versions || !versions.length || !apiVersion) {
         return;
       }
@@ -366,7 +367,7 @@ the License.
       if (!apiInfo) {
         return this._saveApi();
       }
-      return this._saveVersion(apiInfo);
+      return this._saveVersion(Object.assign({}, apiInfo));
     }
 
     _saveApi() {
@@ -400,6 +401,8 @@ the License.
     _updateVersionInfo(apiInfo, version) {
       if (!(apiInfo.versions instanceof Array)) {
         apiInfo.versions = [];
+      } else {
+        apiInfo.versions = Array.from(apiInfo.versions);
       }
       if (apiInfo.versions.indexOf(version) === -1) {
         apiInfo.versions.push(version);
