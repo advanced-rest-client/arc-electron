@@ -26,7 +26,8 @@
     "build-w": "npx electron-builder -w",
     "build-m": "npx electron-builder -m",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "dist": "electron-builder",
+    "start-drive": "electron . --inspect --debug --debug-level=\"silly\" --with-devtools --workspace-path=\"~/arc-dev/workspace\" --settings-file=\"~/arc-dev/dev-settings.json\" --themes-path=\"~/arc-dev/themes\" arc-file://drive/open/1_PAI-CGHqi_pZCV8ZZ_9_N-LGMjkAYzn"
   },
   "main": "main.js",
   "devDependencies": {
@@ -43,7 +44,7 @@
   },
   "dependencies": {
     "@advanced-rest-client/arc-electron-payload-processor": "^0.1.1",
-    "@advanced-rest-client/electron-drive": "0.2.1",
+    "@advanced-rest-client/electron-drive": "0.2.3",
     "@advanced-rest-client/electron-oauth2": "1.0.0",
     "@advanced-rest-client/electron-request": "1.0.0",
     "@advanced-rest-client/electron-session-state": "1.0.0",

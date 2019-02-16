@@ -125,6 +125,7 @@ class ArcInit {
     window.ArcConfig.initConfig = initConfig;
     this.initApp()
     .then(() => this.upgradeApp())
+    .then(() => this.processInitialPath())
     .then(() => this.removeLoader())
     .then(() => console.log('Application window is now ready.'));
   }
@@ -454,6 +455,72 @@ class ArcInit {
       }
       console.info('Applying upgrades...');
       return inst.upgrade(upgrades);
+    });
+  }
+
+  processInitialPath() {
+    const startPath = this.initConfig.startPath;
+    if (!startPath) {
+      return Promise.resolve();
+    }
+    const parts = startPath.split('/');
+    if (parts[0] === 'file-protocol-action') {
+      return this.handleDefaultProtocolActon(parts.slice(1));
+    } else {
+      history.pushState('', null, '#' + startPath);
+      return Promise.resolve();
+    }
+  }
+  /**
+   * Handles action run from default protocol. ARC open files having protocol
+   * `arc-file:`.
+   * @param {Array} args Action arguments passed from the main process.
+   * @return {Promise}
+   */
+  handleDefaultProtocolActon(args) {
+    const [source, action, id] = args;
+    switch (source) {
+      case 'google-drive': return this.handleGoogleDriveAction(action, id);
+    }
+    console.warn('Unknown protocol action. ', args);
+    return Promise.resolve();
+  }
+  /**
+   * Handles opening a file from Google Drive UI.
+   * @param {String} action Action passed from the Drive app. Currently only `open` action
+   * is supported.
+   * @param {String} fileId File id to process
+   * @return {Promise}
+   */
+  handleGoogleDriveAction(action, fileId) {
+    if (action !== 'open') {
+      console.warn('Currently only open action for Google Drive is supported.');
+      return Promise.resolve();
+    }
+    const infoNode = document.querySelector('.loading-info');
+    infoNode.innerText = 'Loading file from Google Drive';
+    return this.driveBridge.getFile(fileId)
+    .then((data) => {
+      if (!data) {
+        throw new Error('Google drive did not return any data.');
+      }
+      try {
+        data = JSON.parse(data);
+      } catch (e) {
+        console.error(e);
+        throw new Error('Unable to parse received data.');
+      }
+      document.body.dispatchEvent(new CustomEvent('import-process-data', {
+        bubbles: true,
+        cancelable: true,
+        detail: {
+          data
+        }
+      }));
+    })
+    .catch((cause) => {
+      console.warn(cause);
+      this.app.notifyError(cause.message);
     });
   }
 }

@@ -61,7 +61,7 @@ class ArcWindowsManager {
     if (!ws || !ws.length) {
       return;
     }
-    for (let i = ws.length; i >= 0; i--) {
+    for (let i = ws.length - 1; i >= 0; i--) {
       if (!ws[i].isDestroyed()) {
         return ws[i];
       }
@@ -71,15 +71,9 @@ class ArcWindowsManager {
    * Restores latest window is any present.
    */
   restoreLast() {
-    const win = this.windows && this.windows.length &&
-      this.windows[this.windows.length - 1];
+    const win = this.lastActive;
     if (win) {
-      if (win.isDestroyed()) {
-        this.windows.pop();
-        this.open();
-      } else {
-        win.show();
-      }
+      win.show();
     } else {
       this.open();
     }
@@ -209,7 +203,7 @@ class ArcWindowsManager {
    * @return {Promise} Resolved promise when the window is ready.
    */
   open(path) {
-    log.debug('[WM] Opening new window', path);
+    log.debug('[WM] Opening new window' + (path ? ': ' + path : ''));
     const index = this._getWindowIndex();
     log.debug('Generated index for the widnow: ' + index);
     const session = new ArcSessionControl(index);
@@ -220,6 +214,30 @@ class ArcWindowsManager {
       this.__attachListeners(win);
       this.windows.push(win);
       this.__loadPage(win, path);
+      if (this.startupOptions.withDevtools) {
+        win.webContents.openDevTools();
+      }
+      return this.recorder.record()
+      .then(() => win);
+    });
+  }
+
+  openWithAction(options) {
+    if (!options) {
+      log.error('openWithAction called without argument.');
+      return;
+    }
+    log.debug('[WM] Opening new window with action ' + options.source + ' ' + options.action);
+    const index = this._getWindowIndex();
+    log.debug('Generated index for the widnow: ' + index);
+    const session = new ArcSessionControl(index);
+    return session.load()
+    .then((data) => {
+      const win = this.__getNewWindow(index, data);
+      win.__arcSession = session;
+      this.__attachListeners(win);
+      this.windows.push(win);
+      this.__loadPage(win, 'file-protocol-action/' + options.source + '/' + options.action + '/' + options.id);
       if (this.startupOptions.withDevtools) {
         win.webContents.openDevTools();
       }

@@ -79,6 +79,7 @@ module.exports = function(startTime) {
 
   function addUrlToOpen(event, url) {
     event.preventDefault();
+    log.debug('Received URL to open: ' + url);
     const fileData = url.substr(11);
     const parts = fileData.split('/');
     switch (parts[0]) {
@@ -89,11 +90,16 @@ module.exports = function(startTime) {
       break;
     }
   }
-  app.setAsDefaultProtocolClient('arc-file');
+  const protocolResult = app.setAsDefaultProtocolClient('arc-file');
+  if (protocolResult) {
+    log.debug('Registered arc-file protocol');
+  } else {
+    log.warn('Unable to register arc-file protocol');
+  }
   app.on('open-url', addUrlToOpen);
   app.once('ready', function() {
     global.appReadyTime = Date.now();
-    log.debug('Electron ready time: ' + (global.appReadyTime - global.shellStartTime));
+    log.debug('Electron ready time: ' + (global.appReadyTime - global.shellStartTime) + 'ms');
     app.removeListener('open-url', addUrlToOpen);
     const defaults = new AppDefaults();
     defaults.prepareEnvironment()
@@ -105,7 +111,7 @@ module.exports = function(startTime) {
     .then(() => {
       global.appLoadingTime = Date.now();
       log.debug('App init time: ' + (global.appLoadingTime - global.appReadyTime));
-      global.arc.open();
+      global.arc.open(initOptions.openProtocolFile);
     });
   });
 

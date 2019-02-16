@@ -58,8 +58,12 @@ class ArcEnvironment {
     this.componentsProtocol = cp;
   }
 
-  open(path) {
-    this.wm.open(path);
+  open(params) {
+    if (!params || typeof params === 'string') {
+      this.wm.open(params);
+    } else {
+      this.wm.openWithAction(params);
+    }
   }
 
   _postConfig(config) {
@@ -113,7 +117,7 @@ class ArcEnvironment {
 
   _initializeGoogleDriveIntegration() {
     log.debug('Initializing Google Drive integration.');
-    this.gdrive = new DriveExport();
+    this.gdrive = new DriveExport(DriveExport.arcDefaults);
     this.gdrive.listen();
   }
 

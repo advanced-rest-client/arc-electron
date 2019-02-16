@@ -11,7 +11,7 @@ let logRoot;
 try {
   logRoot = app.getPath('logs');
 } catch (_) {
-  logRoot = app.getPath('userData');
+  logRoot = app.getPath('userData', 'logs');
 }
 const logPath = path.join(logRoot, 'log.log');
 const errorPath = path.join(logRoot, 'error.log');
@@ -22,7 +22,9 @@ const logger = createLogger({
   exitOnError: false,
   level: 'warning',
   transports: [
-    new transports.Console(),
+    new transports.Console({
+      level: 'debug'
+    }),
     new transports.File({
       filename: logPath,
       // level: 'debug',

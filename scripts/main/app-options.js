@@ -89,12 +89,17 @@ class AppOptions {
     for (let i = 1; i < process.argv.length; i++) {
       let arg = process.argv[i];
       if (arg[0] !== '-') {
-        log.warn('Unknown startup option ', arg);
+        if (arg[0] !== '.') {
+          log.warn('Unknown startup option ' + arg);
+        }
+        if (this.isDefaultProtocolFile(arg)) {
+          this.setDefaultProtocolFile(arg);
+        }
         continue;
       }
       let def = this.findDefinnition(arg);
       if (!def) {
-        log.warn('Unknown startup option ', arg);
+        log.warn('Unknown startup option ' + arg);
         continue;
       }
       def = this.getPropertyDefinition(arg, def, process.argv[i + 1]);
@@ -102,6 +107,37 @@ class AppOptions {
       if (def.skipNext) {
         i++;
       }
+    }
+  }
+  /**
+   * Checks if the argument is default protocol file argument added to the
+   * program's options by the OS.
+   * @param {String} arg Argument to test
+   * @return {Boolean} True if passed argument represent default protocol file.
+   */
+  isDefaultProtocolFile(arg) {
+    return !!(arg && arg.indexOf('arc-file://') === 0);
+  }
+  /**
+   * Sets `openProtocolFile` property with passed file path infomation.
+   * The `source` property represents file source (like google-drive).
+   * The `action` property represent an action to take (like `open` or `create`).
+   * The `id` proeprty if the file identifier.
+   * @param {String} url Default protocol file.
+   */
+  setDefaultProtocolFile(url) {
+    const fileData = url.substr(11);
+    const parts = fileData.split('/');
+    switch (parts[0]) {
+      case 'drive':
+        // arc-file://drive/open/file-id
+        // arc-file://drive/create/file-id
+        this.openProtocolFile = {
+          source: 'google-drive',
+          action: parts[1],
+          id: parts[2]
+        };
+      break;
     }
   }
   /**
