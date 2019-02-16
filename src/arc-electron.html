@@ -64,6 +64,7 @@
 <link rel="import" href="../bower_components/http-code-snippets/http-code-snippets.html">
 <link rel="import" href="../bower_components/arc-electron-experiment-settings/arc-electron-experiment-settings.html">
 <link rel="import" href="../bower_components/api-candidates-dialog/api-candidates-dialog.html">
+<link rel="import" href="../bower_components/arc-onboarding/arc-onboarding.html">
 <dom-module id="arc-electron">
   <template>
     <style>
@@ -466,6 +467,7 @@
     </template>
     <arc-license-dialog></arc-license-dialog>
     <api-candidates-dialog></api-candidates-dialog>
+    <arc-onboarding></arc-onboarding>
     <paper-toast id="errorToast" duration="5000"></paper-toast>
   </template>
   <script>
@@ -1275,6 +1277,13 @@
      */
     _computeRedirectUri(redirectUri) {
       return redirectUri ? redirectUri : 'https://auth.advancedrestclient.com/oauth-popup.html';
+    }
+    /**
+     * Opens onboarding element.
+     */
+    openOnboarding() {
+      const node = this.shadowRoot.querySelector('arc-onboarding');
+      node.opened = true;
     }
   }
   window.customElements.define(ArcElectron.is, ArcElectron);

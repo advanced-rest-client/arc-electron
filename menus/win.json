@@ -259,6 +259,10 @@
         "command": "application:open-messages"
       },
       {
+        "label": "Show tutorial",
+        "command": "application:open-onboarding"
+      },
+      {
         "type": "separator"
       },
       {

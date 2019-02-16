@@ -283,6 +283,7 @@ class ArcInit {
       case 'open-web-socket': app.openWebSocket(); break;
       case 'popup-menu': this._toggleMenuWindow(); break;
       case 'process-external-file': this.processExternalFile(args[0]); break;
+      case 'open-onboarding': app.openOnboarding(); break;
       default:
         console.warn('Unknown command', action, args);
     }

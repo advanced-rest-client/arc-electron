@@ -72,7 +72,8 @@
     "saved-requests-panel": "advanced-rest-client/saved-requests-panel#^2.0.0",
     "themes-panel": "advanced-rest-client/themes-panel#^2.0.0",
     "api-candidates-dialog": "advanced-rest-client/api-candidates-dialog#^2.0.0",
-    "pouchdb": "^7.0.0"
+    "pouchdb": "^7.0.0",
+    "arc-onboarding": "advanced-rest-client/arc-onboarding#^2.0.0"
   },
   "devDependencies": {
     "web-component-tester": "^6.0.0",
