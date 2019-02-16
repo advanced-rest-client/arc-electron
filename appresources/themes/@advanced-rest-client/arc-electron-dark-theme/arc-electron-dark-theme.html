@@ -132,7 +132,7 @@ to all elements.
     --api-navigation-toggle-icon-color: #fff;
     --api-navigation-list-item-selected-background-color: #546E7A;
     --api-navigation-list-item-selected-color: #fff;
-    --request-list-history-group-header-color: #fff;
+    --request-list-item-history-group-header-color: #fff;
     --projects-menu-project-icon-color: #989a9b;
     --api-navigation-operation-endpoint-opened-background-color: #37474F;
     --api-navigation-endpoint-toggle-icon: {
@@ -303,6 +303,10 @@ to all elements.
       color: var(--inline-fom-action-icon-color);
     }
 
+    --request-editor-tabs-container: {
+      background-color: #455A64;
+    };
+
     --code-type-text-value-color: #81C784;
     --code-type-number-value-color: #FFA000;
     --code-type-boolean-value-color: #FFA000;
@@ -407,6 +411,84 @@ to all elements.
       @apply --arc-font-common-base;
       color: #00a1df;
     }
+
+    --request-editor-section-padding: 8px 12px;
+
+    /* Authorization panel */
+    --stepper-step-number-background-color: var(--primary-color);
+    --authorization-panel: {
+      padding: var(--request-editor-section-padding);
+    }
+
+    /* URL parameters editor */
+    --api-url-params-editor: {
+      padding: var(--request-editor-section-padding);
+    }
+
+    --api-url-params-editor-editor-subheader: {
+      @apply --arc-font-body2;
+      font-size: 14px;
+      padding: 0.73em 0;
+      margin: 0;
+      margin-right: 12px;
+    }
+
+    /* Headers editor */
+    --api-headers-editor: {
+      padding: var(--request-editor-section-padding);
+    }
+
+    /* Body editor */
+    --api-body-editor: {
+      padding: var(--request-editor-section-padding);
+    }
+
+    --request-actions-panel: {
+      padding: 12px;
+    }
+  }
+
+  [narrow] {
+    --narrow-request-editor-section-padding: 0px;
+    --authorization-panel: {
+      padding: var(--narrow-request-editor-section-padding);
+    };
+    --api-headers-editor: {
+      padding: var(--narrow-request-editor-section-padding);
+    };
+    --api-body-editor: {
+      padding: var(--narrow-request-editor-section-padding);
+    };
+    --api-url-params-editor: {
+      padding: var(--narrow-request-editor-section-padding);
+    };
+    /* Query / URI parameters documentation styles */
+    --api-parameters-document-title-narrow: {
+      font-size: 17px;
+    };
+
+    /* Headers documentation styles */
+    --api-headers-document-title-narrow: {
+      font-size: 17px;
+    };
+
+    /* API method documentation styles */
+    --api-method-documentation-title-narrow: {
+      font-size: 22px;
+      font-weight: 400;
+    };
+    --api-method-documentation-main-section-title-narrow: {
+      font-size: 20px;
+    };
+    --api-method-documentation-subsection-title-narrow: {
+      font-size: 17px;
+    };
+    /* Body documentation styles */
+    --api-body-document-title-narrow: {
+      font-size: 17px;
+    };
+
+    --api-console-main-content-margin-top: 12px;
   }
   </style>
 </custom-style>
