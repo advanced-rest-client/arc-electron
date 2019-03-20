@@ -32,8 +32,8 @@
   "main": "main.js",
   "devDependencies": {
     "chai": "^4.2.0",
-    "electron": "^4.0.4",
-    "electron-builder": "^20.38.5",
+    "electron": "^4.1.0",
+    "electron-builder": "^20.39.0",
     "electron-mocha": "^6.0.4",
     "eslint": "^4.18.1",
     "eslint-config-google": "^0.9.1",
