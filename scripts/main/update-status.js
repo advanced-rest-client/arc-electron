@@ -79,8 +79,10 @@ class UpdateStatus extends ArcBase {
    * @param {Object} settings Current application configuration.
    */
   start(settings) {
+    log.info('Initializing Auto Updater.');
     if (settings.releaseChannel) {
       if (this.isValidChannel(settings.releaseChannel)) {
+        log.info('Setting auto updater channel to ' + settings.releaseChannel);
         autoUpdater.channel = settings.releaseChannel;
       }
     }
@@ -89,7 +91,6 @@ class UpdateStatus extends ArcBase {
       autoUpdater.autoDownload = false;
       return;
     }
-    log.info('Initializing Auto Updater.');
     setTimeout(() => {
       this.check();
     }, 5000);
