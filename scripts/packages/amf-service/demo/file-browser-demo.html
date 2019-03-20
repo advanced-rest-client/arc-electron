@@ -1,0 +1,146 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../bower_components/paper-styles/typography.html">
+<link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/iron-overlay-behavior/iron-overlay-behavior.html">
+<link rel="import" href="../bower_components/polymer/lib/legacy/class.html">
+<dom-module id="file-browser-demo">
+  <template>
+    <style>
+    :host {
+      @apply --paper-font-body1;
+      min-width: 320px;
+      min-height: 400px;
+      background-color: white;
+
+      @apply --layout-vertical;
+    }
+
+    :host > * {
+      padding: 24px;
+    }
+
+    h1 {
+      @apply --paper-font-title;
+    }
+
+    .content {
+      @apply --layout-flex;
+      border-bottom: 1px #e5e5e5 solid;
+    }
+
+    .actions {
+      @apply --layout-horizontal-reverse;
+    }
+
+    .main-action {
+      background-color: #2196F3;
+      color: white;
+    }
+    </style>
+    <div class="content">
+      <h1>Select API main file</h1>
+      <paper-listbox id="list">
+        <template is="dom-repeat" items="[[candidates]]">
+          <paper-item>[[item]]</paper-item>
+        </template>
+      </paper-listbox>
+    </div>
+    <div class="actions">
+      <paper-button class="main-action" raised on-click="select">Select</paper-button>
+      <paper-button on-click="cancel">cancel</paper-button>
+    </div>
+  </template>
+  <script>
+  /**
+   * `file-browser-demo`
+   *
+   * ## Styling
+   *
+   * `<file-browser-demo>` provides the following custom properties and mixins for styling:
+   *
+   * Custom property | Description | Default
+   * ----------------|-------------|----------
+   * `--file-browser-demo` | Mixin applied to this elment | `{}`
+   *
+   * @customElement
+   * @polymer
+   * @demo demo/index.html
+   * @memberof ApiElements
+   */
+  class FileBrowserDemo extends
+    Polymer.mixinBehaviors([Polymer.IronOverlayBehavior], Polymer.Element) {
+    static get is() {return 'file-browser-demo';}
+    static get properties() {
+      return {
+        candidates: Array
+      };
+    }
+
+    constructor() {
+      super();
+      this._selectHandler = this._selectHandler.bind(this);
+      this._canceledHandler = this._canceledHandler.bind(this);
+    }
+
+    connectedCallback() {
+      super.connectedCallback();
+      window.addEventListener('api-select-entrypoint', this._selectHandler);
+      this.addEventListener('iron-overlay-canceled', this._canceledHandler);
+    }
+
+    disconnectedCallback() {
+      super.disconnectedCallback();
+      window.removeEventListener('api-select-entrypoint', this._selectHandler);
+      this.removeEventListener('iron-overlay-canceled', this._canceledHandler);
+    }
+
+    _selectHandler(e) {
+      if (e.defaultPrevented) {
+        return;
+      }
+      e.preventDefault();
+      this.set('candidates', e.detail.candidates);
+      e.detail.result = new Promise((resolve) => {
+        this._promise = {
+          resolve
+        };
+        this.opened = true;
+      });
+    }
+
+    _finish(file) {
+      this._promise.resolve(file);
+      this._promise = undefined;
+      this.set('candidates', undefined);
+      this.opened = false;
+      this.$.list.selected = undefined;
+    }
+
+    select() {
+      const index = this.$.list.selected;
+      if (index === undefined) {
+        return;
+      }
+      if (index < 0) {
+        return;
+      }
+      const file = this.candidates[index];
+      this._finish(file);
+    }
+
+    cancel() {
+      this._finish();
+    }
+
+    _canceledHandler() {
+      if (this._promise) {
+        this._finish();
+      }
+    }
+  }
+  window.customElements.define(FileBrowserDemo.is, FileBrowserDemo);
+  </script>
+</dom-module>

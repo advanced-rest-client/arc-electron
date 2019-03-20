@@ -1,14 +1,17 @@
-const log = require('electron-log');
+const log = require('./logger');
+const EventEmitter = require('events');
 /**
  * Base class for other classes containing utility functions.
  */
-class ArcBase {
+class ArcBase extends EventEmitter {
   /**
    * @constructor
    */
   constructor() {
+    super();
     this._ipcRequestId = 0;
     this._promises = [];
+    this._debouncers = [];
     this._ipcPromiseCallback = this._ipcPromiseCallback.bind(this);
   }
   /**
@@ -40,11 +43,11 @@ class ArcBase {
     if (!this._debouncers) {
       this._debouncers = [];
     }
-    let index = this._debounceIndex(name);
+    const index = this._debounceIndex(name);
     if (index !== -1) {
       return;
     }
-    let cancelId = setTimeout(() => {
+    const cancelId = setTimeout(() => {
       let index = this._debounceIndex(name);
       this._debouncers.splice(index, 1);
       callback.call(this);
@@ -61,11 +64,11 @@ class ArcBase {
    * @param {String} name Name of the task
    */
   cancelDebounce(name) {
-    let index = this._debounceIndex(name);
+    const index = this._debounceIndex(name);
     if (index === -1) {
       return;
     }
-    let debounce = this._debouncers[index];
+    const debounce = this._debouncers[index];
     clearTimeout(debounce.id);
     this._debouncers.splice(index, 1);
   }
@@ -84,11 +87,11 @@ class ArcBase {
    * @return {Promise} Generated Promise object.
    */
   appendPromise(id) {
-    let p = new Promise((resolve, reject) => {
-      let obj = {
-        id: id,
-        resolve: resolve,
-        reject: reject
+    const p = new Promise((resolve, reject) => {
+      const obj = {
+        id,
+        resolve,
+        reject
       };
       this._promises.push(obj);
     });
@@ -97,26 +100,34 @@ class ArcBase {
   /**
    * Callback function for IPC main event.
    *
-   * @param {String} event
+   * @param {String} e
    * @param {String} id Id if generated promise.
    * @param {Boolean} isError Determines if resolved is error.
    * @param {?Array} args Arguments from the main process.
    */
-  _ipcPromiseCallback(event, id, isError, ...args) {
-    log.info('Received IPC response for id', id, ', is error? ', isError, args);
-    let index = this._promises.findIndex((p) => p.id === id);
+  _ipcPromiseCallback(e, id, isError, ...args) {
+    log.debug('Received IPC response for id', id, ', is error? ', isError, args);
+    const index = this._promises.findIndex((p) => p.id === id);
     if (index === -1) {
       log.error('IPC promise for id', id, ' not found');
       throw new Error('Promise not found');
     }
-    let promise = this._promises[index];
+    const promise = this._promises[index];
     this._promises.splice(index, 1);
     if (isError) {
-      log.info('Rejecting IPC promise');
-      promise.reject(...args);
+      log.debug('Rejecting IPC promise');
+      if (args.length === 1) {
+        promise.reject(...args);
+      } else {
+        promise.reject(args);
+      }
     } else {
-      log.info('Resolving IPC promise');
-      promise.resolve(...args);
+      log.debug('Resolving IPC promise');
+      if (args.length === 1) {
+        promise.resolve(...args);
+      } else {
+        promise.resolve(args);
+      }
     }
   }
 }

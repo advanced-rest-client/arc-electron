@@ -1,6 +1,5 @@
-const log = require('electron-log');
+const log = require('./logger');
 const camelCase = require('camelcase');
-log.transports.file.level = 'info';
 
 /**
  * A class describing and processing application initial options.
@@ -22,14 +21,51 @@ class AppOptions {
       shortcut: '-s',
       type: String
     }, {
-      // Path to the workspace state file. Overrides default location.
-      name: '--workspace-file',
+      // Path to the workspace state files path. Overrides default location.
+      name: '--workspace-path',
       shortcut: '-w',
       type: String
     }, {
-      // Disables console info output
-      name: '--disable-log',
+      // Path to the workspace state files path. Overrides default location.
+      name: '--themes-path',
+      shortcut: '-t',
+      type: String
+    }, {
+      // Path to application components directory (with ARC components)
+      name: '--components-path',
+      shortcut: '-c',
+      type: String
+    }, {
+      // Opens ARC in dev mode (opened console, verbose log)
+      name: '--debug',
+      shortcut: '-d',
+      type: Boolean
+    }, {
+      // Debug log level. Default to "debug". Only valid when `--debug` is set
+      name: '--debug-level',
       shortcut: '-l',
+      type: String
+    }, {
+      // Opens ARC in dev mode (opened console, verbose log)
+      name: '--with-devtools',
+      shortcut: '-w',
+      type: Boolean
+    }, {
+      name: '.', // from "npm start" to not print error
+      shortcut: '-dot',
+      type: String
+    }, {
+      name: '--port',
+      shortcut: '-p',
+      type: Number
+    }, {
+      name: '--open',
+      shortcut: '-o',
+      type: String,
+      allowArray: true
+    }, {
+      name: '--test',
+      shortcut: '-test',
       type: Boolean
     }];
   }
@@ -40,7 +76,9 @@ class AppOptions {
   getOptions() {
     let result = {};
     for (let prop in this) {
-      result[prop] = this[prop];
+      if (this.hasOwnProperty(prop)) {
+        result[prop] = this[prop];
+      }
     }
     return result;
   }
@@ -48,18 +86,20 @@ class AppOptions {
    * Parses startup options.
    */
   parse() {
-    for (let i = 0; i < process.argv.length; i++) {
-      if (i === 0) {
-        continue;
-      }
+    for (let i = 1; i < process.argv.length; i++) {
       let arg = process.argv[i];
       if (arg[0] !== '-') {
-        log.warn('Unknown startup option ', arg);
+        if (arg[0] !== '.') {
+          log.warn('Unknown startup option ' + arg);
+        }
+        if (this.isDefaultProtocolFile(arg)) {
+          this.setDefaultProtocolFile(arg);
+        }
         continue;
       }
       let def = this.findDefinnition(arg);
       if (!def) {
-        log.warn('Unknown startup option ', arg);
+        log.warn('Unknown startup option ' + arg);
         continue;
       }
       def = this.getPropertyDefinition(arg, def, process.argv[i + 1]);
@@ -67,6 +107,37 @@ class AppOptions {
       if (def.skipNext) {
         i++;
       }
+    }
+  }
+  /**
+   * Checks if the argument is default protocol file argument added to the
+   * program's options by the OS.
+   * @param {String} arg Argument to test
+   * @return {Boolean} True if passed argument represent default protocol file.
+   */
+  isDefaultProtocolFile(arg) {
+    return !!(arg && arg.indexOf('arc-file://') === 0);
+  }
+  /**
+   * Sets `openProtocolFile` property with passed file path infomation.
+   * The `source` property represents file source (like google-drive).
+   * The `action` property represent an action to take (like `open` or `create`).
+   * The `id` proeprty if the file identifier.
+   * @param {String} url Default protocol file.
+   */
+  setDefaultProtocolFile(url) {
+    const fileData = url.substr(11);
+    const parts = fileData.split('/');
+    switch (parts[0]) {
+      case 'drive':
+        // arc-file://drive/open/file-id
+        // arc-file://drive/create/file-id
+        this.openProtocolFile = {
+          source: 'google-drive',
+          action: parts[1],
+          id: parts[2]
+        };
+      break;
     }
   }
   /**
@@ -122,7 +193,7 @@ class AppOptions {
    * @return {String} Value for the argument.
    */
   getArgValue(arg) {
-    let index = arg.indexOf('=');
+    const index = arg.indexOf('=');
     if (index === -1) {
       return '';
     }
@@ -141,7 +212,16 @@ class AppOptions {
    */
   setProperty(def) {
     const name = camelCase(def.name);
-    this[name] = def.value;
+    if (this[name] && def.allowArray) {
+      let v = this[name];
+      if (!(v instanceof Array)) {
+        v = [v];
+      }
+      v.push(def.value);
+      this[name] = v;
+    } else {
+      this[name] = def.value;
+    }
   }
 }
 exports.AppOptions = AppOptions;

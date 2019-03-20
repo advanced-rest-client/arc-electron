@@ -6,9 +6,17 @@
         "command": "request:new-tab",
         "accelerator": "CommandOrControl+t"
       }, {
+        "label": "Close tab",
+        "command": "request:close-tab",
+        "accelerator": "CommandOrControl+w"
+      }, {
         "label": "New Window",
         "command": "application:new-window",
         "accelerator": "CommandOrControl+n"
+      }, {
+        "label": "Open file",
+        "command": "application:open-file",
+        "accelerator": "CommandOrControl+Shift+o"
       }, {
         "label": "Open saved request",
         "command": "application:open-saved",
@@ -158,11 +166,23 @@
       },
       {
         "role": "front"
+      },
+      {
+        "type": "separator",
+        "visible": false
+      },
+      {
+        "label": "Popup application menu",
+        "command": "application:popup-menu",
+        "visible": false
       }
     ]
   }, {
     "label": "Request",
     "submenu": [{
+      "label": "Open requests workspace",
+      "command": "application:open-requests-workspace"
+    }, {
       "label": "Run current tab",
       "command": "request:send-current",
       "accelerator": "CommandOrControl+Shift+r"
@@ -189,6 +209,11 @@
     }, {
       "label": "Hosts",
       "command": "application:open-hosts-editor"
+    }, {
+      "type": "separator"
+    }, {
+      "label": "Web socket request",
+      "command": "application:open-web-socket"
     }]
   }, {
     "label": "Help",
@@ -232,6 +257,10 @@
       {
         "label": "What's new",
         "command": "application:open-messages"
+      },
+      {
+        "label": "Show tutorial",
+        "command": "application:open-onboarding"
       },
       {
         "type": "separator"

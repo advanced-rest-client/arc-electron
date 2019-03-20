@@ -1,0 +1,7 @@
+{
+  "name": "test-package",
+  "version": "0.1.0",
+  "description": "Test description",
+  "main": "theme.js",
+  "themeTitle": "Test title"
+}

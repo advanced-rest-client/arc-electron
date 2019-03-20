@@ -3,45 +3,105 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta http-equiv="Content-Security-Policy" content="default-src file: 'self' 'unsafe-inline'; script-src blob: themes: arc-components: 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src arc-components: 'self' https://fonts.gstatic.com; connect-src 'self' https: ws: wss: https://www.google-analytics.com https://app.advancedrestclient.com https://anypoint.mulesoft.com; img-src 'self' blob: data: https://exchange2-asset-manager-kprod.s3.amazonaws.com">
   <title>Advanced REST client</title>
   <script>
     window.Polymer = {
       dom: 'shadow',
-      lazyRegister: true
+      lazyRegister: true,
+      passiveTouchGestures: true
     };
   </script>
   <style>
+  :root {
+    --arc-bg-color: #e5e5e5;
+  }
+
   body {
-    font-family: Roboto, sans-serif;
+    font-family: 'Roboto', 'Noto', sans-serif;
     color: #333;
     margin: 0;
-    font-size: 14px;
+    font-size: 100%;
     line-height: 1.5;
-
+    background-color: var(--arc-bg-color);
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
   }
+
   html, body {
     height: 100%;
     margin: 0;
   }
 
-  /* Context menu */
-  .arc-context-menu {
+  .loader {
     position: absolute;
-    background-color: #FAFAFA;
-    box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12), 0 3px 5px -1px rgba(0, 0, 0, 0.4);
+    z-index: 100;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 1;
+    transition: opacity .12s linear;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.4em;
+    background-color: var(--arc-bg-color);
+    text-align: center;
   }
 
-  .arc-context-menu paper-item {
-    cursor: pointer;
-    min-height: 40px;
+  .loader.end {
+    opacity: 0;
   }
   </style>
+  <custom-style>
+    <style>
+    /* Context menu */
+    .arc-context-menu {
+      position: absolute;
+      color: var(--paper-listbox-color);
+      background-color: var(--paper-listbox-background-color, #FAFAFA);
+      box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12), 0 3px 5px -1px rgba(0, 0, 0, 0.4);
+    }
+
+    .arc-context-menu iron-icon {
+      color: var(--context-menu-item-color);
+    }
+
+    .arc-context-menu paper-icon-item,
+    .arc-context-menu paper-item {
+      color: var(--context-menu-item-color);
+      background-color: var(--context-menu-item-background-color);
+      cursor: pointer;
+      min-height: 40px;
+    }
+
+    .arc-context-menu paper-icon-item:hover,
+    .arc-context-menu paper-item:hover {
+      color: var(--context-menu-item-color-hover);
+      background-color: var(--context-menu-item-background-color-hover);
+    }
+
+    .arc-context-menu paper-icon-item:hover iron-icon,
+    .arc-context-menu paper-item:hover iron-icon {
+      color: var(--context-menu-item-color-hover);
+    }
+
+    bottom-sheet {
+      width: var(--bottom-sheet-width, 100%);
+      max-width: var(--bottom-sheet-max-width, 700px);
+    }
+    </style>
+  </custom-style>
 </head>
 <body>
+  <div class="loader">
+    <img src="assets/icon.iconset/icon_256x256.png" alt="ARC logo" width="256" height="256"/>
+    <p class="loading-info">Loading your API consumer experience</p>
+  </div>
   <script src="app.js"></script>
 </body>
 </html>

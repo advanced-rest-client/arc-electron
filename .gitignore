@@ -28,3 +28,7 @@ Temporary Items
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+
+test/tests-exe-dir
+tasks/mac-app-distribution-cert.p12
+tasks/advancedrestclient.pfx

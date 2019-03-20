@@ -1,0 +1,12 @@
+#%RAML 1.0 DataType
+
+properties:
+  type:
+    type: string
+    required: false
+    description: The content type that this additional role info applies to.
+  roleSets:
+    type: array
+    items: !include role-set.raml
+    required: false
+    description: The supported additional roles per primary role.

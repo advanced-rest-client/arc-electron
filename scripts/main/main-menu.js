@@ -2,8 +2,7 @@ const EventEmitter = require('events');
 const {app, Menu, MenuItem} = require('electron');
 const fs = require('fs-extra');
 const path = require('path');
-const log = require('electron-log');
-log.transports.file.level = 'info';
+const log = require('./logger');
 
 /**
  * A module to handle app menu actions
@@ -21,10 +20,20 @@ class ArcMainMenu extends EventEmitter {
    * @return {Promise} Resolved when menu is created.
    */
   build() {
+    log.info('Building application menu from template');
     return this._getTemplate()
     .then((template) => this._createFromTemplate(template))
     .then(() => this._menuLoaded = true)
     .then(() => Menu.setApplicationMenu(this.topMenu))
+    .then(() => {
+      log.info('Application menu is now set.');
+      if (!this.pendingActions) {
+        return;
+      }
+      this.pendingActions.forEach((item) => {
+        this[item]();
+      });
+    })
     .catch((cause) => {
       this._menuLoaded = false;
       let message = 'Menu template file was not found.';
@@ -120,7 +129,7 @@ class ArcMainMenu extends EventEmitter {
    * First item in the array is event type. Resto of items are avent arguments.
    */
   _linuxUpdateStatusChnaged(status) {
-    let items = this.topMenu.items[5].submenu;
+    const items = this.topMenu.items[5].submenu;
     switch (status) {
       case 'checking-for-update':
         items.items[3].visible = false;
@@ -156,6 +165,7 @@ class ArcMainMenu extends EventEmitter {
    * @param {BrowserWindow} browserWindow Target window.
    */
   _itemAction(command, menuItem, browserWindow) {
+    log.info('Main menu action detected: ' + command);
     this.emit('menu-action', command, browserWindow);
   }
   /**
@@ -163,6 +173,7 @@ class ArcMainMenu extends EventEmitter {
    * @param {[type]} template [description]
    */
   _createFromTemplate(template) {
+    log.info('Creating menu instance');
     this._createMainMenu(template.menu);
     // TODO: Context menus.
   }
@@ -172,7 +183,7 @@ class ArcMainMenu extends EventEmitter {
    */
   _createMainMenu(template) {
     template.forEach((data) => {
-      let item = this._createMenuItem(data);
+      const item = this._createMenuItem(data);
       this.topMenu.append(item);
     });
   }
@@ -210,8 +221,9 @@ class ArcMainMenu extends EventEmitter {
    * definition.
    */
   _getTemplate() {
-    let name = this._platformToName(process.platform) + '.json';
-    let file = path.join(__dirname, '..', '..', 'menus', name);
+    const name = this._platformToName(process.platform) + '.json';
+    const file = path.join(__dirname, '..', '..', 'menus', name);
+    log.info('Menu template location', file);
     return fs.readJson(file);
   }
   /**
@@ -224,6 +236,59 @@ class ArcMainMenu extends EventEmitter {
       case 'win32': return 'win';
       default: return 'linux';
     }
+  }
+  /**
+   * @return {Array<MenuItem>} List of menu items representing (in order)
+   * separator and popup menu item.
+   */
+  getPopupMenuItem() {
+    let i;
+    let j;
+    switch (process.platform) {
+      case 'darwin':
+        i = 4;
+        j = 5;
+        break;
+      case 'win32':
+        i = 3;
+        j = 4;
+        break;
+      default:
+        i = 3;
+        j = 4;
+    }
+    const menu = this.topMenu.items[i];
+    if (!menu) {
+      return;
+    }
+    const items = menu.submenu.items;
+    return [items[j], items[j + 1]];
+  }
+
+  enableAppMenuPopup() {
+    const items = this.getPopupMenuItem();
+    if (!items) {
+      if (!this.pendingActions) {
+        this.pendingActions = [];
+      }
+      this.pendingActions.push('enableAppMenuPopup');
+      return;
+    }
+    items[0].visible = true;
+    items[1].visible = true;
+  }
+
+  disableAppMenuPopup() {
+    const items = this.getPopupMenuItem();
+    if (!items) {
+      if (!this.pendingActions) {
+        this.pendingActions = [];
+      }
+      this.pendingActions.push('disableAppMenuPopup');
+      return;
+    }
+    items[0].visible = false;
+    items[1].visible = false;
   }
 }
 exports.ArcMainMenu = ArcMainMenu;

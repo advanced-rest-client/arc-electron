@@ -6,15 +6,6 @@ if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
   sleep 3
 fi
 
-node --version
-npm --version
-
 export PATH=$PATH:./node_modules/.bin/
 
-# npm install
-cd components/anypoint
-../../node_modules/.bin/bower update
-cd ../default
-../../node_modules/.bin/bower update
-cd ../../
 npm test

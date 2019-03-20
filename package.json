@@ -1,8 +1,8 @@
 {
   "name": "advanced-rest-client",
   "description": "The Advanced REST Client desktop application.",
-  "version": "12.1.4",
-  "homepage": "https://advancedrestclient.com/",
+  "version": "13.0.0",
+  "homepage": "https://advancedrestclient.com",
   "license": "Apache-2.0",
   "author": {
     "name": "Pawel Psztyc",
@@ -12,44 +12,61 @@
     "url": "https://github.com/advanced-rest-client/arc-electron"
   },
   "scripts": {
-    "start": "electron --inspect=5858 --enable-logging --workspace-file=\"~/arc-dev/dev-workspace.json\" --settings-file=\"~/arc-dev/dev-settings.json\" .",
+    "start": "electron . --inspect --debug --debug-level=\"silly\" --with-devtools --workspace-path=\"~/arc-dev/workspace\" --settings-file=\"~/arc-dev/dev-settings.json\" --themes-path=\"~/arc-dev/themes\"",
     "postinstall": "electron-builder install-app-deps",
-    "test": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron electron-mocha test/**/*.test.js",
+    "test": "npm run test-main && npm run test-renderer && npm run test-app",
+    "test-main": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron electron-mocha test/**/*.main.spec.js scripts/packages/**/*.main.spec.js",
+    "test-renderer": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron electron-mocha --renderer --require-main 'test/renderer-setup-paths.js' scripts/packages/**/*.renderer.spec.js",
+    "test-app": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron mocha test/**.app.spec.js",
+    "test-win-all": "npm run test-win-main && npm run test-win-renderer && npm run test-win-app",
+    "test-win-main": "node node_modules/.bin/electron-mocha test/**/*.main.spec.js scripts/packages/**/*.main.spec.js",
+    "test-win-renderer": "node node_modules/.bin/electron-mocha --renderer scripts/packages/**/*.renderer.spec.js",
+    "test-win-app": "node node_modules/.bin/mocha test/**.app.spec.js",
     "build-l": "npx electron-builder -l",
     "build-w": "npx electron-builder -w",
     "build-m": "npx electron-builder -m",
-    "bower": "node tasks/bower.js",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "dist": "electron-builder",
+    "start-drive": "electron . --inspect --debug --debug-level=\"silly\" --with-devtools --workspace-path=\"~/arc-dev/workspace\" --settings-file=\"~/arc-dev/dev-settings.json\" --themes-path=\"~/arc-dev/themes\" arc-file://drive/open/1_PAI-CGHqi_pZCV8ZZ_9_N-LGMjkAYzn"
   },
   "main": "main.js",
   "devDependencies": {
-    "bower": "^1.8.2",
-    "chai": "^4.1.2",
-    "chance": "^1.0.13",
-    "electron": "^2.0.2",
-    "electron-builder": "^20.27.1",
-    "electron-mocha": "^5.0.0",
+    "chai": "^4.2.0",
+    "electron": "^4.1.0",
+    "electron-builder": "^20.39.0",
+    "electron-mocha": "^6.0.4",
     "eslint": "^4.18.1",
     "eslint-config-google": "^0.9.1",
     "glob": "^7.1.2",
     "mocha": "^4.1.0",
-    "spectron": "^3.8.0",
-    "ssl-root-cas": "^1.2.5"
+    "sinon": "^7.2.3",
+    "spectron": "^5.0.0"
   },
   "dependencies": {
+    "@advanced-rest-client/arc-electron-payload-processor": "^0.1.1",
+    "@advanced-rest-client/electron-drive": "0.2.3",
+    "@advanced-rest-client/electron-oauth2": "1.0.0",
+    "@advanced-rest-client/electron-request": "1.0.1",
+    "@advanced-rest-client/electron-session-state": "1.0.0",
+    "amf-client-js": "^3.1.7",
     "camelcase": "^4.1.0",
-    "electron-log": "^2.2.14",
-    "electron-updater": "^3.1.1",
-    "form-data": "^2.3.2",
+    "electron-log": "^2.2.17",
+    "electron-updater": "4.0.4",
+    "form-data": "^2.3.3",
     "fs-extra": "^4.0.3",
+    "jexl": "^1.1.4",
+    "live-plugin-manager": "^0.12.0",
+    "mime-types": "^2.1.21",
     "node-fetch": "^1.7.3",
     "ntlm": "^0.1.3",
     "parse5": "^4.0.0",
-    "polymer-analyzer": "^2.7.0",
-    "polymer-bundler": "^4.0.2",
-    "shady-css-parser": "^0.1.0",
-    "uuid": "^3.2.1"
+    "semver": "^5.6.0",
+    "temp": "^0.8.3",
+    "tmp": "0.0.33",
+    "unzipper": "^0.9.11",
+    "uuid": "^3.3.2",
+    "winston": "^3.2.1",
+    "yargs": "^12.0.5"
   },
   "build": {
     "appId": "com.mulesoft.arc",
@@ -57,6 +74,8 @@
     "artifactName": "arc-${version}-${arch}.${ext}",
     "asar": true,
     "copyright": "Copyright © 2018 Mulesoft",
+    "generateUpdatesFilesForAllChannels": true,
+    "forceCodeSigning": true,
     "detectUpdateChannel": true,
     "files": [
       "app.html",
@@ -65,7 +84,8 @@
       "task-manager.html",
       "package.json",
       "assets/",
-      "components/",
+      "bower_components/",
+      "node_modules/",
       "menus/",
       "scripts/",
       "src/",
@@ -126,15 +146,21 @@
             "x64",
             "ia32"
           ]
+        },
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
         }
       ],
       "vendor": "Mulesoft",
-      "synopsis": "A developert tool to test HTTP requests",
+      "synopsis": "A developer tool to test HTTP requests",
       "artifactName": "arc-linux-${version}-${arch}.${ext}"
     },
     "win": {
       "target": [
-        
         {
           "target": "nsis",
           "arch": [
@@ -150,6 +176,12 @@
       "publisher": "CN=D213CA20-88CE-42AC-A9F2-C5D41BF04550",
       "publisherDisplayName": "Pawel Psztyc"
     },
+    "nsis": {
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "artifactName": "arc-setup-${arch}.${ext}",
+      "shortcutName": "ARC"
+    },
     "publish": [
       {
         "provider": "github",
@@ -162,12 +194,6 @@
       "schemes": [
         "arc-file"
       ]
-    },
-    "nsis": {
-      "installerIcon": "build/icon.ico",
-      "uninstallerIcon": "build/icon.ico",
-      "artifactName": "arc-setup-${arch}.${ext}",
-      "shortcutName": "ARC"
     }
   },
   "oauth2": {
@@ -176,8 +202,7 @@
     "redirect_uri": "https://auth.advancedrestclient.com/oauth2",
     "scopes": [
       "https://www.googleapis.com/auth/drive.file",
-      "https://www.googleapis.com/auth/drive.install",
-      "https://www.googleapis.com/auth/drive.metadata.readonly"
+      "https://www.googleapis.com/auth/drive.install"
     ]
   }
 }

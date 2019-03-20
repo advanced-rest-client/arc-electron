@@ -1,4 +1,5 @@
 const {ThemeDefaults} = require('./defaults/theme-defaults');
+const {WorkspaceDefaults} = require('./defaults/workspace-defaults');
 /**
  * Class responsible for keeping application base environment stable.
  *
@@ -13,7 +14,11 @@ class AppDefaults {
    */
   prepareEnvironment() {
     const td = new ThemeDefaults();
-    return td.prepareEnvironment();
+    return td.prepareEnvironment()
+    .then(() => {
+      const wd = new WorkspaceDefaults();
+      return wd.prepareEnvironment();
+    });
   }
 }
 exports.AppDefaults = AppDefaults;
