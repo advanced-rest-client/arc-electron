@@ -4,7 +4,7 @@ const {ArcSessionRecorder} = require('../../../scripts/main/arc-session-recorder
 const {ContextActions} = require('../../../scripts/packages/context-actions/main');
 const {BrowserWindow} = require('electron');
 
-describe.only('ArcWindowsManager', function() {
+describe('ArcWindowsManager', function() {
   describe('constructor()', function() {
     it('Sets default startupOptions', function() {
       const instance = new ArcWindowsManager();
@@ -151,7 +151,7 @@ describe.only('ArcWindowsManager', function() {
     });
   });
 
-  describe.only('__getNewWindow()', () => {
+  describe('__getNewWindow()', () => {
     let instance;
     let session;
     before(() => {

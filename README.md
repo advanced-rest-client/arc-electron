@@ -30,7 +30,7 @@ cd arc-electron
 Then install dependencies:
 
 ```shell
-npm install && bower install
+npm install && npm run bower
 ```
 
 When all dependencies are installed run:

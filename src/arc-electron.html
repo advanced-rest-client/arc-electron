@@ -238,6 +238,8 @@
 
     .info-center-drawer {
       --app-drawer-width: 640px;
+      z-index: 1;
+      text-align: left;
     }
     </style>
     <!-- Database support -->
@@ -377,7 +379,8 @@
                   vertical-offset="44"
                   on-open-variables-editor="_variablesOpenRequest"
                   on-iron-overlay-closed="_variablesPreviewClosed"
-                  opened="[[_variablesOverlayOpened]]"></variables-preview-overlay>
+                  opened="[[_variablesOverlayOpened]]"
+                  masked-values></variables-preview-overlay>
               </div>
             </template>
           </app-toolbar>
