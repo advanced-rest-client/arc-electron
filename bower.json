@@ -2,7 +2,7 @@
   "name": "advanced-rest-client",
   "description": "The web developers helper program to create and test custom HTTP requests.",
   "homepage": "https://advancedrestclient.com/",
-  "version": "13.0.0",
+  "version": "13.0.1",
   "keywords": [
     "chrome",
     "REST",
@@ -55,7 +55,6 @@
     "web-animations-js": "web-animations/web-animations-js#^2.3",
     "app-pouchdb": "PolymerElements/app-pouchdb#^2.1.1",
     "api-console": "mulesoft/api-console#^5.0.0",
-    "electron-http-transport": "advanced-rest-client/electron-http-transport#^2.0.0",
     "host-rules-editor": "advanced-rest-client/host-rules-editor#^2.0.0",
     "cookie-manager": "advanced-rest-client/cookie-manager#^2.0.0",
     "web-url-input": "advanced-rest-client/web-url-input#^2.0.0",
