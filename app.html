@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-  <meta http-equiv="Content-Security-Policy" content="default-src file: 'self' 'unsafe-inline'; script-src blob: themes: arc-components: 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src arc-components: 'self' https://fonts.gstatic.com; connect-src 'self' https: ws: wss: https://www.google-analytics.com https://app.advancedrestclient.com https://anypoint.mulesoft.com; img-src 'self' blob: data: https://exchange2-asset-manager-kprod.s3.amazonaws.com">
+  <meta http-equiv="Content-Security-Policy" content="default-src file: 'self' 'unsafe-inline'; script-src blob: themes: web-module: 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src arc-components: 'self' https://fonts.gstatic.com; connect-src 'self' https: ws: wss: https://www.google-analytics.com https://app.advancedrestclient.com https://anypoint.mulesoft.com; img-src 'self' blob: data: https://exchange2-asset-manager-kprod.s3.amazonaws.com">
   <title>Advanced REST client</title>
   <script>
     window.Polymer = {
@@ -96,12 +96,34 @@
     }
     </style>
   </custom-style>
+
+  <!-- CodeMirror + modes loader -->
+  <script src="node_modules/codemirror/lib/codemirror.js"></script>
+  <script src="node_modules/codemirror/addon/mode/loadmode.js"></script>
+  <script src="node_modules/codemirror/mode/meta.js"></script>
+  <!--Default set of parsers, add as many as you need -->
+  <script src="node_modules/codemirror/mode/javascript/javascript.js"></script>
+  <script src="node_modules/codemirror/mode/xml/xml.js"></script>
+  <script src="node_modules/codemirror/mode/htmlmixed/htmlmixed.js"></script>
+  <!-- JSON linter -->
+  <script src="node_modules/jsonlint/web/jsonlint.js"></script>
+  <script src="node_modules/codemirror/addon/lint/lint.js"></script>
+  <script src="node_modules/codemirror/addon/lint/json-lint.js"></script>
+  <!-- Headers hint support -->
+  <script src="node_modules/@advanced-rest-client/code-mirror-hint/headers-addon.js"></script>
+  <script src="node_modules/@advanced-rest-client/code-mirror-hint/show-hint.js"></script>
+  <script src="node_modules/@advanced-rest-client/code-mirror-hint/hint-http-headers.js"></script>
+
+  <script>
+  CodeMirror.modeURL = 'node_modules/codemirror/mode/%N/%N.js';
+  </script>
 </head>
 <body>
   <div class="loader">
     <img src="assets/icon.iconset/icon_256x256.png" alt="ARC logo" width="256" height="256"/>
     <p class="loading-info">Loading your API consumer experience</p>
   </div>
+  <script src="node_modules/pouchdb/dist/pouchdb.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

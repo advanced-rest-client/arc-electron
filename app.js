@@ -175,41 +175,31 @@ class ArcInit {
     if (this.created) {
       return Promise.resolve();
     }
-    return this._importHref('src/arc-electron.html')
+    return this._importModule('web-module://src/arc-electron.js')
     .then(() => {
       const app = document.createElement('arc-electron');
       app.id = 'app';
       app.config = config;
+      app.componentsDir = 'web_modules';
       this._setupApp(app);
       document.body.appendChild(app);
       this.created = true;
     });
   }
 
-  _importHref(href) {
+  _importModule(href) {
     return new Promise((resolve, reject) => {
-      const link = document.createElement('link');
-      link.rel = 'import';
-      link.href = href;
-      link.setAttribute('import-href', '');
-      link.setAttribute('async', '');
-      const callbacks = {
-        load: function() {
-          callbacks.cleanup();
-          resolve();
-        },
-        error: function() {
-          callbacks.cleanup();
-          reject();
-        },
-        cleanup: function() {
-          link.removeEventListener('load', callbacks.load);
-          link.removeEventListener('error', callbacks.error);
-        }
+      const s = document.createElement('script');
+      s.type = 'module';
+      s.src = href;
+      s.async = true;
+      s.onload = () => {
+        resolve();
       };
-      link.addEventListener('load', callbacks.load);
-      link.addEventListener('error', callbacks.error);
-      document.head.appendChild(link);
+      s.onerror = () => {
+        reject();
+      };
+      document.head.appendChild(s);
     });
   }
   /**

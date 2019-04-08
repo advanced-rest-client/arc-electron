@@ -1,4 +1,4 @@
-const {app} = require('electron');
+const {app, protocol} = require('electron');
 const arcPaths = require('./arc-paths');
 const {AppOptions} = require('./app-options');
 const log = require('./logger');
@@ -54,6 +54,9 @@ module.exports = function(startTime) {
   // } else if (initOptions.test) {
   //   app.setPath('userData', temp.mkdirSync('arc-test-data'));
   // }
+
+  // Standard scheme must be registered before the app is ready
+  protocol.registerStandardSchemes(['web-module'], {secure: true});
 
   log.debug('Setting up the environment');
   arcPaths.setHome();
