@@ -2,6 +2,7 @@ import {PolymerElement} from '../../web_modules/@polymer/polymer/polymer-element
 import {html} from '../../web_modules/@polymer/polymer/lib/utils/html-tag.js';
 import {ArcAppMixin} from '../web_modules/@advanced-rest-client/arc-app-mixin/arc-app-mixin.js';
 import {afterNextRender} from '../web_modules/@polymer/polymer/lib/utils/render-status.js';
+import {Jexl} from '../web_modules/jexl/lib/Jexl.js';
 import '../web_modules/@polymer/polymer/lib/elements/custom-style.js';
 import '../web_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import '../web_modules/@advanced-rest-client/arc-icons/arc-icons.js';
@@ -62,6 +63,7 @@ import '../web_modules/@advanced-rest-client/arc-electron-experiment-settings/ar
 import '../web_modules/@api-components/api-candidates-dialog/api-candidates-dialog.js';
 import '../web_modules/@advanced-rest-client/arc-onboarding/arc-onboarding.js';
 import './electron-http-transport/electron-http-transport.js';
+window.Jexl = Jexl;
 /* eslint-disable max-len */
 /**
  * Main component for ARC electron app.
@@ -261,14 +263,14 @@ class ArcElectron extends ArcAppMixin(PolymerElement) {
     <arc-data-import></arc-data-import>
     <!-- Request logic -->
     <oauth1-authorization></oauth1-authorization>
-    <arc-request-logic variables-disabled="[[_computeVariablesDisabled(config.systemVariablesEnabled, config.appVariablesEnabled)]]"></arc-request-logic>
+    <arc-request-logic variables-disabled="[[_computeVariablesDisabled(config.systemVariablesEnabled, config.appVariablesEnabled)]]" jexl-path="Jexl"></arc-request-logic>
     <request-hooks-logic></request-hooks-logic>
     <template is="dom-if" if="[[historyEnabled]]" restamp="true">
       <response-history-saver></response-history-saver>
     </template>
     <electron-http-transport follow-redirects$=[[config.followRedirects]] request-timeout$="[[config.requestDefaultTimeout]]" native-transport$="[[config.nativeTransport]]" validate-certificates$="[[config.validateCertificates]]" sent-message-limit$="[[config.sentMessageLimit]]"></electron-http-transport>
     <variables-manager system-variables="[[sysVars]]" sys-variables-disabled="[[_computeVarDisabled(config.systemVariablesEnabled)]]" app-variables-disabled="[[_computeVarDisabled(config.appVariablesEnabled)]]"></variables-manager>
-    <variables-evaluator no-before-request></variables-evaluator>
+    <variables-evaluator no-before-request jexl-path="Jexl"></variables-evaluator>
     <!-- Info center -->
     <arc-messages-service platform="electron" on-unread-changed="_unreadMessagesChanged" messages="{{appMessages}}" id="msgService"></arc-messages-service>
     <!-- Helper components -->
@@ -667,9 +669,11 @@ class ArcElectron extends ArcAppMixin(PolymerElement) {
         scope = '@advanced-rest-client';
         break;
       case 'api-console':
-        id = 'api-console';
-        path = 'api-console/api-console';
-        break;
+        return this._loadApic()
+        .catch((cause) => console.warn(cause));
+        // id = 'api-console';
+        // path = 'api-console/api-console';
+        // break;
       case 'drive':
         id = 'google-drive-browser';
         path = 'google-drive-browser/google-drive-browser';
@@ -804,7 +808,7 @@ class ArcElectron extends ArcAppMixin(PolymerElement) {
    */
   _varsOverlayChanged(val) {
     if (val && !window.customElements.get('variables-preview-overlay')) {
-      this._loadComponent('variables-preview-overlay/variables-preview-overlay')
+      this._loadComponent('variables-preview-overlay/variables-preview-overlay', '@advanced-rest-client')
       .catch((cmp) => this._reportComponentLoadingError(cmp));
     }
   }
@@ -812,7 +816,7 @@ class ArcElectron extends ArcAppMixin(PolymerElement) {
   _variablesOpenRequest(e) {
     e.stopPropagation();
     this._variablesOverlayOpened = false;
-    this._loadComponent('variables-drawer-editor/variables-drawer-editor')
+    this._loadComponent('variables-drawer-editor/variables-drawer-editor', '@advanced-rest-client')
     .then(() => {
       this.$.environmentsDrawer.opened = true;
     })
@@ -830,7 +834,7 @@ class ArcElectron extends ArcAppMixin(PolymerElement) {
    * requests session cookies.
    */
   openWebUrl() {
-    this._loadComponent('web-url-input/web-url-input')
+    this._loadComponent('web-url-input/web-url-input', '@advanced-rest-client')
     .then(() => {
       this.$.webUrlInput.opened = true;
     })
@@ -1020,6 +1024,7 @@ class ArcElectron extends ArcAppMixin(PolymerElement) {
       this._loadingSources = false;
     })
     .catch((cause) => {
+      console.warn(cause);
       this._loadingSources = false;
       this._reportComponentLoadingError('apic-electron');
       throw cause;
@@ -1140,7 +1145,7 @@ class ArcElectron extends ArcAppMixin(PolymerElement) {
    * Opens license dialog.
    */
   openLicense() {
-    this._loadComponent('arc-license-dialog/arc-license-dialog')
+    this._loadComponent('arc-license-dialog/arc-license-dialog', '@advanced-rest-client')
     .then(() => {
       const node = this.shadowRoot.querySelector('arc-license-dialog');
       node.opened = true;

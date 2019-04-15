@@ -200,7 +200,10 @@ class ThemeManager {
     return import('themes://' + themeId)
     .then(() => {
       setTimeout(() => {
-        document.getElementById('app').updateStyles({});
+        const app = document.getElementById('app');
+        if (app) {
+          document.getElementById('app').updateStyles({});
+        }
       });
     })
     .catch((cause) => {

@@ -11,14 +11,15 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import {PolymerElement} from '/@polymer/polymer/polymer-element.js';
-import {html} from '/@polymer/polymer/lib/utils/html-tag.js';
-import '/api-console/api-console.js';
-import '/@api-components/raml-aware/raml-aware.js';
-import {AmfHelperMixin} from '/@api-components/amf-helper-mixin/amf-helper-mixin.js';
-import '/@polymer/paper-spinner/paper-spinner.js';
-import '/@polymer/paper-toast/paper-toast.js';
-import {ArcFileDropMixin} from '/@advanced-rest-client/arc-file-drop-mixin/arc-file-drop-mixin.js';
+import {PolymerElement} from '../../web_modules/@polymer/polymer/polymer-element.js';
+import {html} from '../../web_modules/@polymer/polymer/lib/utils/html-tag.js';
+import '../../web_modules/@api-components/api-documentation/api-documentation.js';
+import '../../web_modules/@api-components/api-navigation/api-navigation.js';
+import '../../web_modules/@api-components/raml-aware/raml-aware.js';
+import {AmfHelperMixin} from '../../web_modules/@api-components/amf-helper-mixin/amf-helper-mixin.js';
+import '../../web_modules/@polymer/paper-spinner/paper-spinner.js';
+import '../../web_modules/@polymer/paper-toast/paper-toast.js';
+import {ArcFileDropMixin} from '../../web_modules/@advanced-rest-client/arc-file-drop-mixin/arc-file-drop-mixin.js';
 /**
  * It'a a wrapper for API console to render the console from unresolved
  * AMF model.
@@ -87,7 +88,7 @@ class ApicElectron extends ArcFileDropMixin(AmfHelperMixin(PolymerElement)) {
       redirect-uri="https://auth.advancedrestclient.com/oauth-popup.html"
       narrow="[[narrow]]"
       scroll-target="[[scrollTarget]]"
-      hidden$="[[apiProcessing]]"></api-documentation>
+      hidden\$="[[apiProcessing]]"></api-documentation>
     <template is="dom-if" if="[[apiProcessing]]">
       <div class="loader">
         <p class="wait-message">Preparing your API experience</p>

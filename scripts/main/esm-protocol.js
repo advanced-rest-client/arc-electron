@@ -1,4 +1,4 @@
-const {session} = require('electron');
+const {session, protocol} = require('electron');
 const path = require('path');
 const fs = require('fs');
 const log = require('./logger');
@@ -40,6 +40,11 @@ class EsmProtocolHandler {
     log.debug('Registering components protocol');
     session.fromPartition('persist:arc-window')
     .protocol
+    .registerBufferProtocol('web-module', this._requestHandler, this._registrationHandler);
+    session.fromPartition('persist:arc-task-manager')
+    .protocol
+    .registerBufferProtocol('web-module', this._requestHandler, this._registrationHandler);
+    protocol
     .registerBufferProtocol('web-module', this._requestHandler, this._registrationHandler);
   }
 

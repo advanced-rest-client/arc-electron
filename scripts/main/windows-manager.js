@@ -262,11 +262,13 @@ class ArcWindowsManager {
       backgroundColor: '#00A2DF',
       webPreferences: {
         partition: 'persist:arc-task-manager',
-        nodeIntegration: true,
-        contextIsolation: false
+        nativeWindowOpen: false,
+        nodeIntegration: false,
+        contextIsolation: false,
+        preload: path.join(__dirname, '..', 'renderer', 'task-manager-preload.js')
       }
     });
-    const dest = path.join(__dirname, '..', '..', 'task-manager.html');
+    const dest = path.join(__dirname, '..', '..', 'src', 'task-manager.html');
     const full = url.format({
       pathname: dest,
       protocol: 'file:',
