@@ -11,7 +11,7 @@ const fs = require('fs-extra');
  * Example usage in the renderer process:
  *
  * ```
- * <link rel="import" href="themes://dd1b715f-af00-4ee8-8b0c-2a262b3cf0c8">
+ * <script type="module" src="themes://dd1b715f-af00-4ee8-8b0c-2a262b3cf0c8"></script>
  * ```
  *
  * This will load ARC's default theme.
@@ -20,7 +20,7 @@ const fs = require('fs-extra');
  * location.
  *
  * ```
- * <link rel="import" href="themes:///path/to/a/theme.html">
+ * <script type="module" src="themes:///path/to/a/theme.js"></script>
  * ```
  */
 class ThemesProtocolHandler {
@@ -76,7 +76,7 @@ class ThemesProtocolHandler {
         log.silly('Sending theme file to renderer.');
         callback({
           data,
-          mimeType: 'text/html',
+          mimeType: 'application/javascript',
           charset: 'utf8'
         });
       } else {
@@ -98,7 +98,7 @@ class ThemesProtocolHandler {
     .then((data) => {
       callback({
         data,
-        mimeType: 'text/html',
+        mimeType: 'application/javascript',
         charset: 'utf8'
       });
     })

@@ -1,4 +1,3 @@
-<script>
 /**
  * `electron-http-transport`
  *
@@ -582,4 +581,3 @@ class ElectronHttpTransport extends HTMLElement {
   }
 }
 window.customElements.define('electron-http-transport', ElectronHttpTransport);
-</script>

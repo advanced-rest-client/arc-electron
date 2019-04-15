@@ -1,4 +1,4 @@
-<!--
+/**
 @license
 Copyright 2018 The Advanced REST client authors <arc@mulesoft.com>
 Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -10,14 +10,15 @@ distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
--->
+*/
 
-<!--
+/**
 Advanced REST Client deskto app dark theme stylesheet.
 It is a Polymer's custom style element. It will propagate variables and mixins
 to all elements.
--->
-<custom-style>
+*/
+const $documentContainer = document.createElement('template');
+$documentContainer.innerHTML = `<custom-style>
   <style>
   :root {
     --primary-color: #00A2DF;
@@ -491,4 +492,5 @@ to all elements.
     --api-console-main-content-margin-top: 12px;
   }
   </style>
-</custom-style>
+  </custom-style>`;
+document.head.appendChild($documentContainer.content);

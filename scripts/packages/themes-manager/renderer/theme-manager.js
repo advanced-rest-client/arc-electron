@@ -178,35 +178,36 @@ class ThemeManager {
   }
 
   _loadTheme(themeId) {
-    return new Promise((resolve) => {
-      // Apparently Polymer handles imports with `<custom-styles>`
-      // automatically and inserts it into the head section
-      const nodes = document.head.children;
-      let removeNextCustomStyle = false;
-      let linkNode;
-      for (let i = 0, len = nodes.length; i < len; i++) {
-        const node = nodes[i];
-        if (node.nodeName === 'LINK' && node.rel === 'import' &&
-          node.href && node.href.indexOf('themes:') === 0) {
-          removeNextCustomStyle = true;
-          linkNode = node;
-          continue;
-        }
-        if (removeNextCustomStyle && node.nodeName === 'CUSTOM-STYLE') {
-          node.parentNode.removeChild(node);
-          linkNode.parentNode.removeChild(linkNode);
-          break;
-        }
+    // Apparently Polymer handles imports with `<custom-styles>`
+    // automatically and inserts it into the head section
+    const nodes = document.head.children;
+    let removeNextCustomStyle = false;
+    let linkNode;
+    for (let i = 0, len = nodes.length; i < len; i++) {
+      const node = nodes[i];
+      if (node.nodeName === 'LINK' && node.rel === 'import' &&
+        node.href && node.href.indexOf('themes:') === 0) {
+        removeNextCustomStyle = true;
+        linkNode = node;
+        continue;
       }
-      Polymer.importHref('themes://' + themeId, () => {
-        Polymer.RenderStatus.afterNextRender(this, () => {
-          Polymer.updateStyles({});
-          resolve();
-        });
-      }, () => {
-        console.error(`Unable to load theme definition for ${themeId}.`);
-        resolve();
-      }, true);
+      if (removeNextCustomStyle && node.nodeName === 'CUSTOM-STYLE') {
+        node.parentNode.removeChild(node);
+        linkNode.parentNode.removeChild(linkNode);
+        break;
+      }
+    }
+    return import('themes://' + themeId)
+    .then(() => {
+      setTimeout(() => {
+        const app = document.getElementById('app');
+        if (app) {
+          document.getElementById('app').updateStyles({});
+        }
+      });
+    })
+    .catch((cause) => {
+      console.error(`Unable to load theme definition for ${themeId}.`, cause);
     });
   }
   /**

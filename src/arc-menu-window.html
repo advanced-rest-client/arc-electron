@@ -4,24 +4,18 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
   <title>Advanced REST client</title>
-  <script>
-    window.Polymer = {
-      dom: 'shadow'
-    };
-  </script>
-  <link rel="import" href="../bower_components/polymer/polymer-element.html">
-  <link rel="import" href="../bower_components/shadycss/apply-shim.html">
-  <link rel="import" href="../bower_components/polymer/lib/elements/custom-style.html">
-  <link rel="import" href="../bower_components/polymer/lib/elements/dom-bind.html">
-  <link rel="import" href="../bower_components/polymer/lib/utils/import-href.html">
-  <link rel="import" href="../bower_components/polymer/lib/utils/render-status.html">
-  <link rel="import" href="../bower_components/font-roboto-local/roboto.html">
-  <link rel="import" href="../bower_components/app-pouchdb/pouchdb.html">
-  <link rel="import" href="../bower_components/arc-models/rest-api-model.html">
-  <link rel="import" href="../bower_components/arc-models/project-model.html">
-  <link rel="import" href="../bower_components/arc-models/request-model.html">
-  <link rel="import" href="../bower_components/neon-animation/web-animations.html">
-  <link rel="import" href="../bower_components/arc-menu/arc-menu.html">
+
+  <script src="../node_modules/pouchdb/dist/pouchdb.js"></script>
+  <script src="../node_modules/web-animations-js/web-animations-next.min.js"></script>
+
+  <script type="module" src="web-module://web_modules/@webcomponents/shadycss/apply-shim.min.js"></script>
+  <script type="module" src="web-module://web_modules/@polymer/polymer/lib/elements/custom-style.js"></script>
+  <script type="module" src="web-module://web_modules/@polymer/font-roboto-local/roboto.js"></script>
+  <script type="module" src="web-module://web_modules/@advanced-rest-client/arc-menu/arc-menu.js"></script>
+  <script type="module" src="web-module://web_modules/@advanced-rest-client/arc-models/rest-api-model.js"></script>
+  <script type="module" src="web-module://web_modules/@advanced-rest-client/arc-models/project-model.js"></script>
+  <script type="module" src="web-module://web_modules/@advanced-rest-client/arc-models/request-model.js"></script>
+
   <style>
   body {
     font-family: Roboto, sans-serif;
@@ -55,6 +49,7 @@
   <rest-api-model></rest-api-model>
   <project-model></project-model>
   <request-model></request-model>
+
   <menu id="container"></menu>
   <script>
   (function() {
@@ -83,30 +78,19 @@
         });
       }
 
-      _importHref(href) {
+      _importModule(href) {
         return new Promise((resolve, reject) => {
-          const link = document.createElement('link');
-          link.rel = 'import';
-          link.href = href;
-          link.setAttribute('import-href', '');
-          link.setAttribute('async', '');
-          const callbacks = {
-            load: function() {
-              callbacks.cleanup();
-              resolve();
-            },
-            error: function() {
-              callbacks.cleanup();
-              reject();
-            },
-            cleanup: function() {
-              link.removeEventListener('load', callbacks.load);
-              link.removeEventListener('error', callbacks.error);
-            }
+          const s = document.createElement('script');
+          s.type = 'module';
+          s.src = href;
+          s.async = true;
+          s.onload = () => {
+            resolve();
           };
-          link.addEventListener('load', callbacks.load);
-          link.addEventListener('error', callbacks.error);
-          document.head.appendChild(link);
+          s.onerror = () => {
+            reject();
+          };
+          document.head.appendChild(s);
         });
       }
 

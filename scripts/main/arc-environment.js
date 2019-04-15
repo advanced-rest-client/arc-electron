@@ -11,7 +11,8 @@ const {UpdateStatus} = require('./update-status');
 const {AppPrompts} = require('./app-prompts');
 const {Oauth2Identity} = require('@advanced-rest-client/electron-oauth2');
 const {ThemesProtocolHandler} = require('./theme-protocol');
-const {ComponentsProtocolHandler} = require('./components-protocol');
+// const {ComponentsProtocolHandler} = require('./components-protocol');
+const {EsmProtocolHandler} = require('./esm-protocol');
 const {AssetImport} = require('./asset-import');
 const log = require('./logger');
 
@@ -53,9 +54,12 @@ class ArcEnvironment {
     const tp = new ThemesProtocolHandler();
     tp.register();
     this.themesProtocol = tp;
-    const cp = new ComponentsProtocolHandler();
-    cp.register();
-    this.componentsProtocol = cp;
+    const mp = new EsmProtocolHandler();
+    mp.register();
+    this.modulesProtocol = mp;
+    // const cp = new ComponentsProtocolHandler();
+    // cp.register();
+    // this.componentsProtocol = cp;
   }
 
   open(params) {

@@ -1,10 +1,34 @@
-<custom-style>
+/**
+@license
+Copyright 2018 The Advanced REST client authors <arc@mulesoft.com>
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+*/
+
+/**
+Advanced REST Client deskto app dark theme stylesheet.
+It is a Polymer's custom style element. It will propagate variables and mixins
+to all elements.
+*/
+const $documentContainer = document.createElement('template');
+$documentContainer.innerHTML = `<custom-style>
   <style>
     html {
       @font-face {
         font-family: "DIN Pro";
         src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/DINPro-Light.eot');
-        src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/DINPro-Light.eot?#iefix') format('embedded-opentype'), url('https://d2mrfksxwk2en8.cloudfront.net/fonts/DINPro-Light.woff2') format('woff2'), url('https://d2mrfksxwk2en8.cloudfront.net/fonts/DINPro-Light.woff') format('woff'), url('https://d2mrfksxwk2en8.cloudfront.net/fonts/DINPro-Light.ttf') format('truetype'), url('https://d2mrfksxwk2en8.cloudfront.net/fonts/DINPro-Light.svg') format('svg');
+        src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/DINPro-Light.eot?#iefix') format('embedded-opentype'),
+          url('https://d2mrfksxwk2en8.cloudfront.net/fonts/DINPro-Light.woff2') format('woff2'),
+          url('https://d2mrfksxwk2en8.cloudfront.net/fonts/DINPro-Light.woff') format('woff'),
+          url('https://d2mrfksxwk2en8.cloudfront.net/fonts/DINPro-Light.ttf') format('truetype'),
+          url('https://d2mrfksxwk2en8.cloudfront.net/fonts/DINPro-Light.svg') format('svg');
         font-weight: 300;
         font-style: normal;
       }
@@ -12,7 +36,11 @@
       @font-face {
         font-family: "Open Sans";
         src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Regular.eot');
-        src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Regular.eot?#iefix') format('embedded-opentype'), url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Regular.woff2') format('woff2'), url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Regular.woff') format('woff'), url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Regular.ttf') format('truetype'), url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Regular.svg') format('svg');
+        src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Regular.eot?#iefix') format('embedded-opentype'),
+          url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Regular.woff2') format('woff2'),
+          url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Regular.woff') format('woff'),
+          url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Regular.ttf') format('truetype'),
+          url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Regular.svg') format('svg');
         font-weight: 400;
         font-style: normal;
       }
@@ -711,20 +739,22 @@
       --paper-checkbox-label: {
         @apply --arc-font-body1;
       };
-      /* A special case for paper input when it is contructed with Anypoint paper-input and using regular input with paper-input container */
+      /* A special case for paper input when it is contructed with Anypoint
+        paper-input and using regular input with paper-input container */
       --paper-input-container-input-input-style: {
         padding: 0 10px;
         box-sizing: border-box;
         background-color: #fff;
       };
-      /* Paper item element: this is very dirty hack to style paper-dropdown-menu. Part of styling is in the element and the rest is here. */
+      /* Paper item element: this is very dirty hack to style paper-dropdown-menu.
+        Part of styling is in the element and the rest is here. */
       --paper-item: {
         padding: 0px 10px;
         cursor: pointer;
         border-left: 2px var(--anypoint-color-aluminum4) solid;
         border-right: 2px var(--anypoint-color-aluminum4) solid;
       };
-      /* There is no such definition in `paper-item` but API components may use it */
+      /* There is no such definition in "paper-item" but API components may use it */
       --paper-item-hover: {
         padding: 0px 10px;
         color: var(--anypoint-color-coreBlue3);
@@ -737,4 +767,5 @@
       --api-summary-url-background-color: var(--anypoint-color-steel2);
     }
   </style>
-</custom-style>
+  </custom-style>`;
+document.head.appendChild($documentContainer.content);

@@ -1,4 +1,4 @@
-const {ipcRenderer: ipc, clipboard} = require('electron');
+const {ipcRenderer: ipc, clipboard, webFrame} = require('electron');
 const {app} = require('electron').remote;
 const log = require('electron-log');
 const Jexl = require('jexl');
@@ -25,6 +25,17 @@ Object.keys(process.env).forEach((key) => {
   }
   env[key] = process.env[key];
 });
+
+process.once('loaded', () => {
+  webFrame.registerURLSchemeAsPrivileged('web-module', {
+    secure: true,
+    bypassCSP: false,
+    allowServiceWorkers: true,
+    supportFetchAPI: true,
+    corsEnabled: false
+  });
+});
+
 process.once('loaded', () => {
   if (process.env.NODE_ENV === 'test') {
     global.electronRequire = require;
