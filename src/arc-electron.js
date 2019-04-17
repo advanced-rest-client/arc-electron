@@ -392,7 +392,13 @@ class ArcElectron extends ArcAppMixin(PolymerElement) {
         </app-header>
 
         <iron-pages class="mainPages" attr-for-selected="data-route" selected-attribute="opened" selected="[[page]]">
-          <arc-request-workspace data-route="request" id="workspace" draggable-enabled="[[config.draggableEnabled]]" oauth2-redirect-uri="[[_oauth2redirectUri]]" narrow="[[narrow]]"></arc-request-workspace>
+          <arc-request-workspace
+            data-route="request"
+            id="workspace"
+            draggable-enabled="[[config.draggableEnabled]]"
+            oauth2-redirect-uri="[[_oauth2redirectUri]]"
+            ignore-content-on-get="[[config.ignoreContentOnGet]]"
+            narrow="[[narrow]]"></arc-request-workspace>
           <websocket-panel data-route="socket"></websocket-panel>
           <history-panel data-route="history" list-type="[[config.viewListType]]"></history-panel>
           <saved-requests-panel data-route="saved" list-type="[[config.viewListType]]"></saved-requests-panel>
