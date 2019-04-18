@@ -45,7 +45,7 @@
   "dependencies": {
     "@advanced-rest-client/arc-electron-payload-processor": "^0.1.1",
     "@advanced-rest-client/electron-drive": "0.2.3",
-    "@advanced-rest-client/electron-oauth2": "1.0.0",
+    "@advanced-rest-client/electron-oauth2": "^1.0.1",
     "@advanced-rest-client/electron-request": "1.0.1",
     "@advanced-rest-client/electron-session-state": "1.0.0",
     "amf-client-js": "^3.1.7",
