@@ -7,7 +7,7 @@ describe('Loading default window', function() {
   const basePath = path.join('test', 'tests-exe-dir');
   const settingsFilePath = path.join(basePath, 'test-settings.json');
   const workspaceFilePath = path.join(basePath, 'workspace');
-  const themesFilePath = path.join(basePath, 'themes');
+  const themesFilePath = path.join(basePath, 'themes-esm');
   const componentsFilePath = path.join(basePath, 'components');
 
   after(() => fs.remove(basePath));
@@ -148,7 +148,7 @@ describe('Loading default window', function() {
       return fs.pathExists(prefix)
       .then((exists) => {
         assert.isTrue(exists, 'Main folder exists');
-        return fs.pathExists(path.join(prefix, 'arc-electron-default-theme.html'));
+        return fs.pathExists(path.join(prefix, 'arc-electron-default-theme.js'));
       })
       .then((exists) => {
         assert.isTrue(exists, 'Theme file exists');
@@ -164,7 +164,7 @@ describe('Loading default window', function() {
       return fs.pathExists(prefix)
       .then((exists) => {
         assert.isTrue(exists, 'Main folder exists');
-        return fs.pathExists(path.join(prefix, 'arc-electron-anypoint-theme.html'));
+        return fs.pathExists(path.join(prefix, 'arc-electron-anypoint-theme.js'));
       })
       .then((exists) => {
         assert.isTrue(exists, 'Theme file exists');
@@ -180,7 +180,7 @@ describe('Loading default window', function() {
       return fs.pathExists(prefix)
       .then((exists) => {
         assert.isTrue(exists, 'Main folder exists');
-        return fs.pathExists(path.join(prefix, 'arc-electron-dark-theme.html'));
+        return fs.pathExists(path.join(prefix, 'arc-electron-dark-theme.js'));
       })
       .then((exists) => {
         assert.isTrue(exists, 'Theme file exists');
