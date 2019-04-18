@@ -60,7 +60,7 @@
     "@advanced-rest-client/import-panel": "^3.0.0-preview.2",
     "@advanced-rest-client/project-details": "^3.0.0-preview.1",
     "@advanced-rest-client/request-hooks-logic": "^3.0.0-preview.1",
-    "@advanced-rest-client/response-history-saver": "^3.0.0-preview.1",
+    "@advanced-rest-client/response-history-saver": "^3.0.0-preview.2",
     "@advanced-rest-client/rest-apis-list-panel": "^3.0.0-preview.1",
     "@advanced-rest-client/saved-requests-panel": "^3.0.0-preview.1",
     "@advanced-rest-client/themes-panel": "^3.0.0-preview.1",
