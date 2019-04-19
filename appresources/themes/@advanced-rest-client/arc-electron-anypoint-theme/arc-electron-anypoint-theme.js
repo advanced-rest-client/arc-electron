@@ -463,16 +463,14 @@ $documentContainer.innerHTML = `<custom-style>
       --paper-item-min-height: 40px;
       --paper-item-selected-weight: 400;
 
+      --paper-item-font-size: 0 14px;
+
       --paper-item: {
-        font-size: 14px;
+        font-size: var(--paper-item-font-size);
       }
 
       --paper-listbox: {
         padding: 0;
-      }
-
-      --paper-item: {
-        font-size: 14px;
       }
 
       --paper-item-selected: {
@@ -755,16 +753,55 @@ $documentContainer.innerHTML = `<custom-style>
         border-right: 2px var(--anypoint-color-aluminum4) solid;
       };
       /* There is no such definition in "paper-item" but API components may use it */
+      --paper-item-hover-padding: 0px 10px;
+      --paper-item-hover-color: var(--anypoint-color-coreBlue3);
+      --paper-item-hover-border-left: 2px var(--anypoint-color-coreBlue3) solid;
+      --paper-item-hover-border-right: 2px var(--anypoint-color-coreBlue3) solid;
+
       --paper-item-hover: {
-        padding: 0px 10px;
-        color: var(--anypoint-color-coreBlue3);
-        border-left: 2px var(--anypoint-color-coreBlue3) solid;
-        border-right: 2px var(--anypoint-color-coreBlue3) solid;
+        padding: var(--paper-item-hover-padding);
+        color: var(--paper-item-hover-color);
+        border-left: var(--paper-item-hover-border-left);
+        border-right: var(--paper-item-hover-border-right);
       };
       /* Endpoint documentation styles */
       --api-endpoint-documentation-url-background-color: var(--anypoint-color-steel2);
       /* API summary page styles */
       --api-summary-url-background-color: var(--anypoint-color-steel2);
+
+      /* Material's shadow definitions */
+      --box-shadow-transition: box-shadow 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      --box-shadow-2dp: 0 2px 2px 0 rgba(0, 0, 0, 0.14),
+                      0 1px 5px 0 rgba(0, 0, 0, 0.12),
+                      0 3px 1px -2px rgba(0, 0, 0, 0.2);
+
+      --box-shadow-3dp: 0 3px 4px 0 rgba(0, 0, 0, 0.14),
+                    0 1px 8px 0 rgba(0, 0, 0, 0.12),
+                    0 3px 3px -2px rgba(0, 0, 0, 0.4);
+
+      --box-shadow-4dp: 0 4px 5px 0 rgba(0, 0, 0, 0.14),
+                    0 1px 10px 0 rgba(0, 0, 0, 0.12),
+                    0 2px 4px -1px rgba(0, 0, 0, 0.4);
+
+      --box-shadow-6dp: 0 6px 10px 0 rgba(0, 0, 0, 0.14),
+                    0 1px 18px 0 rgba(0, 0, 0, 0.12),
+                    0 3px 5px -1px rgba(0, 0, 0, 0.4);
+
+      --box-shadow-8dp: 0 8px 10px 1px rgba(0, 0, 0, 0.14),
+                    0 3px 14px 2px rgba(0, 0, 0, 0.12),
+                    0 5px 5px -3px rgba(0, 0, 0, 0.4);
+
+      --box-shadow-12dp: 0 12px 16px 1px rgba(0, 0, 0, 0.14),
+                    0 4px 22px 3px rgba(0, 0, 0, 0.12),
+                    0 6px 7px -4px rgba(0, 0, 0, 0.4);
+
+      --box-shadow-16dp: 0 16px 24px 2px rgba(0, 0, 0, 0.14),
+                    0  6px 30px 5px rgba(0, 0, 0, 0.12),
+                    0  8px 10px -5px rgba(0, 0, 0, 0.4);
+
+      --box-shadow-24dp: 0 24px 38px 3px rgba(0, 0, 0, 0.14),
+                    0 9px 46px 8px rgba(0, 0, 0, 0.12),
+                    0 11px 15px -7px rgba(0, 0, 0, 0.4);
     }
   </style>
   </custom-style>`;
