@@ -42,12 +42,14 @@ class ThemeDefaults {
       if (stats.isDirectory()) {
         const pkgFile = path.join(loc, 'package.json');
         if (fs.pathExistsSync(pkgFile)) {
+          const main = this._readMainFile(pkgFile, name);
           if (parent) {
             name = path.join(parent, name);
           }
           log.silly('Found default theme: ' + name);
           themePaths[themePaths.length] = {
             name,
+            main,
             location: loc
           };
         } else {
@@ -67,6 +69,22 @@ class ThemeDefaults {
     return themePaths;
   }
 
+  _readMainFile(pkgFile, name) {
+    // Default to package name ??
+    const defaultName = name + '.js';
+    let data;
+    try {
+      const content = fs.readFileSync(pkgFile);
+      data = JSON.parse(content);
+    } catch (_) {
+      return defaultName;
+    }
+    if (data.main) {
+      return data.main;
+    }
+    return defaultName;
+  }
+
   _ensureThemes(themes) {
     const item = themes.shift();
     if (!item) {
@@ -78,7 +96,7 @@ class ThemeDefaults {
   }
 
   _ensureTheme(info) {
-    const file = path.join(process.env.ARC_THEMES, info.name);
+    const file = path.join(process.env.ARC_THEMES, info.name, info.main);
     return fs.pathExists(file)
     .then((exists) => {
       if (exists) {
@@ -92,7 +110,7 @@ class ThemeDefaults {
 
   _copyThemeFiles(info) {
     const dest = path.join(process.env.ARC_THEMES, info.name);
-    return fs.ensureDir(dest)
+    return fs.emptyDir(dest)
     .then(() => fs.copy(info.location, dest))
     .catch((cause) => {
       log.error('Unable to copy default theme from ' + info.location + ' to ' + dest);
