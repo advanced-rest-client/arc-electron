@@ -1,9 +1,9 @@
 {
   "name": "@advanced-rest-client/arc-electron-dark-theme",
   "description": "Dark theme definition for Advanced REST Client",
-  "version": "2.0.0-preview",
+  "version": "3.0.0",
   "license": "Apache-2.0",
-  "main": "arc-electron-dark-theme.html",
+  "main": "arc-electron-dark-theme.js",
   "authors": [
     "Pawel Psztyc",
     "The Advanced REST client authors <arc@mulesoft.com>"
