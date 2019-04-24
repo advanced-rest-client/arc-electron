@@ -393,7 +393,8 @@
           <saved-requests-panel data-route="saved" list-type="[[config.viewListType]]"></saved-requests-panel>
           <import-panel
             data-route="data-import"
-            access-token="[[driveAccessToken]]"></import-panel>
+            access-token="[[driveAccessToken]]"
+            on-oauth-2-token-invalid="_googleTokenInvalid"></import-panel>
           <export-panel data-route="data-export"></export-panel>
           <arc-settings-panel data-route="settings">
             <arc-electron-experiment-settings popup-menu-experiment-enabled="{{popupMenuExperimentEnabled}}" data-title="Experiments"></arc-electron-experiment-settings>
@@ -403,7 +404,8 @@
           <google-drive-browser
             data-route="drive"
             access-token="[[driveAccessToken]]"
-            on-drive-file-picker-data="_openDriveRequest"></google-drive-browser>
+            on-drive-file-picker-data="_openDriveRequest"
+            on-oauth-2-token-invalid="_googleTokenInvalid"></google-drive-browser>
           <cookie-manager data-route="cookie-manager"></cookie-manager>
           <apic-electron
             data-route="api-console"
@@ -1287,6 +1289,13 @@
     openOnboarding() {
       const node = this.shadowRoot.querySelector('arc-onboarding');
       node.opened = true;
+    }
+
+    _googleTokenInvalid() {
+      this.dispatchEvent(new CustomEvent('oauth2-token-remove', {
+        bubbles: true,
+        composed: true
+      }));
     }
   }
   window.customElements.define(ArcElectron.is, ArcElectron);
