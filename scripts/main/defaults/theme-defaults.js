@@ -134,26 +134,65 @@ class ThemeDefaults {
   _ensureThemesInfoVersion(file) {
     return fs.readJson(file, {throws: false})
     .then((data) => {
-      if (!data || !data.length) {
+      if (!data) {
         return this._copyInfoFile();
       }
-      const item = data[0];
+      if (data instanceof Array) {
+        // version 0
+        return this._upgradeInfoFile(file, data);
+      }
+      if (!(data.themes instanceof Array)) {
+        return this._copyInfoFile();
+      }
+      const item = data.themes[0];
       if (!item.location) {
         return this._copyInfoFile();
       }
     });
   }
-
+  /**
+   * @return {String} Location of theme info file in local resources.
+   */
+  get localThemeInfoFile() {
+    return path.join(__dirname, '..', '..', '..', 'appresources', 'themes', 'themes-info.json');
+  }
+  /**
+   * Copies theme info file from local resources to themes folder.
+   * @return {Promise}
+   */
   _copyInfoFile() {
-    const source =
-      path.join(__dirname, '..', '..', '..', 'appresources', 'themes', 'themes-info.json');
     const dest = process.env.ARC_THEMES_SETTINGS;
-    return fs.readJson(source, {throws: false})
+    return fs.readJson(this.localThemeInfoFile, {throws: false})
     .then((info) => {
-      info = info || [];
+      info = info || {};
       return info;
     })
     .then((info) => fs.writeJson(dest, info));
+  }
+  /**
+   * Upgrades original theme info file structure to v1.
+   *
+   * This function checks for already installed themes that are not default themes
+   * and adds it to the list of newly created file.
+   *
+   * @param {String} file Theme info (installed) file location.
+   * @param {Array<Object>} installed List of currently installed packages.
+   * @return {Promise}
+   */
+  _upgradeInfoFile(file, installed) {
+    return fs.readJson(this.localThemeInfoFile, {throws: false})
+    .then((info) => {
+      if (!info || !info.themes) {
+        info = {themes: []};
+      }
+      installed.forEach((item) => {
+        if (item.isDefault) {
+          return;
+        }
+        info.themes.push(item);
+      });
+      return fs.writeJson(file, info);
+    });
   }
 }
 exports.ThemeDefaults = ThemeDefaults;
