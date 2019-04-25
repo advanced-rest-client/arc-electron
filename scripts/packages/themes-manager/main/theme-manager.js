@@ -57,8 +57,9 @@ class ThemeManager {
    */
   _listThemesHandler(e, id) {
     this.themeInfo.load()
-    .then((list) => {
-      e.sender.send('theme-manager-themes-list', id, list);
+    .then((info) => {
+      const {themes} = info;
+      e.sender.send('theme-manager-themes-list', id, themes);
     })
     .catch((cause) => this._handleError(e.sender, id, cause));
   }
@@ -75,7 +76,8 @@ class ThemeManager {
       this.themeInfo.load()
     ])
     .then((result) => {
-      const [settings, themes] = result;
+      const [settings, themesInfo] = result;
+      const {themes} = themesInfo;
       const themeId = settings.theme || this.defaultTheme;
       let theme = this._findThemeInfo(themeId, themes);
       if (!theme) {
