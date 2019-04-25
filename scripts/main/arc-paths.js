@@ -95,7 +95,7 @@ class ArcPaths {
       }
     }
     if (!this._themesBasePath) {
-      this._themesBasePath = path.join(process.env.ARC_HOME, 'themes');
+      this._themesBasePath = path.join(process.env.ARC_HOME, 'themes-esm');
     }
     if (!themesSettingsFile) {
       themesSettingsFile = 'themes-info.json';

@@ -7,7 +7,7 @@ describe('Initial paths', function() {
   const basePath = path.join('test', 'tests-exe-dir');
   const settingsFilePath = path.join(basePath, 'test-settings.json');
   const workspaceFilePath = path.join(basePath, 'workspace');
-  const themesFilePath = path.join(basePath, 'themes');
+  const themesFilePath = path.join(basePath, 'themes-esm');
   const componentsFilePath = path.join(basePath, 'components');
 
   describe('Setups default file paths', function() {

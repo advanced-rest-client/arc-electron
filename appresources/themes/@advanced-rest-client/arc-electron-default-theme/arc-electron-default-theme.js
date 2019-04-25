@@ -36,7 +36,7 @@ $documentContainer.innerHTML = `<custom-style>
     --dark-accent-color: #f50057;
     --paper-menu-background-color: #fff;
     --menu-link-color: #111111;
-    --arc-link-color: #111111;
+    --link-color: #00A1DF;
     --toolbar-color: #ffffff;
     --toolbar-background-color: var(--primary-color);
     --main-section-border-color: rgba(0, 0, 0, 0.12);
@@ -209,22 +209,30 @@ $documentContainer.innerHTML = `<custom-style>
       font-weight: normal;
     };
 
+    --action-button-background-color: var(--primary-color);
+    --action-button-background-image: none;
+    --action-button-color: #fff;
+    --action-button-transition: background-color 300ms linear;
+    --action-button-hover-background-color: #04b3f5;
+    --action-button-hover-color: #fff;
+    --action-button-disabled-background-color: #eaeaea;
+    --action-button-disabled-color: #a8a8a8;
+
     --action-button: {
-      background-color: var(--primary-color);
-      background-image: none;
-      color: white;
-      transition: background-color 300ms linear;
+      background-color: var(--action-button-background-color);
+      background-image: var(--action-button-background-image);
+      color: var(--action-button-color);
+      transition: var(--action-button-transition);
     };
 
     --action-button-hover: {
-      background-color: #04b3f5;
-      background-image: none;
-      color: white;
+      background-color: var(--action-button-hover-background-color);
+      color: var(--action-button-hover-color);
     };
 
     --action-button-disabled: {
-      background: #eaeaea;
-      color: #a8a8a8;
+      background: var(--action-button-disabled-background-color);
+      color: var(--action-button-disabled-color);
       cursor: auto;
       pointer-events: none;
     };
@@ -242,7 +250,7 @@ $documentContainer.innerHTML = `<custom-style>
     --arc-link: {
       font-family: var(--arc-font-family);
       -webkit-font-smoothing: var(--arc-font-font-smoothing);
-      color: #00A1DF;
+      color: var(--link-color);
     }
 
     /* Tutorial elements */
@@ -422,8 +430,10 @@ $documentContainer.innerHTML = `<custom-style>
       @apply --empty-info;
     };
 
+    --paper-item-padding: 0 16px;
+
     --paper-item: {
-      padding: 0 16px;
+      padding: var(--paper-item-padding);
     }
 
     /* Method labels in method documentation title */
@@ -473,6 +483,40 @@ $documentContainer.innerHTML = `<custom-style>
     };
     --request-action-editor-background-color: #fff;
     --paper-chip-autocomplete-background-color: #fff;
+
+    /* Material's shadow definitions */
+    --box-shadow-transition: box-shadow 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    --box-shadow-2dp: 0 2px 2px 0 rgba(0, 0, 0, 0.14),
+                    0 1px 5px 0 rgba(0, 0, 0, 0.12),
+                    0 3px 1px -2px rgba(0, 0, 0, 0.2);
+
+    --box-shadow-3dp: 0 3px 4px 0 rgba(0, 0, 0, 0.14),
+                  0 1px 8px 0 rgba(0, 0, 0, 0.12),
+                  0 3px 3px -2px rgba(0, 0, 0, 0.4);
+
+    --box-shadow-4dp: 0 4px 5px 0 rgba(0, 0, 0, 0.14),
+                  0 1px 10px 0 rgba(0, 0, 0, 0.12),
+                  0 2px 4px -1px rgba(0, 0, 0, 0.4);
+
+    --box-shadow-6dp: 0 6px 10px 0 rgba(0, 0, 0, 0.14),
+                  0 1px 18px 0 rgba(0, 0, 0, 0.12),
+                  0 3px 5px -1px rgba(0, 0, 0, 0.4);
+
+    --box-shadow-8dp: 0 8px 10px 1px rgba(0, 0, 0, 0.14),
+                  0 3px 14px 2px rgba(0, 0, 0, 0.12),
+                  0 5px 5px -3px rgba(0, 0, 0, 0.4);
+
+    --box-shadow-12dp: 0 12px 16px 1px rgba(0, 0, 0, 0.14),
+                  0 4px 22px 3px rgba(0, 0, 0, 0.12),
+                  0 6px 7px -4px rgba(0, 0, 0, 0.4);
+
+    --box-shadow-16dp: 0 16px 24px 2px rgba(0, 0, 0, 0.14),
+                  0  6px 30px 5px rgba(0, 0, 0, 0.12),
+                  0  8px 10px -5px rgba(0, 0, 0, 0.4);
+
+    --box-shadow-24dp: 0 24px 38px 3px rgba(0, 0, 0, 0.14),
+                  0 9px 46px 8px rgba(0, 0, 0, 0.12),
+                  0 11px 15px -7px rgba(0, 0, 0, 0.4);
   }
 
   [narrow] {

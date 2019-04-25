@@ -109,6 +109,11 @@ class ArcElectron extends ArcAppMixin(PolymerElement) {
       border-left: 1px var(--arc-layout-divider-color, #BDBDBD) solid;
     }
 
+    app-header {
+      /* To ensure that dialogs and overlay are rendered properly. */
+      z-index: 0;
+    }
+
     google-drive-browser {
       height: calc(100vh - 64px);
     }
@@ -273,8 +278,6 @@ class ArcElectron extends ArcAppMixin(PolymerElement) {
     <variables-evaluator no-before-request jexl-path="Jexl"></variables-evaluator>
     <!-- Info center -->
     <arc-messages-service platform="electron" on-unread-changed="_unreadMessagesChanged" messages="{{appMessages}}" id="msgService"></arc-messages-service>
-    <!-- Helper components -->
-    <web-url-input id="webUrlInput" purpose="web-session" on-open-web-url="_openWebUrlHandler"></web-url-input>
     <!-- Application views -->
     <app-drawer-layout fullbleed narrow="{{narrowLayout}}" force-narrow="[[appMenuDisabled]]" responsive-width="980px">
       <app-drawer slot="drawer" align="start">
@@ -392,7 +395,14 @@ class ArcElectron extends ArcAppMixin(PolymerElement) {
         </app-header>
 
         <iron-pages class="mainPages" attr-for-selected="data-route" selected-attribute="opened" selected="[[page]]">
-          <arc-request-workspace data-route="request" id="workspace" draggable-enabled="[[config.draggableEnabled]]" oauth2-redirect-uri="[[_oauth2redirectUri]]" narrow="[[narrow]]"></arc-request-workspace>
+          <arc-request-workspace
+            data-route="request"
+            id="workspace"
+            draggable-enabled="[[config.draggableEnabled]]"
+            oauth2-redirect-uri="[[_oauth2redirectUri]]"
+            ignore-content-on-get="[[config.ignoreContentOnGet]]"
+            narrow="[[narrow]]"
+            on-open-web-url="_openWebUrlHandler"></arc-request-workspace>
           <websocket-panel data-route="socket"></websocket-panel>
           <history-panel data-route="history" list-type="[[config.viewListType]]"></history-panel>
           <saved-requests-panel data-route="saved" list-type="[[config.viewListType]]"></saved-requests-panel>
@@ -834,11 +844,10 @@ class ArcElectron extends ArcAppMixin(PolymerElement) {
    * requests session cookies.
    */
   openWebUrl() {
-    this._loadComponent('web-url-input/web-url-input', '@advanced-rest-client')
-    .then(() => {
-      this.$.webUrlInput.opened = true;
-    })
-    .catch((cmp) => this._reportComponentLoadingError(cmp));
+    if (this.page !== 'request') {
+      this.page = 'request';
+    }
+    this.workspace.openWebUrlInput();
   }
 
   _openWebUrlHandler(e) {
