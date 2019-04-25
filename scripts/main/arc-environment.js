@@ -243,6 +243,13 @@ class ArcEnvironment {
         log.debug('Toggling popup menu.');
         this.appMenuService.togglePopupMenu();
         break;
+      case 'import-workspace':
+        AssetImport.openWorkspaceFile(win)
+        .then((path) => {
+          console.log(path);
+          this.wm.openWorkspace(path);
+        });
+        break;
       default:
         log.debug('Sending action to the UI thred.', action);
         win.webContents.send(windowCommand, action);

@@ -8,29 +8,12 @@ const log = require('electron-log');
  */
 class WorkspaceManager extends ArcPreferences {
   /**
-   * @param {?Number} windowIndex An index of opened renderer window.
-   * By Default it is `0` meaning that `workspace.json` is used. Otherwise
-   * it uses `workspace.{index}.json`. Note, this option is ignored if
-   * `file` or `fileName` is set on the `opts` object.
-   * @param {?Object} opts - Initialization options:
-   * - file - Path to a workspace state file. It overrides other settings and
-   * uses this file as a final store.
-   * - fileName - A name for the state file. By default it's `workspace.json`
-   * - filePath - Path to the state file. By default it's system's
-   * application directory for user profile.
+   * @param {String} workspaceFile Location of the workspace state file to use.
    */
-  constructor(windowIndex, opts) {
-    if (!opts) {
-      opts = {};
-    }
-    if (!opts.fileName) {
-      if (!windowIndex) {
-        opts.fileName = 'workspace.json';
-      } else {
-        opts.fileName = `workspace.${windowIndex}.json`;
-      }
-    }
-    super(opts);
+  constructor(workspaceFile) {
+    super({
+      file: workspaceFile
+    });
     log.info('State file is ', this.settingsFile);
     /**
      * Store data debounce timer.
@@ -61,6 +44,7 @@ class WorkspaceManager extends ArcPreferences {
    * @return {Promise}
    */
   defaultSettings() {
+    console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
     return Promise.resolve({
       requests: [],
       selected: 0,

@@ -114,10 +114,6 @@ class ArcInit {
   _stateInfoHandler(e, info) {
     info = info || {};
     const initConfig = info;
-    if (!initConfig.workspaceIndex) {
-      initConfig.workspaceIndex = 0;
-    }
-    this.workspaceIndex = initConfig.workspaceIndex;
     if (!window.ArcConfig) {
       window.ArcConfig = {};
     }
@@ -136,11 +132,7 @@ class ArcInit {
    */
   initApp() {
     // console.info('Initializing renderer window...');
-    const opts = {};
-    if (this.initConfig.workspacePath) {
-      opts.filePath = this.initConfig.workspacePath;
-    }
-    this.workspaceManager = new WorkspaceManager(this.workspaceIndex, opts);
+    this.workspaceManager = new WorkspaceManager(this.initConfig.workspaceFile);
     this.workspaceManager.observe();
     let appConfig;
     return this.prefProxy.load()
@@ -275,6 +267,8 @@ class ArcInit {
       case 'popup-menu': this._toggleMenuWindow(); break;
       case 'process-external-file': this.processExternalFile(args[0]); break;
       case 'open-onboarding': app.openOnboarding(); break;
+      case 'open-workspace-details': app.openWorkspaceDetails(); break;
+      case 'export-workspace': this.exportWorkspace(); break;
       default:
         console.warn('Unknown command', action, args);
     }
@@ -512,6 +506,14 @@ class ArcInit {
       console.warn(cause);
       this.app.notifyError(cause.message);
     });
+  }
+  /**
+   * Calls ARC app to serialize workspace data and exports it to a file.
+   * @return {Promise}
+   */
+  exportWorkspace() {
+    const workspace = this.app.workspace.serializeWorkspace();
+    return this.fs.exportFileData(workspace, 'application/json', 'arc-workspace.arc');
   }
 }
 

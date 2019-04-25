@@ -25,5 +25,22 @@ class AssetImport {
       bWindow.webContents.send('command', 'process-external-file', filePaths[0]);
     });
   }
+
+  static openWorkspaceFile(bWindow) {
+    log.debug('Opening workspace import dialog.');
+    return new Promise((resolve) => {
+      dialog.showOpenDialog(bWindow, {
+        title: 'Select workspace file to open',
+        buttonLabel: 'Open',
+        properties: ['openFile'],
+        filters: [
+          {name: 'All supported files', extensions: ['arc', 'json']}
+        ]
+      }, (filePaths) => {
+        const loc = filePaths && filePaths[0];
+        resolve(loc);
+      });
+    });
+  }
 }
 module.exports.AssetImport = AssetImport;

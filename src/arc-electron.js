@@ -1313,5 +1313,14 @@ class ArcElectron extends ArcAppMixin(PolymerElement) {
     const node = this.shadowRoot.querySelector('arc-onboarding');
     node.opened = true;
   }
+  /**
+   * Opens workspace details dialog.
+   */
+  openWorkspaceDetails() {
+    if (this.page !== 'request') {
+      this.page = 'request';
+    }
+    this.workspace.openWorkspaceDetails();
+  }
 }
 window.customElements.define('arc-electron', ArcElectron);

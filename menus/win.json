@@ -216,6 +216,22 @@
       "command": "application:open-web-socket"
     }]
   }, {
+    "label": "Workspace",
+    "submenu": [
+      {
+        "label": "Open details",
+        "command": "application:open-workspace-details"
+      },
+      {
+        "label": "Save as...",
+        "command": "application:export-workspace"
+      },
+      {
+        "label": "Open from file",
+        "command": "application:import-workspace"
+      }
+    ]
+  }, {
     "label": "Help",
     "role": "help",
     "submenu": [{

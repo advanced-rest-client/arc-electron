@@ -47,7 +47,7 @@
     "@advanced-rest-client/arc-models": "^3.0.0-preview.3",
     "@advanced-rest-client/arc-onboarding": "^3.0.0-preview.1",
     "@advanced-rest-client/arc-request-logic": "^3.0.0-preview.1",
-    "@advanced-rest-client/arc-request-workspace": "^3.0.0-preview.3",
+    "@advanced-rest-client/arc-request-workspace": "^3.0.0-preview.5",
     "@advanced-rest-client/arc-settings-panel": "^3.0.0-preview.3",
     "@advanced-rest-client/authorization-data-saver": "^3.0.0-preview.1",
     "@advanced-rest-client/cookie-manager": "^3.0.0-preview.1",

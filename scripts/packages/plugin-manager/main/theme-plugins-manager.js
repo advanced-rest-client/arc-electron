@@ -367,8 +367,8 @@ class ThemePluginsManager {
   _addThemeEntry(info) {
     const store = this.themeInfo;
     return store.load()
-    .then((info) => {
-      const {themes} = info;
+    .then((data) => {
+      const {themes} = data;
       themes.push(info);
       return store.store();
     })
