@@ -42,12 +42,14 @@ class ThemeDefaults {
       if (stats.isDirectory()) {
         const pkgFile = path.join(loc, 'package.json');
         if (fs.pathExistsSync(pkgFile)) {
+          const main = this._readMainFile(pkgFile, name);
           if (parent) {
             name = path.join(parent, name);
           }
           log.silly('Found default theme: ' + name);
           themePaths[themePaths.length] = {
             name,
+            main,
             location: loc
           };
         } else {
@@ -67,6 +69,22 @@ class ThemeDefaults {
     return themePaths;
   }
 
+  _readMainFile(pkgFile, name) {
+    // Default to package name ??
+    const defaultName = name + '.js';
+    let data;
+    try {
+      const content = fs.readFileSync(pkgFile);
+      data = JSON.parse(content);
+    } catch (_) {
+      return defaultName;
+    }
+    if (data.main) {
+      return data.main;
+    }
+    return defaultName;
+  }
+
   _ensureThemes(themes) {
     const item = themes.shift();
     if (!item) {
@@ -78,7 +96,7 @@ class ThemeDefaults {
   }
 
   _ensureTheme(info) {
-    const file = path.join(process.env.ARC_THEMES, info.name);
+    const file = path.join(process.env.ARC_THEMES, info.name, info.main);
     return fs.pathExists(file)
     .then((exists) => {
       if (exists) {
@@ -92,7 +110,7 @@ class ThemeDefaults {
 
   _copyThemeFiles(info) {
     const dest = path.join(process.env.ARC_THEMES, info.name);
-    return fs.ensureDir(dest)
+    return fs.emptyDir(dest)
     .then(() => fs.copy(info.location, dest))
     .catch((cause) => {
       log.error('Unable to copy default theme from ' + info.location + ' to ' + dest);
@@ -116,26 +134,65 @@ class ThemeDefaults {
   _ensureThemesInfoVersion(file) {
     return fs.readJson(file, {throws: false})
     .then((data) => {
-      if (!data || !data.length) {
+      if (!data) {
         return this._copyInfoFile();
       }
-      const item = data[0];
+      if (data instanceof Array) {
+        // version 0
+        return this._upgradeInfoFile(file, data);
+      }
+      if (!(data.themes instanceof Array)) {
+        return this._copyInfoFile();
+      }
+      const item = data.themes[0];
       if (!item.location) {
         return this._copyInfoFile();
       }
     });
   }
-
+  /**
+   * @return {String} Location of theme info file in local resources.
+   */
+  get localThemeInfoFile() {
+    return path.join(__dirname, '..', '..', '..', 'appresources', 'themes', 'themes-info.json');
+  }
+  /**
+   * Copies theme info file from local resources to themes folder.
+   * @return {Promise}
+   */
   _copyInfoFile() {
-    const source =
-      path.join(__dirname, '..', '..', '..', 'appresources', 'themes', 'themes-info.json');
     const dest = process.env.ARC_THEMES_SETTINGS;
-    return fs.readJson(source, {throws: false})
+    return fs.readJson(this.localThemeInfoFile, {throws: false})
     .then((info) => {
-      info = info || [];
+      info = info || {};
       return info;
     })
     .then((info) => fs.writeJson(dest, info));
+  }
+  /**
+   * Upgrades original theme info file structure to v1.
+   *
+   * This function checks for already installed themes that are not default themes
+   * and adds it to the list of newly created file.
+   *
+   * @param {String} file Theme info (installed) file location.
+   * @param {Array<Object>} installed List of currently installed packages.
+   * @return {Promise}
+   */
+  _upgradeInfoFile(file, installed) {
+    return fs.readJson(this.localThemeInfoFile, {throws: false})
+    .then((info) => {
+      if (!info || !info.themes) {
+        info = {themes: []};
+      }
+      installed.forEach((item) => {
+        if (item.isDefault) {
+          return;
+        }
+        info.themes.push(item);
+      });
+      return fs.writeJson(file, info);
+    });
   }
 }
 exports.ThemeDefaults = ThemeDefaults;

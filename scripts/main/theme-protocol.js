@@ -62,7 +62,8 @@ class ThemesProtocolHandler {
   _loadInstalledTheme(location, callback) {
     log.silly('ThemesProtocolHandler::loading theme from ' + location);
     return this._loadThemeInfo()
-    .then((themes) => {
+    .then((config) => {
+      const {themes} = config;
       log.debug('Got themes list');
       const theme = this._findThemeInfo(location, themes);
       if (theme) {
@@ -114,7 +115,7 @@ class ThemesProtocolHandler {
     return fs.readJson(process.env.ARC_THEMES_SETTINGS)
     .catch(() => {
       log.warn('Theme file not found', process.env.ARC_THEMES_SETTINGS);
-      return [];
+      return {};
     });
   }
 
