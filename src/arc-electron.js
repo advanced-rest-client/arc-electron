@@ -111,7 +111,8 @@ class ArcElectron extends ArcAppMixin(PolymerElement) {
 
     app-header {
       /* To ensure that dialogs and overlay are rendered properly. */
-      z-index: 0;
+      /* z-index: 0; */
+      /* Above doesn't work as any overlay placed in the toolbar won't be visible */
     }
 
     google-drive-browser {
