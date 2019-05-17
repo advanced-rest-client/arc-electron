@@ -102,7 +102,7 @@
     "@advanced-rest-client/arc-electron-payload-processor": "^0.2.3",
     "@advanced-rest-client/code-mirror-hint": "^3.0.0-preview.2",
     "@advanced-rest-client/code-mirror-linter": "^3.0.0-preview.2",
-    "@advanced-rest-client/electron-drive": "^0.2.3",
+    "@advanced-rest-client/electron-drive": "^0.2.4",
     "@advanced-rest-client/electron-oauth2": "^1.0.4",
     "@advanced-rest-client/electron-request": "^1.0.1",
     "@advanced-rest-client/electron-session-state": "^1.0.0",
@@ -373,7 +373,8 @@
       "@polymer/iron-overlay-behavior/iron-overlay-behavior.js",
       "@polymer/iron-resizable-behavior/iron-resizable-behavior.js",
       "web-animations-js/web-animations-next.min.js",
-      "pouchdb/dist/pouchdb.js"
+      "pouchdb/dist/pouchdb.js",
+      "@advanced-rest-client/arc-data-export/workers/data-processing.js"
     ]
   }
 }
