@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "@advanced-rest-client/arc-electron-payload-processor": "^0.1.1",
-    "@advanced-rest-client/electron-drive": "0.2.3",
+    "@advanced-rest-client/electron-drive": "0.2.4",
     "@advanced-rest-client/electron-oauth2": "^1.0.4",
     "@advanced-rest-client/electron-request": "1.0.1",
     "@advanced-rest-client/electron-session-state": "1.0.0",
@@ -51,7 +51,7 @@
     "electron-log": "^2.2.17",
     "electron-updater": "4.0.4",
     "form-data": "^2.3.3",
-    "fs-extra": "^4.0.3",
+    "fs-extra": "^7.0.1",
     "jexl": "^1.1.4",
     "live-plugin-manager": "^0.12.0",
     "mime-types": "^2.1.21",
