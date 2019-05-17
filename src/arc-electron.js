@@ -405,8 +405,14 @@ class ArcElectron extends ArcAppMixin(PolymerElement) {
             narrow="[[narrow]]"
             on-open-web-url="_openWebUrlHandler"></arc-request-workspace>
           <websocket-panel data-route="socket"></websocket-panel>
-          <history-panel data-route="history" list-type="[[config.viewListType]]"></history-panel>
-          <saved-requests-panel data-route="saved" list-type="[[config.viewListType]]"></saved-requests-panel>
+          <history-panel
+            data-route="history"
+            list-type="[[config.viewListType]]"
+            draggable-enabled="[[config.draggableEnabled]]"></history-panel>
+          <saved-requests-panel
+            data-route="saved"
+            list-type="[[config.viewListType]]"
+            draggable-enabled="[[config.draggableEnabled]]"></saved-requests-panel>
           <import-panel
             data-route="data-import"
             access-token="[[driveAccessToken]]"></import-panel>
@@ -415,7 +421,10 @@ class ArcElectron extends ArcAppMixin(PolymerElement) {
             <arc-electron-experiment-settings popup-menu-experiment-enabled="{{popupMenuExperimentEnabled}}" data-title="Experiments"></arc-electron-experiment-settings>
           </arc-settings-panel>
           <about-arc-electron data-route="about" app-version="[[appVersion]]"></about-arc-electron>
-          <project-details data-route="project" id="projectDetails"></project-details>
+          <project-details
+            data-route="project"
+            id="projectDetails"
+            draggable-enabled="[[config.draggableEnabled]]"></project-details>
           <google-drive-browser
             data-route="drive"
             access-token="[[driveAccessToken]]"
