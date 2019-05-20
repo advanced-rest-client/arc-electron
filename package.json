@@ -43,7 +43,7 @@
     "@advanced-rest-client/arc-info-messages": "^3.0.0-preview.1",
     "@advanced-rest-client/arc-license-dialog": "^3.0.0-preview.1",
     "@advanced-rest-client/arc-menu": "^3.0.0-preview.1",
-    "@advanced-rest-client/arc-messages-service": "^3.0.0-preview.1",
+    "@advanced-rest-client/arc-messages-service": "^3.0.0-preview.2",
     "@advanced-rest-client/arc-models": "^3.0.0-preview.3",
     "@advanced-rest-client/arc-onboarding": "^3.0.0-preview.1",
     "@advanced-rest-client/arc-request-logic": "^3.0.0-preview.1",
