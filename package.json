@@ -36,7 +36,7 @@
     "@advanced-rest-client/app-analytics": "^3.0.0-preview.3",
     "@advanced-rest-client/arc-app-mixin": "^3.0.0-preview.3",
     "@advanced-rest-client/arc-data-export": "^3.0.0-preview.2",
-    "@advanced-rest-client/arc-data-import": "^3.0.0-preview.2",
+    "@advanced-rest-client/arc-data-import": "^3.0.0-preview.3",
     "@advanced-rest-client/arc-definitions": "^3.0.0-preview.2",
     "@advanced-rest-client/arc-electron-experiment-settings": "^3.0.0-preview.2",
     "@advanced-rest-client/arc-icons": "^3.0.0-preview.2",
