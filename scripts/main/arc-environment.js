@@ -246,8 +246,9 @@ class ArcEnvironment {
       case 'import-workspace':
         AssetImport.openWorkspaceFile(win)
         .then((path) => {
-          console.log(path);
-          this.wm.openWorkspace(path);
+          if (path) {
+            this.wm.openWorkspace(path);
+          }
         });
         break;
       default:
