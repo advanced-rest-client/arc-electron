@@ -59,13 +59,20 @@ class EsmProtocolHandler {
     const url = new URL(request.url);
     let location = this._findFile(url.pathname);
     location = decodeURI(location);
-    console.log(location);
+    log.debug(`Loading: ${location}`);
     fs.readFile(location, (error, data) => {
-      const mimeType = mime.lookup(location) || 'application/octet-stream';
-      respond({
-        mimeType,
-        data
-      });
+      if (error) {
+        log.error(error);
+        // The file or directory cannot be found.
+        // NET_ERROR(FILE_NOT_FOUND, -6)
+        respond(-6);
+      } else {
+        const mimeType = mime.lookup(location) || 'application/octet-stream';
+        respond({
+          mimeType,
+          data
+        });
+      }
     });
   }
 
