@@ -15,6 +15,7 @@ const {ThemesProtocolHandler} = require('./theme-protocol');
 const {EsmProtocolHandler} = require('./esm-protocol');
 const {AssetImport} = require('./asset-import');
 const log = require('./logger');
+const fs = require('fs-extra');
 
 class ArcEnvironment {
   constructor(params = {}) {
@@ -110,6 +111,8 @@ class ArcEnvironment {
       this.us.menuActionHandler(action, win);
       this._menuHandler(action, win);
     });
+    this.menu.loadWorkspaceHistory();
+    this.menu.on('open-workspace', (filePath) => this.openWorkspace(filePath));
   }
 
   _initializeApplicationMenu() {
@@ -244,12 +247,10 @@ class ArcEnvironment {
         this.appMenuService.togglePopupMenu();
         break;
       case 'import-workspace':
-        AssetImport.openWorkspaceFile(win)
-        .then((path) => {
-          if (path) {
-            this.wm.openWorkspace(path);
-          }
-        });
+        this._importWorkspaceHandler(win);
+        break;
+      case 'clear-workspace-history':
+        this.clearWorkspaceHistory();
         break;
       default:
         log.debug('Sending action to the UI thred.', action);
@@ -291,6 +292,44 @@ class ArcEnvironment {
     } else {
       this.wm.restoreLast();
     }
+  }
+  /**
+   * An application menu handler for open workspace from file.
+   * @param {BrowserWindow} win Window from where the request came from
+   * @return {Promise}
+   */
+  _importWorkspaceHandler(win) {
+    return AssetImport.openWorkspaceFile(win)
+    .then((path) => {
+      if (path) {
+        log.info('Opening workspace file in a new window.');
+        this.wm.openWorkspace(path);
+        this.menu.appendWorkspaceHistory(path);
+      }
+    });
+  }
+  /**
+   * Clears workspace history list in the workspace menu.
+   *
+   * @return {Promise}
+   */
+  clearWorkspaceHistory() {
+    return this.menu.clearWorkspaceHistory();
+  }
+  /**
+   * Opens workspace from file
+   * @param {String} filePath Workspace file location.
+   * @return {Promise}
+   */
+  openWorkspace(filePath) {
+    return fs.exists(filePath)
+    .then((exists) => {
+      if (!exists) {
+        AppPrompts.workspaceMissing(filePath);
+      } else {
+        return this.wm.openWorkspace(filePath);
+      }
+    });
   }
 }
 module.exports.ArcEnvironment = ArcEnvironment;

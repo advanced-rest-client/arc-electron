@@ -3,6 +3,7 @@ const {app, Menu, MenuItem} = require('electron');
 const fs = require('fs-extra');
 const path = require('path');
 const log = require('./logger');
+const {WorkspaceHistory} = require('./models/workspace-history.js');
 
 /**
  * A module to handle app menu actions
@@ -14,6 +15,9 @@ class ArcMainMenu extends EventEmitter {
   constructor() {
     super();
     this.topMenu = new Menu();
+    this.history = new WorkspaceHistory();
+
+    this._workspaceHistoryAction = this._workspaceHistoryAction.bind(this);
   }
   /**
    * Builds and sets the application menu.
@@ -95,7 +99,7 @@ class ArcMainMenu extends EventEmitter {
    * First item in the array is event type. Resto of items are avent arguments.
    */
   _winUpdateStatusChnaged(status) {
-    let items = this.topMenu.items[5].submenu;
+    let items = this.topMenu.items[6].submenu;
     switch (status) {
       case 'checking-for-update':
         items.items[1].visible = false;
@@ -129,7 +133,7 @@ class ArcMainMenu extends EventEmitter {
    * First item in the array is event type. Resto of items are avent arguments.
    */
   _linuxUpdateStatusChnaged(status) {
-    const items = this.topMenu.items[5].submenu;
+    const items = this.topMenu.items[6].submenu;
     switch (status) {
       case 'checking-for-update':
         items.items[3].visible = false;
@@ -289,6 +293,101 @@ class ArcMainMenu extends EventEmitter {
     }
     items[0].visible = false;
     items[1].visible = false;
+  }
+  /**
+   * Appends an item to the list of workspace history items.
+   * @param {String} filePath Location of the workspace file.
+   * @return {Promise}
+   */
+  appendWorkspaceHistory(filePath) {
+    return this.history.addEntry(filePath)
+    .then(() => this._appendHistoryEntry(filePath));
+  }
+  /**
+   * Clears list of workspace history.
+   * Persists the state in the settings file.
+   * @return {Promise}
+   */
+  clearWorkspaceHistory() {
+    return this.history.clearHistory()
+    .then(() => this._clearWorkspaceHistory());
+  }
+  /**
+   * Loads workspace history list and creates menu entries.
+   * @return {Promise}
+   */
+  loadWorkspaceHistory() {
+    return this.history.loadEntries()
+    .then((entries) => {
+      if (!entries) {
+        return;
+      }
+      return this._createWorkspaceHistory(entries);
+    });
+  }
+  /**
+   * Iterates over the argument and creates menu entries from it.
+   * @param {Array<String>} entries List of history entries.
+   */
+  _createWorkspaceHistory(entries) {
+    for (let i = 0, len = entries.length; i < len; i++) {
+      const filePath = entries[i].file;
+      // Untrusted source
+      if (typeof filePath !== 'string') {
+        continue;
+      }
+      this._appendHistoryEntry(filePath);
+    }
+  }
+  /**
+   * @return {Menu} A reference to workspace history submenu.
+   */
+  getWorkspaceHistoryMenu() {
+    // linux: 5, win: 5, osx: 6
+    const index = process.platform === 'darwin' ? 6 : 5;
+    const workspaceMenu = this.topMenu.items[index];
+    const historyMenu = workspaceMenu.submenu.items[3];
+    return historyMenu.submenu;
+  }
+  /**
+   * Appends history entry item to the history menu.
+   * @param {String} filePath A path to the workspace file.
+   */
+  _appendHistoryEntry(filePath) {
+    const menu = this.getWorkspaceHistoryMenu();
+    const items = menu.items;
+    if (items[2].visible) {
+      items[2].visible = false;
+    }
+    const options = {
+      label: filePath,
+      after: 'no-history-entry',
+      click: this._workspaceHistoryAction
+    };
+    const item = new MenuItem(options);
+    menu.append(item);
+  }
+  /**
+   * A handler for menu item click action.
+   * @param {MenuItem} menuItem Instance of the menu item
+   */
+  _workspaceHistoryAction(menuItem) {
+    this.emit('open-workspace', menuItem.label);
+    this.history.addEntry(menuItem.label);
+  }
+  /**
+   * Removes all workspace history entries from the menu.
+   */
+  _clearWorkspaceHistory() {
+    const menu = this.getWorkspaceHistoryMenu();
+    const items = Array.from(menu.items);
+    menu.clear();
+    if (!items[2].visible) {
+      items[2].visible = true;
+    }
+    for (let i = 0; i < 3; i++) {
+      menu.append(items[i]);
+    }
   }
 }
 exports.ArcMainMenu = ArcMainMenu;

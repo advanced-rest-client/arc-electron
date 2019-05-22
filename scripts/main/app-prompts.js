@@ -36,5 +36,18 @@ class AppPrompts {
       e.sender.send('saved-file', filename);
     });
   }
+  /**
+   * A dialog that renders error message about missing workspace file.
+   * @param {String} file Requested workspace file location.
+   */
+  static workspaceMissing(file) {
+    let message = 'Workspace file cannot be located. Probably it was deleted or';
+    message += ' renamed.\n\n';
+    message += 'Requested file: ' + file;
+    dialog.showMessageBox({
+      type: 'error',
+      message
+    });
+  }
 }
 exports.AppPrompts = AppPrompts;
