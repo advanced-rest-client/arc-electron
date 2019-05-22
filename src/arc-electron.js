@@ -156,9 +156,10 @@ class ArcElectron extends ArcAppMixin(PolymerElement) {
     arc-info-messages {
       min-width: 320px;
       position: relative;
-      background-color: white;
+      background-color: var(--arc-info-messages-background-color, white);
       padding: 0 12px;
       box-sizing: border-box;
+      height: 100%;
     }
 
     arc-menu {

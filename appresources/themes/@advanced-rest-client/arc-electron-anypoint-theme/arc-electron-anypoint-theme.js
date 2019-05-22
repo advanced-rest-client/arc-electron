@@ -48,7 +48,11 @@ $documentContainer.innerHTML = `<custom-style>
       @font-face {
         font-family: "Open Sans";
         src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Semibold.eot');
-        src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Semibold.eot?#iefix') format('embedded-opentype'), url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Semibold.woff2') format('woff2'), url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Semibold.woff') format('woff'), url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Semibold.ttf') format('truetype'), url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Semibold.svg') format('svg');
+        src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Semibold.eot?#iefix') format('embedded-opentype'),
+          url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Semibold.woff2') format('woff2'),
+          url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Semibold.woff') format('woff'),
+          url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Semibold.ttf') format('truetype'),
+          url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Semibold.svg') format('svg');
         font-weight: 600;
         font-style: normal;
       }
@@ -56,7 +60,11 @@ $documentContainer.innerHTML = `<custom-style>
       @font-face {
         font-family: "Open Sans";
         src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Bold.eot');
-        src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Bold.eot?#iefix') format('embedded-opentype'), url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Bold.woff2') format('woff2'), url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Bold.woff') format('woff'), url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Bold.ttf') format('truetype'), url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Bold.svg') format('svg');
+        src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Bold.eot?#iefix') format('embedded-opentype'),
+          url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Bold.woff2') format('woff2'),
+          url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Bold.woff') format('woff'),
+          url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Bold.ttf') format('truetype'),
+          url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Bold.svg') format('svg');
         font-weight: 700;
         font-style: normal;
       }
@@ -64,7 +72,11 @@ $documentContainer.innerHTML = `<custom-style>
       @font-face {
         font-family: "Open Sans";
         src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Light.eot');
-        src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Light.eot?#iefix') format('embedded-opentype'), url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Light.woff2') format('woff2'), url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Light.woff') format('woff'), url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Light.ttf') format('truetype'), url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Light.svg') format('svg');
+        src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Light.eot?#iefix') format('embedded-opentype'),
+          url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Light.woff2') format('woff2'),
+          url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Light.woff') format('woff'),
+          url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Light.ttf') format('truetype'),
+          url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Light.svg') format('svg');
         font-weight: 200;
         font-style: normal;
       }
@@ -72,7 +84,11 @@ $documentContainer.innerHTML = `<custom-style>
       @font-face {
         font-family: "Open Sans";
         src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-LightItalic.eot');
-        src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-LightItalic.eot?#iefix') format('embedded-opentype'), url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-LightItalic.woff2') format('woff2'), url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-LightItalic.woff') format('woff'), url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-LightItalic.ttf') format('truetype'), url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-LightItalic.svg') format('svg');
+        src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-LightItalic.eot?#iefix') format('embedded-opentype'),
+          url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-LightItalic.woff2') format('woff2'),
+          url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-LightItalic.woff') format('woff'),
+          url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-LightItalic.ttf') format('truetype'),
+          url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-LightItalic.svg') format('svg');
         font-weight: 200;
         font-style: italic;
       }
@@ -80,7 +96,11 @@ $documentContainer.innerHTML = `<custom-style>
       @font-face {
         font-family: "Source Code Pro";
         src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/SourceCodePro-Regular.eot');
-        src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/SourceCodePro-Regular.eot?#iefix') format('embedded-opentype'), url('https://d2mrfksxwk2en8.cloudfront.net/fonts/SourceCodePro-Regular.woff2') format('woff2'), url('https://d2mrfksxwk2en8.cloudfront.net/fonts/SourceCodePro-Regular.woff') format('woff'), url('https://d2mrfksxwk2en8.cloudfront.net/fonts/SourceCodePro-Regular.ttf') format('truetype'), url('https://d2mrfksxwk2en8.cloudfront.net/fonts/SourceCodePro-Regular.svg') format('svg');
+        src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/SourceCodePro-Regular.eot?#iefix') format('embedded-opentype'),
+          url('https://d2mrfksxwk2en8.cloudfront.net/fonts/SourceCodePro-Regular.woff2') format('woff2'),
+          url('https://d2mrfksxwk2en8.cloudfront.net/fonts/SourceCodePro-Regular.woff') format('woff'),
+          url('https://d2mrfksxwk2en8.cloudfront.net/fonts/SourceCodePro-Regular.ttf') format('truetype'),
+          url('https://d2mrfksxwk2en8.cloudfront.net/fonts/SourceCodePro-Regular.svg') format('svg');
         font-weight: 400;
         font-style: normal;
       }
@@ -125,34 +145,79 @@ $documentContainer.innerHTML = `<custom-style>
       --anypoint-color-violet3: #9A63F9;
       --anypoint-color-red3: #D1344E;
 
+      --arc-font-family: "Open Sans", "DIN Pro", sans-serif;
+      --arc-font-font-smoothing: antialiased;
+      --arc-font-code-family: "Source Code Pro", 'Consolas', 'Menlo', monospace;
+      --arc-font-nowrap-white-space: nowrap;
+      --arc-font-nowrap-overflow: hidden;
+      --arc-font-nowrap-text-overflow: ellipsis;
+      --arc-font-expensive-kerning: optimizeLegibility;
+
+      --arc-font-display1-font-size: 34px;
+      --arc-font-display1-line-height: 40px;
+
+      --arc-font-title-font-size: 20px;
+      --arc-font-title-font-weight: 100;
+      --arc-font-title-line-height: 28px;
+      --arc-font-title-letter-spacing: -.02em;
+
+      --arc-font-headline-font-size: 24px;
+      --arc-font-headline-font-weight: 100;
+      --arc-font-headline-letter-spacing: -.03em;
+      --arc-font-headline-line-height: 32px
+
+      --arc-font-subhead-font-size: 16px;
+      --arc-font-subhead-font-weight: 400;
+      --arc-font-subhead-line-height: 24px;
+
+      --arc-font-body2-font-size: 14px;
+      --arc-font-body2-font-weight: 500;
+      --arc-font-body2-letter-spacing: 0;
+
+      --arc-font-body1-font-size: 13px;
+      --arc-font-body1-font-weight: 400;
+      --arc-font-body1-line-height: 20px;
+      --arc-font-body1-letter-spacing: -.17px;
+
+      --arc-font-caption-font-size: 12px;
+      --arc-font-caption-font-weight: 400;
+      --arc-font-caption-letter-spacing: 0.011em;
+      --arc-font-caption-line-height: 20px;
+
+      --select-text-user-select: text;
+      --select-text-cursor: text;
+
       --anypoint-font-common-base: {
-        font-family: "Open Sans", "DIN Pro", sans-serif;
-        -webkit-font-smoothing: antialiased;
+        font-family: var(--arc-font-family);
+        -webkit-font-smoothing: var(--arc-font-font-smoothing);
       }
 
       --anypoint-title-font-common-base: {
         font-family: "DIN Pro", sans-serif;
-        -webkit-font-smoothing: antialiased;
+        -webkit-font-smoothing: var(--arc-font-font-smoothing);
       }
 
       --anypoint-font-common-code: {
-        font-family: "Source Code Pro", 'Consolas', 'Menlo', monospace;
-        -webkit-font-smoothing: antialiased;
+        font-family: var(--arc-font-code-family);
+        -webkit-font-smoothing: var(--arc-font-font-smoothing);
       }
 
       --anypoint-font-common-expensive-kerning: {
-        text-rendering: optimizeLegibility;
+        text-rendering: var(--arc-font-expensive-kerning);
       }
 
       --anypoint-font-common-nowrap: {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        white-space: var(--arc-font-nowrap-white-space);
+        overflow: var(--arc-font-nowrap-overflow);
+        text-overflow: var(--arc-font-nowrap-text-overflow);
       }
 
       --anypoint-font-header1: {
-        @apply --anypoint-font-common-base;
-        @apply --anypoint-font-common-nowrap;
+        font-family: var(--arc-font-family);
+        -webkit-font-smoothing: var(--arc-font-font-smoothing);
+        white-space: var(--arc-font-nowrap-white-space);
+        overflow: var(--arc-font-nowrap-overflow);
+        text-overflow: var(--arc-font-nowrap-text-overflow);
         font-size: 30px;
         font-weight: 100;
         letter-spacing: -0.5px;
@@ -160,8 +225,11 @@ $documentContainer.innerHTML = `<custom-style>
       }
 
       --anypoint-font-header2: {
-        @apply --anypoint-font-common-base;
-        @apply --anypoint-font-common-nowrap;
+        font-family: var(--arc-font-family);
+        -webkit-font-smoothing: var(--arc-font-font-smoothing);
+        white-space: var(--arc-font-nowrap-white-space);
+        overflow: var(--arc-font-nowrap-overflow);
+        text-overflow: var(--arc-font-nowrap-text-overflow);
         font-size: 25px;
         font-weight: 100;
         letter-spacing: -.3px;
@@ -169,7 +237,8 @@ $documentContainer.innerHTML = `<custom-style>
       }
 
       --anypoint-font-header3: {
-        @apply --anypoint-font-common-base;
+        font-family: var(--arc-font-family);
+        -webkit-font-smoothing: var(--arc-font-font-smoothing);
         font-size: 20px;
         font-weight: 100;
         letter-spacing: -.25px;
@@ -177,7 +246,8 @@ $documentContainer.innerHTML = `<custom-style>
       }
 
       --anypoint-font-header4: {
-        @apply --anypoint-font-common-base;
+        font-family: var(--arc-font-family);
+        -webkit-font-smoothing: var(--arc-font-font-smoothing);
         font-size: 18px;
         font-weight: 100;
         letter-spacing: -.2px;
@@ -185,7 +255,8 @@ $documentContainer.innerHTML = `<custom-style>
       }
 
       --anypoint-font-header5: {
-        @apply --anypoint-font-common-base;
+        font-family: var(--arc-font-family);
+        -webkit-font-smoothing: var(--arc-font-font-smoothing);
         font-size: 16px;
         font-weight: 100;
         letter-spacing: -.2px;
@@ -193,8 +264,11 @@ $documentContainer.innerHTML = `<custom-style>
       }
 
       --anypoint-font-header6: {
-        @apply --anypoint-font-common-base;
-        @apply --anypoint-font-common-nowrap;
+        font-family: var(--arc-font-family);
+        -webkit-font-smoothing: var(--arc-font-font-smoothing);
+        white-space: var(--arc-font-nowrap-white-space);
+        overflow: var(--arc-font-nowrap-overflow);
+        text-overflow: var(--arc-font-nowrap-text-overflow);
         font-size: 12px;
         font-weight: 700;
         letter-spacing: 0;
@@ -202,28 +276,32 @@ $documentContainer.innerHTML = `<custom-style>
       }
 
       --anypoint-font-body: {
-        @apply --anypoint-font-common-base;
+        font-family: var(--arc-font-family);
+        -webkit-font-smoothing: var(--arc-font-font-smoothing);
         font-size: 14px;
         letter-spacing: 0;
         font-weight: 400;
       }
 
       --anypoint-font-body-small: {
-        @apply --anypoint-font-common-base;
+        font-family: var(--arc-font-family);
+        -webkit-font-smoothing: var(--arc-font-font-smoothing);
         font-size: 14px;
         letter-spacing: 0;
         font-weight: 400;
       }
 
       --anypoint-font-blockquote: {
-        @apply --anypoint-font-common-base;
+        font-family: var(--arc-font-family);
+        -webkit-font-smoothing: var(--arc-font-font-smoothing);
         font-style: italic;
         font-weight: 200;
         font-size: 18px;
       }
 
       --anypoint-font-code: {
-        @apply --anypoint-font-common-code;
+        font-family: var(--arc-font-code-family);
+        -webkit-font-smoothing: var(--arc-font-font-smoothing);
         font-size: 14px;
         font-weight: 500;
         line-height: 20px;
@@ -254,16 +332,16 @@ $documentContainer.innerHTML = `<custom-style>
       --request-list-item-history-group-header-color: #fff;
 
       --font-family-din-pro: {
-        font-family: "DIN Pro", "Open Sans", sans-serif;
+        font-family: var(--arc-font-family);
       }
 
       --arc-font-common-base: {
-        @apply --anypoint-font-common-base;
-        font-family: Open Sans, sans-serif;
+        font-family: var(--arc-font-family);
+        -webkit-font-smoothing: var(--arc-font-font-smoothing);
       }
 
       --arc-font-common-code: {
-        @apply --anypoint-font-common-code;
+        -webkit-font-smoothing: var(--arc-font-font-smoothing);
         font-family: "Input Mono", "Source Code Pro", monospace;
         font-size: 13px;
         font-weight: 400;
@@ -277,70 +355,88 @@ $documentContainer.innerHTML = `<custom-style>
       }
 
       --arc-font-common-nowrap: {
-        @apply --anypoint-font-common-nowrap;
+        white-space: var(--arc-font-nowrap-white-space);
+        overflow: var(--arc-font-nowrap-overflow);
+        text-overflow: var(--arc-font-nowrap-text-overflow);
       }
 
+      /* Display1: Add variables from --arc-font-common-base */
       --arc-font-display1: {
-        @apply --arc-font-common-base;
-        font-size: 34px;
-        line-height: 40px;
+        font-family: var(--arc-font-family);
+        -webkit-font-smoothing: var(--arc-font-font-smoothing);
+        font-size: var(--arc-font-display1-font-size);
+        line-height: var(--arc-font-display1-line-height);
       }
 
       --arc-font-headline: {
-        @apply --arc-font-common-base;
-        font-weight: 100;
-        letter-spacing: -.03em;
-        font-size: 24px;
-        line-height: 32px;
+        font-family: var(--arc-font-family);
+        -webkit-font-smoothing: var(--arc-font-font-smoothing);
+        font-size: var(--arc-font-headline-font-size);
+        font-weight: var(--arc-font-headline-font-weight);
+        letter-spacing: var(--arc-font-headline-letter-spacing);
+        line-height: var(--arc-font-headline-line-height);
       }
 
       --arc-font-title: {
-        @apply --arc-font-common-base;
-        @apply --arc-font-common-nowrap;
-        font-weight: 100;
-        letter-spacing: -.02em;
-        font-size: 20px;
-        line-height: 28px;
+        font-family: var(--arc-font-family);
+        -webkit-font-smoothing: var(--arc-font-font-smoothing);
+        white-space: var(--arc-font-nowrap-white-space);
+        overflow: var(--arc-font-nowrap-overflow);
+        text-overflow: var(--arc-font-nowrap-text-overflow);
+        font-weight: var(--arc-font-title-font-weight);
+        letter-spacing: var(--arc-font-title-letter-spacing);
+        line-height: var(--arc-font-title-line-height);
       }
 
       --arc-font-subhead: {
-        @apply --arc-font-common-base;
-        font-weight: 400;
-        font-size: 16px;
-        line-height: 24px;
+        font-family: var(--arc-font-family);
+        -webkit-font-smoothing: var(--arc-font-font-smoothing);
+        font-size: var(--arc-font-subhead-font-size);
+        font-weight: var(--arc-font-subhead-font-weight);
+        line-height: var(--arc-font-subhead-line-height);
       }
 
       --arc-font-body2: {
-        @apply --anypoint-font-body;
-        font-weight: 500;
-        font-size: 14px;
+        font-family: var(--arc-font-family);
+        -webkit-font-smoothing: var(--arc-font-font-smoothing);
+        letter-spacing: var(--arc-font-body2-letter-spacing);
+        font-size: var(--arc-font-body2-font-size);
+        font-weight: var(--arc-font-body2-font-weight);
       }
 
       --arc-font-body1: {
-        @apply --anypoint-font-body;
-        font-size: 13px;
-        line-height: 20px;
-        letter-spacing: -.17px;
+        font-family: var(--arc-font-family);
+        -webkit-font-smoothing: var(--arc-font-font-smoothing);
+        font-weight: var(--arc-font-body1-font-weight);
+        font-size: var(--arc-font-body1-font-size);
+        line-height: var(--arc-font-body1-line-height);
+        letter-spacing: var(--arc-font-body1-letter-spacing);
         color: var(--anypoint-color-steel3);
       }
 
       --arc-font-caption: {
-        @apply --arc-font-common-base;
-        @apply --arc-font-common-nowrap;
-        font-size: 12px;
-        font-weight: 400;
-        letter-spacing: 0.011em;
-        line-height: 20px;
+        font-family: var(--arc-font-family);
+        -webkit-font-smoothing: var(--arc-font-font-smoothing);
+        white-space: var(--arc-font-nowrap-white-space);
+        overflow: var(--arc-font-nowrap-overflow);
+        text-overflow: var(--arc-font-nowrap-text-overflow);
+        font-size: var(--arc-font-caption-font-size);
+        font-weight: var(--arc-font-caption-font-weight);
+        line-height: var(--arc-font-caption-line-height);
+        letter-spacing: var(--arc-font-caption-letter-spacing);
       }
 
       --select-text: {
-        @apply --arc-font-common-base;
-        -webkit-user-select: text;
-        cursor: text;
+        font-family: var(--arc-font-family);
+        -webkit-font-smoothing: var(--arc-font-font-smoothing);
+        -webkit-user-select: var(--select-text-user-select);;
+        user-select: var(--select-text-user-select);
+        cursor: var(--select-text-cursor);
       }
 
       --arc-link: {
-        @apply --arc-font-common-base;
+        font-family: var(--arc-font-family);
+        -webkit-font-smoothing: var(--arc-font-font-smoothing);
         color: #00a1df;
       }
 
@@ -350,7 +446,8 @@ $documentContainer.innerHTML = `<custom-style>
       }
 
       --paper-font-common-base: {
-        @apply --arc-font-common-base;
+        font-family: var(--arc-font-family);
+        -webkit-font-smoothing: var(--arc-font-font-smoothing);
         font-size: 14px;
       }
 
@@ -367,7 +464,8 @@ $documentContainer.innerHTML = `<custom-style>
       }
 
       --tutorial-font: {
-        @apply --arc-font-common-base;
+        font-family: var(--arc-font-family);
+        -webkit-font-smoothing: var(--arc-font-font-smoothing);
         color: rgba(255, 255, 255, 0.67);
         font-size: 15px;
       }
@@ -517,7 +615,8 @@ $documentContainer.innerHTML = `<custom-style>
       --paper-tabs-content: {
         height: calc(100% - 3px);
         border-bottom: 3px solid rgba(39, 47, 51, .12);
-        @apply --anypoint-font-common-base;
+        font-family: var(--arc-font-family);
+        -webkit-font-smoothing: var(--arc-font-font-smoothing);
         font-style: normal;
         color: var(--anypoint-color-steel3);
         display: block;
@@ -533,7 +632,10 @@ $documentContainer.innerHTML = `<custom-style>
 
       /* Paper button mixn */
       --paper-button: {
-        @apply --anypoint-font-body;
+        font-family: var(--arc-font-family);
+        -webkit-font-smoothing: var(--arc-font-font-smoothing);
+        letter-spacing: 0;
+        font-weight: 400;
         font-size: 14px;
         border-radius: 0;
         box-shadow: none;

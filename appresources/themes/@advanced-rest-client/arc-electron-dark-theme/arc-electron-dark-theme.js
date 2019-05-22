@@ -20,7 +20,11 @@ to all elements.
 const $documentContainer = document.createElement('template');
 $documentContainer.innerHTML = `<custom-style>
   <style>
-  :root {
+  body {
+    color: #fff !important;
+  }
+
+  html {
     --primary-color: #00A2DF;
     --primary-text-color: rgba(255, 255, 255, 0.87);
     --primary-background-color: #37474F;
@@ -35,60 +39,147 @@ $documentContainer.innerHTML = `<custom-style>
     --light-accent-color: #ff80ab;
     --dark-accent-color: #f50057;
 
+    --arc-font-family: 'Roboto', 'Noto', sans-serif;
+    --arc-font-font-smoothing: antialiased;
+    --arc-font-code-family: 'Roboto Mono', 'Consolas', 'Menlo', monospace;
+    --arc-font-nowrap-white-space: nowrap;
+    --arc-font-nowrap-overflow: hidden;
+    --arc-font-nowrap-text-overflow: ellipsis;
+    --arc-font-expensive-kerning: optimizeLegibility;
+
+    --arc-font-display1-font-size: 34px;
+    --arc-font-display1-font-weight: 400;
+    --arc-font-display1-letter-spacing: -.01em;
+    --arc-font-display1-line-height: 40px;
+
+    --arc-font-title-font-size: 20px;
+    --arc-font-title-font-weight: 500;
+    --arc-font-title-line-height: 28px;
+
+    --arc-font-headline-font-size: 24px;
+    --arc-font-headline-font-weight: 400;
+    --arc-font-headline-letter-spacing: -.012em;
+    --arc-font-headline-line-height: 32px;
+
+    --arc-font-subhead-font-size: 16px;
+    --arc-font-subhead-font-weight: 400;
+    --arc-font-subhead-line-height: 24px;
+
+    --arc-font-body1-font-size: 14px;
+    --arc-font-body1-font-weight: 400;
+    --arc-font-body1-line-height: 20px;
+
+    --arc-font-body2-font-size: 14px;
+    --arc-font-body2-font-weight: 500;
+    --arc-font-body2-line-height: 24px;
+
+    --arc-font-caption-font-size: 12px;
+    --arc-font-caption-font-weight: 400;
+    --arc-font-caption-letter-spacing: 0.011em;
+    --arc-font-caption-line-height: 20px;
+
+    --select-text-user-select: text;
+    --select-text-cursor: text;
+
     --paper-font-common-base: {
-      font-family: 'Roboto', 'Noto', sans-serif;
-      -webkit-font-smoothing: antialiased;
-      color: #fff;
+      font-family: var(--arc-font-family);
+      -webkit-font-smoothing: var(--arc-font-font-smoothing);
+      /* color: #fff; */
     }
 
     --arc-font-common-base: {
-      @apply --paper-font-common-base;
+      font-family: var(--arc-font-family);
+      -webkit-font-smoothing: var(--arc-font-font-smoothing);
     };
 
     --arc-font-common-code: {
-      @apply --paper-font-common-code;
+      font-family: var(--arc-font-code-family);
+      -webkit-font-smoothing: var(--arc-font-font-smoothing);
     };
 
     --arc-font-common-expensive-kerning: {
-      @apply --paper-font-common-expensive-kerning;
+      text-rendering: var(--arc-font-expensive-kerning);
     };
 
     --arc-font-common-nowrap: {
-      @apply --paper-font-common-nowrap;
+      white-space: var(--arc-font-nowrap-white-space);
+      overflow: var(--arc-font-nowrap-overflow);
+      text-overflow: var(--arc-font-nowrap-text-overflow);
     };
 
     --arc-font-display1: {
-      @apply --paper-font-display1;
+      font-family: var(--arc-font-family);
+      -webkit-font-smoothing: var(--arc-font-font-smoothing);
+      font-size: var(--arc-font-display1-font-size);
+      font-weight: var(--arc-font-display1-font-weight);
+      letter-spacing: var(--arc-font-display1-letter-spacing);
+      line-height: var(--arc-font-display1-line-height);
     };
 
     --arc-font-title: {
-      @apply --paper-font-title;
+      font-family: var(--arc-font-family);
+      -webkit-font-smoothing: var(--arc-font-font-smoothing);
+      white-space: var(--arc-font-nowrap-white-space);
+      overflow: var(--arc-font-nowrap-overflow);
+      text-overflow: var(--arc-font-nowrap-text-overflow);
+      font-size: var(--arc-font-title-font-size);
+      font-weight: var(--arc-font-title-font-weight);
+      line-height: var(--arc-font-title-line-height);
+      /* color: #fff; */
     };
 
     --arc-font-headline: {
-      @apply --paper-font-headline;
+      font-family: var(--arc-font-family);
+      -webkit-font-smoothing: var(--arc-font-font-smoothing);
+      font-size: var(--arc-font-headline-font-size);
+      font-weight: var(--arc-font-headline-font-weight);
+      letter-spacing: var(--arc-font-headline-letter-spacing);
+      line-height: var(--arc-font-headline-line-height);
+      /* color: #fff; */
     };
 
     --arc-font-subhead: {
-      @apply --paper-font-subhead;
+      font-family: var(--arc-font-family);
+      -webkit-font-smoothing: var(--arc-font-font-smoothing);
+      font-size: var(--arc-font-subhead-font-size);
+      font-weight: var(--arc-font-subhead-font-weight);
+      line-height: var(--arc-font-subhead-line-height);
+      /* color: #fff; */
     };
 
     --arc-font-body1: {
-      @apply --paper-font-body1;
+      font-family: var(--arc-font-family);
+      -webkit-font-smoothing: var(--arc-font-font-smoothing);
+      font-size: var(--arc-font-body1-font-size);
+      font-weight: var(--arc-font-body1-font-weight);
+      line-height: var(--arc-font-body1-line-height);
+      /* color: #fff; */
     }
 
     --arc-font-body2: {
-      @apply --paper-font-body2;
+      font-family: var(--arc-font-family);
+      -webkit-font-smoothing: var(--arc-font-font-smoothing);
+      font-size: var(--arc-font-body2-font-size);
+      font-weight: var(--arc-font-body2-font-weight);
+      line-height: var(--arc-font-body2-line-height);
     }
 
-    --arc-font-caption: {-code-mirror-property-color
-      @apply --paper-font-caption;
+    --arc-font-caption: {
+      font-family: var(--arc-font-family);
+      -webkit-font-smoothing: var(--arc-font-font-smoothing);
+      white-space: var(--arc-font-nowrap-white-space);
+      overflow: var(--arc-font-nowrap-overflow);
+      text-overflow: var(--arc-font-nowrap-text-overflow);
+      font-size: var(--arc-font-caption-font-size);
+      font-weight: var(--arc-font-caption-font-weight);
+      line-height: var(--arc-font-caption-line-height);
+      letter-spacing: var(--arc-font-caption-letter-spacing);
     }
 
     --select-text: {
-      @apply --arc-font-common-base;
-      -webkit-user-select: text;
-      cursor: text;
+      -webkit-user-select: var(--select-text-user-select);;
+      user-select: var(--select-text-user-select);
+      cursor: var(--select-text-cursor);
     }
 
     --arc-font-code1: {
@@ -134,6 +225,7 @@ $documentContainer.innerHTML = `<custom-style>
     --api-navigation-list-item-selected-background-color: #546E7A;
     --api-navigation-list-item-selected-color: #fff;
     --request-list-item-history-group-header-color: #fff;
+    --request-list-item-selected-background-color: rgba(0, 0, 0, 0.26);
     --projects-menu-project-icon-color: #989a9b;
     --api-navigation-operation-endpoint-opened-background-color: #37474F;
     --api-navigation-endpoint-toggle-icon: {
@@ -306,6 +398,8 @@ $documentContainer.innerHTML = `<custom-style>
       color: var(--inline-fom-action-icon-color);
     }
 
+    --response-body-view-color: var(--inline-fom-action-icon-color);
+
     --request-editor-tabs-container: {
       background-color: #455A64;
     };
@@ -322,6 +416,7 @@ $documentContainer.innerHTML = `<custom-style>
     --code-array-index-color: #FFC107;
     --code-property-value-color: #ff6f6f;
     --code-keyword-value-color: #48c8ff;
+    --code-operator-value-background-color: transparent;
 
     --json-table: {
       color: #fff;
@@ -483,6 +578,24 @@ $documentContainer.innerHTML = `<custom-style>
     --box-shadow-24dp: 0 24px 38px 3px rgba(0, 0, 0, 0.14),
                   0 9px 46px 8px rgba(0, 0, 0, 0.12),
                   0 11px 15px -7px rgba(0, 0, 0, 0.4);
+
+    --arc-workspace-detail-data-list-color: rgba(255, 255, 255, 0.87);
+    --arc-workspace-detail-action-icon-color: rgba(255, 255, 255, 0.54);
+
+    --arc-info-message: {
+      background-color: var(--arc-menu-background-color) !important;
+      color: #fff !important;
+    }
+    --arc-info-messages-background-color: var(--arc-menu-background-color);
+    --arc-info-message-content-color: #fff;
+    --arc-info-message-date-color: rgba(255, 255, 255, 0.64);
+    --inline-documentation-color: rgba(255, 255, 255, 0.87);
+    --request-actions-panel-empty-screen-color: #fff;
+    --request-action-iterator-editor-info-color: #e1e1e1;
+    --rest-apis-list-item-color: rgba(255, 255, 255, 0.87);
+    --api-method-documentation-description-color: rgba(255, 255, 255, 0.87);
+    --api-method-documentation-descxription-color: var(--api-method-documentation-description-color);
+    --api-endpoint-documentation-description-color: var(--api-method-documentation-description-color);
   }
 
   [narrow] {
