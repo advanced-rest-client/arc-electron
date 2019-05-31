@@ -2,13 +2,15 @@ os:
 - linux
 - osx
 dist: xenial
+services:
+  - xvfb
 language: node_js
 node_js:
 - '10'
 sudo: required
 install:
 - npm ci
-script: "./test/travis-build.sh"
+# script: "./test/travis-build.sh"
 after_success:
 - openssl aes-256-cbc -K $encrypted_36ee0d5a95ce_key -iv $encrypted_36ee0d5a95ce_iv
   -in tasks/advancedrestclient.pfx.enc -out tasks/advancedrestclient.pfx -d
