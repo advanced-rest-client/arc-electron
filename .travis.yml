@@ -7,8 +7,6 @@ node_js:
 - '10'
 sudo: required
 install:
-- npm install -g bower
-- bower i
 - npm ci
 script: "./test/travis-build.sh"
 after_success:
