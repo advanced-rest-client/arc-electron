@@ -1,19 +1,8 @@
-import {PolymerElement} from '../../web_modules/@polymer/polymer/polymer-element.js';
-import {html} from '../../web_modules/@polymer/polymer/lib/utils/html-tag.js';
+import { LitElement, html, css } from '../web_modules/lit-element/lit-element.js';
 import {ArcAppMixin} from '../web_modules/@advanced-rest-client/arc-app-mixin/arc-app-mixin.js';
-import {afterNextRender} from '../web_modules/@polymer/polymer/lib/utils/render-status.js';
 import {Jexl} from '../web_modules/jexl/lib/Jexl.js';
-import '../web_modules/@polymer/polymer/lib/elements/custom-style.js';
-import '../web_modules/@polymer/paper-icon-button/paper-icon-button.js';
 import '../web_modules/@advanced-rest-client/arc-icons/arc-icons.js';
 import '../web_modules/@advanced-rest-client/arc-menu/arc-menu.js';
-import '../web_modules/@polymer/paper-icon-button/paper-icon-button.js';
-import '../web_modules/@polymer/paper-item/paper-icon-item.js';
-import '../web_modules/@polymer/iron-icon/iron-icon.js';
-import '../web_modules/@polymer/iron-flex-layout/iron-flex-layout.js';
-import '../web_modules/@polymer/iron-pages/iron-pages.js';
-import '../web_modules/@polymer/app-route/app-location.js';
-import '../web_modules/@polymer/app-route/app-route.js';
 import '../web_modules/@polymer/app-layout/app-drawer-layout/app-drawer-layout.js';
 import '../web_modules/@polymer/app-layout/app-drawer/app-drawer.js';
 import '../web_modules/@polymer/app-layout/app-header-layout/app-header-layout.js';
@@ -40,15 +29,7 @@ import '../web_modules/@advanced-rest-client/app-analytics/app-analytics.js';
 import '../web_modules/@advanced-rest-client/app-analytics/app-analytics-custom.js';
 import '../web_modules/@advanced-rest-client/arc-messages-service/arc-messages-service.js';
 import '../web_modules/@advanced-rest-client/arc-info-messages/arc-info-messages.js';
-import '../web_modules/@polymer/paper-styles/typography.js';
-import '../web_modules/@polymer/paper-styles/color.js';
-import '../web_modules/@polymer/paper-button/paper-button.js';
-import '../web_modules/@polymer/paper-toggle-button/paper-toggle-button.js';
 import '../web_modules/@advanced-rest-client/uuid-generator/uuid-generator.js';
-import '../web_modules/@polymer/paper-item/paper-item.js';
-import '../web_modules/@polymer/paper-item/paper-item-body.js';
-import '../web_modules/@polymer/paper-tabs/paper-tabs.js';
-import '../web_modules/@polymer/paper-tabs/paper-tab.js';
 import '../web_modules/@advanced-rest-client/request-hooks-logic/request-hooks-logic.js';
 import '../web_modules/@advanced-rest-client/arc-request-logic/arc-request-logic.js';
 import '../web_modules/@advanced-rest-client/oauth-authorization/oauth1-authorization.js';
@@ -59,7 +40,6 @@ import '../web_modules/@advanced-rest-client/saved-request-editor/saved-request-
 import '../web_modules/@advanced-rest-client/saved-request-detail/saved-request-detail.js';
 import '../web_modules/@advanced-rest-client/bottom-sheet/bottom-sheet.js';
 import '../web_modules/@advanced-rest-client/http-code-snippets/http-code-snippets.js';
-import '../web_modules/@advanced-rest-client/arc-electron-experiment-settings/arc-electron-experiment-settings.js';
 import '../web_modules/@api-components/api-candidates-dialog/api-candidates-dialog.js';
 import '../web_modules/@advanced-rest-client/arc-onboarding/arc-onboarding.js';
 import './electron-http-transport/electron-http-transport.js';
@@ -70,7 +50,7 @@ window.Jexl = Jexl;
  *
  * @appliesMixin ArcAppMixin
  */
-class ArcElectron extends ArcAppMixin(PolymerElement) {
+class ArcElectron extends ArcAppMixin(LitElement) {
   static get template() {
     return html`<style>
     :host {
@@ -618,7 +598,7 @@ class ArcElectron extends ArcAppMixin(PolymerElement) {
     this.addEventListener('process-exchange-asset-data', this._exchangeAssetHandler);
     this.addEventListener('request-workspace-append', this.openWorkspace);
     window.addEventListener('workspace-open-project-requests', this.openWorkspace);
-    afterNextRender(this, () => {
+    setTimeout(() => {
       this._variablesButton = this.shadowRoot.querySelector('#varToggleButton');
       this._scrollTarget = this.$.scrollingRegion.$.contentContainer;
     });
@@ -743,9 +723,9 @@ class ArcElectron extends ArcAppMixin(PolymerElement) {
   }
 
   initApplication() {
-    afterNextRender(this, () => this.initSettings({}));
-    afterNextRender(this, () => this.updateStyles({}));
-    afterNextRender(this, () => this._requestAuthToken(false));
+    setTimeout(() => this.initSettings({}));
+    setTimeout(() => this.updateStyles({}));
+    setTimeout(() => this._requestAuthToken(false));
     const hash = location.hash.substr(1);
     if (hash) {
       this.page = hash;
@@ -1059,7 +1039,7 @@ class ArcElectron extends ArcAppMixin(PolymerElement) {
       this._setIsApiConsole(true);
       this.apiSelected = undefined;
       this.apiSelectedType = undefined;
-      afterNextRender(this, () => {
+      setTimeout(() => {
         this.apiSelected = 'summary';
         this.apiSelectedType = 'summary';
       });

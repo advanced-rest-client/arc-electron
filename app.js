@@ -167,7 +167,7 @@ class ArcInit {
     if (this.created) {
       return Promise.resolve();
     }
-    return this._importModule('web-module://src/arc-electron.js')
+    return import('web-module://src/arc-electron.js')
     .then(() => {
       const app = document.createElement('arc-electron');
       app.id = 'app';
@@ -176,22 +176,6 @@ class ArcInit {
       this._setupApp(app);
       document.body.appendChild(app);
       this.created = true;
-    });
-  }
-
-  _importModule(href) {
-    return new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.type = 'module';
-      s.src = href;
-      s.async = true;
-      s.onload = () => {
-        resolve();
-      };
-      s.onerror = () => {
-        reject();
-      };
-      document.head.appendChild(s);
     });
   }
   /**

@@ -56,7 +56,9 @@ module.exports = function(startTime) {
   // }
 
   // Standard scheme must be registered before the app is ready
-  protocol.registerStandardSchemes(['web-module'], {secure: true});
+  protocol.registerSchemesAsPrivileged([
+    { scheme: 'web-module', privileges: { standard: true, secure: true } }
+  ]);
 
   log.debug('Setting up the environment');
   arcPaths.setHome();
