@@ -50,12 +50,13 @@
     opacity: 0;
   }
   </style>
-  <script type="module" src="web-module://web_modules/@advanced-rest-client/pouchdb-quick-search/dist/pouchdb.quick-search.min.js"></script>
   <script type="module">
-  import PouchDB from 'web-module://web_modules/pouchdb/dist/pouchdb.js';
+  import PouchDB from 'web-module://src/web_modules/pouchdb/dist/pouchdb.js';
+  import PouchQuickSearch from 'web-module://src/web_modules/@advanced-rest-client/pouchdb-quick-search/dist/pouchdb.quick-search.min.js';
   window.PouchDB = PouchDB;
+  window.PouchQuickSearch = PouchQuickSearch;
   </script>
-  <script src="web-module://web_modules/pouchdb/dist/pouchdb.js"></script>
+  <!-- <script src="web-module://web_modules/pouchdb/dist/pouchdb.js"></script> -->
   <script src="web-module://web_modules/codemirror/lib/codemirror.js"></script>
   <script src="web-module://web_modules/codemirror/addon/mode/loadmode.js"></script>
   <script src="web-module://web_modules/codemirror/mode/meta.js"></script>
