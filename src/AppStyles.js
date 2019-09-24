@@ -62,15 +62,13 @@ app-toolbar {
 
 .env-container {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   color: var(--arc-env-container-color);
 }
 
 environment-selector {
   margin-left: 8px;
-  max-width: 120px;
-  --paper-input-container-input-color: var(--arc-toolbar-environment-selector-input-color);
 }
 
 .api-version-selector {
@@ -157,4 +155,11 @@ app-drawer {
   --app-drawer-width: 640px;
   z-index: 1;
   text-align: left;
+}
+
+.icon {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
 }`;

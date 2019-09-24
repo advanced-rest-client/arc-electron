@@ -12,11 +12,11 @@ class ThemeDefaults {
    *
    * @return {Promise} Resolved promise when the defaults are stored.
    */
-  prepareEnvironment() {
+  async prepareEnvironment() {
     log.debug('Preparing ARC environment.');
     const names = this._readDefaultThemesPackages();
-    return this._ensureThemes(names)
-    .then(() => this._setThemeInfo());
+    await this._ensureThemes(names);
+    await this._setThemeInfo();
   }
 
   _readDefaultThemesPackages() {
@@ -85,70 +85,68 @@ class ThemeDefaults {
     return defaultName;
   }
 
-  _ensureThemes(themes) {
+  async _ensureThemes(themes) {
     const item = themes.shift();
     if (!item) {
-      return Promise.resolve();
+      return;
     }
-    return this._ensureTheme(item)
-    .then(() => this._ensureThemes(themes))
-    .catch(() => this._ensureThemes(themes));
+    try {
+      await this._ensureTheme(item);
+    } catch (e) {
+      log.error(e);
+    }
+    await this._ensureThemes(themes);
   }
 
-  _ensureTheme(info) {
+  async _ensureTheme(info) {
     const file = path.join(process.env.ARC_THEMES, info.name, info.main);
-    return fs.pathExists(file)
-    .then((exists) => {
-      if (exists) {
-        log.silly(`Theme ${file} exists. Skipping initialization.`);
-        return;
-      }
-      log.silly(`Theme ${file} do not exists. Initializing.`);
-      return this._copyThemeFiles(info);
-    });
+    const exists = await fs.pathExists(file);
+    if (exists) {
+      log.silly(`Theme ${file} exists. Skipping initialization.`);
+      return;
+    }
+    log.silly(`Theme ${file} do not exists. Initializing.`);
+    return await this._copyThemeFiles(info);
   }
 
-  _copyThemeFiles(info) {
+  async _copyThemeFiles(info) {
     const dest = path.join(process.env.ARC_THEMES, info.name);
-    return fs.emptyDir(dest)
-    .then(() => fs.copy(info.location, dest))
-    .catch((cause) => {
+    try {
+      await fs.emptyDir(dest);
+      await fs.copy(info.location, dest);
+    } catch (cause) {
       log.error('Unable to copy default theme from ' + info.location + ' to ' + dest);
       log.error(cause);
-    });
+    }
   }
   // Setups theme info file if missing
-  _setThemeInfo() {
+  async _setThemeInfo() {
     const file = path.join(process.env.ARC_THEMES, 'themes-info.json');
-    return fs.pathExists(file)
-    .then((exists) => {
-      if (exists) {
-        log.debug(`theme-info.json exists. Skipping initialization.`);
-        return this._ensureThemesInfoVersion(file);
-      }
-      log.info('Creating themes-info.json file');
-      return this._copyInfoFile();
-    });
+    const exists = await fs.pathExists(file);
+    if (exists) {
+      log.debug(`theme-info.json exists. Skipping initialization.`);
+      return await this._ensureThemesInfoVersion(file);
+    }
+    log.info('Creating themes-info.json file');
+    return await this._copyInfoFile();
   }
 
-  _ensureThemesInfoVersion(file) {
-    return fs.readJson(file, {throws: false})
-    .then((data) => {
-      if (!data) {
-        return this._copyInfoFile();
-      }
-      if (data instanceof Array) {
-        // version 0
-        return this._upgradeInfoFile(file, data);
-      }
-      if (!(data.themes instanceof Array)) {
-        return this._copyInfoFile();
-      }
-      const item = data.themes[0];
-      if (!item.location) {
-        return this._copyInfoFile();
-      }
-    });
+  async _ensureThemesInfoVersion(file) {
+    const data = await fs.readJson(file, { throws: false });
+    if (!data) {
+      return await this._copyInfoFile();
+    }
+    if (data instanceof Array) {
+      // version 0
+      return await this._upgradeInfoFile(file, data);
+    }
+    if (!(data.themes instanceof Array)) {
+      return await this._copyInfoFile();
+    }
+    const item = data.themes[0];
+    if (!item.location) {
+      return await this._copyInfoFile();
+    }
   }
   /**
    * @return {String} Location of theme info file in local resources.
@@ -160,14 +158,11 @@ class ThemeDefaults {
    * Copies theme info file from local resources to themes folder.
    * @return {Promise}
    */
-  _copyInfoFile() {
+  async _copyInfoFile() {
     const dest = process.env.ARC_THEMES_SETTINGS;
-    return fs.readJson(this.localThemeInfoFile, {throws: false})
-    .then((info) => {
-      info = info || {};
-      return info;
-    })
-    .then((info) => fs.writeJson(dest, info));
+    let info = await fs.readJson(this.localThemeInfoFile, { throws: false })
+    info = info || {};
+    await fs.writeJson(dest, info);
   }
   /**
    * Upgrades original theme info file structure to v1.
@@ -180,10 +175,10 @@ class ThemeDefaults {
    * @return {Promise}
    */
   _upgradeInfoFile(file, installed) {
-    return fs.readJson(this.localThemeInfoFile, {throws: false})
+    return fs.readJson(this.localThemeInfoFile, { throws: false })
     .then((info) => {
       if (!info || !info.themes) {
-        info = {themes: []};
+        info = { themes: [] };
       }
       installed.forEach((item) => {
         if (item.isDefault) {

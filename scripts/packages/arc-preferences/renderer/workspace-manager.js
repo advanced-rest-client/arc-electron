@@ -44,7 +44,6 @@ class WorkspaceManager extends ArcPreferences {
    * @return {Promise}
    */
   defaultSettings() {
-    console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
     return Promise.resolve({
       requests: [],
       selected: 0,

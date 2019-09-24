@@ -12,7 +12,7 @@ class ElectronHttpTransport extends HTMLElement {
   get requestTimeout() {
     const rt = this.getAttribute('request-timeout');
     if (!rt || isNaN(rt)) {
-      return;
+      return null;
     }
     return Number(rt);
   }
@@ -82,7 +82,7 @@ class ElectronHttpTransport extends HTMLElement {
   get sentMessageLimit() {
     const v = this.getAttribute('sent-message-limit');
     if (!v || isNaN(v)) {
-      return;
+      return null;
     }
     return Number(v);
   }
@@ -162,7 +162,12 @@ class ElectronHttpTransport extends HTMLElement {
   }
 
   _prepareRequestOptions(request, opts) {
-    const rConfig = Object.assign({}, request.config || {});
+    let rConfig;
+    if (request.config && request.config.enabled !== false) {
+      rConfig = Object.assign(request.config);
+    } else {
+      rConfig = {};
+    }
     opts = Object.assign({}, opts || {});
     opts = Object.assign(rConfig, opts);
     if (typeof opts.timeout === 'undefined') {
@@ -187,6 +192,9 @@ class ElectronHttpTransport extends HTMLElement {
     if (typeof opts.sentMessageLimit === 'undefined') {
       opts.sentMessageLimit = this.sentMessageLimit;
     }
+    if (opts.sentMessageLimit) {
+      opts.sentMessageLimit = Number(opts.sentMessageLimit);
+    }
     return opts;
   }
   /**
@@ -194,9 +202,9 @@ class ElectronHttpTransport extends HTMLElement {
    * It returns empty array of hosts couldn't be read.
    * @return {Promise<Array>}
    */
-  _readHosts() {
+  async _readHosts() {
     if (this.hosts !== undefined) {
-      return Promise.resolve(this.hosts);
+      return this.hosts;
     }
     const e = new CustomEvent('host-rules-list', {
       bubbles: true,
@@ -207,13 +215,11 @@ class ElectronHttpTransport extends HTMLElement {
     this.dispatchEvent(e);
     if (!e.defaultPrevented) {
       this.hosts = [];
-      return Promise.resolve(this.hosts);
+      return this.hosts;
     }
-    return e.detail.result
-    .then((rules) => {
-      this.hosts = rules || [];
-      return rules;
-    });
+    const rules = await e.detail.result;
+    this.hosts = rules || [];
+    return rules;
   }
 
   _isNative(opts) {
@@ -234,7 +240,7 @@ class ElectronHttpTransport extends HTMLElement {
     // In ARC electron the browser window is created without node integration
     // and therefore require is disabled. In tests node is enabled.
     if (typeof SocketRequest === 'undefined') {
-      const {SocketRequest} = require('@advanced-rest-client/electron-request');
+      const { SocketRequest } = require('@advanced-rest-client/electron-request');
       conn = new SocketRequest(request, opts);
     } else {
       conn = new SocketRequest(request, opts);
@@ -258,7 +264,7 @@ class ElectronHttpTransport extends HTMLElement {
     // In ARC electron the browser window is created without node integration
     // and therefore require is disabled. In tests node is enabled.
     if (typeof ElectronRequest === 'undefined') {
-      const {ElectronRequest} = require('@advanced-rest-client/electron-request');
+      const { ElectronRequest } = require('@advanced-rest-client/electron-request');
       conn = new ElectronRequest(request, opts);
     } else {
       conn = new ElectronRequest(request, opts);
@@ -382,7 +388,7 @@ class ElectronHttpTransport extends HTMLElement {
     if (!response) {
       response = {};
     }
-    let data = Object.assign({}, response, {
+    const data = Object.assign({}, response, {
       isError: true,
       error: cause
     });

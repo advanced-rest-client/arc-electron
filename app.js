@@ -134,8 +134,9 @@ class ArcInit {
     // console.info('Initializing renderer window...');
     this.workspaceManager = new WorkspaceManager(this.initConfig.workspaceFile);
     this.workspaceManager.observe();
+    let cnf;
     try {
-      const cnf = await this.prefProxy.load();
+      cnf = await this.prefProxy.load();
       await this._createApp(cnf);
     } catch (e) {
       this.reportFatalError(e);
@@ -144,7 +145,7 @@ class ArcInit {
     try {
       await this.themeManager.loadTheme(cnf.theme)
     } catch (e) {
-      // ...
+      console.error(e);
     }
   }
   /**

@@ -1,4 +1,4 @@
-const {session} = require('electron');
+const { session } = require('electron');
 const path = require('path');
 const log = require('./logger');
 const fs = require('fs-extra');
@@ -52,7 +52,9 @@ class ThemesProtocolHandler {
     try {
       fs.accessSync(url, fs.constants.R_OK | fs.constants.X_OK);
       return this._loadFileTheme(url, callback);
-    } catch (_) {}
+    } catch (_) {
+      // ..
+    }
     if (url === 'dd1b715f-af00-4ee8-8b0c-2a262b3cf0c8') {
       url = 'advanced-rest-client/arc-electron-default-theme';
     }
@@ -63,7 +65,7 @@ class ThemesProtocolHandler {
     log.silly('ThemesProtocolHandler::loading theme from ' + location);
     return this._loadThemeInfo()
     .then((config) => {
-      const {themes} = config;
+      const { themes } = config;
       log.debug('Got themes list');
       const theme = this._findThemeInfo(location, themes);
       if (theme) {
@@ -77,7 +79,7 @@ class ThemesProtocolHandler {
         log.silly('Sending theme file to renderer.');
         callback({
           data,
-          mimeType: 'application/javascript',
+          mimeType: 'text/css',
           charset: 'utf8'
         });
       } else {
@@ -99,7 +101,7 @@ class ThemesProtocolHandler {
     .then((data) => {
       callback({
         data,
-        mimeType: 'application/javascript',
+        mimeType: 'text/css',
         charset: 'utf8'
       });
     })
@@ -111,12 +113,13 @@ class ThemesProtocolHandler {
     });
   }
 
-  _loadThemeInfo() {
-    return fs.readJson(process.env.ARC_THEMES_SETTINGS)
-    .catch(() => {
+  async _loadThemeInfo() {
+    try {
+      return await fs.readJson(process.env.ARC_THEMES_SETTINGS);
+    } catch (_) {
       log.warn('Theme file not found', process.env.ARC_THEMES_SETTINGS);
       return {};
-    });
+    }
   }
 
   _findThemeInfo(id, themes) {
