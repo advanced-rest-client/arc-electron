@@ -16,27 +16,27 @@ export default css`
   display: none !important;
 }
 
-.mainPages {
+.pages {
   padding: 0px 24px;
   box-sizing: border-box;
 }
 
-.mainPages,
-.mainPages > * {
+.pages,
+.pages > * {
   background-color: var(--primary-background-color, #fff);
 }
 
-.mainPages {
+.pages {
   min-height: 100%;
 }
 
-.mainPages > * {
+.pages > * {
   min-height: calc(100vh - 64px);
   box-sizing: border-box;
   padding: 4px;
 }
 
-.mainPages,
+.pages,
 app-header {
   border-left: 1px var(--arc-layout-divider-color, #BDBDBD) solid;
 }
@@ -162,4 +162,10 @@ app-drawer {
   width: 24px;
   height: 24px;
   fill: currentColor;
+}
+
+history-panel,
+saved-requests-panel,
+exchange-search-panel {
+  height: calc(100vh - 64px);
 }`;

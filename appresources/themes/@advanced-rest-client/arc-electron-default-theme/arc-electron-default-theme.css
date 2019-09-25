@@ -1,5 +1,6 @@
 body {
   --primary-color: #00A2DF;
+  --accent-color: #4CAF50;
   --primary-text-color: rgba(0, 0, 0, 0.87);
   --primary-background-color: #ffffff;
   --secondary-color: #506773;
@@ -8,7 +9,6 @@ body {
   --divider-color: #dbdbdb;
   --light-primary-color: var(--paper-indygo-100);
   --dark-primary-color: var(--paper-blue-700);
-  --accent-color: var(--paper-red-a200);
   --light-accent-color: #ff80ab;
   --dark-accent-color: #f50057;
   --paper-menu-background-color: #fff;
@@ -79,6 +79,27 @@ body {
   --action-button-hover-color: #fff;
   --action-button-disabled-background-color: #eaeaea;
   --action-button-disabled-color: #a8a8a8;
+
+  --http-method-label-get-background-color: rgb(0, 128, 0);
+  --http-method-label-get-color: #fff;
+  --http-method-label-post-background-color: #006ec5;
+  --http-method-label-post-color: #fff;
+  --http-method-label-put-background-color: #ffa500;
+  --http-method-label-put-color: #1D0029;
+  --http-method-label-delete-background-color: #e93628;
+  --http-method-label-delete-color: #fff;
+  --http-method-label-patch-background-color: #811f92;
+  --http-method-label-patch-color: #F2F1EF;
+
+  --anypoiont-dropdown-shaddow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
+  --anypoiont-autocomplete-dropdown-shaddow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
+
+  --anypoint-listbox-background-color: #fff;
+  --api-navigation-list-item-selected-background-color: #E1F5FE;
+  --api-navigation-list-item-selected-color: #0277BD;
+  --api-navigation-operation-font-size: 13px;
+
+  --code-background-color: #f5f2f0;
 }
 
 body[narrow] {

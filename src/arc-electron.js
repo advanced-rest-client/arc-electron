@@ -63,8 +63,10 @@ class ArcElectron extends ArcAppMixin(LitElement) {
             ${this.mainToolbarTemplate()}
           </app-toolbar>
         </app-header>
-        ${this.workspaceTemplate()}
-        ${this._pageTemplate()}
+        <div class="pages">
+          ${this.workspaceTemplate()}
+          ${this._pageTemplate()}
+        </div>
       </app-header-layout>
     </app-drawer-layout>
     <iron-media-query query="(max-width: 700px)" @query-matches-changed="${this._narrowHandler}"></iron-media-query>
@@ -152,9 +154,10 @@ class ArcElectron extends ArcAppMixin(LitElement) {
       ?outlined="${outlined}"
       anypointauth
       columns="auto"
-      exchangeredirecturi="https://auth.advancedrestclient.com/oauth-popup.html"
-      exchangeclientid="59KaqF90hLgZMJec"
+      exchangeredirecturi="https://auth.advancedrestclient.com/"
+      exchangeclientid="2dc40927457042b5862864c3c97737d7"
       forceoauthevents
+      @oauth2-token-requested="${this._exchangeTokenHandler}"
     ></exchange-search-panel>`;
   }
 
@@ -707,6 +710,10 @@ class ArcElectron extends ArcAppMixin(LitElement) {
         break;
     }
     target.selected = undefined;
+  }
+
+  _exchangeTokenHandler(e) {
+    e.detail.clientSecret = '5d02cE95028E4Dc08A40907a0A4883fC';
   }
 }
 window.customElements.define('arc-electron', ArcElectron);

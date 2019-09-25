@@ -4,26 +4,13 @@ const path = require('path');
  * A logic to be executed when the app is being installed from sources (local npm install).
  */
 class PrepareApp {
-  run() {
-    return this.fixMarked()
-    .then(() => this.analyzeNodeModules())
-    .catch((cause) => {
+  async run() {
+    try {
+      await this.analyzeNodeModules();
+    } catch (cause) {
       console.error(cause);
       process.exit(-1);
-    });
-  }
-  /**
-   * Walkaround for https://github.com/PolymerElements/marked-element/issues/100
-   * @return {Promise}
-   */
-  fixMarked() {
-    const file = 'web_modules/@polymer/marked-element/marked-element.js';
-    return fs.readFile(file, 'utf8')
-    .then((content) => {
-      content = content.replace('new marked.Renderer()', 'new marked.default.Renderer()');
-      content = content.replace('marked(this.markdown', 'marked.default(this.markdown');
-      return fs.writeFile(file, content);
-    });
+    }
   }
   /**
    * A function that checks whether any of `@advanced-rest-client` or `@api-components`
@@ -33,29 +20,43 @@ class PrepareApp {
    *
    * @return {Promise}
    */
-  analyzeNodeModules() {
-    return this._analyzeNmPath('@advanced-rest-client')
-    .then(() => this._analyzeNmPath('@api-components'));
+  async analyzeNodeModules() {
+    await this._analyzeNmPath('@advanced-rest-client')
+    await this._analyzeNmPath('@api-components');
   }
 
-  _analyzeNmPath(dir) {
+  async _analyzeNmPath(dir) {
     const loc = path.join(__dirname, '..', 'node_modules', dir);
-    return fs.readdir(loc)
-    .then((items) => {
-      for (let i = 0, len = items.length; i < len; i++) {
-        const candidate = path.join(loc, items[i], 'node_modules');
-        let has = false;
-        try {
-          const stat = fs.statSync(candidate);
-          if (stat.isDirectory()) {
-            has = true;
-          }
-        } catch (e) {}
-        if (has) {
-          throw new Error(`Nested node_modules directory exists for ${candidate}`);
+    const items = await fs.readdir(loc);
+    for (let i = 0, len = items.length; i < len; i++) {
+      const candidate = path.join(loc, items[i], 'node_modules');
+      let has = false;
+      try {
+        const stat = await fs.stat(candidate);
+        if (stat.isDirectory()) {
+          has = await this._hasModules(candidate);
         }
+      } catch (e) {
+        // ...
       }
-    });
+      if (has) {
+        throw new Error(`Nested node_modules directory exists for ${candidate}`);
+      }
+    }
+  }
+
+  async _hasModules(loc) {
+    const items = await fs.readdir(loc);
+    if (!items.length) {
+      return false;
+    }
+    if (items.length > 1) {
+      return true;
+    }
+    if (items[0][0] === '.') {
+      return false;
+    }
+    return true;
   }
 }
 

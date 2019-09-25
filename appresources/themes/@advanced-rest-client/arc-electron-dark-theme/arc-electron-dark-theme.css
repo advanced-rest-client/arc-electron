@@ -44,13 +44,15 @@ body {
   background-color: #424242;
   height: 100vh;
   color: #fff;
+  --primary-color: #BBDEFB;
+  --primary-text-color: #fff;
+  --error-color: #FF5722;
+  --accent-color: #4CAF50;
+  --primary-background-color: #424242;
   --action-button-background-color: #fff;
   --action-button-color: var(--primary-color);
   --secondary-action-button-color: #fff;
-  --primary-color: #BBDEFB;
   --anypoint-color-primary: var(--primary-color);
-  --primary-text-color: #fff;
-  --error-color: #F4511E;
   --paper-toggle-button-label-color: #fff;
   --paper-listbox-background-color: #424242;
   --paper-listbox-color: #fff;
@@ -66,8 +68,7 @@ body {
   --paper-toggle-button-label-color: #fff;
   --error-message-icon-color: rgba(255, 255, 255, 0.64);
   --error-message-color: #fff;
-  --secondary-text-color: #616161;
-  --primary-background-color: #424242;
+  --secondary-text-color: #EEEEEE;
   --anypoint-input-legacy-label-color: #F5F5F5;
   --arc-interactive-demo-options-color: #F5F5F5;
   --anypoint-checkbox-label-color:  #F5F5F5;
@@ -84,20 +85,17 @@ body {
   --anypoint-dropdown-menu-background-color: #494949;
   --anypoint-dropdown-menu-label-background-color: var(--primary-background-color);
   --anypoint-listbox-background-color: #494949;
-  --anypoint-dropdown-menu-focus-background-color: #9E9E9E;
+  --anypoint-dropdown-menu-focus-background-color: #616161;
   --anypoint-dropdown-menu-label-color: #fff;
   --anypoint-dropdown-menu-info-message-color: #fff;
-  --anypoint-item-hover-background-color: #9E9E9E;
+  --anypoint-item-hover-background-color: #616161;
   --anypoiont-autocomplete-background-color: #494949;
   --anypoint-icon-button-emphasis-low-color: #fff;
-  --from-row-action-icon-color: #fff;
-  --icon-button-color: #fff;
   --api-form-action-icon-color: #fff;
   --api-form-action-button-color: #fff;
   --anypoint-icon-button-emphasis-low-color: #fff;
   --anypoiont-autocomplete-background-color: #494949;
   --auth-method-oauth2-redirect-info-color: #fff;
-  --from-row-action-icon-color: #fff;
   --inline-documentation-color: #fff;
   --code-mirror-background-color: #37474F;
   --code-mirror-string-color: #C3E88D;
@@ -123,7 +121,9 @@ body {
   --request-action-iterator-editor-info-color: #fff;
   --request-condition-editor-background-color: #212121;
   --code-color: #fff;
-  --code-background-color: #212121;
+  --code-background-color: #263238;
+  --code-type-boolean-value-color: #F07178;
+  --code-operator-value-background-color: transparent;
   --code-type-number-value-color: #eb67b0;
   --code-token-comment-value-color: #C792EA;
   --code-property-value-color: #F07178
@@ -151,6 +151,40 @@ body {
   --anypoint-switch-active-color: #FF9800;
   --anypoint-dialog-title-color: #fff;
   --anypoint-dialog-content-color: rgba(255, 255, 255, 0.74);
+
+  --http-method-label-get-background-color: rgb(0, 128, 0);
+  --http-method-label-get-color: #fff;
+  --http-method-label-post-background-color: rgb(33, 150, 243);
+  --http-method-label-post-color: #fff;
+  --http-method-label-put-background-color: rgb(255, 165, 0);
+  --http-method-label-put-color: fff;
+  --http-method-label-delete-background-color: rgb(244, 67, 54);
+  --http-method-label-delete-color: fff;
+  --iron-icon-fill-color: #fff;
+
+  --api-type-document-type-attribute-color: #fff;
+  --api-annotation-document-color: #fff;
+  --api-body-document-description-color: #fff;
+  --api-method-documentation-description-color: #fff;
+  --api-method-documentation-bottom-navigation-color: #fff;
+
+  --api-method-documentation-url-background-color: var(--code-background-color);
+  --markdown-styles-code-text-shadow: none;
+
+  --api-type-document-property-parent-color: #fff;
+
+  --from-row-action-icon-color: #fff;
+  --icon-button-color: #fff;
+
+  --api-console-menu-background-color: #424242;
+  --api-console-menu-color: #fff;
+
+  --api-endpoint-documentation-bottom-navigation-color: #fff;
+
+  --arc-menu-color: #fff;
+  --request-list-item-history-group-header-color: #fff;
+  --arc-menu-background-color: var(--primary-background-color);
+  --arc-request-workspace-tabs-close-color: #fff;
 }
 
 body[narrow] {
