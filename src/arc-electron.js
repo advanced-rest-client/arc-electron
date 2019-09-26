@@ -2,6 +2,10 @@ import { LitElement, html } from '../web_modules/lit-element/lit-element.js';
 import { ArcAppMixin } from '../web_modules/@advanced-rest-client/arc-app-mixin/arc-app-mixin.js';
 import { Jexl } from '../web_modules/jexl/lib/Jexl.js';
 import { moreVert } from '../web_modules/@advanced-rest-client/arc-icons/ArcIcons.js';
+import PouchDB from '../web_modules/pouchdb/dist/pouchdb.js';
+import PouchQuickSearch from
+'../web_modules/@advanced-rest-client/pouchdb-quick-search/dist/pouchdb.quick-search.min.js';
+import marked from '../web_modules/marked/lib/marked.js';
 import '../web_modules/@polymer/app-layout/app-drawer-layout/app-drawer-layout.js';
 import '../web_modules/@polymer/app-layout/app-drawer/app-drawer.js';
 import '../web_modules/@polymer/app-layout/app-header-layout/app-header-layout.js';
@@ -15,6 +19,9 @@ import '../web_modules/@api-components/api-candidates-dialog/api-candidates-dial
 import './electron-http-transport/electron-http-transport.js';
 import styles from './AppStyles.js';
 import poweredIcon from './poweredby.js';
+window.PouchDB = PouchDB;
+window.PouchQuickSearch = PouchQuickSearch;
+window.marked = marked;
 window.Jexl = Jexl;
 /* eslint-disable max-len */
 /**
@@ -27,308 +34,8 @@ class ArcElectron extends ArcAppMixin(LitElement) {
     return styles;
   }
 
-  render() {
-    const {
-      narrowLayout,
-      appMenuDisabled,
-      messageCenterOpened,
-      appMessages
-    } = this;
-    return html`
-    ${this.modelsTemplate()}
-    ${this.importExportTemplate({ electron: true })}
-    ${this.requestLogicTemplate()}
-    ${this.variablesLogicTemplate()}
-    ${this.appMessagesLogicTemplate('electron')}
-
-    <app-drawer-layout fullbleed ?narrow="${narrowLayout}" ?force-narrow="${appMenuDisabled}" responsive-width="980px">
-      <app-drawer slot="drawer" align="start">
-        ${this.menuTemplate()}
-      </app-drawer>
-      <app-drawer
-        slot="drawer"
-        align="end"
-        .opened="${messageCenterOpened}"
-        class="info-center-drawer"
-      >
-        <arc-info-messages
-          .messages="${appMessages}"
-          @close="${this.closeInfoCenter}"
-        ></arc-info-messages>
-      </app-drawer>
-
-      <app-header-layout has-scrolling-region id="scrollingRegion">
-        <app-header slot="header" fixed shadow scroll-target="scrollingRegion">
-          <app-toolbar>
-            ${this.mainToolbarTemplate()}
-          </app-toolbar>
-        </app-header>
-        <div class="pages">
-          ${this.workspaceTemplate()}
-          ${this._pageTemplate()}
-        </div>
-      </app-header-layout>
-    </app-drawer-layout>
-    <iron-media-query query="(max-width: 700px)" @query-matches-changed="${this._narrowHandler}"></iron-media-query>
-    ${this.variablesDrawerTemplate()}
-    ${this._analyticsTemplate()}
-    ${this.licenseTemplate()}
-    ${this.apiCandidatedViewTemplate()}
-    <arc-onboarding></arc-onboarding>
-    <paper-toast id="errorToast" duration="5000"></paper-toast>`;
-  }
-
-  _pageTemplate() {
-    const {
-      page
-    } = this;
-
-    switch (page) {
-      case 'settings': return this.settingsViewTemplate({ hasExperiments: true, restApis: true });
-      case 'about': return this.aboutViewTemplate();
-      case 'api-console': return this.apicViewTemplate();
-      case 'exchange-search': return this.exchangeViewTemplate();
-      case 'rest-projects': return this.restApisViewTemplate({ explore: true });
-      case 'hosts-rules': return this.hostsViewTemplate();
-      case 'themes-panel': return this.themesViewTemplate();
-      default: return super._pageTemplate();
-    }
-  }
-
-  aboutViewTemplate() {
-    const {
-      compatibility,
-      outlined
-    } = this;
-    return html`
-    <about-arc-electron
-      ?compatibility="${compatibility}"
-      ?outlined="${outlined}"
-      .appVersion="${this.appVersion}"
-    ></about-arc-electron>`;
-  }
-
-  apicViewTemplate() {
-    const {
-      compatibility,
-      outlined,
-      _oauth2redirectUri,
-      apiSelected,
-      apiSelectedType,
-      narrow,
-      _scrollTarget
-    } = this;
-    return html`
-    <apic-electron
-      data-page="docs"
-      aware="apic"
-      id="apic"
-      ?compatibility="${compatibility}"
-      ?outlined="${outlined}"
-      .selected="${apiSelected}"
-      .selectedType="${apiSelectedType}"
-      handlenavigationevents
-      inlinemethods
-      ?narrow="${narrow}"
-      .redirectUri="${_oauth2redirectUri}"
-      .scrollTarget="${_scrollTarget}"
-      .saved="${this.apiIsSaved}"
-      .versions="${this.apiVersions}"
-      .apiVersion="${this.apiVersion}"
-      .canSave="${this.canSaveApi}"
-      .versionSaved="${this.apiVersionSaved}"
-      .multiVersion="${this.apiMultiVersionVersion}"
-      ?apiProcessing="${this.apiProcessing}"
-    ></apic-electron>`;
-  }
-
-  exchangeViewTemplate() {
-    const {
-      compatibility,
-      outlined,
-      _scrollTarget
-    } = this;
-    return html`<exchange-search-panel
-      .scrollTarget="${_scrollTarget}"
-      ?compatibility="${compatibility}"
-      ?outlined="${outlined}"
-      anypointauth
-      columns="auto"
-      exchangeredirecturi="https://auth.advancedrestclient.com/"
-      exchangeclientid="2dc40927457042b5862864c3c97737d7"
-      forceoauthevents
-      @oauth2-token-requested="${this._exchangeTokenHandler}"
-    ></exchange-search-panel>`;
-  }
-
-  hostsViewTemplate() {
-    const {
-      compatibility,
-      outlined
-    } = this;
-    return html`<host-rules-editor
-    ?compatibility="${compatibility}"
-    ?outlined="${outlined}"
-    ></host-rules-editor>`;
-  }
-
-  themesViewTemplate() {
-    const {
-      compatibility,
-      outlined
-    } = this;
-    return html`<themes-panel
-    addenabled
-    ?compatibility="${compatibility}"
-    ?outlined="${outlined}"
-    ></themes-panel>`;
-  }
-
-  requestLogicTemplate() {
-    const config = this.config || {};
-    return html`
-    ${super.requestLogicTemplate()}
-    <electron-http-transport
-      ?followredirects=${config.followRedirects}
-      .requestTimeout="${config.requestDefaultTimeout}"
-      ?nativeTransport="${config.nativeTransport}"
-      ?validateCertificates="${config.validateCertificates}"
-      .sentMessageLimit="${config.sentMessageLimit}"
-    ></electron-http-transport>`;
-  }
-
-  _appToolbarEnvTemplate() {
-    if (this.isApiConsole) {
-      return this._apiConsoleToolbarTemplate();
-    }
-    return super._appToolbarEnvTemplate();
-  }
-
-  _apiConsoleToolbarTemplate() {
-    const {
-      apiIsSaved,
-      canSaveApi,
-      apiMultiVersionVersion,
-      apiVersionSaved,
-      compatibility,
-      outlined
-    } = this;
-    const renderSave = !apiIsSaved && !!canSaveApi;
-    const renderMultiVersion = !!apiIsSaved && !!apiMultiVersionVersion;
-    const apiVersions = this.apiVersions || [];
-    const renderSaveVersion = !!canSaveApi && !apiVersionSaved;
-    return html`
-    ${renderSave ? html`
-      <anypoint-button
-        class="toolbar-button"
-        emphasis="high"
-        @click="${this.saveApi}"
-        ?compatibility="${compatibility}"
-      >Save API</anypoint-button>
-    ` : ''}
-    ${renderMultiVersion ? html`
-      <anypoint-dropdown-menu
-        class="api-version-selector"
-        ?compatibility="${compatibility}"
-        ?outlined="${outlined}">
-        <label slot="label">API version</label>
-        <anypoint-listbox
-          id="apiVersionSelector"
-          slot="dropdown-content"
-          .selected="${this.apiVersion}"
-          attrforselected="data-version"
-          @selected-changed="${this._apiVersionMenuChanged}"
-          ?compatibility="${compatibility}"
-        >
-          ${apiVersions.map((item) => html`
-            <anypoint-item data-version="${item}" ?compatibility="${compatibility}">${item}</anypoint-item>
-          `)}
-        </anypoint-listbox>
-      </anypoint-dropdown-menu>` : ''}
-    ${renderSaveVersion ? html`
-      <anypoint-button
-        class="toolbar-button"
-        emphasis="high"
-        @click="${this.saveApi}"
-        ?compatibility="${compatibility}"
-      >Save API version</anypoint-button>
-      ` : ''}
-    ${apiIsSaved ? html`
-    <anypoint-menu-button
-      verticalalign="top"
-      horizontalalign="auto">
-      <anypoint-icon-button slot="dropdown-trigger" ?compatibility="${compatibility}">
-        <span class="icon">${moreVert}</span>
-      </anypoint-icon-button>
-      <anypoint-listbox
-        slot="dropdown-content"
-        @selected-changed="${this._apiActionMenuChanged}"
-        ?compatibility="${compatibility}"
-      >
-        <anypoint-item data-action="delete">Delete API</anypoint-item>
-        ${apiMultiVersionVersion ? html`
-          <anypoint-item data-action="delete-version">Delete version</anypoint-item>
-        ` : ''}
-        <!-- <anypoint-item data-action="save-oas">Save as OAS</anypoint-item>
-        <anypoint-item data-action="save-raml">Save as RAML</anypoint-item> -->
-        <!-- <anypoint-item data-action="upload-exchange">Upload to Exchange</anypoint-item> -->
-      </anypoint-listbox>
-    </anypoint-menu-button>` : ''}
-    `;
-  }
-
-  menuTemplate() {
-    // const { isApiConsole } = this;
-    // return isApiConsole ? this.apicNavigationTemplate() : this.arcNavigationTemplate();
-    if (this.isApiConsole) {
-      return this.apicNavigationTemplate();
-    }
-    return super.menuTemplate();
-  }
-
-  apicNavigationTemplate() {
-    const {
-      compatibility,
-      apiProcessing,
-      apiSelected,
-      apiSelectedType
-    } = this;
-    return html`<div class="api-navigation">
-      <api-navigation
-        aware="apic"
-        summary
-        endpointsopened
-        ?compatibility="${compatibility}"
-        ?hidden="${apiProcessing}"
-        .selected="${apiSelected}"
-        .selectedType="${apiSelectedType}"
-      ></api-navigation>
-      ${apiProcessing ? html`<div class="api-navigation-loader">
-        <p>Loading the API</p>
-      </div>` : ''}
-      <div class="powered-by">
-        <a href="https://github.com/mulesoft/api-console" class="attribution" target="_blank">
-          ${poweredIcon}
-        </a>
-      </div>
-    </div>`;
-  }
-
-  apiCandidatedViewTemplate(opts) {
-    const {
-      compatibility
-    } = this;
-    return html`<api-candidates-dialog
-      ?compatibility="${compatibility}"
-    ></api-candidates-dialog>`;
-  }
-
   static get properties() {
     return {
-      /**
-       * System variables
-       */
-      sysVars: { type: Object },
       /**
        * When true it is rendering API console view.
        */
@@ -714,6 +421,302 @@ class ArcElectron extends ArcAppMixin(LitElement) {
 
   _exchangeTokenHandler(e) {
     e.detail.clientSecret = '5d02cE95028E4Dc08A40907a0A4883fC';
+  }
+
+  render() {
+    const {
+      narrowLayout,
+      appMenuDisabled,
+      messageCenterOpened,
+      appMessages
+    } = this;
+    return html`
+    ${this.modelsTemplate()}
+    ${this.importExportTemplate({ electron: true })}
+    ${this.requestLogicTemplate()}
+    ${this.variablesLogicTemplate()}
+    ${this.appMessagesLogicTemplate('electron')}
+
+    <app-drawer-layout fullbleed ?narrow="${narrowLayout}" ?force-narrow="${appMenuDisabled}" responsive-width="980px">
+      <app-drawer slot="drawer" align="start">
+        ${this.menuTemplate()}
+      </app-drawer>
+      <app-drawer
+        slot="drawer"
+        align="end"
+        .opened="${messageCenterOpened}"
+        class="info-center-drawer"
+      >
+        <arc-info-messages
+          .messages="${appMessages}"
+          @close="${this.closeInfoCenter}"
+        ></arc-info-messages>
+      </app-drawer>
+
+      <app-header-layout has-scrolling-region id="scrollingRegion">
+        <app-header slot="header" fixed shadow scroll-target="scrollingRegion">
+          <app-toolbar>
+            ${this.mainToolbarTemplate()}
+          </app-toolbar>
+        </app-header>
+        <div class="pages">
+          ${this.workspaceTemplate()}
+          ${this._pageTemplate()}
+        </div>
+      </app-header-layout>
+    </app-drawer-layout>
+    <iron-media-query query="(max-width: 700px)" @query-matches-changed="${this._narrowHandler}"></iron-media-query>
+    ${this.variablesDrawerTemplate()}
+    ${this._analyticsTemplate()}
+    ${this.licenseTemplate()}
+    ${this.apiCandidatedViewTemplate()}
+    <arc-onboarding></arc-onboarding>
+    <paper-toast id="errorToast" duration="5000"></paper-toast>`;
+  }
+
+  _pageTemplate() {
+    const {
+      page
+    } = this;
+
+    switch (page) {
+      case 'settings': return this.settingsViewTemplate({ hasExperiments: true, restApis: true });
+      case 'about': return this.aboutViewTemplate();
+      case 'api-console': return this.apicViewTemplate();
+      case 'exchange-search': return this.exchangeViewTemplate();
+      case 'rest-projects': return this.restApisViewTemplate({ explore: true });
+      case 'hosts-rules': return this.hostsViewTemplate();
+      case 'themes-panel': return this.themesViewTemplate();
+      default: return super._pageTemplate();
+    }
+  }
+
+  aboutViewTemplate() {
+    const {
+      compatibility,
+      outlined
+    } = this;
+    return html`
+    <about-arc-electron
+      ?compatibility="${compatibility}"
+      ?outlined="${outlined}"
+      .appVersion="${this.appVersion}"
+    ></about-arc-electron>`;
+  }
+
+  apicViewTemplate() {
+    const {
+      compatibility,
+      outlined,
+      _oauth2redirectUri,
+      apiSelected,
+      apiSelectedType,
+      narrow,
+      _scrollTarget
+    } = this;
+    return html`
+    <apic-electron
+      data-page="docs"
+      aware="apic"
+      id="apic"
+      ?compatibility="${compatibility}"
+      ?outlined="${outlined}"
+      .selected="${apiSelected}"
+      .selectedType="${apiSelectedType}"
+      handlenavigationevents
+      inlinemethods
+      ?narrow="${narrow}"
+      .redirectUri="${_oauth2redirectUri}"
+      .scrollTarget="${_scrollTarget}"
+      .saved="${this.apiIsSaved}"
+      .versions="${this.apiVersions}"
+      .apiVersion="${this.apiVersion}"
+      .canSave="${this.canSaveApi}"
+      .versionSaved="${this.apiVersionSaved}"
+      .multiVersion="${this.apiMultiVersionVersion}"
+      ?apiProcessing="${this.apiProcessing}"
+    ></apic-electron>`;
+  }
+
+  exchangeViewTemplate() {
+    const {
+      compatibility,
+      outlined,
+      _scrollTarget
+    } = this;
+    return html`<exchange-search-panel
+      .scrollTarget="${_scrollTarget}"
+      ?compatibility="${compatibility}"
+      ?outlined="${outlined}"
+      anypointauth
+      columns="auto"
+      exchangeredirecturi="https://auth.advancedrestclient.com/"
+      exchangeclientid="2dc40927457042b5862864c3c97737d7"
+      forceoauthevents
+      @oauth2-token-requested="${this._exchangeTokenHandler}"
+    ></exchange-search-panel>`;
+  }
+
+  hostsViewTemplate() {
+    const {
+      compatibility,
+      outlined
+    } = this;
+    return html`<host-rules-editor
+    ?compatibility="${compatibility}"
+    ?outlined="${outlined}"
+    ></host-rules-editor>`;
+  }
+
+  themesViewTemplate() {
+    const {
+      compatibility,
+      outlined
+    } = this;
+    return html`<themes-panel
+    addenabled
+    ?compatibility="${compatibility}"
+    ?outlined="${outlined}"
+    ></themes-panel>`;
+  }
+
+  requestLogicTemplate() {
+    const config = this.config || {};
+    return html`
+    ${super.requestLogicTemplate()}
+    <electron-http-transport
+      ?followredirects=${config.followRedirects}
+      .requestTimeout="${config.requestDefaultTimeout}"
+      ?nativeTransport="${config.nativeTransport}"
+      ?validateCertificates="${config.validateCertificates}"
+      .sentMessageLimit="${config.sentMessageLimit}"
+    ></electron-http-transport>`;
+  }
+
+  _appToolbarEnvTemplate() {
+    if (this.isApiConsole) {
+      return this._apiConsoleToolbarTemplate();
+    }
+    return super._appToolbarEnvTemplate();
+  }
+
+  _apiConsoleToolbarTemplate() {
+    const {
+      apiIsSaved,
+      canSaveApi,
+      apiMultiVersionVersion,
+      apiVersionSaved,
+      compatibility,
+      outlined
+    } = this;
+    const renderSave = !apiIsSaved && !!canSaveApi;
+    const renderMultiVersion = !!apiIsSaved && !!apiMultiVersionVersion;
+    const apiVersions = this.apiVersions || [];
+    const renderSaveVersion = !!canSaveApi && !apiVersionSaved;
+    return html`
+    ${renderSave ? html`
+      <anypoint-button
+        class="toolbar-button"
+        emphasis="high"
+        @click="${this.saveApi}"
+        ?compatibility="${compatibility}"
+      >Save API</anypoint-button>
+    ` : ''}
+    ${renderMultiVersion ? html`
+      <anypoint-dropdown-menu
+        class="api-version-selector"
+        ?compatibility="${compatibility}"
+        ?outlined="${outlined}">
+        <label slot="label">API version</label>
+        <anypoint-listbox
+          id="apiVersionSelector"
+          slot="dropdown-content"
+          .selected="${this.apiVersion}"
+          attrforselected="data-version"
+          @selected-changed="${this._apiVersionMenuChanged}"
+          ?compatibility="${compatibility}"
+        >
+          ${apiVersions.map((item) => html`
+            <anypoint-item data-version="${item}" ?compatibility="${compatibility}">${item}</anypoint-item>
+          `)}
+        </anypoint-listbox>
+      </anypoint-dropdown-menu>` : ''}
+    ${renderSaveVersion ? html`
+      <anypoint-button
+        class="toolbar-button"
+        emphasis="high"
+        @click="${this.saveApi}"
+        ?compatibility="${compatibility}"
+      >Save API version</anypoint-button>
+      ` : ''}
+    ${apiIsSaved ? html`
+    <anypoint-menu-button
+      verticalalign="top"
+      horizontalalign="auto">
+      <anypoint-icon-button slot="dropdown-trigger" ?compatibility="${compatibility}">
+        <span class="icon">${moreVert}</span>
+      </anypoint-icon-button>
+      <anypoint-listbox
+        slot="dropdown-content"
+        @selected-changed="${this._apiActionMenuChanged}"
+        ?compatibility="${compatibility}"
+      >
+        <anypoint-item data-action="delete">Delete API</anypoint-item>
+        ${apiMultiVersionVersion ? html`
+          <anypoint-item data-action="delete-version">Delete version</anypoint-item>
+        ` : ''}
+        <!-- <anypoint-item data-action="save-oas">Save as OAS</anypoint-item>
+        <anypoint-item data-action="save-raml">Save as RAML</anypoint-item> -->
+        <!-- <anypoint-item data-action="upload-exchange">Upload to Exchange</anypoint-item> -->
+      </anypoint-listbox>
+    </anypoint-menu-button>` : ''}
+    `;
+  }
+
+  menuTemplate() {
+    // const { isApiConsole } = this;
+    // return isApiConsole ? this.apicNavigationTemplate() : this.arcNavigationTemplate();
+    if (this.isApiConsole) {
+      return this.apicNavigationTemplate();
+    }
+    return super.menuTemplate();
+  }
+
+  apicNavigationTemplate() {
+    const {
+      compatibility,
+      apiProcessing,
+      apiSelected,
+      apiSelectedType
+    } = this;
+    return html`<div class="api-navigation">
+      <api-navigation
+        aware="apic"
+        summary
+        endpointsopened
+        ?compatibility="${compatibility}"
+        ?hidden="${apiProcessing}"
+        .selected="${apiSelected}"
+        .selectedType="${apiSelectedType}"
+      ></api-navigation>
+      ${apiProcessing ? html`<div class="api-navigation-loader">
+        <p>Loading the API</p>
+      </div>` : ''}
+      <div class="powered-by">
+        <a href="https://github.com/mulesoft/api-console" class="attribution" target="_blank">
+          ${poweredIcon}
+        </a>
+      </div>
+    </div>`;
+  }
+
+  apiCandidatedViewTemplate(opts) {
+    const {
+      compatibility
+    } = this;
+    return html`<api-candidates-dialog
+      ?compatibility="${compatibility}"
+    ></api-candidates-dialog>`;
   }
 }
 window.customElements.define('arc-electron', ArcElectron);
