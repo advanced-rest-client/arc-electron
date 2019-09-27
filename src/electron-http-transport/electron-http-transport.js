@@ -82,7 +82,7 @@ class ElectronHttpTransport extends HTMLElement {
   get sentMessageLimit() {
     const v = this.getAttribute('sent-message-limit');
     if (!v || isNaN(v)) {
-      return null;
+      return undefined;
     }
     return Number(v);
   }
@@ -150,21 +150,29 @@ class ElectronHttpTransport extends HTMLElement {
    * @return {Promise} A promise when the request is started with the socket
    * library
    */
-  run(request, opts) {
+  async run(request, opts) {
+    opts = opts ? Object.assign({}, opts) : {};
+    request = Object.assign({}, request);
+    if (request.config) {
+      request.config = Object.assign({}, request.config);
+    }
     opts = this._prepareRequestOptions(request, opts);
-    return this._readHosts()
-    .then((hosts) => {
+    try {
+      const hosts = await this._readHosts();
+      /* eslint-disable-next-line require-atomic-updates */
       opts.hosts = hosts;
-      return this._prepareRequest(request, opts);
-    })
-    .then((connection) => this._makeConnection(connection))
-    .catch((cause) => this._errorHandler(cause, request.id));
+      const connection = await this._prepareRequest(request, opts);
+      return await this._makeConnection(connection);
+    } catch (cause) {
+      this._errorHandler(cause, request.id);
+    }
   }
 
   _prepareRequestOptions(request, opts) {
     let rConfig;
     if (request.config && request.config.enabled !== false) {
       rConfig = Object.assign(request.config);
+      delete rConfig.enabled;
     } else {
       rConfig = {};
     }
@@ -177,9 +185,7 @@ class ElectronHttpTransport extends HTMLElement {
       }
     }
     if (opts.timeout) {
-      if (opts.timeout < 500) {
-        opts.timeout = opts.timeout * 1000;
-      }
+      opts.timeout = Number(opts.timeout) * 1000;
     } else {
       opts.timeout = 0;
     }
@@ -283,11 +289,12 @@ class ElectronHttpTransport extends HTMLElement {
     return conn;
   }
 
-  _makeConnection(connection) {
-    return connection.send()
-    .catch((cause) => {
+  async _makeConnection(connection) {
+    try {
+      return await connection.send();
+    } catch (cause) {
       this._errorHandler(cause, connection.id);
-    });
+    }
   }
 
   _removeConnectionHandlers(connection) {

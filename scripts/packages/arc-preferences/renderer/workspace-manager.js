@@ -1,5 +1,5 @@
-const {ArcPreferences} = require('../lib/preferences');
-const {PayloadProcessor} = require(
+const { ArcPreferences } = require('../lib/preferences');
+const { PayloadProcessor } = require(
   '@advanced-rest-client/arc-electron-payload-processor');
 const log = require('electron-log');
 /**
@@ -75,7 +75,6 @@ class WorkspaceManager extends ArcPreferences {
     if (!e.detail.value) {
       const message = 'workspace-state-store event has no value';
       log.warn(message);
-      console.error(message);
       return;
     }
     this.__settings = e.detail.value;
@@ -86,20 +85,20 @@ class WorkspaceManager extends ArcPreferences {
    *
    * @return {Promise} Promise resolved to content of the file.
    */
-  restore() {
+  async restore() {
     log.info('Restoring workspace data from', this.settingsFile);
-    return this.load()
-    .then((data) => {
+    try {
+      const data = await this.load();
       log.info('Restored workspace data from', this.settingsFile);
       this.initialized = true;
       this._processRestoredPayload(data);
       return data;
-    })
-    .catch((cause) => {
-      log.info('Unable to restore workspace data', cause);
+    } catch (cause) {
+      log.warn('Unable to restore workspace data');
+      log.warn(cause);
       this.initialized = true;
       return {};
-    });
+    }
   }
   /**
    * Stores current data to state file.
@@ -118,13 +117,18 @@ class WorkspaceManager extends ArcPreferences {
     this.__storeDebouncer = true;
     setTimeout(() => {
       this.__storeDebouncer = false;
-      log.info('Storing workspace data to', this.settingsFile);
-      this.store()
-      .catch((cause) => {
-        log.error('Unable to store workspace data.', this.settingsFile, cause);
-        console.error(cause);
-      });
+      this._doStoreWorkspace();
     }, this.storeDebounce);
+  }
+
+  async _doStoreWorkspace() {
+    log.info('Storing workspace data to', this.settingsFile);
+    try {
+      await this.store();
+    } catch (cause) {
+      log.error('Unable to store workspace data to ' + this.settingsFile);
+      log.error(cause);
+    }
   }
   /**
    * Updates state of the request entries.
@@ -132,7 +136,7 @@ class WorkspaceManager extends ArcPreferences {
    * @param {Object} requests List of ARC requests objects.
    * @return {Promise} Promise resolved when data is saved.
    */
-  updateRequestsSate(requests) {
+  async updateRequestsSate(requests) {
     if (!this.initialized) {
       return;
     }
@@ -140,11 +144,9 @@ class WorkspaceManager extends ArcPreferences {
     if (!this.__settings) {
       this.__settings = {};
     }
-    return this._processRequests(requests)
-    .then((data) => {
-      this.__settings.requests = data;
-      this.storeWorkspace();
-    });
+    const data = await this._processRequests(requests);
+    this.__settings.requests = data;
+    this.storeWorkspace();
   }
   /**
    * Updates selected request data.
@@ -171,19 +173,18 @@ class WorkspaceManager extends ArcPreferences {
    * @return {Promise} Promise resolved when all requests has been processed.
    * Resolved promise contains the copy of request objects.
    */
-  _processRequests(requests, index, result) {
+  async _processRequests(requests, index, result) {
     index = index || 0;
     result = result || [];
     const item = requests[index];
     if (!item) {
-      return Promise.resolve(result);
+      return result;
     }
-    return PayloadProcessor.payloadToString()
-    .then((request) => {
-      result[index] = request;
-      index++;
-      return this._processRequests(requests, index, result);
-    });
+    const request = await PayloadProcessor.payloadToString(item);
+    /* eslint-disable-next-line require-atomic-updates */
+    result[index] = request;
+    index++;
+    return await this._processRequests(requests, index, result);
   }
   /**
    * When restoring data it processes requests payload data.
@@ -199,13 +200,17 @@ class WorkspaceManager extends ArcPreferences {
           state.requeststs[i].payload = PayloadProcessor.restoreMultipart(
             state.requests[i].multipart);
           delete state.requests[i].multipart;
-        } catch (_) {}
+        } catch (_) {
+          // ...
+        }
       } else if (state.requests[i].blob) {
         try {
           state.requeststs[i].payload = PayloadProcessor._dataURLtoBlob(
             state.requests[i].blob);
           delete state.requests[i].blob;
-        } catch (_) {}
+        } catch (_) {
+          // ...
+        }
       }
     }
   }

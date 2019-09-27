@@ -2,6 +2,7 @@ const EventEmitter = require('events');
 const electron = require('electron');
 const path = require('path');
 const fs = require('fs-extra');
+const log = require('electron-log');
 /**
  * A module responsible for storing / restoring user settings.
  * This works with any file and is not mean to work specifically with
@@ -88,9 +89,9 @@ class ArcPreferences extends EventEmitter {
    * @param {String} file Path to a file
    * @return {Promise} Promise resolved to file content or empty object.
    */
-  _restoreFile(file) {
-    return fs.ensureFile(file)
-    .then(() => fs.readJson(file, {throws: false}));
+  async _restoreFile(file) {
+    await fs.ensureFile(file);
+    return await fs.readJson(file, { throws: false });
   }
   /**
    * Stores JSON `data` in `file`.
@@ -99,31 +100,35 @@ class ArcPreferences extends EventEmitter {
    * @param {Object} data JavaScript object to store.
    * @return {Promise} Promise resolved when the `file` is updated.
    */
-  _storeFile(file, data) {
-    return fs.outputJson(file, data, {
-      spaces: 2
-    });
+  async _storeFile(file, data) {
+    return await fs.outputJson(file, data);
   }
   /**
    * Loads current settings from settings file.
    *
    * @return {Promise} Promise resolved to a settings file.
    */
-  load() {
+  async load() {
     if (this.__settings) {
-      return Promise.resolve(this.__settings);
+      return this.__settings;
     }
-    return this._restoreFile(this.settingsFile)
-    .then((data) => this._processSettings(data))
-    .catch(() => this._processSettings());
+    try {
+      const data = await this._restoreFile(this.settingsFile);
+      return this._processSettings(data);
+    } catch (e) {
+      log.warn(e);
+      return this._processSettings();
+    }
   }
 
   loadSync() {
     let data;
     try {
       fs.ensureFileSync(this.settingsFile);
-      data = fs.readJsonSync(this.settingsFile, {throws: false});
-    } catch (_) {}
+      data = fs.readJsonSync(this.settingsFile, { throws: false });
+    } catch (_) {
+      // ...
+    }
     if (!data) {
       data = {};
     } else {
@@ -138,29 +143,27 @@ class ArcPreferences extends EventEmitter {
    * @param {?Object} data Settings read from the settings file.
    * @return {Promise<Object>} Settings for the app.
    */
-  _processSettings(data) {
+  async _processSettings(data) {
     if (!data || !Object.keys(data).length) {
       if (typeof this.defaultSettings === 'function') {
-        return this.defaultSettings()
-        .then((settings) => {
-          this.__settings = settings;
-          return this.store();
-        })
-        .then(() => this.__settings);
+        const settings = await this.defaultSettings();
+        this.__settings = settings;
+        await this.store();
+        return settings;
       } else {
-        return Promise.resolve({});
+        return {};
       }
     }
     this.__settings = data;
-    return Promise.resolve(data);
+    return data;
   }
   /**
    * Stores current settings to file.
    *
    * @return {Promise} Promise resolved when the settings are stored.
    */
-  store() {
-    return this._storeFile(this.settingsFile, this.__settings);
+  async store() {
+    return await this._storeFile(this.settingsFile, this.__settings);
   }
 }
 exports.ArcPreferences = ArcPreferences;
