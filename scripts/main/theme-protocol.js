@@ -37,6 +37,9 @@ class ThemesProtocolHandler {
     session.fromPartition('persist:arc-window')
     .protocol
     .registerStringProtocol('themes', this._requestHandler, this._registrationHandler);
+    session.fromPartition('persist:arc-task-manager')
+    .protocol
+    .registerStringProtocol('themes', this._requestHandler, this._registrationHandler);
   }
 
   _registrationHandler(err) {

@@ -260,23 +260,23 @@ class ArcElectron extends ArcAppMixin(LitElement) {
     }
     try {
       await this._loadApic();
-      this.apiSelected = undefined;
-      this.apiSelectedType = undefined;
-      this.isApiConsole = (true);
-      this.apiProcessing = true;
+      // this.apiSelected = undefined;
+      // this.apiSelectedType = undefined;
+      this.isApiConsole = true;
       await this.apic.open(id, version);
       this.apiSelected = 'summary';
       this.apiSelectedType = 'summary';
     } catch (e) {
       this.apiProcessing = false;
-      this.isApiConsole = (false);
+      this.isApiConsole = false;
       this.notifyError(e.message);
     }
   }
 
   async _loadApic() {
     try {
-      // await import('./apic-electron/apic-electron.js');
+      this.page = 'api-console';
+      await import('./apic-electron/apic-electron.js');
       this._loadingSources = false;
     } catch (cause) {
       this._loadingSources = false;
@@ -288,7 +288,7 @@ class ArcElectron extends ArcAppMixin(LitElement) {
   async _setApiData(api, type) {
     await this._loadApic();
     const apic = this.apic;
-    apic.amf = api;
+    apic.unresolvedAmf = api;
     apic.apiType = type;
     this.isApiConsole = (true);
     this.apiSelected = undefined;
@@ -357,8 +357,7 @@ class ArcElectron extends ArcAppMixin(LitElement) {
     if (!value) {
       return;
     }
-    const id = this.apic.apiInfo._id;
-    this.apiVersion = id;
+    const id = this.apiInfo._id;
     const params = {
       id,
       version: value
@@ -421,6 +420,37 @@ class ArcElectron extends ArcAppMixin(LitElement) {
 
   _exchangeTokenHandler(e) {
     e.detail.clientSecret = '5d02cE95028E4Dc08A40907a0A4883fC';
+  }
+
+  _apiPropertyHandler(e) {
+    const { value } = e.detail;
+    switch (e.type) {
+      case 'apiprocessing-changed':
+        this.apiProcessing = value;
+        break;
+      case 'apiversion-changed':
+        this.apiVersion = value;
+        break;
+      case 'apiinfo-changed':
+        this.apiInfo = value;
+        break;
+      case 'versions-changed':
+        this.apiVersions = value;
+        break;
+      case 'multiversion-changed':
+        this.apiMultiVersionVersion = value;
+        break;
+      case 'saved-changed':
+        this.apiIsSaved = value;
+        break;
+      case 'cansave-changed':
+        this.canSaveApi = value;
+        break;
+      case 'versionsaved-changed':
+        this.apiVersionSaved = value;
+        break;
+    }
+    this.requestUpdate();
   }
 
   render() {
@@ -535,6 +565,15 @@ class ArcElectron extends ArcAppMixin(LitElement) {
       .versionSaved="${this.apiVersionSaved}"
       .multiVersion="${this.apiMultiVersionVersion}"
       ?apiProcessing="${this.apiProcessing}"
+
+      @apiprocessing-changed="${this._apiPropertyHandler}"
+      @apiversion-changed="${this._apiPropertyHandler}"
+      @apiinfo-changed="${this._apiPropertyHandler}"
+      @versions-changed="${this._apiPropertyHandler}"
+      @multiversion-changed="${this._apiPropertyHandler}"
+      @saved-changed="${this._apiPropertyHandler}"
+      @cansave-changed="${this._apiPropertyHandler}"
+      @versionsaved-changed="${this._apiPropertyHandler}"
     ></apic-electron>`;
   }
 
@@ -612,7 +651,7 @@ class ArcElectron extends ArcAppMixin(LitElement) {
     const renderSave = !apiIsSaved && !!canSaveApi;
     const renderMultiVersion = !!apiIsSaved && !!apiMultiVersionVersion;
     const apiVersions = this.apiVersions || [];
-    const renderSaveVersion = !!canSaveApi && !apiVersionSaved;
+    const renderSaveVersion = !!canSaveApi && !renderSave && !apiVersionSaved;
     return html`
     ${renderSave ? html`
       <anypoint-button

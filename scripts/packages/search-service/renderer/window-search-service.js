@@ -1,5 +1,5 @@
-const remote = require('electron').remote;
-const ipcRenderer = require('electron').ipcRenderer;
+const remote = require("electron").remote;
+const ipcRenderer = require("electron").ipcRenderer;
 /**
  * Class responsible to control search action in a window.
  */
@@ -20,10 +20,10 @@ class WindowSearchService {
    * @return {undefined}
    */
   listen() {
-    this.win.webContents.on('found-in-page', this._onPageFoundHandler);
-    ipcRenderer.on('search-bar-query-changed', this._searchHandler);
-    ipcRenderer.on('search-bar-query-next', this._searchNextHandler);
-    ipcRenderer.on('search-bar-query-previous', this._searchPreviousHandler);
+    this.win.webContents.on("found-in-page", this._onPageFoundHandler);
+    ipcRenderer.on("search-bar-query-changed", this._searchHandler);
+    ipcRenderer.on("search-bar-query-next", this._searchNextHandler);
+    ipcRenderer.on("search-bar-query-previous", this._searchPreviousHandler);
   }
   /**
    * Performs the search action on the opened window.
@@ -33,7 +33,7 @@ class WindowSearchService {
    */
   search(word, opts) {
     if (!word) {
-      this.win.webContents.stopFindInPage('clearSelection');
+      this.win.webContents.stopFindInPage("clearSelection");
       return;
     }
     this.win.webContents.findInPage(word, opts);
@@ -49,8 +49,11 @@ class WindowSearchService {
    * @param {Object} detail Event details.
    */
   _onPageFoundHandler(event, detail) {
-    ipcRenderer.send('search-bar-search-result',
-      detail.matches, detail.activeMatchOrdinal);
+    ipcRenderer.send(
+      "search-bar-search-result",
+      detail.matches,
+      detail.activeMatchOrdinal
+    );
   }
   /**
    * Handler for the search event.

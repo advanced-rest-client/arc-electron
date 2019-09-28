@@ -28,7 +28,8 @@
     "build-m": "npx electron-builder -m",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
-    "start-drive": "electron . --inspect --debug --debug-level=\"silly\" --with-devtools --workspace-path=\"~/arc-dev/workspace\" --settings-file=\"~/arc-dev/dev-settings.json\" --themes-path=\"~/arc-dev/themes\" arc-file://drive/open/1_PAI-CGHqi_pZCV8ZZ_9_N-LGMjkAYzn"
+    "start-drive": "electron . --inspect --debug --debug-level=\"silly\" --with-devtools --workspace-path=\"~/arc-dev/workspace\" --settings-file=\"~/arc-dev/dev-settings.json\" --themes-path=\"~/arc-dev/themes\" arc-file://drive/open/1_PAI-CGHqi_pZCV8ZZ_9_N-LGMjkAYzn",
+    "resetmodules": "rm -rf node_modules/ && rm package-lock.json && npm i"
   },
   "main": "main.js",
   "devDependencies": {
@@ -44,7 +45,7 @@
     "@api-components/api-candidates-dialog": "^3.0.0",
     "@api-components/api-documentation": "^3.0.1",
     "@api-components/api-navigation": "^3.1.1",
-    "@pika/web": "^0.4.4",
+    "@pika/web": "^0.6.1",
     "@polymer/app-layout": "^3.1.0",
     "@polymer/app-route": "^3.0.2",
     "@polymer/font-roboto-local": "^3.0.2",
@@ -263,6 +264,7 @@
       "@advanced-rest-client/history-panel/history-panel.js",
       "@advanced-rest-client/saved-requests-panel/saved-requests-panel.js",
       "@advanced-rest-client/variables-drawer-editor/variables-drawer-editor.js",
+      "@advanced-rest-client/arc-menu/arc-menu.js",
       "@api-components/api-candidates-dialog/api-candidates-dialog.js",
       "@api-components/raml-aware/raml-aware.js",
       "@api-components/api-documentation/api-documentation.js",
@@ -271,10 +273,15 @@
       "@advanced-rest-client/arc-file-drop-mixin/arc-file-drop-mixin.js",
       "@advanced-rest-client/arc-electron-payload-processor/payload-processor-esm.js",
       "@polymer/font-roboto-local/roboto.js",
+      "@polymer/paper-spinner/paper-spinner.js",
       "web-animations-js/web-animations.min.js",
       "pouchdb/dist/pouchdb.js",
       "@advanced-rest-client/pouchdb-quick-search/dist/pouchdb.quick-search.min.js",
-      "marked/lib/marked.js"
+      "marked/lib/marked.js",
+      "@anypoint-web-components/anypoint-button/anypoint-icon-button.js",
+      "@anypoint-web-components/anypoint-input/anypoint-input.js",
+      "@anypoint-web-components/anypoint-item/anypoint-item.js",
+      "lit-html/directives/repeat.js"
     ]
   }
 }

@@ -179,7 +179,7 @@ class ThemeManager {
   }
 
   async _loadTheme(themeId) {
-    const nodes = document.head.querySelector('link[rel="stylesheet"]');
+    const nodes = document.head.querySelectorAll('link[rel="stylesheet"]');
     for (let i = nodes.length - 1; i >= 0; i--) {
       const href = nodes[i].href;
       if (href && href.indexOf('themes:') === 0) {

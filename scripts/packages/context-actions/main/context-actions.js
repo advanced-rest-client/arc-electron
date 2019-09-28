@@ -24,7 +24,7 @@ class ContextActions {
   _addCloseTab(webContents) {
     webContents.send('register-context-action', {
       label: 'Close tab',
-      selector: 'paper-tab > span.tab-name',
+      selector: 'anypoint-tab > span.tab-name',
       action: 'request-panel-close-tab'
     });
   }
@@ -36,7 +36,7 @@ class ContextActions {
   _addCloseAllTabs(webContents) {
     webContents.send('register-context-action', {
       label: 'Close all tabs',
-      selector: 'paper-tab > span.tab-name',
+      selector: 'anypoint-tab > span.tab-name',
       action: 'request-panel-close-all-tabs'
     });
   }
@@ -48,7 +48,7 @@ class ContextActions {
   _addCloseOtherTabs(webContents) {
     webContents.send('register-context-action', {
       label: 'Close other tabs',
-      selector: 'paper-tab > span.tab-name',
+      selector: 'anypoint-tab > span.tab-name',
       action: 'request-panel-close-other-tabs'
     });
   }
@@ -61,7 +61,7 @@ class ContextActions {
   _addDuplicateTab(webContents) {
     webContents.send('register-context-action', {
       label: 'Duplicate tab',
-      selector: 'paper-tab > span.tab-name',
+      selector: 'anypoint-tab > span.tab-name',
       action: 'request-panel-duplicate-tab'
     });
   }

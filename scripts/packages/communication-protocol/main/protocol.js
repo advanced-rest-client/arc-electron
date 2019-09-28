@@ -1,6 +1,6 @@
 const net = require('net');
 const log = require('../../../main/logger');
-const {RemoteApi} = require('./remote-api');
+const { RemoteApi } = require('./remote-api');
 const argv = require('yargs');
 /**
  * A class that allow to connect to the application via HTTP server and

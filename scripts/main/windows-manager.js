@@ -1,9 +1,9 @@
-const {BrowserWindow, dialog, ipcMain} = require('electron');
+const { BrowserWindow, dialog, ipcMain } = require('electron');
 const path = require('path');
 const url = require('url');
-const {ArcSessionControl} = require('../packages/arc-preferences/main');
-const {ArcSessionRecorder} = require('./arc-session-recorder');
-const {ContextActions} = require('../packages/context-actions/main');
+const { ArcSessionControl } = require('../packages/arc-preferences/main');
+const { ArcSessionRecorder } = require('./arc-session-recorder');
+const { ContextActions } = require('../packages/context-actions/main');
 const log = require('./logger');
 /**
  * A class that manages opened app windows.
@@ -44,11 +44,11 @@ class ArcWindowsManager {
    */
   get lastFocused() {
     if (!this._lastFocused) {
-      return;
+      return null;
     }
     if (this._lastFocused.isDestroyed()) {
       this._lastFocused = undefined;
-      return;
+      return null;
     }
     return this._lastFocused;
   }
@@ -59,13 +59,14 @@ class ArcWindowsManager {
   get lastActive() {
     const ws = this.windows;
     if (!ws || !ws.length) {
-      return;
+      return null;
     }
     for (let i = ws.length - 1; i >= 0; i--) {
       if (!ws[i].isDestroyed()) {
         return ws[i];
       }
     }
+    return null;
   }
   /**
    * Restores latest window is any present.
@@ -272,10 +273,11 @@ class ArcWindowsManager {
         nativeWindowOpen: false,
         nodeIntegration: false,
         contextIsolation: false,
-        preload: path.join(__dirname, '..', 'renderer', 'task-manager-preload.js')
+        preload: path.join(__dirname, '..', '..', 'src', 'arc-task-manager', 'task-manager-preload.js')
       }
     });
-    const dest = path.join(__dirname, '..', '..', 'src', 'task-manager.html');
+    win.webContents.openDevTools();
+    const dest = path.join(__dirname, '..', '..', 'src', 'arc-task-manager', 'arc-task-manager.html');
     const full = url.format({
       pathname: dest,
       protocol: 'file:',
@@ -500,7 +502,7 @@ class ArcWindowsManager {
     //   height: 100
     // });
     // event.newGuest = new BrowserWindow(options);
-    const {shell} = require('electron');
+    const { shell } = require('electron');
     shell.openExternal(url);
   }
   /**

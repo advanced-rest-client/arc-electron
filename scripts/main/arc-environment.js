@@ -1,19 +1,19 @@
-const {ipcMain, app, shell} = require('electron');
-const {PreferencesManager} = require('../packages/arc-preferences/main');
-const {ArcMainMenu} = require('./main-menu');
-const {AppMenuService} = require('./app-menu-service');
-const {DriveExport} = require('@advanced-rest-client/electron-drive');
-const {SessionManager} = require('@advanced-rest-client/electron-session-state/main');
-const {ContentSearchService} = require('../packages/search-service/main');
-const {ThemeManager} = require('../packages/themes-manager/main/');
-const {ArcWindowsManager} = require('./windows-manager');
-const {UpdateStatus} = require('./update-status');
-const {AppPrompts} = require('./app-prompts');
-const {Oauth2Identity} = require('@advanced-rest-client/electron-oauth2');
-const {ThemesProtocolHandler} = require('./theme-protocol');
+const { ipcMain, app, shell } = require('electron');
+const { PreferencesManager } = require('../packages/arc-preferences/main');
+const { ArcMainMenu } = require('./main-menu');
+const { AppMenuService } = require('./app-menu-service');
+const { DriveExport } = require('@advanced-rest-client/electron-drive');
+const { SessionManager } = require('@advanced-rest-client/electron-session-state/main');
+const { ContentSearchService } = require('../packages/search-service/main');
+const { ThemeManager } = require('../packages/themes-manager/main/');
+const { ArcWindowsManager } = require('./windows-manager');
+const { UpdateStatus } = require('./update-status');
+const { AppPrompts } = require('./app-prompts');
+const { Oauth2Identity } = require('@advanced-rest-client/electron-oauth2');
+const { ThemesProtocolHandler } = require('./theme-protocol');
 // const {ComponentsProtocolHandler} = require('./components-protocol');
-const {EsmProtocolHandler} = require('./esm-protocol');
-const {AssetImport} = require('./asset-import');
+const { EsmProtocolHandler } = require('./esm-protocol');
+const { AssetImport } = require('./asset-import');
 const log = require('./logger');
 const fs = require('fs-extra');
 
@@ -96,7 +96,7 @@ class ArcEnvironment {
       return;
     }
     port = Number(port);
-    const {CommunicationProtocol} = require('../packages/communication-protocol/main');
+    const { CommunicationProtocol } = require('../packages/communication-protocol/main');
     this.comm = new CommunicationProtocol(port);
     this.comm.start();
   }
@@ -130,10 +130,10 @@ class ArcEnvironment {
 
   _initializeSessionManager() {
     log.debug('Initializing session manager.');
-    this.sm = new SessionManager({appUrls: [
+    this.sm = new SessionManager({ appUrls: [
       'https://advancedrestclient-1155.appspot.com',
       'advancedrestclient.com'
-    ]});
+    ] });
     this.sm.listen();
     this.sm.on('cookie-changed', (cookies) =>
       this.wm.notifyAll('cookie-changed', [cookies]));
@@ -214,7 +214,7 @@ class ArcEnvironment {
    * @param {BrowserWindow} win Target window.
    */
   _handleApplicationAction(action, win) {
-    let windowCommand = 'command';
+    const windowCommand = 'command';
     switch (action) {
       case 'quit':
         log.debug('Quiting the app.');
@@ -239,7 +239,7 @@ class ArcEnvironment {
       case 'search-issues':
       case 'web-session-help':
         log.debug('Running help action.');
-        let {HelpManager} = require('./help-manager');
+        const { HelpManager } = require('./help-manager');
         HelpManager.helpWith(action);
         break;
       case 'popup-menu':

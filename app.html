@@ -49,6 +49,19 @@
   .loader.end {
     opacity: 0;
   }
+
+  .arc-context-menu {
+    position: absolute;
+    color: var(--anypoint-listbox-color);
+    background-color: var(--anypoint-listbox-background-color, #FAFAFA);
+    box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12), 0 3px 5px -1px rgba(0, 0, 0, 0.4);
+  }
+
+  .arc-context-menu anypoint-icon-item,
+  .arc-context-menu anypoint-item {
+    min-height: 40px;
+  }
+
   </style>
   <script src="web-module://web_modules/codemirror/lib/codemirror.js"></script>
   <script src="web-module://web_modules/codemirror/addon/mode/loadmode.js"></script>

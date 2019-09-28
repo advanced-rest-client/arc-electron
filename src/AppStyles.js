@@ -115,6 +115,7 @@ api-navigation,
   display: flex;
   flex-direction: row;
   align-items: center;
+  justify-content: center;
 }
 
 .powered-by {

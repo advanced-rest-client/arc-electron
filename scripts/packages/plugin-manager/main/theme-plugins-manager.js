@@ -1,9 +1,9 @@
-const {app} = require('electron');
+const { app } = require('electron');
 const path = require('path');
 const log = require('electron-log');
 const fs = require('fs-extra');
-const {ThemeInfo} = require('../../../main/models/theme-info');
-const {PluginManager} = require('live-plugin-manager');
+const { ThemeInfo } = require('../../../main/models/theme-info');
+const { PluginManager } = require('live-plugin-manager');
 const semver = require('semver');
 /**
  * This is the main process interface.
@@ -205,7 +205,7 @@ class ThemePluginsManager {
   getInfo(name) {
     return this.themeInfo.load()
     .then((info) => {
-      const {themes} = info;
+      const { themes } = info;
       for (let i = 0, len = themes.length; i < len; i++) {
         if (themes[i]._id === name) {
           return themes[i];
@@ -228,7 +228,7 @@ class ThemePluginsManager {
     const now = Date.now();
     return this.themeInfo.load()
     .then((info) => {
-      const {themes} = info;
+      const { themes } = info;
       const names = [];
       themes.forEach((item) => {
         if (item.isSymlink) {
@@ -271,7 +271,7 @@ class ThemePluginsManager {
     const store = this.themeInfo;
     return store.load()
     .then((info) => {
-      const {themes} = info;
+      const { themes } = info;
       for (let i = 0, len = themes.length; i < len; i++) {
         if (themes[i]._id === name) {
           themes[i].updateCheck = Date.now();
@@ -368,7 +368,7 @@ class ThemePluginsManager {
     const store = this.themeInfo;
     return store.load()
     .then((data) => {
-      const {themes} = data;
+      const { themes } = data;
       themes.push(info);
       return store.store();
     })
@@ -379,7 +379,7 @@ class ThemePluginsManager {
     const store = this.themeInfo;
     return store.load()
     .then((info) => {
-      const {themes} = info;
+      const { themes } = info;
       for (let i = 0, len = themes.length; i < len; i++) {
         if (themes[i]._id === name) {
           themes.splice(i, 1);

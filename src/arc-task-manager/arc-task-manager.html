@@ -4,9 +4,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta http-equiv="Content-Security-Policy" content="default-src file: 'self' 'unsafe-inline'; script-src blob: themes: web-module: 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'  themes: https://fonts.googleapis.com; font-src web-module: 'self' https://fonts.gstatic.com; img-src 'self'">
   <title>Task manager - Advanced REST client</title>
   <style>
-    body {
+  body {
     font-family: Roboto, sans-serif;
     color: #333;
     margin: 0;
@@ -22,11 +23,11 @@
     margin: 0;
   }
   </style>
-  <script type="module" src="web-module://src/arc-task-manager/arc-task-manager.js"></script>
 </head>
 
 <body>
   <arc-task-manager></arc-task-manager>
+  <script type="module" src="web-module://src/arc-task-manager/arc-task-manager.js"></script>
 </body>
 
 </html>

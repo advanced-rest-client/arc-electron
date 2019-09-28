@@ -1,4 +1,4 @@
-const {ArcPreferences} = require('../lib/preferences');
+const { ArcPreferences } = require('../lib/preferences');
 const uuidv4 = require('uuid/v4');
 const uuidv5 = require('uuid/v5');
 /**

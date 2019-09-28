@@ -10,7 +10,7 @@
 class ElectronHttpTransport extends HTMLElement {
   /* global SocketRequest, ElectronRequest */
   get requestTimeout() {
-    const rt = this.getAttribute('request-timeout');
+    const rt = this.getAttribute('requesttimeout');
     if (!rt || isNaN(rt)) {
       return null;
     }
@@ -19,14 +19,14 @@ class ElectronHttpTransport extends HTMLElement {
 
   set requestTimeout(value) {
     if (!value) {
-      this.removeAttribute('request-timeout');
+      this.removeAttribute('requesttimeout');
     } else {
-      this.setAttribute('request-timeout', value);
+      this.setAttribute('requesttimeout', value);
     }
   }
 
   get nativeTransport() {
-    return this.hasAttribute('native-transport');
+    return this.hasAttribute('nativetransport');
   }
 
   set nativeTransport(value) {
@@ -38,7 +38,7 @@ class ElectronHttpTransport extends HTMLElement {
   }
 
   get validateCertificates() {
-    return this.hasAttribute('validate-certificates');
+    return this.hasAttribute('validatecertificates');
   }
   /**
    * When set it validates certificates during request.
@@ -46,9 +46,9 @@ class ElectronHttpTransport extends HTMLElement {
    */
   set validateCertificates(value) {
     if (!value) {
-      this.removeAttribute('validate-certificates');
+      this.removeAttribute('validatecertificates');
     } else {
-      this.setAttribute('validate-certificates', '');
+      this.setAttribute('validatecertificates', '');
     }
   }
   /**
@@ -57,14 +57,14 @@ class ElectronHttpTransport extends HTMLElement {
    */
   set followRedirects(value) {
     if (!value) {
-      this.removeAttribute('follow-redirects');
+      this.removeAttribute('followredirects');
     } else {
-      this.setAttribute('follow-redirects', '');
+      this.setAttribute('followredirects', '');
     }
   }
 
   get followRedirects() {
-    return this.hasAttribute('follow-redirects');
+    return this.hasAttribute('followredirects');
   }
   /**
    * A limit of characters to include into the `sentHttpMessage` property
@@ -73,14 +73,14 @@ class ElectronHttpTransport extends HTMLElement {
    */
   set sentMessageLimit(value) {
     if (!value) {
-      this.removeAttribute('sent-message-limit');
+      this.removeAttribute('sentmessagelimit');
     } else {
-      this.setAttribute('sent-message-limit', value);
+      this.setAttribute('sentmessagelimit', value);
     }
   }
 
   get sentMessageLimit() {
-    const v = this.getAttribute('sent-message-limit');
+    const v = this.getAttribute('sentmessagelimit');
     if (!v || isNaN(v)) {
       return undefined;
     }
