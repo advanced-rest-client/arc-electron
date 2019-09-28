@@ -624,7 +624,8 @@ class ArcElectron extends ArcAppMixin(LitElement) {
     return html`
     ${super.requestLogicTemplate()}
     <electron-http-transport
-      ?followredirects=${config.followRedirects}
+      ?followredirects="${config.followRedirects}"
+      ?defaultHeaders="${config.defaultHeaders}"
       .requestTimeout="${config.requestDefaultTimeout}"
       ?nativeTransport="${config.nativeTransport}"
       ?validateCertificates="${config.validateCertificates}"
