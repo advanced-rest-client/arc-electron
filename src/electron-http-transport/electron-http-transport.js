@@ -67,6 +67,21 @@ class ElectronHttpTransport extends HTMLElement {
     return this.hasAttribute('followredirects');
   }
   /**
+   * When set the HTTP client adds default headers, like cURL does
+   * @param {Boolean} value
+   */
+  set defaultHeaders(value) {
+    if (!value) {
+      this.removeAttribute('defaultheaders');
+    } else {
+      this.setAttribute('defaultheaders', '');
+    }
+  }
+
+  get defaultHeaders() {
+    return this.hasAttribute('defaultheaders');
+  }
+  /**
    * A limit of characters to include into the `sentHttpMessage` property
    * of the request object. 0 to disable limit. Default to 2048.
    * @param {Number} value
@@ -194,6 +209,9 @@ class ElectronHttpTransport extends HTMLElement {
     }
     if (typeof opts.followRedirects === 'undefined') {
       opts.followRedirects = this.followRedirects;
+    }
+    if (typeof opts.defaultHeaders === 'undefined') {
+      opts.defaultHeaders = this.defaultHeaders;
     }
     if (typeof opts.sentMessageLimit === 'undefined') {
       opts.sentMessageLimit = this.sentMessageLimit;
