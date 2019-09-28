@@ -14,35 +14,41 @@ class ThemeDefaults {
    */
   async prepareEnvironment() {
     log.debug('Preparing ARC environment.');
-    const names = this._readDefaultThemesPackages();
+    const names = await this._readDefaultThemesPackages();
+    if (!names) {
+      return;
+    }
     await this._ensureThemes(names);
     await this._setThemeInfo();
   }
 
-  _readDefaultThemesPackages() {
+  async _readDefaultThemesPackages() {
     const source = path.join(__dirname, '..', '..', '..', 'appresources', 'themes');
     log.silly('Searching for default themes...');
-    const themes = this._listThemePackages(source);
-    log.silly(`Found ${themes.length} default themes.`);
+    const themes = await this._listThemePackages(source);
+    if (themes) {
+      log.silly(`Found ${themes.length} default themes.`);
+    }
     return themes;
   }
 
-  _listThemePackages(themePath, parent) {
+  async _listThemePackages(themePath, parent) {
     let items;
     try {
-      items = fs.readdirSync(themePath);
+      items = await fs.readdir(themePath);
     } catch (e) {
       log.warn(`Unable to read themes path ${themePath}.`);
       return;
     }
     let themePaths = [];
-    items.forEach((name) => {
+    for (let name of items) {
       const loc = path.join(themePath, name);
-      const stats = fs.statSync(loc);
+      const stats = await fs.stat(loc);
       if (stats.isDirectory()) {
         const pkgFile = path.join(loc, 'package.json');
-        if (fs.pathExistsSync(pkgFile)) {
-          const main = this._readMainFile(pkgFile, name);
+        const hasPackage = await fs.pathExists(pkgFile);
+        if (hasPackage) {
+          const main = await this._readMainFile(pkgFile, name);
           if (parent) {
             name = path.join(parent, name);
           }
@@ -59,22 +65,22 @@ class ThemeDefaults {
           } else {
             parent = name;
           }
-          const deepThemes = this._listThemePackages(loc, parent);
+          const deepThemes = await this._listThemePackages(loc, parent);
           if (deepThemes) {
             themePaths = themePaths.concat(deepThemes);
           }
         }
       }
-    });
+    }
     return themePaths;
   }
 
-  _readMainFile(pkgFile, name) {
+  async _readMainFile(pkgFile, name) {
     // Default to package name ??
     const defaultName = name + '.js';
     let data;
     try {
-      const content = fs.readFileSync(pkgFile);
+      const content = await fs.readFile(pkgFile);
       data = JSON.parse(content);
     } catch (_) {
       return defaultName;
@@ -174,20 +180,18 @@ class ThemeDefaults {
    * @param {Array<Object>} installed List of currently installed packages.
    * @return {Promise}
    */
-  _upgradeInfoFile(file, installed) {
-    return fs.readJson(this.localThemeInfoFile, { throws: false })
-    .then((info) => {
-      if (!info || !info.themes) {
-        info = { themes: [] };
+  async _upgradeInfoFile(file, installed) {
+    let info = await fs.readJson(this.localThemeInfoFile, { throws: false });
+    if (!info || !info.themes) {
+      info = { themes: [] };
+    }
+    installed.forEach((item) => {
+      if (item.isDefault) {
+        return;
       }
-      installed.forEach((item) => {
-        if (item.isDefault) {
-          return;
-        }
-        info.themes.push(item);
-      });
-      return fs.writeJson(file, info);
+      info.themes.push(item);
     });
+    return await fs.writeJson(file, info);
   }
 }
 exports.ThemeDefaults = ThemeDefaults;

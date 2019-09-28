@@ -1,4 +1,4 @@
-const {dialog, ipcMain} = require('electron');
+const { dialog, ipcMain } = require('electron');
 const log = require('./logger');
 /**
  * Class responsible for displaying system dialogs and

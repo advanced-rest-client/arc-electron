@@ -19,20 +19,20 @@ module.exports = function(startTime) {
 
   process.on('uncaughtException', function(error = {}) {
     if (error.message) {
-      console.log(error.message);
+      log.error(error.message);
     }
     if (error.stack) {
-      console.log(error.stack);
+      log.error(error.stack);
     }
   });
 
   process.on('unhandledRejection', function(error = {}) {
     if (error.message) {
-      console.log(error.message);
+      log.error(error.message);
     }
 
     if (error.stack) {
-      console.log(error.stack);
+      log.error(error.stack);
     }
   });
 
@@ -66,7 +66,6 @@ module.exports = function(startTime) {
   arcPaths.setSettingsFile(initOptions.settingsFile);
   arcPaths.setWorkspacePath(initOptions.workspacePath);
   arcPaths.setThemesPath(initOptions.themesPath);
-  arcPaths.setComponentsPath(initOptions.componentsPath);
 
   // Overrides initial user path to processed by arcPaths
   initOptions.workspacePath = arcPaths.workspacePath;

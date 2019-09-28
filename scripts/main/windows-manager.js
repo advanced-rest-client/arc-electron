@@ -246,12 +246,10 @@ class ArcWindowsManager {
    * @param {String} workspaceFile A worksace file to use.
    * @return {Promise}
    */
-  openWorkspace(workspaceFile) {
-    return this.open()
-    .then((win) => {
-      win.startupOptions = win.startupOptions || {};
-      win.startupOptions.workspaceFile = workspaceFile;
-    });
+  async openWorkspace(workspaceFile) {
+    const win = await this.open();
+    win.startupOptions = win.startupOptions || {};
+    win.startupOptions.workspaceFile = workspaceFile;
   }
   /**
    * Opens task manager window. If the window is already created it tries to

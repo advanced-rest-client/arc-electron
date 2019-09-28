@@ -12,7 +12,7 @@
     "url": "https://github.com/advanced-rest-client/arc-electron"
   },
   "scripts": {
-    "start": "electron . --inspect --debug --debug-level=\"silly\" --with-devtools --workspace-path=\"~/arc-dev/workspace\" --settings-file=\"~/arc-dev/dev-settings.json\" --themes-path=\"~/arc-dev/themes\"",
+    "start": "electron . --inspect --debug --debug-level=\"silly\" --workspace-path=\"~/arc-dev/workspace\" --settings-file=\"~/arc-dev/dev-settings.json\" --themes-path=\"~/arc-dev/themes\"",
     "postinstall": "electron-builder install-app-deps",
     "prepare": "pika-web && node tasks/prepare-app.js",
     "test": "npm run test-main && npm run test-renderer && npm run test-app",
@@ -67,6 +67,7 @@
     "@advanced-rest-client/arc-electron-payload-processor": "^0.4.0",
     "@advanced-rest-client/code-mirror-hint": "^3.0.0",
     "@advanced-rest-client/code-mirror-linter": "^3.0.0",
+    "@advanced-rest-client/electron-amf-service": "^2.0.0",
     "@advanced-rest-client/electron-drive": "^0.4.0",
     "@advanced-rest-client/electron-oauth2": "^2.0.0",
     "@advanced-rest-client/electron-request": "^2.0.1",

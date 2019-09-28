@@ -10,30 +10,26 @@ class WorkspaceDefaults {
    *
    * @return {Promise} Resolved promise when the defaults are stored.
    */
-  prepareEnvironment() {
+  async prepareEnvironment() {
     log.debug('Preparing ARC workspace.');
-    return this._ensureWorkspaceDir();
+    await this._ensureWorkspaceDir();
   }
 
-  _ensureWorkspaceDir() {
+  async _ensureWorkspaceDir() {
     const dir = process.env.ARC_WORKSPACE_PATH;
     const file = path.join(dir, 'workspace.json');
-    return fs.pathExists(dir)
-    .then((exists) => {
-      if (exists) {
-        return;
-      }
-      log.silly('Workspace directory does not exists. Creating.');
-      return fs.ensureDir(dir);
-    })
-    .then(() => fs.pathExists(file))
-    .then((exists) => {
-      if (exists) {
-        return;
-      }
-      log.silly('Workspace default file does not exists. Creating.');
-      return fs.ensureFile(file);
-    });
+    const exists = await fs.pathExists(dir);
+    if (exists) {
+      return;
+    }
+    log.silly('Workspace directory does not exists. Creating.');
+    await fs.ensureDir(dir);
+    const fileExists = await fs.pathExists(file);
+    if (fileExists) {
+      return;
+    }
+    log.silly('Workspace default file does not exists. Creating.');
+    await fs.ensureFile(file);
   }
 }
 exports.WorkspaceDefaults = WorkspaceDefaults;
