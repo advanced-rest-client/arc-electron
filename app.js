@@ -188,6 +188,7 @@ class ArcInit {
     app.appVersion = versionInfo.appVersion;
     app.browserVersion = versionInfo.chrome;
     app.initApplication();
+    app.initTutorial();
   }
   /**
    * Because window has to be setup from the main process
@@ -465,7 +466,7 @@ class ArcInit {
     }
     const infoNode = document.querySelector('.loading-info');
     infoNode.innerText = 'Loading file from Google Drive';
-    const data = await this.driveBridge.getFile(fileId)
+    let data = await this.driveBridge.getFile(fileId)
     if (!data) {
       const e = new Error('Google drive did not return any data.');
       this.app.notifyError(e.message);

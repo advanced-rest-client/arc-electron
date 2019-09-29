@@ -452,6 +452,44 @@ class ArcElectron extends ArcAppMixin(LitElement) {
     }
     this.requestUpdate();
   }
+  /**
+   * Initialized the tutorial if needed.
+   */
+  async initTutorial() {
+    const major = versionInfo.appVersion.split('.')[0];
+    const cnf = this.config;
+    const passed = cnf.finishedOnboarding || [];
+    if (passed.indexOf(major) !== -1) {
+      return;
+    }
+    try {
+      await this._loadComponent('arc-onboarding/arc-onboarding', '@advanced-rest-client');
+    } catch (cmp) {
+      this.log.error(`Unable to load ${cmp}`);
+      return;
+    }
+    const element = document.createElement('arc-onboarding');
+    element.addEventListener('tutorial-close', this._finalizeTutorial.bind(this));
+    element.dataset.major = major;
+    document.body.appendChild(element);
+    element.opened = true;
+  }
+
+  _finalizeTutorial(e) {
+    const cnf = this.config;
+    const passed = cnf.finishedOnboarding || [];
+    passed.push(e.target.dataset.major);
+    const ev = new CustomEvent('settings-changed', {
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+      detail: {
+        name: 'finishedOnboarding',
+        value: passed
+      }
+    });
+    this.dispatchEvent(ev);
+  }
 
   render() {
     const {
