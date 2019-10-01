@@ -29,7 +29,7 @@
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
     "start-drive": "electron . --inspect --debug --debug-level=\"silly\" --with-devtools --workspace-path=\"~/arc-dev/workspace\" --settings-file=\"~/arc-dev/dev-settings.json\" --themes-path=\"~/arc-dev/themes\" arc-file://drive/open/1_PAI-CGHqi_pZCV8ZZ_9_N-LGMjkAYzn",
-    "resetmodules": "rm -rf node_modules/ && rm package-lock.json && npm i"
+    "resetmodules": "rm -rf node_modules/ && rm -rf web_modules/ && rm package-lock.json && npm i"
   },
   "main": "main.js",
   "devDependencies": {
@@ -43,6 +43,7 @@
     "@advanced-rest-client/host-rules-editor": "^3.0.0",
     "@advanced-rest-client/themes-panel": "^3.0.0",
     "@advanced-rest-client/arc-onboarding": "^3.0.1",
+    "@advanced-rest-client/rest-apis-list-panel": "^3.0.0",
     "@api-components/api-candidates-dialog": "^3.0.0",
     "@api-components/api-documentation": "^3.0.1",
     "@api-components/api-navigation": "^3.1.1",
@@ -281,7 +282,8 @@
       "@anypoint-web-components/anypoint-input/anypoint-input.js",
       "@anypoint-web-components/anypoint-item/anypoint-item.js",
       "lit-html/directives/repeat.js",
-      "@advanced-rest-client/arc-onboarding/arc-onboarding.js"
+      "@advanced-rest-client/arc-onboarding/arc-onboarding.js",
+      "@advanced-rest-client/rest-apis-list-panel/rest-apis-list-panel.js"
     ]
   }
 }

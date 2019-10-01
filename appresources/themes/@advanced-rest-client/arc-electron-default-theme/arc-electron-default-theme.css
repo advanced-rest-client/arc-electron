@@ -11,7 +11,6 @@ body {
   --dark-primary-color: var(--paper-blue-700);
   --light-accent-color: #ff80ab;
   --dark-accent-color: #f50057;
-  --paper-menu-background-color: #fff;
   --menu-link-color: #111111;
   --link-color: #00A1DF;
   --toolbar-color: #ffffff;
@@ -41,6 +40,11 @@ body {
   --arc-font-display1-font-weight: 400;
   --arc-font-display1-letter-spacing: -.01em;
   --arc-font-display1-line-height: 40px;
+
+  --arc-font-display3-font-size: 56px;
+  --arc-font-display3-font-weight: 400;
+  --arc-font-display3-letter-spacing: -.026em;
+  --arc-font-display3-line-height: 60px;
 
   --arc-font-title-font-size: 20px;
   --arc-font-title-font-weight: 500;

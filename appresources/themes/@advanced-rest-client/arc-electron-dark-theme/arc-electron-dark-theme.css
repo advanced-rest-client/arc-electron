@@ -120,6 +120,7 @@ body {
   --request-action-iterator-editor-background-color: #212121;
   --request-action-iterator-editor-info-color: #fff;
   --request-condition-editor-background-color: #212121;
+
   --code-color: #fff;
   --code-background-color: #263238;
   --code-type-boolean-value-color: #F07178;
@@ -129,6 +130,8 @@ body {
   --code-property-value-color: #F07178
   --code-keyword-value-color: #C3E88D;
   --code-type-text-value-color: #FFCB6B;
+  --code-punctuation-value-color: rgba(255, 255, 255, 0.82);
+
   --http-code-snippet-code-text-shadow: #fff;
   --http-code-snippet-container-background-color: var(--code-background-color);
   --http-code-snippet-code-function-color: #82AAFF;
@@ -137,7 +140,7 @@ body {
   --response-status-view-loading-time-color: #fff;
   --anypoint-button-emphasis-high-background-color: #fff;
   --anypoint-button-emphasis-high-focus-background-color: #E3F2FD;
-  --anypoint-button-emphasis-low-focus-color: var(--primary-color);
+  --anypoint-button-emphasis-low-focus-color: var(--accent-color);
   --anypoint-button-emphasis-high-hover-background-color: var(--primary-color);
   --anypoint-button-hover-background-color: var(--primary-color);
   --anypoint-button-emphasis-high-color: #2196f3;
@@ -183,8 +186,63 @@ body {
 
   --arc-menu-color: #fff;
   --request-list-item-history-group-header-color: #fff;
+  --request-list-item-selected-background-color: #212121;
   --arc-menu-background-color: var(--primary-background-color);
   --arc-request-workspace-tabs-close-color: #fff;
+
+  --request-timings-progress-background: #9E9E9E;
+  --request-timings-progress-background: #616161;
+  --request-timings-progress-color: #4CAF50;
+
+  --exchange-search-list-item-author-color: rgba(255, 255, 255, 0.74);
+
+  --anypoiont-dropdown-shaddow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
+  --anypoiont-autocomplete-dropdown-shaddow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
+
+  --box-shadow-transition: box-shadow 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  --box-shadow-2dp: 0 2px 2px 0 rgba(0, 0, 0, 0.14),
+                  0 1px 5px 0 rgba(0, 0, 0, 0.12),
+                  0 3px 1px -2px rgba(0, 0, 0, 0.2);
+  --box-shadow-3dp: 0 3px 4px 0 rgba(0, 0, 0, 0.14),
+                0 1px 8px 0 rgba(0, 0, 0, 0.12),
+                0 3px 3px -2px rgba(0, 0, 0, 0.4);
+  --box-shadow-4dp: 0 4px 5px 0 rgba(0, 0, 0, 0.14),
+                0 1px 10px 0 rgba(0, 0, 0, 0.12),
+                0 2px 4px -1px rgba(0, 0, 0, 0.4);
+  --box-shadow-6dp: 0 6px 10px 0 rgba(0, 0, 0, 0.14),
+                0 1px 18px 0 rgba(0, 0, 0, 0.12),
+                0 3px 5px -1px rgba(0, 0, 0, 0.4);
+  --box-shadow-8dp: 0 8px 10px 1px rgba(0, 0, 0, 0.14),
+                0 3px 14px 2px rgba(0, 0, 0, 0.12),
+                0 5px 5px -3px rgba(0, 0, 0, 0.4);
+  --box-shadow-12dp: 0 12px 16px 1px rgba(0, 0, 0, 0.14),
+                0 4px 22px 3px rgba(0, 0, 0, 0.12),
+                0 6px 7px -4px rgba(0, 0, 0, 0.4);
+  --box-shadow-16dp: 0 16px 24px 2px rgba(0, 0, 0, 0.14),
+                0  6px 30px 5px rgba(0, 0, 0, 0.12),
+                0  8px 10px -5px rgba(0, 0, 0, 0.4);
+  --box-shadow-24dp: 0 24px 38px 3px rgba(0, 0, 0, 0.14),
+                0 9px 46px 8px rgba(0, 0, 0, 0.12),
+                0 11px 15px -7px rgba(0, 0, 0, 0.4);
+
+  --bottom-sheet-box-shadow: var(--box-shadow-6dp);
+  --bottom-sheet-background-color: var(--primary-background-color);
+  --bottom-sheet-color: #fff;
+  --saved-request-detail-data-list-color: #fff;
+  --saved-request-detail-action-icon-color: #fff;
+  --saved-request-editor-options-color: #fff;
+
+  --arc-toolbar-variables-panel-color: #fff;
+  --variables-preview-overlay-background-color: var(--primary-background-color);
+  --variables-preview-overlay-var-name-color: rgba(255, 255, 255, 0.54);
+  --variables-preview-overlay-var-value-color: rgba(255, 255, 255, 0.87);
+  --variables-drawer-editor-background-color: var(--primary-background-color);
+
+  --import-table-title-request-project-background-color: #616161;
+
+  --project-details-description-color: #fff;
+
+  --web-url-input-background-color: #616161;
 }
 
 body[narrow] {

@@ -79,8 +79,8 @@ environment-selector {
 .var-panel {
   max-width: calc(100vw - var(--app-drawer-width, 0) - 32px);
   max-height: calc(100vh - 64px - 32px);
-  background-color: var(--arc-toolbar-variables-panel-background, #fff);
-  color: var(--arc-toolbar-variables-panel-color);
+  /* background-color: var(--arc-toolbar-variables-panel-background, #fff);
+  color: var(--arc-toolbar-variables-panel-color); */
 }
 
 arc-info-messages {
