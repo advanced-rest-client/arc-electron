@@ -175,10 +175,12 @@ body {
   --select-text-cursor: text;
 
   --primary-color: var(--anypoint-color-primary);
-  --secondary-color: var(--anypoint-color-primary);
+  --secondary-color: var(--anypoint-color-secondary);
   --secondary-text-color: var(--anypoint-color-robustBlue2);
   --primary-background-color: var(--anypoint-color-tertiary);
-  --accent-color: var(--anypoint-color-violet3);
+  --accent-color: var(--anypoint-color-primary);
+  --error-color: var(--anypoint-color-danger);
+
   --hover-button-accent-color: #ffffff;
   --warning-primary-color: #FF7043;
   --warning-contrast-color: #fff;
@@ -248,7 +250,6 @@ body {
   --method-display-head-color: var(--anypoint-color-futureGreen3);
   /* HTTP methods colors in method documentation panel */
   --http-method-label-border-radius: 1px;
-  --http-method-label-padding: 0;
   --http-method-label-get-background-color: var(--method-display-get-color);
   --http-method-label-get-color: #fff;
   --http-method-label-post-background-color: var(--method-display-post-color);
@@ -263,7 +264,32 @@ body {
   --http-method-label-options-color: #fff;
   --http-method-label-head-background-color: var(--method-display-head-color);
   --http-method-label-head-color: #fff;
+  --http-method-label-padding: 4px 5px;
   --method-display-font-weigth: 100;
+
+  --api-navigation-list-item-selected-background-color: #e8e9ea;
+  --api-navigation-list-item-selected-color: #000;
+
+  --api-method-documentation-url-border-radius: 0;
+
+  --api-method-documentation-section-background-color: #f9fafb;
+  --api-method-documentation-section-padding: 5px;
+
+  --code-background-color: #f4f5f6;
+  --api-type-document-type-background-color: transparent;
+  --api-type-document-type-color: #000;
+  --api-type-document-trait-data-type-font-weight: 400;
+  --api-type-document-trait-data-type-padding: 2px 0;
+  --property-shape-document-object-color: transparent;
+  --property-shape-document-array-color: transparent;
+  --property-shape-document-union-color: transparent;
+
+  --arc-menu-color: #fff;
+  --projects-menu-project-icon-color: rgba(255, 255, 255, 0.64);
+
+  --arc-env-container-color: #fff;
+  --arc-env-selector-color: #fff;
+  --arc-env-selector-background-color: #424242;
 
   /* Material's shadow definitions */
   --box-shadow-transition: box-shadow 0.28s cubic-bezier(0.4, 0, 0.2, 1);
