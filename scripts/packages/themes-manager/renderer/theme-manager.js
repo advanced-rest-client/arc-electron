@@ -251,15 +251,19 @@ class ThemeManager {
    * Handler for `theme-manager-theme-activated` event from the main IPC.
    * @param {Object} e
    * @param {String} id Request id
+   * @param {String} themeId ID of activated theme.
    */
-  _ipcActivatedHandler(e, id) {
+  async _ipcActivatedHandler(e, id, themeId) {
     const p = this._getPromise(id);
-    if (!p) {
-      log.error(`ThemeManager: Pending request ${id} do not exist.`);
-      return;
+    if (p) {
+      p.resolve();
     }
-    this.requireReload();
-    p.resolve();
+    // this.requireReload();
+    await this.loadTheme(themeId);
+    document.body.dispatchEvent(new CustomEvent('theme-activated', {
+      bubbles: true,
+      detail: themeId
+    }));
   }
 
   _ipcInstalledHandler(e, id, info) {

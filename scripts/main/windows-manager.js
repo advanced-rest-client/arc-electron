@@ -1,4 +1,4 @@
-const { BrowserWindow, dialog, ipcMain } = require('electron');
+const { BrowserWindow, dialog, ipcMain, systemPreferences } = require('electron');
 const path = require('path');
 const url = require('url');
 const { ArcSessionControl } = require('../packages/arc-preferences/main');
@@ -274,7 +274,7 @@ class ArcWindowsManager {
         preload: path.join(__dirname, '..', '..', 'src', 'arc-task-manager', 'task-manager-preload.js')
       }
     });
-    win.webContents.openDevTools();
+    // win.webContents.openDevTools();
     const dest = path.join(__dirname, '..', '..', 'src', 'arc-task-manager', 'arc-task-manager.html');
     const full = url.format({
       pathname: dest,
@@ -285,7 +285,7 @@ class ArcWindowsManager {
     win.on('closed', () => {
       this._tmWin = null;
     });
-    win.setMenu(null);
+    win.removeMenu();
     this._tmWin = win;
   }
   /**
@@ -353,7 +353,8 @@ class ArcWindowsManager {
       }
     }
     const cnf = {
-      workspaceFile: this._computeWorkspaceFile(workspaceOptions)
+      workspaceFile: this._computeWorkspaceFile(workspaceOptions),
+      darkMode: systemPreferences.isDarkMode()
     };
     if (win) {
       cnf.startPath = win._startPath;

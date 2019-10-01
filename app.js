@@ -142,6 +142,9 @@ class ArcInit {
       this.reportFatalError(e);
       throw e;
     }
+    if (this.initConfig.darkMode) {
+      cnf.theme = 'advanced-rest-client/arc-electron-dark-theme';
+    }
     if (cnf.theme === 'advanced-rest-client/arc-electron-anypoint-theme') {
       const app = this.app;
       app.compatibility = true;

@@ -52,6 +52,7 @@ class ArcElectron extends ArcAppMixin(LitElement) {
     this._openExternalHandler = this._openExternalHandler.bind(this);
     this._copyContentHandler = this._copyContentHandler.bind(this);
     this._exchangeAssetHandler = this._exchangeAssetHandler.bind(this);
+    this._activeThemeHandler = this._activeThemeHandler.bind(this);
     /* global log */
     this.log = log;
     this.sysVars = process.env;
@@ -61,6 +62,7 @@ class ArcElectron extends ArcAppMixin(LitElement) {
     super.connectedCallback();
     window.addEventListener('open-external-url', this._openExternalHandler);
     window.addEventListener('content-copy', this._copyContentHandler);
+    window.addEventListener('theme-activated', this._activeThemeHandler);
     this.addEventListener('process-exchange-asset-data', this._exchangeAssetHandler);
   }
 
@@ -489,6 +491,18 @@ class ArcElectron extends ArcAppMixin(LitElement) {
       }
     });
     this.dispatchEvent(ev);
+  }
+
+  _activeThemeHandler(e) {
+    if (e.detail === 'advanced-rest-client/arc-electron-anypoint-theme') {
+      if (!this.compatibility) {
+        this.compatibility = true;
+      }
+    } else {
+      if (this.compatibility) {
+        this.compatibility = false;
+      }
+    }
   }
 
   render() {

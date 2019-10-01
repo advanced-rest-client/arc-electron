@@ -113,16 +113,15 @@ class ThemeManager {
    * @param {String} id
    * @param {String} themeId
    */
-  _activateHandler(e, id, themeId) {
-    this.arcApp.config.load()
-    .then((settings) => {
+  async _activateHandler(e, id, themeId) {
+    try {
+      const settings = await this.arcApp.config.load();
       settings.theme = themeId;
-      return this.arcApp.config.store();
-    })
-    .then(() => {
-      e.sender.send('theme-manager-theme-activated', id);
-    })
-    .catch((cause) => this._handleError(e.sender, id, cause));
+      await this.arcApp.config.store();
+      e.sender.send('theme-manager-theme-activated', id, themeId);
+    } catch (cause) {
+      this._handleError(e.sender, id, cause);
+    }
   }
 
   _installHandler(e, id, name) {
