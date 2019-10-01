@@ -3,7 +3,7 @@
   "description": "Anypoint theme definition for Advanced REST Client",
   "version": "3.0.0",
   "license": "Apache-2.0",
-  "main": "arc-electron-anypoint-theme.js",
+  "main": "arc-electron-anypoint-theme.css",
   "authors": [
     "Pawel Psztyc",
     "The Advanced REST client authors <arc@mulesoft.com>"

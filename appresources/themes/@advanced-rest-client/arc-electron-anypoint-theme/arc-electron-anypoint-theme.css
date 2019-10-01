@@ -1,0 +1,301 @@
+/**
+Advanced REST Client deskto app dark theme stylesheet.
+*/
+
+html {
+  @font-face {
+    font-family: "DIN Pro";
+    src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/DINPro-Light.eot');
+    src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/DINPro-Light.eot?#iefix') format('embedded-opentype'),
+      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/DINPro-Light.woff2') format('woff2'),
+      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/DINPro-Light.woff') format('woff'),
+      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/DINPro-Light.ttf') format('truetype'),
+      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/DINPro-Light.svg') format('svg');
+    font-weight: 300;
+    font-style: normal;
+  }
+
+  @font-face {
+    font-family: "Open Sans";
+    src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Regular.eot');
+    src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Regular.eot?#iefix') format('embedded-opentype'),
+      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Regular.woff2') format('woff2'),
+      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Regular.woff') format('woff'),
+      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Regular.ttf') format('truetype'),
+      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Regular.svg') format('svg');
+    font-weight: 400;
+    font-style: normal;
+  }
+
+  @font-face {
+    font-family: "Open Sans";
+    src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Semibold.eot');
+    src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Semibold.eot?#iefix') format('embedded-opentype'),
+      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Semibold.woff2') format('woff2'),
+      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Semibold.woff') format('woff'),
+      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Semibold.ttf') format('truetype'),
+      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Semibold.svg') format('svg');
+    font-weight: 600;
+    font-style: normal;
+  }
+
+  @font-face {
+    font-family: "Open Sans";
+    src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Bold.eot');
+    src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Bold.eot?#iefix') format('embedded-opentype'),
+      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Bold.woff2') format('woff2'),
+      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Bold.woff') format('woff'),
+      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Bold.ttf') format('truetype'),
+      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Bold.svg') format('svg');
+    font-weight: 700;
+    font-style: normal;
+  }
+
+  @font-face {
+    font-family: "Open Sans";
+    src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Light.eot');
+    src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Light.eot?#iefix') format('embedded-opentype'),
+      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Light.woff2') format('woff2'),
+      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Light.woff') format('woff'),
+      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Light.ttf') format('truetype'),
+      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Light.svg') format('svg');
+    font-weight: 200;
+    font-style: normal;
+  }
+
+  @font-face {
+    font-family: "Open Sans";
+    src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-LightItalic.eot');
+    src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-LightItalic.eot?#iefix') format('embedded-opentype'),
+      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-LightItalic.woff2') format('woff2'),
+      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-LightItalic.woff') format('woff'),
+      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-LightItalic.ttf') format('truetype'),
+      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-LightItalic.svg') format('svg');
+    font-weight: 200;
+    font-style: italic;
+  }
+
+  @font-face {
+    font-family: "Source Code Pro";
+    src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/SourceCodePro-Regular.eot');
+    src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/SourceCodePro-Regular.eot?#iefix') format('embedded-opentype'),
+      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/SourceCodePro-Regular.woff2') format('woff2'),
+      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/SourceCodePro-Regular.woff') format('woff'),
+      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/SourceCodePro-Regular.ttf') format('truetype'),
+      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/SourceCodePro-Regular.svg') format('svg');
+    font-weight: 400;
+    font-style: normal;
+  }
+}
+
+body {
+  --anypoint-color-primary: #00A2DF;
+  --anypoint-color-secondary: #506773;
+  --anypoint-color-danger: #D1344E;
+  --anypoint-color-success: #17BC65;
+  --anypoint-color-tertiary: #ffffff;
+  --anypoint-color-coreBlue1: #ABE2F5;
+  --anypoint-color-coreBlue2: #48C1ED;
+  --anypoint-color-coreBlue3: #00A2DF;
+  --anypoint-color-coreBlue4: #087299;
+  --anypoint-color-coreBlue5: #114459;
+  --anypoint-color-robustBlue1: #A1B1B8;
+  --anypoint-color-robustBlue2: #6B8A99;
+  --anypoint-color-robustBlue3: #506773;
+  --anypoint-color-robustBlue4: #32444D;
+  --anypoint-color-robustBlue5: #272F33;
+  --anypoint-color-futureGreen1: #AAF2CB;
+  --anypoint-color-futureGreen2: #33CC7A;
+  --anypoint-color-futureGreen3: #17BC65;
+  --anypoint-color-futureGreen4: #0E8C48;
+  --anypoint-color-futureGreen5: #174D30;
+  --anypoint-color-aluminum1: #F9FAFB;
+  --anypoint-color-aluminum2: #F4F5F6;
+  --anypoint-color-aluminum3: #E8E9EA;
+  --anypoint-color-aluminum4: #CACBCC;
+  --anypoint-color-aluminum5: #989A9B;
+  --anypoint-color-steel1: #6B6C6D;
+  --anypoint-color-steel2: #58595A;
+  --anypoint-color-steel3: #3A3B3C;
+  --anypoint-color-steel4: #262728;
+  --anypoint-color-steel5: #121314;
+  --anypoint-color-yellow3: #F2BE24;
+  --anypoint-color-viridian3: #00B49D;
+  --anypoint-color-teal3: #00B5D1;
+  --anypoint-color-navy3: #178BEA;
+  --anypoint-color-indigo3: #5E66F9;
+  --anypoint-color-violet3: #9A63F9;
+  --anypoint-color-red3: #D1344E;
+
+  --arc-font-family: "Open Sans", "DIN Pro", sans-serif;
+  --arc-font-font-smoothing: antialiased;
+  --arc-font-code-family: "Source Code Pro", 'Consolas', 'Menlo', monospace;
+  --arc-font-nowrap-white-space: nowrap;
+  --arc-font-nowrap-overflow: hidden;
+  --arc-font-nowrap-text-overflow: ellipsis;
+  --arc-font-expensive-kerning: optimizeLegibility;
+
+  --arc-font-display1-font-size: 34px;
+  --arc-font-display1-line-height: 40px;
+
+  --arc-font-display3-font-size: 30px;
+  --arc-font-display3-font-weight: 400;
+  --arc-font-display3-letter-spacing: -.026em;
+  --arc-font-display3-line-height: 60px;
+
+  --arc-font-title-font-size: 20px;
+  --arc-font-title-font-weight: 100;
+  --arc-font-title-line-height: 28px;
+  --arc-font-title-letter-spacing: -.02em;
+
+  --arc-font-headline-font-size: 24px;
+  --arc-font-headline-font-weight: 100;
+  --arc-font-headline-letter-spacing: -.03em;
+  --arc-font-headline-line-height: 32px
+
+  --arc-font-subhead-font-size: 16px;
+  --arc-font-subhead-font-weight: 400;
+  --arc-font-subhead-line-height: 24px;
+
+  --arc-font-body2-font-size: 14px;
+  --arc-font-body2-font-weight: 500;
+  --arc-font-body2-letter-spacing: 0;
+
+  --arc-font-body1-font-size: 13px;
+  --arc-font-body1-font-weight: 400;
+  --arc-font-body1-line-height: 20px;
+  --arc-font-body1-letter-spacing: -.17px;
+
+  --arc-font-caption-font-size: 12px;
+  --arc-font-caption-font-weight: 400;
+  --arc-font-caption-letter-spacing: 0.011em;
+  --arc-font-caption-line-height: 20px;
+
+  --select-text-user-select: text;
+  --select-text-cursor: text;
+
+  --primary-color: var(--anypoint-color-primary);
+  --secondary-color: var(--anypoint-color-primary);
+  --secondary-text-color: var(--anypoint-color-robustBlue2);
+  --primary-background-color: var(--anypoint-color-tertiary);
+  --accent-color: var(--anypoint-color-violet3);
+  --hover-button-accent-color: #ffffff;
+  --warning-primary-color: #FF7043;
+  --warning-contrast-color: #fff;
+  --pages-fixed-height: calc(100vh - 64px);
+  --arc-menu-height: 100%;
+  --arc-toolbar-color: #ffffff;
+  --arc-toolbar-background-color: var(--anypoint-color-steel5);
+  --arc-toolbar-environment-selector-input-color: var(--anypoint-color-tertiary);
+  --arc-toolbar-paper-icon-button-active-color: var(--anypoint-color-tertiary);
+  --arc-menu-paper-item-body-secondary-color: var(--anypoint-color-aluminum4);
+  --arc-toolbar-api-version-selector-color: var(--anypoint-color-tertiary);
+  --arc-toolbar-api-version-selector-label-color: var(--anypoint-color-aluminum3);
+  --arc-toolbar-button-background-color: var(--anypoint-color-primary);
+  --arc-toolbar-button-color: var(--anypoint-color-tertiary);
+  --request-list-item-history-group-header-color: #fff;
+
+  --onboarding-page-image-color: rgba(255, 255, 255, 0.67);
+  --arc-onboarding-legal-info-color: rgba(255, 255, 255, 0.57);
+  --paper-radio-button-unchecked-color: rgba(255, 255, 255, 0.87);
+
+  --arc-menu-background-color: var(--anypoint-color-robustBlue4);
+  --arc-menu-item-background-color: var(--anypoint-color-robustBlue4);
+  --history-menu-background-color: var(--anypoint-color-robustBlue4);
+  --arc-menu-selected-color: var(--anypoint-color-steel2);
+
+  --api-navigation-header-color: var(--anypoint-color-tertiary);
+  --api-navigation-list-item-color: var(--anypoint-color-tertiary);
+  --api-navigation-toggle-icon-color: var(--anypoint-color-tertiary);
+
+  --api-navigation-list-item-selected-background-color: var(--anypoint-color-robustBlue5);
+  --api-navigation-list-item-selected-color: #fff;
+
+  --code-mirror-string-color: #690;
+  --code-mirror-number-color: #690;
+  --code-mirror-atom-color: #0288d1;
+  --code-mirror-punctuation-color: #999;
+  --code-type-text-value-color: var(--code-mirror-string-color);
+  --code-type-number-value-color: var(--code-mirror-number-color);
+  --code-type-boolean-value-color: var(--code-mirror-atom-color);
+  --code-type-null-value-color: var(--code-mirror-atom-color);
+  --code-punctuation-value-color: var(--code-mirror-punctuation-color);
+  --code-type-link-color: #757575;
+  --code-array-index-color: rgba(1, 87, 155, 0.57);
+  --code-background-color: var(--anypoint-color-aluminum2);
+
+  --dark-divider-opacity: 0;
+  /* Auth method custom icon button margin top */
+  --auth-method-custom-help-icon-margin-top: 3px;
+  --api-form-action-button-color: var(--primary-color);
+  --api-form-action-button-hover-color: var(--anypoint-color-coreBlue2);
+  --api-form-action-icon-color: var(--primary-color);
+  --api-form-action-icon-hover-color: var(--anypoint-color-coreBlue2);
+  --hint-trigger-color: var(--primary-color);
+  --hint-trigger-hover-color: var(--anypoint-color-coreBlue2);
+  --content-action-button-color: var(--primary-color);
+  --content-action-button-color-hover: var(--anypoint-color-coreBlue2);
+  --from-row-action-icon-color: var(--primary-color);
+  --from-row-action-icon-color-hover: var(--anypoint-color-coreBlue2);
+  /* HTTP methods colors */
+  --method-display-selected-color: #fff;
+  --method-display-get-color: var(--anypoint-color-viridian3);
+  --method-display-post-color: var(--anypoint-color-violet3);
+  --method-display-put-color: var(--anypoint-color-yellow3);
+  --method-display-patch-color: var(--anypoint-color-indigo3);
+  --method-display-delete-color: var(--anypoint-color-red3);
+  --method-display-options-color: var(--anypoint-color-teal3);
+  --method-display-head-color: var(--anypoint-color-futureGreen3);
+  /* HTTP methods colors in method documentation panel */
+  --http-method-label-border-radius: 1px;
+  --http-method-label-padding: 0;
+  --http-method-label-get-background-color: var(--method-display-get-color);
+  --http-method-label-get-color: #fff;
+  --http-method-label-post-background-color: var(--method-display-post-color);
+  --http-method-label-post-color: #fff;
+  --http-method-label-put-background-color: var(--method-display-put-color);
+  --http-method-label-put-color: #fff;
+  --http-method-label-patch-background-color: var(--method-display-patch-color);
+  --http-method-label-patch-color: #fff;
+  --http-method-label-delete-background-color: var(--method-display-delete-color);
+  --http-method-label-delete-color: #fff;
+  --http-method-label-options-background-color: var(--method-display-options-color);
+  --http-method-label-options-color: #fff;
+  --http-method-label-head-background-color: var(--method-display-head-color);
+  --http-method-label-head-color: #fff;
+  --method-display-font-weigth: 100;
+
+  /* Material's shadow definitions */
+  --box-shadow-transition: box-shadow 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  --box-shadow-2dp: 0 2px 2px 0 rgba(0, 0, 0, 0.14),
+                  0 1px 5px 0 rgba(0, 0, 0, 0.12),
+                  0 3px 1px -2px rgba(0, 0, 0, 0.2);
+
+  --box-shadow-3dp: 0 3px 4px 0 rgba(0, 0, 0, 0.14),
+                0 1px 8px 0 rgba(0, 0, 0, 0.12),
+                0 3px 3px -2px rgba(0, 0, 0, 0.4);
+
+  --box-shadow-4dp: 0 4px 5px 0 rgba(0, 0, 0, 0.14),
+                0 1px 10px 0 rgba(0, 0, 0, 0.12),
+                0 2px 4px -1px rgba(0, 0, 0, 0.4);
+
+  --box-shadow-6dp: 0 6px 10px 0 rgba(0, 0, 0, 0.14),
+                0 1px 18px 0 rgba(0, 0, 0, 0.12),
+                0 3px 5px -1px rgba(0, 0, 0, 0.4);
+
+  --box-shadow-8dp: 0 8px 10px 1px rgba(0, 0, 0, 0.14),
+                0 3px 14px 2px rgba(0, 0, 0, 0.12),
+                0 5px 5px -3px rgba(0, 0, 0, 0.4);
+
+  --box-shadow-12dp: 0 12px 16px 1px rgba(0, 0, 0, 0.14),
+                0 4px 22px 3px rgba(0, 0, 0, 0.12),
+                0 6px 7px -4px rgba(0, 0, 0, 0.4);
+
+  --box-shadow-16dp: 0 16px 24px 2px rgba(0, 0, 0, 0.14),
+                0  6px 30px 5px rgba(0, 0, 0, 0.12),
+                0  8px 10px -5px rgba(0, 0, 0, 0.4);
+
+  --box-shadow-24dp: 0 24px 38px 3px rgba(0, 0, 0, 0.14),
+                0 9px 46px 8px rgba(0, 0, 0, 0.12),
+                0 11px 15px -7px rgba(0, 0, 0, 0.4);
+}

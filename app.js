@@ -142,8 +142,12 @@ class ArcInit {
       this.reportFatalError(e);
       throw e;
     }
+    if (cnf.theme === 'advanced-rest-client/arc-electron-anypoint-theme') {
+      const app = this.app;
+      app.compatibility = true;
+    }
     try {
-      await this.themeManager.loadTheme(cnf.theme)
+      await this.themeManager.loadTheme(cnf.theme);
     } catch (e) {
       console.error(e);
     }
