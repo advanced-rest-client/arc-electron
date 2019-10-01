@@ -3,6 +3,7 @@ Advanced REST Client deskto app dark theme stylesheet.
 */
 
 html {
+
   @font-face {
     font-family: "DIN Pro";
     src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/DINPro-Light.eot');
@@ -291,6 +292,12 @@ body {
   --arc-env-selector-color: #fff;
   --arc-env-selector-background-color: #424242;
 
+  --anypoiont-dropdown-shaddow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
+  --anypoiont-autocomplete-dropdown-shaddow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
+
+  --anypoint-listbox-background-color: #fff;
+  /* --anypoint-dropdown-menu-compatibility-focus-background-color: #424242; */
+
   /* Material's shadow definitions */
   --box-shadow-transition: box-shadow 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   --box-shadow-2dp: 0 2px 2px 0 rgba(0, 0, 0, 0.14),
@@ -324,4 +331,6 @@ body {
   --box-shadow-24dp: 0 24px 38px 3px rgba(0, 0, 0, 0.14),
                 0 9px 46px 8px rgba(0, 0, 0, 0.12),
                 0 11px 15px -7px rgba(0, 0, 0, 0.4);
+
+  --variables-preview-overlay-background-color: var(--primary-background-color);
 }

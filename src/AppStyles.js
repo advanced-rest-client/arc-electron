@@ -69,9 +69,14 @@ app-toolbar {
 
 environment-selector {
   margin-left: 8px;
+}
+
+.api-version-selector,
+environment-selector {
   background-color: var(--arc-env-selector-background-color, initial);
   color: var(--arc-env-selector-color);
   --anypoint-dropdown-menu-background-color: var(--arc-env-selector-background-color, initial);
+  --anypoint-dropdown-menu-compatibility-focus-background-color: var(--arc-env-selector-background-color, initial);
 }
 
 .var-panel {
