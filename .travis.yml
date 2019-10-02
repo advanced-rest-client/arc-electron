@@ -25,11 +25,6 @@ install:
 - npm install
 script: "./test/travis-build.sh"
 after_success:
-- openssl aes-256-cbc -K $encrypted_36ee0d5a95ce_key -iv $encrypted_36ee0d5a95ce_iv
-  -in tasks/advancedrestclient.pfx.enc -out tasks/advancedrestclient.pfx -d
-- openssl aes-256-cbc -K $encrypted_36ee0d5a95ce_key -iv $encrypted_36ee0d5a95ce_iv
-  -in tasks/mac-app-distribution-cert.p12.enc -out tasks/mac-app-distribution-cert.p12
-  -d
 - tasks/arc-publish.sh
 env:
   global:
