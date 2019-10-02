@@ -1,4 +1,4 @@
-const {ArcPreferences} = require('../../packages/arc-preferences');
+const { ArcPreferences } = require('../../packages/arc-preferences');
 /**
  * A preferences class to store and read theme info file.
  */

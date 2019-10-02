@@ -1,11 +1,10 @@
-import {PolymerElement} from '../../web_modules/@polymer/polymer/polymer-element.js';
-import {html} from '../../web_modules/@polymer/polymer/lib/utils/html-tag.js';
-import {afterNextRender} from '../../web_modules/@polymer/polymer/lib/utils/render-status.js';
+import { LitElement, html, css } from '../../web_modules/lit-element/lit-element.js';
 import '../../web_modules/@polymer/font-roboto-local/roboto.js';
-import '../../web_modules/@polymer/paper-item/paper-item.js';
-import '../../web_modules/@polymer/iron-flex-layout/iron-flex-layout.js';
-import '../../web_modules/@polymer/iron-icon/iron-icon.js';
-import '../../web_modules/@advanced-rest-client/arc-icons/arc-icons.js';
+import { arrowDropDown, arrowDropUp } from
+  '../../web_modules/@advanced-rest-client/arc-icons/ArcIcons.js';
+import '../../web_modules/@anypoint-web-components/anypoint-item/anypoint-item.js';
+import { repeat } from '../../web_modules/lit-html/directives/repeat.js';
+
 /* global appProcess, BrowserWindow, app */
 /**
  * @customElement
@@ -13,19 +12,23 @@ import '../../web_modules/@advanced-rest-client/arc-icons/arc-icons.js';
  * @demo demo/index.html
  * @memberof ApiElements
  */
-class ArcTaskManager extends PolymerElement {
-  static get template() {
-    return html`<style>
+class ArcTaskManager extends LitElement {
+  static get styles() {
+    return css`
     :host {
       display: block;
       background-color: #fff;
       overflow: auto;
-      @apply --layout-fit;
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
       font-size: 14px;
     }
 
     .title {
-      @apply --layout-flex;
+      flex: 1;
     }
 
     .pid,
@@ -56,24 +59,26 @@ class ArcTaskManager extends PolymerElement {
 
     .th {
       font-weight: 500;
-      @apply --layout-horizontal;
-      @apply --layout-center;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
       height: 48px;
       padding: 0 16px;
       font-size: 13px;
     }
 
     .th > div {
-      @apply --layout-horizontal;
-      @apply --layout-center;
-      @apply --layout-end-justified;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-end;
       cursor: pointer;
       -webkit-user-select: none;
       user-select: none;
     }
 
     .th > div.title {
-      @apply --layout-start-justified;
+      justify-content: flex-start;
     }
 
     .th .label {
@@ -84,108 +89,121 @@ class ArcTaskManager extends PolymerElement {
     div[ordered] {
       /* padding-right: 0px; */
     }
-    </style>
+
+    .icon {
+      width: 24px;
+      height: 24px;
+      display: inline-block;
+      fill: currentColor;
+    }
+    `;
+  }
+
+  render() {
+    const {
+      orderTitle,
+      orderPid,
+      orderCpu,
+      orderMemWorkingSize,
+      orderMemPrivateSize,
+      orderDirection,
+      orderMemSharedSize
+    } = this;
+    return html`
     <div class="th">
-
-      <div class="title" ordered\$="[[orderTitle]]" on-click="_changeOrder" data-order-property="title">
-        <span class="label">Process</span>
-        <template is="dom-if" if="[[orderTitle]]" restamp>
-          <iron-icon icon="[[_computeOrderIcon(orderDirection)]]"></iron-icon>
-        </template>
-      </div>
-
-      <div class="pid" ordered\$="[[orderPid]]" on-click="_changeOrder" data-order-property="pid">
-        <span class="label">Pid</span>
-        <template is="dom-if" if="[[orderPid]]" restamp>
-          <iron-icon icon="[[_computeOrderIcon(orderDirection)]]"></iron-icon>
-        </template>
-      </div>
-      <div class="cpu-usage" ordered\$="[[orderCpu]]" on-click="_changeOrder" data-order-property="cpu-usage">
-        <span class="label">CPU</span>
-        <template is="dom-if" if="[[orderCpu]]" restamp>
-          <iron-icon icon="[[_computeOrderIcon(orderDirection)]]"></iron-icon>
-        </template>
-      </div>
-      <div class="memory-working-size"
-        ordered\$="[[orderMemWorkingSize]]" on-click="_changeOrder" data-order-property="memory-working">
-        <span class="label">Memory</span>
-        <template is="dom-if" if="[[orderMemWorkingSize]]" restamp>
-          <iron-icon icon="[[_computeOrderIcon(orderDirection)]]"></iron-icon>
-        </template>
-      </div>
-      <div class="memory-private-size"
-        ordered\$="[[orderMemPrivateSize]]" on-click="_changeOrder" data-order-property="memory-private">
-        <span class="label">Private memory</span>
-        <template is="dom-if" if="[[orderMemPrivateSize]]" restamp>
-          <iron-icon icon="[[_computeOrderIcon(orderDirection)]]"></iron-icon>
-        </template>
-      </div>
-      <div class="memory-shared-size"
-        ordered\$="[[orderMemSharedSize]]" on-click="_changeOrder" data-order-property="memory-shared">
-        <span class="label">Shared memory</span>
-        <template is="dom-if" if="[[orderMemSharedSize]]" restamp>
-          <iron-icon icon="[[_computeOrderIcon(orderDirection)]]"></iron-icon>
-        </template>
-      </div>
+      ${this._columTemplate('title', 'title', 'Process', orderTitle, orderDirection)}
+      ${this._columTemplate('pid', 'pid', 'Pid', orderPid, orderDirection)}
+      ${this._columTemplate('cpu-usage', 'cpu-usage', 'CPU', orderCpu, orderDirection)}
+      ${this._columTemplate('memory-working-size', 'memory-working', 'Memory', orderMemWorkingSize, orderDirection)}
+      ${this._columTemplate('memory-private-size', 'memory-private', 'Private memory',
+        orderMemPrivateSize, orderDirection)}
+      ${this._columTemplate('memory-shared-size', 'memory-shared', 'Shared memory', orderMemSharedSize, orderDirection)}
     </div>
-    <template is="dom-repeat" items="[[items]]" sort="_sortItems" id="list">
-      <paper-item>
-        <div class="title">[[item.title]]</div>
-        <div class="pid">[[item.pid]]</div>
-        <div class="cpu-usage">[[item.cpu.usage]]</div>
-        <div class="memory-working-size">[[item.memory.workingSetSize]]</div>
-        <div class="memory-private-size">[[item.memory.privateBytes]]</div>
-        <div class="memory-shared-size">[[item.memory.sharedBytes]]</div>
-      </paper-item>
-    </template>`;
+    ${this._itemsTemplate()}`;
+  }
+
+  _columTemplate(cls, prop, label, ordered, dir) {
+    const icon = dir === 'asc' ? arrowDropDown : arrowDropUp;
+    return html`<div class="${cls}" ?ordered="${ordered}" @click="${this._changeOrder}" data-order-property="${prop}">
+      <span class="label">${label}</span>
+      ${ordered ? html`<span class="icon">${icon}</span>` : ''}
+    </div>`;
+  }
+
+  _itemsTemplate() {
+    const items = this.items || [];
+    return html`
+      ${repeat(items, (i) => i.pid, (item) => html`
+      <anypoint-item>
+        <div class="title">${item.title}</div>
+        <div class="pid">${item.pid}</div>
+        <div class="cpu-usage">${item.cpu.usage}</div>
+        <div class="memory-working-size">${item.memory.workingSetSize}</div>
+        <div class="memory-private-size">${item.memory.privateBytes}</div>
+        <div class="memory-shared-size">${item.memory.sharedBytes}</div>
+      </anypoint-item>
+      `)}
+    `;
   }
 
   static get properties() {
     return {
       // List of items to display in the table.
-      items: Array,
+      items: { type: Array },
       // True if the window is active.
-      active: Boolean,
+      active: { type: Boolean },
       // True if ordering by title is enabled
-      orderTitle: Boolean,
+      orderTitle: { type: Boolean },
       // True if ordering by pid is enabled
-      orderPid: Boolean,
+      orderPid: { type: Boolean },
       // True if ordering by cpu is enabled
-      orderCpu: Boolean,
+      orderCpu: { type: Boolean },
       // True if ordering by memory working size is enabled
-      orderMemWorkingSize: Boolean,
+      orderMemWorkingSize: { type: Boolean },
       // True if ordering by memory private size is enabled
-      orderMemPrivateSize: Boolean,
+      orderMemPrivateSize: { type: Boolean },
       // True if ordering by memory shared size is enabled
-      orderMemSharedSize: Boolean,
+      orderMemSharedSize: { type: Boolean },
       // Order direction. `acs` or `desc`.
       orderDirection: {
         type: String,
         value: 'asc'
       },
       // Order property name
-      orderProperty: String,
-      mainId: {
-        type: Number
-      },
-      thisPid: {
-        type: Number
-      }
+      orderProperty: { type: String },
+      mainId: { type: Number },
+      thisPid: { type: Number }
     };
   }
 
   connectedCallback() {
-    super.connectedCallback();
+    if (super.connectedCallback) {
+      super.connectedCallback();
+    }
     this.active = true;
-    afterNextRender(this, () => {
+    setTimeout(() => {
       this.setupGlobalVariables();
       this.refresh();
     });
+    this.loadTheme();
   }
 
   disconnectedCallback() {
-    super.disconnectedCallback();
+    if (super.disconnectedCallback) {
+      super.disconnectedCallback();
+    }
     this.active = false;
+  }
+
+  /**
+   * Loads bar components.
+   *
+   * @return {Promise}
+   */
+  async loadTheme() {
+    /* global ThemeManager */
+    const mgr = new ThemeManager();
+    await mgr.loadTheme('advanced-rest-client/arc-electron-default-theme');
   }
 
   setupGlobalVariables() {
@@ -199,7 +217,8 @@ class ArcTaskManager extends PolymerElement {
     }
     let metrics = app.getAppMetrics();
     metrics = this.translateMetrics(metrics);
-    this.set('items', metrics);
+    metrics.sort(this._sortItems.bind(this));
+    this.items = metrics;
     setTimeout(() => this.refresh(), 2000);
   }
 
@@ -245,7 +264,7 @@ class ArcTaskManager extends PolymerElement {
     const windows = BrowserWindow.getAllWindows();
     for (let i = 0; i < windows.length; i++) {
       if (windows[i].webContents.getOSProcessId() === pid) {
-        let title = windows[i].getTitle();
+        const title = windows[i].getTitle();
         if (title) {
           return title;
         }
@@ -326,7 +345,7 @@ class ArcTaskManager extends PolymerElement {
     const property = target.dataset.orderProperty;
     if (property === this.orderProperty) {
       this.toggleOrder();
-      this.$.list.render();
+      this._sort();
       return;
     }
     this._cancelOrderProperty();
@@ -351,7 +370,13 @@ class ArcTaskManager extends PolymerElement {
         break;
     }
     this.orderProperty = property;
-    this.$.list.render();
+    this._sort();
+  }
+
+  _sort() {
+    const items = this.items || [];
+    items.sort(this._sortItems.bind(this));
+    this.items = items;
   }
 
   _cancelOrderProperty() {

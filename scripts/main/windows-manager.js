@@ -1,9 +1,9 @@
-const {BrowserWindow, dialog, ipcMain} = require('electron');
+const { BrowserWindow, dialog, ipcMain, systemPreferences } = require('electron');
 const path = require('path');
 const url = require('url');
-const {ArcSessionControl} = require('../packages/arc-preferences/main');
-const {ArcSessionRecorder} = require('./arc-session-recorder');
-const {ContextActions} = require('../packages/context-actions/main');
+const { ArcSessionControl } = require('../packages/arc-preferences/main');
+const { ArcSessionRecorder } = require('./arc-session-recorder');
+const { ContextActions } = require('../packages/context-actions/main');
 const log = require('./logger');
 /**
  * A class that manages opened app windows.
@@ -44,11 +44,11 @@ class ArcWindowsManager {
    */
   get lastFocused() {
     if (!this._lastFocused) {
-      return;
+      return null;
     }
     if (this._lastFocused.isDestroyed()) {
       this._lastFocused = undefined;
-      return;
+      return null;
     }
     return this._lastFocused;
   }
@@ -59,13 +59,14 @@ class ArcWindowsManager {
   get lastActive() {
     const ws = this.windows;
     if (!ws || !ws.length) {
-      return;
+      return null;
     }
     for (let i = ws.length - 1; i >= 0; i--) {
       if (!ws[i].isDestroyed()) {
         return ws[i];
       }
     }
+    return null;
   }
   /**
    * Restores latest window is any present.
@@ -245,12 +246,10 @@ class ArcWindowsManager {
    * @param {String} workspaceFile A worksace file to use.
    * @return {Promise}
    */
-  openWorkspace(workspaceFile) {
-    return this.open()
-    .then((win) => {
-      win.startupOptions = win.startupOptions || {};
-      win.startupOptions.workspaceFile = workspaceFile;
-    });
+  async openWorkspace(workspaceFile) {
+    const win = await this.open();
+    win.startupOptions = win.startupOptions || {};
+    win.startupOptions.workspaceFile = workspaceFile;
   }
   /**
    * Opens task manager window. If the window is already created it tries to
@@ -272,10 +271,11 @@ class ArcWindowsManager {
         nativeWindowOpen: false,
         nodeIntegration: false,
         contextIsolation: false,
-        preload: path.join(__dirname, '..', 'renderer', 'task-manager-preload.js')
+        preload: path.join(__dirname, '..', '..', 'src', 'arc-task-manager', 'task-manager-preload.js')
       }
     });
-    const dest = path.join(__dirname, '..', '..', 'src', 'task-manager.html');
+    // win.webContents.openDevTools();
+    const dest = path.join(__dirname, '..', '..', 'src', 'arc-task-manager', 'arc-task-manager.html');
     const full = url.format({
       pathname: dest,
       protocol: 'file:',
@@ -285,7 +285,7 @@ class ArcWindowsManager {
     win.on('closed', () => {
       this._tmWin = null;
     });
-    win.setMenu(null);
+    win.removeMenu();
     this._tmWin = win;
   }
   /**
@@ -353,7 +353,8 @@ class ArcWindowsManager {
       }
     }
     const cnf = {
-      workspaceFile: this._computeWorkspaceFile(workspaceOptions)
+      workspaceFile: this._computeWorkspaceFile(workspaceOptions),
+      darkMode: systemPreferences.isDarkMode()
     };
     if (win) {
       cnf.startPath = win._startPath;
@@ -500,7 +501,7 @@ class ArcWindowsManager {
     //   height: 100
     // });
     // event.newGuest = new BrowserWindow(options);
-    const {shell} = require('electron');
+    const { shell } = require('electron');
     shell.openExternal(url);
   }
   /**

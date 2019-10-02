@@ -1,4 +1,4 @@
-const {ipcRenderer: ipc} = require('electron');
+const { ipcRenderer: ipc } = require('electron');
 const fs = require('fs-extra');
 const path = require('path');
 /**
@@ -40,7 +40,7 @@ class FilesystemProxy {
       return;
     }
     e.preventDefault();
-    const {content, file, options} = e.detail;
+    const { content, file, options } = e.detail;
     e.detail.result = this.exportFileData(content, options && options.contentType, file);
   }
 

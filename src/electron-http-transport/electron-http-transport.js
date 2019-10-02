@@ -10,23 +10,23 @@
 class ElectronHttpTransport extends HTMLElement {
   /* global SocketRequest, ElectronRequest */
   get requestTimeout() {
-    const rt = this.getAttribute('request-timeout');
+    const rt = this.getAttribute('requesttimeout');
     if (!rt || isNaN(rt)) {
-      return;
+      return null;
     }
     return Number(rt);
   }
 
   set requestTimeout(value) {
     if (!value) {
-      this.removeAttribute('request-timeout');
+      this.removeAttribute('requesttimeout');
     } else {
-      this.setAttribute('request-timeout', value);
+      this.setAttribute('requesttimeout', value);
     }
   }
 
   get nativeTransport() {
-    return this.hasAttribute('native-transport');
+    return this.hasAttribute('nativetransport');
   }
 
   set nativeTransport(value) {
@@ -38,7 +38,7 @@ class ElectronHttpTransport extends HTMLElement {
   }
 
   get validateCertificates() {
-    return this.hasAttribute('validate-certificates');
+    return this.hasAttribute('validatecertificates');
   }
   /**
    * When set it validates certificates during request.
@@ -46,9 +46,9 @@ class ElectronHttpTransport extends HTMLElement {
    */
   set validateCertificates(value) {
     if (!value) {
-      this.removeAttribute('validate-certificates');
+      this.removeAttribute('validatecertificates');
     } else {
-      this.setAttribute('validate-certificates', '');
+      this.setAttribute('validatecertificates', '');
     }
   }
   /**
@@ -57,14 +57,29 @@ class ElectronHttpTransport extends HTMLElement {
    */
   set followRedirects(value) {
     if (!value) {
-      this.removeAttribute('follow-redirects');
+      this.removeAttribute('followredirects');
     } else {
-      this.setAttribute('follow-redirects', '');
+      this.setAttribute('followredirects', '');
     }
   }
 
   get followRedirects() {
-    return this.hasAttribute('follow-redirects');
+    return this.hasAttribute('followredirects');
+  }
+  /**
+   * When set the HTTP client adds default headers, like cURL does
+   * @param {Boolean} value
+   */
+  set defaultHeaders(value) {
+    if (!value) {
+      this.removeAttribute('defaultheaders');
+    } else {
+      this.setAttribute('defaultheaders', '');
+    }
+  }
+
+  get defaultHeaders() {
+    return this.hasAttribute('defaultheaders');
   }
   /**
    * A limit of characters to include into the `sentHttpMessage` property
@@ -73,16 +88,16 @@ class ElectronHttpTransport extends HTMLElement {
    */
   set sentMessageLimit(value) {
     if (!value) {
-      this.removeAttribute('sent-message-limit');
+      this.removeAttribute('sentmessagelimit');
     } else {
-      this.setAttribute('sent-message-limit', value);
+      this.setAttribute('sentmessagelimit', value);
     }
   }
 
   get sentMessageLimit() {
-    const v = this.getAttribute('sent-message-limit');
+    const v = this.getAttribute('sentmessagelimit');
     if (!v || isNaN(v)) {
-      return;
+      return undefined;
     }
     return Number(v);
   }
@@ -150,19 +165,32 @@ class ElectronHttpTransport extends HTMLElement {
    * @return {Promise} A promise when the request is started with the socket
    * library
    */
-  run(request, opts) {
+  async run(request, opts) {
+    opts = opts ? Object.assign({}, opts) : {};
+    request = Object.assign({}, request);
+    if (request.config) {
+      request.config = Object.assign({}, request.config);
+    }
     opts = this._prepareRequestOptions(request, opts);
-    return this._readHosts()
-    .then((hosts) => {
+    try {
+      const hosts = await this._readHosts();
+      /* eslint-disable-next-line require-atomic-updates */
       opts.hosts = hosts;
-      return this._prepareRequest(request, opts);
-    })
-    .then((connection) => this._makeConnection(connection))
-    .catch((cause) => this._errorHandler(cause, request.id));
+      const connection = await this._prepareRequest(request, opts);
+      return await this._makeConnection(connection);
+    } catch (cause) {
+      this._errorHandler(cause, request.id);
+    }
   }
 
   _prepareRequestOptions(request, opts) {
-    const rConfig = Object.assign({}, request.config || {});
+    let rConfig;
+    if (request.config && request.config.enabled !== false) {
+      rConfig = Object.assign(request.config);
+      delete rConfig.enabled;
+    } else {
+      rConfig = {};
+    }
     opts = Object.assign({}, opts || {});
     opts = Object.assign(rConfig, opts);
     if (typeof opts.timeout === 'undefined') {
@@ -172,9 +200,7 @@ class ElectronHttpTransport extends HTMLElement {
       }
     }
     if (opts.timeout) {
-      if (opts.timeout < 500) {
-        opts.timeout = opts.timeout * 1000;
-      }
+      opts.timeout = Number(opts.timeout) * 1000;
     } else {
       opts.timeout = 0;
     }
@@ -184,8 +210,14 @@ class ElectronHttpTransport extends HTMLElement {
     if (typeof opts.followRedirects === 'undefined') {
       opts.followRedirects = this.followRedirects;
     }
+    if (typeof opts.defaultHeaders === 'undefined') {
+      opts.defaultHeaders = this.defaultHeaders;
+    }
     if (typeof opts.sentMessageLimit === 'undefined') {
       opts.sentMessageLimit = this.sentMessageLimit;
+    }
+    if (opts.sentMessageLimit) {
+      opts.sentMessageLimit = Number(opts.sentMessageLimit);
     }
     return opts;
   }
@@ -194,9 +226,9 @@ class ElectronHttpTransport extends HTMLElement {
    * It returns empty array of hosts couldn't be read.
    * @return {Promise<Array>}
    */
-  _readHosts() {
+  async _readHosts() {
     if (this.hosts !== undefined) {
-      return Promise.resolve(this.hosts);
+      return this.hosts;
     }
     const e = new CustomEvent('host-rules-list', {
       bubbles: true,
@@ -207,13 +239,11 @@ class ElectronHttpTransport extends HTMLElement {
     this.dispatchEvent(e);
     if (!e.defaultPrevented) {
       this.hosts = [];
-      return Promise.resolve(this.hosts);
+      return this.hosts;
     }
-    return e.detail.result
-    .then((rules) => {
-      this.hosts = rules || [];
-      return rules;
-    });
+    const rules = await e.detail.result;
+    this.hosts = rules || [];
+    return rules;
   }
 
   _isNative(opts) {
@@ -234,7 +264,7 @@ class ElectronHttpTransport extends HTMLElement {
     // In ARC electron the browser window is created without node integration
     // and therefore require is disabled. In tests node is enabled.
     if (typeof SocketRequest === 'undefined') {
-      const {SocketRequest} = require('@advanced-rest-client/electron-request');
+      const { SocketRequest } = require('@advanced-rest-client/electron-request');
       conn = new SocketRequest(request, opts);
     } else {
       conn = new SocketRequest(request, opts);
@@ -258,7 +288,7 @@ class ElectronHttpTransport extends HTMLElement {
     // In ARC electron the browser window is created without node integration
     // and therefore require is disabled. In tests node is enabled.
     if (typeof ElectronRequest === 'undefined') {
-      const {ElectronRequest} = require('@advanced-rest-client/electron-request');
+      const { ElectronRequest } = require('@advanced-rest-client/electron-request');
       conn = new ElectronRequest(request, opts);
     } else {
       conn = new ElectronRequest(request, opts);
@@ -277,11 +307,12 @@ class ElectronHttpTransport extends HTMLElement {
     return conn;
   }
 
-  _makeConnection(connection) {
-    return connection.send()
-    .catch((cause) => {
+  async _makeConnection(connection) {
+    try {
+      return await connection.send();
+    } catch (cause) {
       this._errorHandler(cause, connection.id);
-    });
+    }
   }
 
   _removeConnectionHandlers(connection) {
@@ -382,7 +413,7 @@ class ElectronHttpTransport extends HTMLElement {
     if (!response) {
       response = {};
     }
-    let data = Object.assign({}, response, {
+    const data = Object.assign({}, response, {
       isError: true,
       error: cause
     });

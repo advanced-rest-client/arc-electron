@@ -1,7 +1,13 @@
-const {assert} = require('chai');
+const { assert } = require('chai');
 const bootstrap = require('./test-bootstrap.js');
 const fs = require('fs-extra');
 const path = require('path');
+
+async function aTimeout(timeout) {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(), timeout);
+  });
+}
 
 describe('Renderer configuration', function() {
   let app;
@@ -87,7 +93,7 @@ describe('Renderer configuration', function() {
       assert.equal(cnf.requestTimeout, 45);
       assert.isFalse(cnf.nativeTransport);
       assert.isFalse(cnf.validateCertificates);
-      assert.isUndefined(cnf.sentMessageLimit);
+      assert.equal(cnf.sentMessageLimit, null);
       done();
     })
     .catch((cause) => {
@@ -95,157 +101,103 @@ describe('Renderer configuration', function() {
     });
   });
 
-  it('Sets configuration on variables-manager component', (done) => {
+  it('Sets configuration on variables-manager component', async () => {
     this.timeout(10000);
-    app.client.element('arc-electron')
-    .then((result) => {
-      assert.ok(result);
-    })
-    .then(() => {
-      return app.client.execute(() => {
-        const arc = document.querySelector('arc-electron');
-        const mgr = arc.shadowRoot.querySelector('variables-manager');
-        return {
-          sysVariablesDisabled: mgr.sysVariablesDisabled,
-          appVariablesDisabled: mgr.appVariablesDisabled
-        };
-      });
-    })
-    .then((result) => {
-      const cnf = result.value;
-      assert.isFalse(cnf.sysVariablesDisabled);
-      assert.isFalse(cnf.appVariablesDisabled);
-      done();
-    })
-    .catch((cause) => {
-      done(cause);
+    const result = await app.client.element('arc-electron');
+    assert.ok(result);
+    const call = await app.client.execute(() => {
+      const arc = document.querySelector('arc-electron');
+      const mgr = arc.shadowRoot.querySelector('variables-manager');
+      return {
+        sysVariablesDisabled: mgr.sysVariablesDisabled,
+        appVariablesDisabled: mgr.appVariablesDisabled
+      };
     });
+    const cnf = call.value;
+    assert.equal(cnf.sysVariablesDisabled, null);
+    assert.equal(cnf.appVariablesDisabled, null);
   });
 
-  it('Sets configuration on arc-request-logic component', (done) => {
+  it('Sets configuration on arc-request-logic component', async () => {
     this.timeout(10000);
-    app.client.element('arc-electron')
-    .then((result) => {
-      assert.ok(result);
-    })
-    .then(() => {
-      return app.client.execute(() => {
-        const arc = document.querySelector('arc-electron');
-        const node = arc.shadowRoot.querySelector('arc-request-logic');
-        return {
-          variablesDisabled: node.variablesDisabled
-        };
-      });
-    })
-    .then((result) => {
-      const cnf = result.value;
-      assert.isFalse(cnf.variablesDisabled);
-      done();
-    })
-    .catch((cause) => {
-      done(cause);
+    const init = await app.client.element('arc-electron');
+    assert.ok(init);
+    const result = await app.client.execute(() => {
+      const arc = document.querySelector('arc-electron');
+      const node = arc.shadowRoot.querySelector('arc-request-logic');
+      return {
+        variablesDisabled: node.variablesDisabled
+      };
     });
+    const cnf = result.value;
+    assert.equal(cnf.variablesDisabled, null);
   });
 
-  it('Sets configuration on arc-menu component', (done) => {
+  it('Sets configuration on arc-menu component', async () => {
     this.timeout(10000);
-    app.client.element('arc-electron')
-    .then((result) => {
-      assert.ok(result);
-    })
-    .then(() => {
-      return app.client.execute(() => {
-        const arc = document.querySelector('arc-electron');
-        const node = arc.shadowRoot.querySelector('arc-menu');
-        return {
-          allowPopup: node.allowPopup,
-          listType: node.listType
-        };
-      });
-    })
-    .then((result) => {
-      const cnf = result.value;
-      assert.isFalse(cnf.allowPopup);
-      assert.equal(cnf.listType, 'default');
-      done();
-    })
-    .catch((cause) => {
-      done(cause);
+    const init = await app.client.element('arc-electron');
+    assert.ok(init);
+    const result = await app.client.execute(() => {
+      const arc = document.querySelector('arc-electron');
+      const node = arc.shadowRoot.querySelector('arc-menu');
+      return {
+        allowPopup: node.allowPopup,
+        listType: node.listType
+      };
     });
+    const cnf = result.value;
+    assert.equal(cnf.allowPopup, null);
+    assert.equal(cnf.listType, 'default');
   });
 
-  it('Sets configuration on history-panel component', (done) => {
+  it('Sets configuration on history-panel component', async () => {
     this.timeout(10000);
-    app.client.element('arc-electron')
-    .then((result) => {
-      assert.ok(result);
-    })
-    .then(() => {
-      return app.client.execute(() => {
-        const arc = document.querySelector('arc-electron');
+    const init = await app.client.element('arc-electron');
+    assert.ok(init);
+    const result = await app.client.executeAsync((done) => {
+      const arc = document.querySelector('arc-electron');
+      arc.page = 'history';
+      setTimeout(() => {
         const node = arc.shadowRoot.querySelector('history-panel');
-        return {
+        done({
           listType: node.listType
-        };
+        });
       });
-    })
-    .then((result) => {
-      const cnf = result.value;
-      assert.equal(cnf.listType, 'default');
-      done();
-    })
-    .catch((cause) => {
-      done(cause);
     });
+    const cnf = result.value;
+    assert.equal(cnf.listType, 'default');
   });
 
-  it('Sets configuration on saved-requests-panel component', (done) => {
+  it('Sets configuration on saved-requests-panel component', async () => {
     this.timeout(10000);
-    app.client.element('arc-electron')
-    .then((result) => {
-      assert.ok(result);
-    })
-    .then(() => {
-      return app.client.execute(() => {
-        const arc = document.querySelector('arc-electron');
+    const init = await app.client.element('arc-electron');
+    assert.ok(init);
+    const result = await app.client.executeAsync((done) => {
+      const arc = document.querySelector('arc-electron');
+      arc.page = 'saved';
+      setTimeout(() => {
         const node = arc.shadowRoot.querySelector('saved-requests-panel');
-        return {
+        done({
           listType: node.listType
-        };
+        });
       });
-    })
-    .then((result) => {
-      const cnf = result.value;
-      assert.equal(cnf.listType, 'default');
-      done();
-    })
-    .catch((cause) => {
-      done(cause);
     });
+    const cnf = result.value;
+    assert.equal(cnf.listType, 'default');
   });
 
-  it('Renders app-analytics elements', (done) => {
+  it('Renders app-analytics elements', async () => {
     this.timeout(10000);
-    app.client.element('arc-electron')
-    .then((result) => {
-      assert.ok(result);
-    })
-    .then(() => {
-      return app.client.execute(() => {
-        const arc = document.querySelector('arc-electron');
-        const node = arc.shadowRoot.querySelectorAll('app-analytics');
-        return {
-          length: node.length
-        };
-      });
-    })
-    .then((result) => {
-      const cnf = result.value;
-      assert.equal(cnf.length, 3);
-      done();
-    })
-    .catch((cause) => {
-      done(cause);
+    const init = await app.client.element('arc-electron');
+    assert.ok(init);
+    const result = await app.client.execute(() => {
+      const arc = document.querySelector('arc-electron');
+      const node = arc.shadowRoot.querySelectorAll('app-analytics');
+      return {
+        length: node.length
+      };
     });
+    const cnf = result.value;
+    assert.equal(cnf.length, 3);
   });
 });

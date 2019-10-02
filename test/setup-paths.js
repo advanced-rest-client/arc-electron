@@ -17,7 +17,6 @@ module.exports = {
     arcPaths.setSettingsFile();
     arcPaths.setWorkspacePath();
     arcPaths.setThemesPath();
-    arcPaths.setComponentsPath();
     return basePath;
   }
 };

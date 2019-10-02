@@ -1,4 +1,4 @@
-const {ArcMeta} = require('../packages/arc-preferences/main');
+const { ArcMeta } = require('../packages/arc-preferences/main');
 const _FormData = require('form-data');
 const _fetch = require('node-fetch');
 const log = require('./logger');
@@ -22,12 +22,13 @@ class ArcSessionRecorder {
    * Pings the server to record the session.
    * @return {Promise}
    */
-  record() {
-    return this.meta.getAninimizedId()
-    .then((id) => this._postSession(id))
-    .catch((cause) => {
+  async record() {
+    try {
+      const id = await this.meta.getAninimizedId();
+      await this._postSession(id);
+    } catch (cause) {
       log.error('Unable to record the session', cause.message);
-    });
+    }
   }
   /**
    * Posts session data to the analytics server.
@@ -35,19 +36,15 @@ class ArcSessionRecorder {
    * @param {String} id Anonymous app id.
    * @return {Promise}
    */
-  _postSession(id) {
+  async _postSession(id) {
     const data = new _FormData();
     const d = new Date();
     data.append('aid', id); // anonymousId
     data.append('tz', d.getTimezoneOffset()); // timezone
-    try {
-      return _fetch(this.endpoint, {
-        method: 'POST',
-        body: data
-      });
-    } catch (e) {
-      return Promise.rejec(e);
-    }
+    return await _fetch(this.endpoint, {
+      method: 'POST',
+      body: data
+    });
   }
 }
 exports.ArcSessionRecorder = ArcSessionRecorder;

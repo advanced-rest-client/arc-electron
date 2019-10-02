@@ -1,5 +1,5 @@
-const {assert} = require('chai');
-const {ArcContextMenu} = require('../renderer');
+const { assert } = require('chai');
+const { ArcContextMenu } = require('../renderer');
 const sinon = require('sinon');
 
 describe('ArcContextMenu', function() {
@@ -222,7 +222,7 @@ describe('ArcContextMenu', function() {
     });
 
     after(() => {
-      const nodes = document.body.querySelectorAll('paper-listbox');
+      const nodes = document.body.querySelectorAll('anypoint-listbox');
       if (nodes.length) {
         for (let i = 0; i < nodes.length; i++) {
           nodes[i].parentNode.removeChild(nodes[i]);
@@ -306,13 +306,13 @@ describe('ArcContextMenu', function() {
 
   describe('renderActions()', () => {
     let instance;
-    const pos = {x: 1, y: 2};
+    const pos = { x: 1, y: 2 };
     beforeEach(function() {
       instance = new ArcContextMenu();
     });
 
     afterEach(() => {
-      const nodes = document.body.querySelectorAll('paper-listbox');
+      const nodes = document.body.querySelectorAll('anypoint-listbox');
       if (nodes.length) {
         for (let i = 0; i < nodes.length; i++) {
           nodes[i].parentNode.removeChild(nodes[i]);
@@ -330,33 +330,33 @@ describe('ArcContextMenu', function() {
       }];
     }
 
-    it('Adds paper-listbox to the DOM', () => {
+    it('Adds anypoint-listbox to the DOM', () => {
       instance.renderActions(getActions(), pos);
-      const node = document.body.querySelector('paper-listbox');
+      const node = document.body.querySelector('anypoint-listbox');
       assert.ok(node);
     });
 
     it('Renders all actions', () => {
       instance.renderActions(getActions(), pos);
-      const nodes = document.body.querySelectorAll('paper-listbox paper-item');
+      const nodes = document.body.querySelectorAll('anypoint-listbox anypoint-item');
       assert.lengthOf(nodes, 2);
     });
 
     it('Sets data-action on action item', () => {
       instance.renderActions(getActions(), pos);
-      const node = document.body.querySelector('paper-listbox paper-item');
+      const node = document.body.querySelector('anypoint-listbox anypoint-item');
       assert.equal(node.dataset.action, 'aA');
     });
 
     it('Renders item label', () => {
       instance.renderActions(getActions(), pos);
-      const node = document.body.querySelector('paper-listbox paper-item');
+      const node = document.body.querySelector('anypoint-listbox anypoint-item');
       assert.equal(node.innerText, 'aL');
     });
 
     it('Sets _currentMenu porperty', () => {
       instance.renderActions(getActions(), pos);
-      const node = document.body.querySelector('paper-listbox');
+      const node = document.body.querySelector('anypoint-listbox');
       assert.isTrue(node === instance._currentMenu);
     });
 
@@ -365,17 +365,17 @@ describe('ArcContextMenu', function() {
       assert.deepEqual(instance._currentActions, getActions());
     });
 
-    it('paper-listbox has global calss name', () => {
+    it('anypoint-listbox has global calss name', () => {
       instance.renderActions(getActions(), pos);
       assert.equal(instance._currentMenu.className, 'arc-context-menu');
     });
 
-    it('paper-listbox has top position', () => {
+    it('anypoint-listbox has top position', () => {
       instance.renderActions(getActions(), pos);
       assert.equal(instance._currentMenu.style.top, '2px');
     });
 
-    it('paper-listbox has left position', () => {
+    it('anypoint-listbox has left position', () => {
       instance.renderActions(getActions(), pos);
       assert.equal(instance._currentMenu.style.left, '1px');
     });
@@ -383,14 +383,14 @@ describe('ArcContextMenu', function() {
     it('Removes any previously added context menu', () => {
       instance.renderActions(getActions(), pos);
       instance.renderActions(getActions(), pos);
-      const nodes = document.body.querySelectorAll('paper-listbox');
+      const nodes = document.body.querySelectorAll('anypoint-listbox');
       assert.lengthOf(nodes, 1);
     });
   });
 
   describe('removeActions()', () => {
     let instance;
-    const pos = {x: 1, y: 2};
+    const pos = { x: 1, y: 2 };
     function getActions() {
       return [{
         label: 'aL',
@@ -406,7 +406,7 @@ describe('ArcContextMenu', function() {
     });
 
     afterEach(() => {
-      const node = document.body.querySelector('paper-listbox');
+      const node = document.body.querySelector('anypoint-listbox');
       if (node) {
         node.parentNode.removeChild(node);
       }
@@ -420,7 +420,7 @@ describe('ArcContextMenu', function() {
     it('Removes context menu from the DOM', () => {
       instance.renderActions(getActions(), pos);
       instance.removeActions();
-      const node = document.body.querySelector('paper-listbox');
+      const node = document.body.querySelector('anypoint-listbox');
       assert.notOk(node);
     });
 

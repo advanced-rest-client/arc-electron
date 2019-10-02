@@ -1,8 +1,8 @@
-const {assert} = require('chai');
-const {ArcWindowsManager} = require('../../../scripts/main/windows-manager.js');
-const {ArcSessionRecorder} = require('../../../scripts/main/arc-session-recorder');
-const {ContextActions} = require('../../../scripts/packages/context-actions/main');
-const {BrowserWindow} = require('electron');
+const { assert } = require('chai');
+const { ArcWindowsManager } = require('../../../scripts/main/windows-manager.js');
+const { ArcSessionRecorder } = require('../../../scripts/main/arc-session-recorder');
+const { ContextActions } = require('../../../scripts/packages/context-actions/main');
+const { BrowserWindow } = require('electron');
 
 describe('ArcWindowsManager', function() {
   describe('constructor()', function() {
@@ -13,7 +13,7 @@ describe('ArcWindowsManager', function() {
     });
 
     it('Sets passed startupOptions', function() {
-      const opts = {startPath: 'test'};
+      const opts = { startPath: 'test' };
       const instance = new ArcWindowsManager(opts);
       assert.deepEqual(instance.startupOptions, opts);
     });
@@ -56,15 +56,15 @@ describe('ArcWindowsManager', function() {
       instance = new ArcWindowsManager();
     });
 
-    it('Returns undefined when no focused window', () => {
-      assert.isUndefined(instance.lastFocused);
+    it('Returns null when no focused window', () => {
+      assert.equal(instance.lastFocused, null);
     });
 
-    it('Returns undefined when the window has been destroyed', () => {
+    it('Returns null when the window has been destroyed', () => {
       instance._lastFocused = {
         isDestroyed: () => true
       };
-      assert.isUndefined(instance.lastFocused);
+      assert.equal(instance.lastFocused, null);
     });
 
     it('Returns window instance', () => {
@@ -81,17 +81,17 @@ describe('ArcWindowsManager', function() {
       instance = new ArcWindowsManager();
     });
 
-    it('Returns undefined when no windows', () => {
-      assert.isUndefined(instance.lastActive);
+    it('Returns null when no windows', () => {
+      assert.equal(instance.lastActive, null);
     });
 
-    it('Returns undefined when no active windows', () => {
+    it('Returns null when no active windows', () => {
       instance.windows = [{
         isDestroyed: () => true
       }, {
         isDestroyed: () => true
       }];
-      assert.isUndefined(instance.lastActive);
+      assert.equal(instance.lastActive, null);
     });
 
     it('Returns window instance', () => {

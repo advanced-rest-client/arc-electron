@@ -11,15 +11,15 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 */
-import {PolymerElement} from '../../web_modules/@polymer/polymer/polymer-element.js';
-import {html} from '../../web_modules/@polymer/polymer/lib/utils/html-tag.js';
+import { LitElement, html } from '../../web_modules/lit-element/lit-element.js';
+import { AmfHelperMixin } from '../../web_modules/@api-components/amf-helper-mixin/amf-helper-mixin.js';
 import '../../web_modules/@api-components/api-documentation/api-documentation.js';
 import '../../web_modules/@api-components/api-navigation/api-navigation.js';
-import '../../web_modules/@api-components/raml-aware/raml-aware.js';
-import {AmfHelperMixin} from '../../web_modules/@api-components/amf-helper-mixin/amf-helper-mixin.js';
 import '../../web_modules/@polymer/paper-spinner/paper-spinner.js';
 import '../../web_modules/@polymer/paper-toast/paper-toast.js';
-import {ArcFileDropMixin} from '../../web_modules/@advanced-rest-client/arc-file-drop-mixin/arc-file-drop-mixin.js';
+import '../../web_modules/@api-components/raml-aware/raml-aware.js';
+import { ArcFileDropMixin } from '../../web_modules/@advanced-rest-client/arc-file-drop-mixin/arc-file-drop-mixin.js';
+import styles from './styles.js';
 /**
  * It'a a wrapper for API console to render the console from unresolved
  * AMF model.
@@ -30,183 +30,172 @@ import {ArcFileDropMixin} from '../../web_modules/@advanced-rest-client/arc-file
  *
  *
  * @customElement
- * @polymer
  * @demo demo/index.html
  * @memberof ApiElements
  */
-class ApicElectron extends ArcFileDropMixin(AmfHelperMixin(PolymerElement)) {
-  static get template() {
-    return html`<style>
-    :host {
-      display: block;
-      @apply --arc-font-body1;
-      @apply --apic-electron;
-    };
+class ApicElectron extends ArcFileDropMixin(AmfHelperMixin(LitElement)) {
+  static get styles() {
+    return styles;
+  }
 
-    paper-spinner {
-      margin-left: 8px;
-    }
-
-    .error-toast {
-      background-color: var(--warning-primary-color, #FF7043);
-      color: var(--warning-contrast-color, #fff);
-      @apply --error-toast;
-    }
-
-    [hidden] {
-      display: none !important;
-    }
-
-    .loader {
-      height: 100%;
-      font-size: 16px;
-      @apply --layout-vertical;
-      @apply --layout-center-center;
-    }
-    .drop-target {
-      display: none;
-    }
-
-    :host([dragging]) .drop-target {
-      display: block;
-      @apply --layout-fit;
-      @apply --layout-vertical;
-      @apply --layout-center;
-      background-color: #fff;
-      border: 4px var(--drop-file-importer-header-background-color, var(--primary-color)) solid;
-    }
-    </style>
-    <raml-aware scope="apic" raml="[[amfModel]]"></raml-aware>
+  _docsTemplate() {
+    const {
+      amf,
+      selected,
+      selectedType,
+      narrow,
+      scrollTarget,
+      apiProcessing
+    } = this;
+    return html`
+    <raml-aware scope="apic" .api="${amf}"></raml-aware>
     <api-documentation
-      data-route="api-console"
-      data-page="docs"
-      aware="apic"
-      selected="[[selected]]"
-      selected-type="[[selectedType]]"
-      handle-navigation-events
-      inline-methods
-      redirect-uri="https://auth.advancedrestclient.com/oauth-popup.html"
-      narrow="[[narrow]]"
-      scroll-target="[[scrollTarget]]"
-      hidden\$="[[apiProcessing]]"></api-documentation>
-    <template is="dom-if" if="[[apiProcessing]]">
-      <div class="loader">
-        <p class="wait-message">Preparing your API experience</p>
-        <paper-progress indeterminate></paper-progress>
-      </div>
-    </template>
+      .amf="${amf}"
+      .selected="${selected}"
+      .selectedType="${selectedType}"
+      handlenavigationevents
+      inlinemethods
+      redirecturi="https://auth.advancedrestclient.com/oauth-popup.html"
+      ?narrow="${narrow}"
+      .scrollTarget="${scrollTarget}"
+      ?hidden="${apiProcessing}"
+    ></api-documentation>
+    `;
+  }
+
+  _busyTemplate() {
+    if (!this.apiProcessing) {
+      return '';
+    }
+    return html`<div class="loader">
+      <p class="wait-message">Preparing your API experience</p>
+      <paper-progress indeterminate></paper-progress>
+    </div>`;
+  }
+
+  render() {
+    return html`
+    ${this._docsTemplate()}
+    ${this._busyTemplate()}
     <paper-toast id="errorToast" class="error-toast" duration="5000"></paper-toast>
     <section class="drop-target">
       <p class="drop-message">Drop API file here</p>
     </section>`;
   }
-  static get is() {
-    return 'apic-electron';
-  }
+
   static get properties() {
     return {
       /**
        * Unresolved AMF model.
        */
-      amf: String,
+      unresolvedAmf: { type: String },
       /**
        * API original type.
        */
-      apiType: String,
+      apiType: { type: String },
       /**
        * Resolved AMF model.
        */
-      amfModel: Object,
+      amf: { type: Object },
       /**
        * Passed to API console's `selected` property.
        */
-      selected: String,
+      selected: { type: String },
       /**
        * Passed to API console's `selectedType` property.
        */
-      selectedType: String,
-      narrow: Boolean,
-      scrollTarget: Object,
+      selectedType: { type: String },
+      narrow: { type: Boolean },
+      scrollTarget: { type: Object },
 
-      baseUri: {
-        type: String,
-        computed: '_computeBaseUri(amfModel)',
-        observer: '_baseUriChanged'
-      },
+      baseUri: { type: String },
 
-      apiVersion: {
-        type: String,
-        notify: true,
-        computed: '_getApiVersion(amfModel)'
-      },
+      apiVersion: { type: String, notify: true },
 
-      apiInfo: {
-        type: Object,
-        readOnly: true,
-        notify: true
-      },
+      apiInfo: { type: Object, notify: true },
 
-      versions: {
-        type: Array,
-        notify: true,
-        computed: '_computeVersionsList(apiInfo.*)'
-      },
+      versions: { type: Array, notify: true },
 
-      multiVersion: {
-        type: Boolean,
-        notify: true,
-        computed: '_computeIsMultiVersion(versions)'
-      },
+      multiVersion: { type: Boolean, notify: true },
 
-      saved: {
-        type: Boolean,
-        notify: true,
-        readOnly: true
-      },
+      saved: { type: Boolean, notify: true },
 
-      canSave: {
-        type: Boolean,
-        notify: true,
-        computed: '_computeCanSave(baseUri, apiVersion)'
-      },
+      canSave: { type: Boolean, notify: true },
 
-      versionSaved: {
-        type: Boolean,
-        notify: true,
-        computed: '_computeIsVersionSaved(versions.*, apiVersion)'
-      },
+      versionSaved: { type: Boolean, notify: true, },
       /**
        * When set the API is being processed.
        */
-      apiProcessing: {type: Boolean, notify: true}
+      apiProcessing: { type: Boolean, notify: true }
     };
   }
 
-  static get observers() {
-    return [
-      '_amfChanged(amf, apiType)'
-    ];
+  get unresolvedAmf() {
+    return this._unresolvedAmf;
+  }
+
+  set unresolvedAmf(value) {
+    const old = this._unresolvedAmf;
+    if (old === value) {
+      return;
+    }
+    this._unresolvedAmf = value;
+    this._unprocessedChanged();
+  }
+
+  get apiType() {
+    return this._apiType;
+  }
+
+  set apiType(value) {
+    const old = this._apiType;
+    if (old === value) {
+      return;
+    }
+    this._apiType = value;
+    this._unprocessedChanged();
   }
 
   constructor() {
     super();
     this._indexChangeHandler = this._indexChangeHandler.bind(this);
+    /* global log */
+    this.log = log;
   }
 
   connectedCallback() {
-    super.connectedCallback();
+    if (super.connectedCallback) {
+      super.connectedCallback();
+    }
     window.addEventListener('api-index-changed', this._indexChangeHandler);
     // window.addEventListener('api-version-deleted', this._indexChangeHandler);
   }
 
   disconnectedCallback() {
-    super.disconnectedCallback();
+    if (super.disconnectedCallback) {
+      super.disconnectedCallback();
+    }
     window.removeEventListener('api-index-changed', this._indexChangeHandler);
   }
 
-  _amfChanged(amf, type) {
-    if (!amf || typeof amf !== 'string' || !type) {
-      this.amfModel = undefined;
+  updated(changedProperties) {
+    const props = ApicElectron.properties;
+    changedProperties.forEach((old, key) => {
+      const def = props[key] || {};
+      if (def.notify) {
+        this.dispatchEvent(new CustomEvent(`${key.toLowerCase()}-changed`, {
+          detail: {
+            value: this[key]
+          }
+        }));
+      }
+    });
+  }
+
+  _unprocessedChanged() {
+    const { unresolvedAmf, apiType } = this;
+    if (!unresolvedAmf || typeof unresolvedAmf !== 'string' || !apiType) {
+      this.amf = undefined;
       return;
     }
     if (this.__processingResolve) {
@@ -214,24 +203,22 @@ class ApicElectron extends ArcFileDropMixin(AmfHelperMixin(PolymerElement)) {
     }
     this.__processingResolve = setTimeout(() => {
       this.__processingResolve = undefined;
-      this._processApi(amf, type);
+      this._processApi(unresolvedAmf, apiType);
     });
   }
 
-  _processApi(amf, type) {
+  async _processApi(unresolvedAmf, type) {
     this.apiProcessing = true;
-    const e = this._dispatchResolve(amf, type);
-    return e.detail.result
-    .then((model) => {
-      this.amfModel = JSON.parse(model);
-      this.apiProcessing = false;
-    })
-    .catch((cause) => {
-      this.apiProcessing = false;
-      this.$.errorToast.text = cause.message;
-      this.$.errorToast.opened = true;
-      console.error(cause);
-    });
+    const e = this._dispatchResolve(unresolvedAmf, type);
+
+    try {
+      const model = await e.detail.result;
+      this.amf = JSON.parse(model);
+      this._resolvedAmfChanged();
+    } catch (e) {
+      this._notifyError(e.message);
+    }
+    this.apiProcessing = false;
   }
 
   _dispatchResolve(model, type) {
@@ -248,6 +235,25 @@ class ApicElectron extends ArcFileDropMixin(AmfHelperMixin(PolymerElement)) {
     return e;
   }
 
+  _notifyError(message) {
+    const toast = this.shadowRoot.querySelector('#errorToast');
+    toast.text = message;
+    toast.opened = true;
+  }
+
+  _resolvedAmfChanged() {
+    const { amf } = this;
+    this.baseUri = this._computeBaseUri(amf);
+    this._baseUriChanged();
+    this.apiVersion = this._getApiVersion(amf);
+    this.canSave = this._computeCanSave(this.baseUri, this.apiVersion);
+  }
+
+  _compteVersionProperties() {
+    this.versions = this._computeVersionsList();
+    this.multiVersion = this._computeIsMultiVersion(this.versions);
+    this.versionSaved = this._computeIsVersionSaved(this.versions, this.apiVersion);
+  }
   /**
    * Computes model's base Uri
    * @param {Object|Array} model AMF data model
@@ -262,33 +268,33 @@ class ApicElectron extends ArcFileDropMixin(AmfHelperMixin(PolymerElement)) {
     return this._getAmfBaseUri(server, protocols);
   }
 
-  _getApiVersion(amfModel) {
-    let version = this._computeApiVersion(amfModel);
+  _getApiVersion(amf) {
+    let version = this._computeApiVersion(amf);
     if (!version) {
       version = '1';
     }
     return String(version);
   }
 
-  _baseUriChanged(baseUri) {
-    this._setSaved(false);
-    this._setApiInfo(undefined);
+  async _baseUriChanged() {
+    const { baseUri } = this;
+    this.saved = false;
+    this.apiInfo = undefined;
     if (!baseUri) {
       return;
     }
-    this._getApiInfo(baseUri)
-    .then((apiInfo) => {
+    try {
+      const apiInfo = await this._getApiInfo(baseUri);
       const saved = !!apiInfo;
-      if (this.saved !== saved) {
-        this._setSaved(saved);
-      }
+      this.saved = saved;
       if (saved) {
-        this._setApiInfo(apiInfo);
+        this.apiInfo = apiInfo;
+        // this._compteVersionProperties();
       }
-    })
-    .catch((cause) => {
-      console.error(cause);
-    });
+    } catch (cause) {
+      this.log.error(cause);
+    }
+    this._compteVersionProperties();
   }
 
   _computeCanSave(baseUri, apiVersion) {
@@ -314,8 +320,7 @@ class ApicElectron extends ArcFileDropMixin(AmfHelperMixin(PolymerElement)) {
     return e.detail.result;
   }
 
-  _computeIsVersionSaved(record, apiVersion) {
-    const versions = record && record.base;
+  _computeIsVersionSaved(versions, apiVersion) {
     if (!versions || !versions.length || !apiVersion) {
       return;
     }
@@ -336,48 +341,49 @@ class ApicElectron extends ArcFileDropMixin(AmfHelperMixin(PolymerElement)) {
    * Note, property change observers will run model resolving API when
    * unresolved model and type is set.
    */
-  open(id, version) {
+  async open(id, version) {
+    this.unresolvedAmf = undefined;
     this.amf = undefined;
-    this.amfModel = undefined;
     this.apiProcessing = true;
-    return this.getApi(id, version)
-    .then((result) => {
+    try {
+      const result = await this.getApi(id, version);
       let api = result.api;
       if (api && typeof api !== 'string') {
         api = JSON.stringify(api);
       }
-      this.amf = api;
+      this.unresolvedAmf = api;
       this.apiType = result.type;
-    })
-    .catch((cause) => {
       this.apiProcessing = false;
-      throw cause;
-    });
+    } catch (e) {
+      this.apiProcessing = false;
+      this.log.error(e);
+      throw e;
+    }
   }
 
-  save() {
-    if (!this.amfModel) {
-      return Promise.reject(new Error('AMF model not set'));
+  async save() {
+    if (!this.amf) {
+      throw new Error('AMF model not set');
     }
     if (!this.canSave) {
-      return Promise.reject(new Error('API version is missing.'));
+      throw new Error('API version is missing.');
     }
     const apiInfo = this.apiInfo;
     if (!apiInfo) {
-      return this._saveApi();
+      return await this._saveApi();
     }
-    return this._saveVersion(Object.assign({}, apiInfo));
+    return await this._saveVersion(Object.assign({}, apiInfo));
   }
 
-  _saveApi() {
+  async _saveApi() {
     const baseUri = this.baseUri;
     if (!baseUri) {
-      return Promise.reject(new Error('API base URI is missing.'));
+      throw new Error('API base URI is missing.');
     }
-    const webApi = this._computeWebApi(this.amfModel);
+    const webApi = this._computeWebApi(this.amf);
     const title = this._getValue(webApi, this.ns.schema.schemaName);
     if (!title) {
-      return Promise.reject(new Error('API title is missing.'));
+      throw new Error('API title is missing.');
     }
     const info = {
       _id: baseUri,
@@ -385,19 +391,20 @@ class ApicElectron extends ArcFileDropMixin(AmfHelperMixin(PolymerElement)) {
       order: 0,
       type: this.apiType
     };
-    return this._saveVersion(info);
+    return await this._saveVersion(info);
   }
 
-  _saveVersion(apiInfo) {
+  async _saveVersion(apiInfo) {
     const version = this.apiVersion;
     if (!version) {
-      return Promise.reject(new Error('API version is missing.'));
+      throw new Error('API version is missing.');
     }
-    return this._updateVersionInfo(apiInfo, version)
-    .then(() => this._updateDataObject(apiInfo._id, version));
+    await this._updateVersionInfo(apiInfo, version);
+    this._compteVersionProperties();
+    return await this._updateDataObject(apiInfo._id, version);
   }
 
-  _updateVersionInfo(apiInfo, version) {
+  async _updateVersionInfo(apiInfo, version) {
     if (!(apiInfo.versions instanceof Array)) {
       apiInfo.versions = [];
     } else {
@@ -408,7 +415,7 @@ class ApicElectron extends ArcFileDropMixin(AmfHelperMixin(PolymerElement)) {
     }
     apiInfo.latest = version;
     if (!this.apiInfo) {
-      this._setApiInfo(apiInfo);
+      this.apiInfo = apiInfo;
     }
     const e = new CustomEvent('api-index-changed', {
       detail: {
@@ -420,17 +427,17 @@ class ApicElectron extends ArcFileDropMixin(AmfHelperMixin(PolymerElement)) {
     });
     this.dispatchEvent(e);
     if (!e.defaultPrevented) {
-      return Promise.reject(new Error('APIs model is not in the DOM'));
+      throw new Error('APIs model is not in the DOM');
     }
-    return e.detail.result;
+    return await e.detail.result;
   }
 
-  _updateDataObject(id, version) {
+  async _updateDataObject(id, version) {
     const e = new CustomEvent('api-data-changed', {
       detail: {
         indexId: id,
         version,
-        data: this.amf
+        data: this.unresolvedAmf
       },
       bubbles: true,
       cancelable: true,
@@ -438,9 +445,9 @@ class ApicElectron extends ArcFileDropMixin(AmfHelperMixin(PolymerElement)) {
     });
     this.dispatchEvent(e);
     if (!e.defaultPrevented) {
-      return Promise.reject(new Error('APIs model is not in the DOM'));
+      throw new Error('APIs model is not in the DOM');
     }
-    return e.detail.result;
+    return await e.detail.result;
   }
 
   _indexChangeHandler(e) {
@@ -451,23 +458,24 @@ class ApicElectron extends ArcFileDropMixin(AmfHelperMixin(PolymerElement)) {
     if (this.apiInfo._id !== changed._id) {
       return;
     }
-    this._setApiInfo(changed);
+    this.apiInfo = changed;
     if (!this.saved) {
-      this._setSaved(true);
+      this.saved = true;
     }
+    this._compteVersionProperties();
   }
   /**
    * Requests to delete current API from the data store.
    * It removes all versions of the API data and then the API index.
    * @return {Promise}
    */
-  delete() {
+  async delete() {
     if (!this.saved) {
-      return Promise.reject(new Error('This API is not yet saved'));
+      throw new Error('This API is not yet saved');
     }
     const info = this.apiInfo;
     if (!info) {
-      return Promise.reject(new Error('API data not restored'));
+      throw new Error('API data not restored');
     }
     const e = new CustomEvent('api-deleted', {
       detail: {
@@ -479,9 +487,9 @@ class ApicElectron extends ArcFileDropMixin(AmfHelperMixin(PolymerElement)) {
     });
     this.dispatchEvent(e);
     if (!e.defaultPrevented) {
-      return Promise.reject(new Error('APIs model is not in the DOM'));
+      throw new Error('APIs model is not in the DOM');
     }
-    return e.detail.result;
+    return await e.detail.result;
   }
   /**
    * Removes given version of the API.
@@ -489,13 +497,13 @@ class ApicElectron extends ArcFileDropMixin(AmfHelperMixin(PolymerElement)) {
    * @param {String} version
    * @return {Promise}
    */
-  deleteVersion(version) {
+  async deleteVersion(version) {
     if (!this.saved) {
-      return Promise.reject(new Error('This API is not yet saved'));
+      throw new Error('This API is not yet saved');
     }
     const info = this.apiInfo;
     if (!info) {
-      return Promise.reject(new Error('API data not restored'));
+      throw new Error('API data not restored');
     }
     const e = new CustomEvent('api-version-deleted', {
       detail: {
@@ -508,33 +516,28 @@ class ApicElectron extends ArcFileDropMixin(AmfHelperMixin(PolymerElement)) {
     });
     this.dispatchEvent(e);
     if (!e.defaultPrevented) {
-      return Promise.reject(new Error('APIs model is not in the DOM'));
+      throw new Error('APIs model is not in the DOM');
     }
-    return e.detail.result;
+    return await e.detail.result;
   }
 
-  getApi(id, version) {
+  async getApi(id, version) {
     if (!id) {
-      return Promise.reject(new Error('No API id given'));
+      throw new Error('No API id given');
     }
-    let apiType;
-    return this._getApiInfo(id)
-    .then((doc) => {
-      apiType = doc.type;
-      if (!version) {
-        version = doc.latest;
-      }
-      return this._requestApiVersion(id + '|' + version);
-    })
-    .then((api) => {
-      return {
-        api,
-        type: apiType
-      };
-    });
+    const doc = await this._getApiInfo(id);
+    const type = doc.type;
+    if (!version) {
+      version = doc.latest;
+    }
+    const api = await this._requestApiVersion(id + '|' + version);
+    return {
+      api,
+      type
+    };
   }
 
-  _requestApiVersion(versionId) {
+  async _requestApiVersion(versionId) {
     const e = new CustomEvent('api-data-read', {
       detail: {
         id: versionId
@@ -545,21 +548,21 @@ class ApicElectron extends ArcFileDropMixin(AmfHelperMixin(PolymerElement)) {
     });
     this.dispatchEvent(e);
     if (!e.defaultPrevented) {
-      return Promise.reject(new Error('APIs model is not in the DOM'));
+      throw new Error('APIs model is not in the DOM');
     }
-    return e.detail.result
-    .then((doc) => doc.data);
+    const doc = await e.detail.result;
+    return doc.data;
   }
 
-  _computeVersionsList(record) {
-    const info = record && record.base;
-    if (!info) {
+  _computeVersionsList() {
+    const { apiInfo } = this;
+    if (!apiInfo) {
       return;
     }
-    if (!info.versions) {
-      info.versions = [];
+    if (!apiInfo.versions) {
+      apiInfo.versions = [];
     }
-    return info.versions;
+    return apiInfo.versions;
   }
 }
-window.customElements.define(ApicElectron.is, ApicElectron);
+window.customElements.define('apic-electron', ApicElectron);

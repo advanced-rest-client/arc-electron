@@ -1,5 +1,5 @@
 const path = require('path');
-const {Application} = require('spectron');
+const { Application } = require('spectron');
 const electronPath = require('electron');
 const fs = require('fs-extra');
 

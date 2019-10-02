@@ -1,21 +1,21 @@
-const {ipcRenderer: ipc, clipboard, webFrame} = require('electron');
-const {app} = require('electron').remote;
+const { ipcRenderer: ipc, clipboard } = require('electron');
+const { app } = require('electron').remote;
 const log = require('electron-log');
 const Jexl = require('jexl');
 const prefix = '@advanced-rest-client/';
-const {ArcElectronDrive} = require(prefix + 'electron-drive/renderer');
-const {OAuth2Handler} = require(prefix + 'electron-oauth2/renderer');
-const {WorkspaceManager} = require('../packages/arc-preferences/renderer');
-const {ArcPreferencesProxy} = require('../packages/arc-preferences/renderer');
-const {ThemeManager} = require('../packages/themes-manager/renderer');
-const {SocketRequest, ElectronRequest} = require(prefix + 'electron-request');
-const {CookieBridge} = require(prefix + 'electron-session-state/renderer');
-const {ArcContextMenu} = require('../packages/context-actions/renderer');
-const {FilesystemProxy} = require('./filesystem-proxy');
-const {ElectronAmfService} = require('../packages/amf-service');
-const {WindowSearchService} = require('../packages/search-service/renderer');
-const {UpgradeHelper} = require('./upgrade-helper');
-const {ImportFilePrePprocessor} = require('./import-file-preprocessor');
+const { ArcElectronDrive } = require(prefix + 'electron-drive/renderer');
+const { OAuth2Handler } = require(prefix + 'electron-oauth2/renderer');
+const { WorkspaceManager } = require('../packages/arc-preferences/renderer');
+const { ArcPreferencesProxy } = require('../packages/arc-preferences/renderer');
+const { ThemeManager } = require('../packages/themes-manager/renderer');
+const { SocketRequest, ElectronRequest } = require(prefix + 'electron-request');
+const { CookieBridge } = require(prefix + 'electron-session-state/renderer');
+const { ArcContextMenu } = require('../packages/context-actions/renderer');
+const { FilesystemProxy } = require('./filesystem-proxy');
+const { ElectronAmfService } = require('@advanced-rest-client/electron-amf-service');
+const { WindowSearchService } = require('../packages/search-service/renderer');
+const { UpgradeHelper } = require('./upgrade-helper');
+const { ImportFilePrePprocessor } = require('./import-file-preprocessor');
 const setImmediateFn = setImmediate;
 const versions = process.versions;
 const env = {};
@@ -24,16 +24,6 @@ Object.keys(process.env).forEach((key) => {
     return;
   }
   env[key] = process.env[key];
-});
-
-process.once('loaded', () => {
-  webFrame.registerURLSchemeAsPrivileged('web-module', {
-    secure: true,
-    bypassCSP: false,
-    allowServiceWorkers: true,
-    supportFetchAPI: true,
-    corsEnabled: false
-  });
 });
 
 process.once('loaded', () => {

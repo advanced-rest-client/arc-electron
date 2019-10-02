@@ -121,8 +121,8 @@ class ArcContextMenu {
     }
     if (actions.length) {
       this._lastTarget = target;
-      const {x, y} = e;
-      this.renderActions(actions, {x, y});
+      const { x, y } = e;
+      this.renderActions(actions, { x, y });
     }
   }
   /**
@@ -142,10 +142,10 @@ class ArcContextMenu {
    */
   renderActions(actions, xy) {
     this.removeActions();
-    const box = document.createElement('paper-listbox');
+    const box = document.createElement('anypoint-listbox');
     box.addEventListener('selected-changed', this._selectionHandler);
     actions.forEach((action) => {
-      const item = document.createElement('paper-item');
+      const item = document.createElement('anypoint-item');
       item.innerText = action.label;
       item.dataset.action = action.action;
       box.appendChild(item);

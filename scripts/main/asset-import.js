@@ -1,4 +1,4 @@
-const {dialog} = require('electron');
+const { dialog } = require('electron');
 const log = require('./logger');
 
 class AssetImport {
@@ -14,7 +14,7 @@ class AssetImport {
       buttonLabel: 'Import',
       properties: ['openFile'],
       filters: [
-        {name: 'All supported files', extensions: ['arc', 'json', 'raml', 'yaml', 'zip']}
+        { name: 'All supported files', extensions: ['arc', 'json', 'raml', 'yaml', 'zip'] }
       ]
     }, (filePaths) => {
       if (!filePaths || !filePaths[0]) {
@@ -34,7 +34,7 @@ class AssetImport {
         buttonLabel: 'Open',
         properties: ['openFile'],
         filters: [
-          {name: 'All supported files', extensions: ['arc', 'json']}
+          { name: 'All supported files', extensions: ['arc', 'json'] }
         ]
       }, (filePaths) => {
         const loc = filePaths && filePaths[0];

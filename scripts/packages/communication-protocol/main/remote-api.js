@@ -1,6 +1,6 @@
 const log = require('../../../main/logger');
-const {BrowserWindow, ipcMain} = require('electron');
-const {ArcBase} = require('../../../main/arc-base');
+const { BrowserWindow, ipcMain } = require('electron');
+const { ArcBase } = require('../../../main/arc-base');
 /**
  * A class responsible for handling remote API operations.
  */
@@ -13,12 +13,12 @@ class RemoteApi extends ArcBase {
    */
   getActiveWindow() {
     log.debug('Getting active window...');
-    let win = BrowserWindow.getFocusedWindow();
+    const win = BrowserWindow.getFocusedWindow();
     if (win) {
       return Promise.resolve(win);
     }
     log.debug('Focused window not found. Getting any first window.');
-    let wins = BrowserWindow.getAllWindows();
+    const wins = BrowserWindow.getAllWindows();
     if (wins && wins.length) {
       return Promise.resolve(wins[0]);
     }
@@ -69,10 +69,10 @@ class RemoteApi extends ArcBase {
     log.debug('[RemoteApi] Counting tabs in window', windowIndex);
     let p;
     if (typeof windowIndex === 'number') {
-      let win = BrowserWindow.getAllWindows()[windowIndex];
+      const win = BrowserWindow.getAllWindows()[windowIndex];
       if (!win) {
         log.warn('[RemoteApi] Window ' + windowIndex + ' not found');
-        return Promise.reject('Window for given index does not exists');
+        return Promise.reject(new Error('Window for given index does not exists'));
       }
       p = Promise.resolve(win);
     } else {
@@ -88,7 +88,7 @@ class RemoteApi extends ArcBase {
    * @return {Promise} Promise resolved to number of tabs.
    */
   getTabsCountForWindow(win) {
-    let id = this.nextIpcRequestId();
+    const id = this.nextIpcRequestId();
     const p = this.appendPromise(id);
     ipcMain.once('current-tabs-count', this._ipcPromiseCallback);
     win.webContents.send('command', 'get-tabs-count', id);
@@ -107,10 +107,10 @@ class RemoteApi extends ArcBase {
     log.debug('[RemoteApi] Setting tab ' + tabIndex + ' active on window ' + windowIndex);
     let p;
     if (typeof windowIndex === 'number') {
-      let win = BrowserWindow.getAllWindows()[windowIndex];
+      const win = BrowserWindow.getAllWindows()[windowIndex];
       if (!win) {
         log.warn('[RemoteApi] Window ' + windowIndex + ' not found');
-        return Promise.reject('Window for given index does not exists');
+        return Promise.reject(new Error('Window for given index does not exists'));
       }
       p = Promise.resolve(win);
     } else {
@@ -127,7 +127,7 @@ class RemoteApi extends ArcBase {
    * @return {Promise}
    */
   activateTabForWindow(tabIndex, win) {
-    let id = this.nextIpcRequestId();
+    const id = this.nextIpcRequestId();
     const p = this.appendPromise(id);
     ipcMain.once('tab-activated', this._ipcPromiseCallback);
     win.webContents.send('command', 'activate-tab', id, tabIndex);
@@ -143,10 +143,10 @@ class RemoteApi extends ArcBase {
     log.debug('[RemoteApi] Reading request data from tab ' + tabIndex + ' active on window ' + windowIndex);
     let p;
     if (typeof windowIndex === 'number') {
-      let win = BrowserWindow.getAllWindows()[windowIndex];
+      const win = BrowserWindow.getAllWindows()[windowIndex];
       if (!win) {
         log.warn('[RemoteApi] Window ' + windowIndex + ' not found');
-        return Promise.reject('Window for given index does not exists');
+        return Promise.reject(new Error('Window for given index does not exists'));
       }
       p = Promise.resolve(win);
     } else {
@@ -162,7 +162,7 @@ class RemoteApi extends ArcBase {
    * @return {Promise} A promise resolved to the ARC request object.
    */
   getRequestForWindow(tabIndex, win) {
-    let id = this.nextIpcRequestId();
+    const id = this.nextIpcRequestId();
     const p = this.appendPromise(id);
     ipcMain.once('request-data', this._ipcPromiseCallback);
     win.webContents.send('command', 'get-request-data', id, tabIndex);

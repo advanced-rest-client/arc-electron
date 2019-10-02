@@ -1,4 +1,4 @@
-const {session, protocol} = require('electron');
+const { session, protocol } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const log = require('./logger');

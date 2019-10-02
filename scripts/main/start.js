@@ -1,10 +1,10 @@
-const {app, protocol} = require('electron');
+const { app, protocol } = require('electron');
 const arcPaths = require('./arc-paths');
-const {AppOptions} = require('./app-options');
+const { AppOptions } = require('./app-options');
 const log = require('./logger');
-const {ArcEnvironment} = require('./arc-environment');
-const {PreferencesManager} = require('../packages/arc-preferences/main');
-const {AppDefaults} = require('./app-defaults');
+const { ArcEnvironment } = require('./arc-environment');
+const { PreferencesManager } = require('../packages/arc-preferences/main');
+const { AppDefaults } = require('./app-defaults');
 // const temp = require('temp').track();
 
 function getConfig(settingsFile) {
@@ -19,20 +19,20 @@ module.exports = function(startTime) {
 
   process.on('uncaughtException', function(error = {}) {
     if (error.message) {
-      console.log(error.message);
+      log.error(error.message);
     }
     if (error.stack) {
-      console.log(error.stack);
+      log.error(error.stack);
     }
   });
 
   process.on('unhandledRejection', function(error = {}) {
     if (error.message) {
-      console.log(error.message);
+      log.error(error.message);
     }
 
     if (error.stack) {
-      console.log(error.stack);
+      log.error(error.stack);
     }
   });
 
@@ -56,14 +56,16 @@ module.exports = function(startTime) {
   // }
 
   // Standard scheme must be registered before the app is ready
-  protocol.registerStandardSchemes(['web-module'], {secure: true});
+  protocol.registerSchemesAsPrivileged([
+    { scheme: 'web-module', privileges: { standard: true, secure: true } },
+    { scheme: 'themes', privileges: { standard: true, secure: true } }
+  ]);
 
   log.debug('Setting up the environment');
   arcPaths.setHome();
   arcPaths.setSettingsFile(initOptions.settingsFile);
   arcPaths.setWorkspacePath(initOptions.workspacePath);
   arcPaths.setThemesPath(initOptions.themesPath);
-  arcPaths.setComponentsPath(initOptions.componentsPath);
 
   // Overrides initial user path to processed by arcPaths
   initOptions.workspacePath = arcPaths.workspacePath;

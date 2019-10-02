@@ -44,7 +44,7 @@ class UpgradeHelper {
       queue[queue.length] = pathUpgrade;
     }
 
-    const fullv = ver.replace(/[\.\-]/g, '');
+    const fullv = ver.replace(/[.-]/g, '');
     if (fullv !== pathUpgrade) {
       const channelUpgrade = this.__getUpgrade(fullv);
       if (channelUpgrade) {
