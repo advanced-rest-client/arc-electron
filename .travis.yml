@@ -33,6 +33,5 @@ env:
   - secure: vqjLjFS1r21KkSV6g5rrnHnEDvytxFZUZGglmVBfEMWMTLmUt6tpUOZ9fQhNK02Lwoqabx+jwqkqQH3n2Qh4rdgrHciaZz8rVpB+BNRbGpk8Av9pvJEFt5P2UUfjgthgBEUCAkcMlFAWvVgGoiaZPTLufxh9YZvjilG6QrZq6907+YZmxanFfQs/YpCwhG1S36BZ5ce3FxWk7z46DETD3LIe5ThImdmxruEv31F1pNNfInoDGg1qucQiZ2Icd6e+TK6tHH76KJbWc7kaJFSaubu1zIepmUNAxwdLN13nCPcxZaTkPs+LkCel3/C0hD/GLYEc48qC6zQDiQ61/JbUqtfZqShR5qpWhG0jETwpJqlUGNeWjO8KaPUcsolDy49Iiyy+ZMN8g7qiVcxqInLM3BT0Do3vyEZA3Z3WxXDF5wGeHy8PhUbFa3wZdRxtTgNoXCPJCPAzZIPYNUbby6auhWraBHU5UfyitH+CDP34FPaM9eG9TcJbEmdoA9rB9RYEH2T6OxGN/IntSuSP1cdkN/gi4c1ZsWlZSpCS9l5emakrGa4CMl7PKUBhefvKmn/UeYi+REHR2+iNOBYGBBAzfuwSn2iLg//Cg0SdDOs557vKFozVjM2u35Qp1zoncvEZWPSL3WaVGNzmlV35yjgculysZt1tEQpLWGIBmNjEa0c=
 before_install:
 - openssl aes-256-cbc -K $encrypted_c7c10d38055a_key -iv $encrypted_c7c10d38055a_iv
-  -in arc-mac-certs.p12.enc -out arc-mac-certs.p12 -d
-- openssl aes-256-cbc -K $encrypted_c7c10d38055a_key -iv $encrypted_c7c10d38055a_iv
-  -in advancedrestclient.pfx.enc -out advancedrestclient.pfx -d
+  -in certs.tar.enc -out certs.tar -d
+- tar xvf certs.tar
