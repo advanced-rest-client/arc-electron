@@ -32,7 +32,7 @@ if [ "$TRAVIS_OS_NAME" == "linux" ]; then
     -v ~/.cache/electron:/root/.cache/electron \
     -v ~/.cache/electron-builder:/root/.cache/electron-builder \
     electronuserland/builder:wine \
-    /bin/bash -c "./node_modules/.bin/electron-builder --linux --win"
+    /bin/bash -c "./node_modules/.bin/electron-builder --linux --win --publish always"
 else
-  /bin/bash -c "./node_modules/.bin/electron-builder --mac"
+  /bin/bash -c "./node_modules/.bin/electron-builder --mac --publish always"
 fi
