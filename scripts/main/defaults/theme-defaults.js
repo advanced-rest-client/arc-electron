@@ -130,7 +130,7 @@ class ThemeDefaults {
     const file = path.join(process.env.ARC_THEMES, 'themes-info.json');
     const exists = await fs.pathExists(file);
     if (exists) {
-      log.debug(`theme-info.json exists. Skipping initialization.`);
+      log.debug(`theme-info.json exists. Checking for latest scheme.`);
       return await this._ensureThemesInfoVersion(file);
     }
     log.info('Creating themes-info.json file');
@@ -151,6 +151,10 @@ class ThemeDefaults {
     }
     const item = data.themes[0];
     if (!item.location) {
+      return await this._copyInfoFile();
+    }
+    if ((item.mainFile || '').indexOf('.js') !== -1) {
+      // early 14.x.x preview
       return await this._copyInfoFile();
     }
   }
