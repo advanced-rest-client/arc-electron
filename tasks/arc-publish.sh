@@ -1,4 +1,5 @@
-if [ $TRAVIS_BRANCH != 'develop' ]; then
+if [ $TRAVIS_BRANCH != 'develop' ] && [ $TRAVIS_BRANCH != 'master' ] && [ $TRAVIS_BRANCH != 'beta' ]; then
+  echo "Skipping ARC build. Incompatible branch."
   exit 0
 fi
 if [ "$TRAVIS_OS_NAME" == "linux" ]; then

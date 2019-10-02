@@ -1,17 +1,17 @@
-language: node_js
 matrix:
   include:
     - os: osx
       osx_image: xcode10.2
       language: node_js
-      node_js: "10"
-      services:
-        - xvfb
+      node_js: stable
       env:
         - ELECTRON_CACHE=$HOME/.cache/electron
         - ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder
 
     - os: linux
+      sudo: required
+      language: node_js
+      node_js: stable
       services:
         - docker
         - xvfb
@@ -25,7 +25,6 @@ cache:
 
 before_cache:
   - rm -rf $HOME/.cache/electron-builder/wine
-sudo: required
 install:
 - npm ci
 script: "./test/travis-build.sh"
