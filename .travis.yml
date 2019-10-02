@@ -11,13 +11,13 @@ sudo: required
 install:
 - npm ci
 # script: "./test/travis-build.sh"
-after_success:
-- openssl aes-256-cbc -K $encrypted_36ee0d5a95ce_key -iv $encrypted_36ee0d5a95ce_iv
-  -in tasks/advancedrestclient.pfx.enc -out tasks/advancedrestclient.pfx -d
-- openssl aes-256-cbc -K $encrypted_36ee0d5a95ce_key -iv $encrypted_36ee0d5a95ce_iv
-  -in tasks/mac-app-distribution-cert.p12.enc -out tasks/mac-app-distribution-cert.p12 -d
-- ./tasks/install-build-deps.sh
-- node tasks/build-success.js
+# after_success:
+# - openssl aes-256-cbc -K $encrypted_36ee0d5a95ce_key -iv $encrypted_36ee0d5a95ce_iv
+#   -in tasks/advancedrestclient.pfx.enc -out tasks/advancedrestclient.pfx -d
+# - openssl aes-256-cbc -K $encrypted_36ee0d5a95ce_key -iv $encrypted_36ee0d5a95ce_iv
+#   -in tasks/mac-app-distribution-cert.p12.enc -out tasks/mac-app-distribution-cert.p12 -d
+# - ./tasks/install-build-deps.sh
+# - node tasks/build-success.js
 env:
   global:
   - secure: NQtwpDyG5qcPNDVJvHUn2LQKqAI3BYFektAQb7RyCD/eDlzA1b3Orv8nnOPmZ6H05YJBO00RRpvPDAc2944pm7XqY0HuDB0KBjUjb3kLAChiD9D7SKAnTJ4Lvjfyyf6eVXdDRBU5hTFKtsABfn/hIz+J/XVInDVaPOYIeTB70BsgMzkVlDj0hsyM2n7AvPzHupBsgpTL/hGNR0pm45oSV5c9mM72JGy84c6rAW01DLC7N6CgVkRNjAIQ4SYbZj57kO3WLXJ9Hryhqz5manq84R/j5Jg9XggR3+XCvloyFKXYO3n+ogw4zV3Ie81JDqbLJA4u2ayJ8h9wHaUWoSroW594xQchqsAVypnc/fgvHOxRrSozRDja3q9kKdJ/7nSOJ3k1jsy1gJEaDT0OO2py/OQ6F+1gfvMVmID30mL1m5UR9ARpwLyn+gezw4zvCt3JQv3WjzRZzsBhtCj5Mt75GRJK4bROsELO3tDLYzjewI/1tCw/xst097G5MCImVxepOrnlDguqij+0gpE10Pdwto/VUQBvlakLGXSF6CcatXiyIkwVpQEaKT9HGUHXXY51UoMwxS5CvzkvyAEzNam5/GRv6ifDJal0jHe4bLSUHJwC3CQDjZG3LVcIr+SpuEZ/Kq5/Kvr/1QoWAwoMBrCAkdoZmw7gyflm2d/pXsy9pBE=

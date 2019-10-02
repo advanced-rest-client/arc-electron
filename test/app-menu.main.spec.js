@@ -1,9 +1,9 @@
-const {assert} = require('chai');
+const { assert } = require('chai');
 const path = require('path');
 const fs = require('fs-extra');
-const {ArcMainMenu} = require('../scripts/main/main-menu.js');
+const { ArcMainMenu } = require('../scripts/main/main-menu.js');
 const sinon = require('sinon');
-const {Menu} = require('electron');
+const { Menu } = require('electron');
 
 describe('ArcMainMenu class', function() {
   const historyPath = path.join('workspace', 'workspace-history.json');
@@ -115,20 +115,16 @@ describe('ArcMainMenu class', function() {
       return fs.remove(file);
     });
 
-    it('Calls WorkspaceHistory::clearHistory', () => {
+    it('Calls WorkspaceHistory::clearHistory', async () => {
       const spy = sinon.spy(instance.history, 'clearHistory');
-      return instance.clearWorkspaceHistory()
-      .then(() => {
-        assert.isTrue(spy.called);
-      });
+      await instance.clearWorkspaceHistory()
+      assert.isTrue(spy.called);
     });
 
-    it('Calls _clearWorkspaceHistory', () => {
+    it('Calls _clearWorkspaceHistory', async () => {
       const spy = sinon.spy(instance, '_clearWorkspaceHistory');
-      return instance.clearWorkspaceHistory()
-      .then(() => {
-        assert.isTrue(spy.called);
-      });
+      await instance.clearWorkspaceHistory();
+      assert.isTrue(spy.called);
     });
   });
 
@@ -260,7 +256,7 @@ describe('ArcMainMenu class', function() {
 
     it('Calls WorkspaceHistory::addEntry', () => {
       const spy = sinon.spy(instance.history, 'addEntry');
-      instance._workspaceHistoryAction({label: '/test'});
+      instance._workspaceHistoryAction({ label: '/test' });
       assert.equal(spy.args[0][0], '/test');
     });
 
@@ -269,7 +265,7 @@ describe('ArcMainMenu class', function() {
       instance.on('open-workspace', () => {
         called = true;
       });
-      instance._workspaceHistoryAction({label: '/test'});
+      instance._workspaceHistoryAction({ label: '/test' });
       instance.removeAllListeners('open-workspace');
       assert.isTrue(called);
     });

@@ -1,4 +1,4 @@
-const {BrowserWindow, ipcMain} = require('electron');
+const { BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const url = require('url');
 
@@ -68,7 +68,7 @@ class ContentSearchService {
    * @return {undefined}
    */
   static addService(srv) {
-    let exists = !!ContentSearchService.getService(srv.win);
+    const exists = !!ContentSearchService.getService(srv.win);
     if (exists) {
       return;
     }
@@ -79,7 +79,7 @@ class ContentSearchService {
    * @param {ContentSearchService} srv Service instance.
    */
   static removeService(srv) {
-    let index = instances.find((item) => item.win === srv.win);
+    const index = instances.find((item) => item.win === srv.win);
     if (index === -1) {
       return;
     }
@@ -136,7 +136,7 @@ class ContentSearchService {
    * @param {BrowserWindow} win A window to be positioned.
    */
   _positionWindow(win) {
-    let winBounds = this._computeBounds(this.searchBarBounds);
+    const winBounds = this._computeBounds(this.searchBarBounds);
     win.setBounds(winBounds);
   }
   /**
@@ -146,10 +146,10 @@ class ContentSearchService {
    * @return {Object} Updated bounds object with new dimensions and position.
    */
   _computeBounds(winBounds) {
-    let rect = this.win.getBounds();
-    let maxRight = rect.width + rect.x;
-    let x = maxRight - winBounds.width - 12; // padding
-    let maxTop = rect.y + 32;
+    const rect = this.win.getBounds();
+    const maxRight = rect.width + rect.x;
+    const x = maxRight - winBounds.width - 12; // padding
+    const maxTop = rect.y + 32;
     winBounds.x = x;
     winBounds.y = maxTop;
     return winBounds;
@@ -159,7 +159,7 @@ class ContentSearchService {
    * @param {BrowserWindow} win An instance of the window object
    */
   _loadUI(win) {
-    const dest = path.join(__dirname, '..', '..', '..', '..', 'src', 'search-bar.html');
+    const dest = path.join(__dirname, '..', '..', '..', '..', 'src', 'search-bar', 'search-bar.html');
     const full = url.format({
       pathname: dest,
       protocol: 'file:',

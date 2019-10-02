@@ -1,8 +1,8 @@
 const path = require('path');
-const {app} = require('electron');
+const { app } = require('electron');
 
-const {createLogger, format, transports} = require('winston');
-const {combine, timestamp, printf} = format;
+const { createLogger, format, transports } = require('winston');
+const { combine, timestamp, printf } = format;
 const myFormat = printf((info) => {
   return `[${new Date(info.timestamp).toLocaleString()}]: ${info.level} ${info.message}`;
 });
@@ -16,7 +16,6 @@ try {
 const logPath = path.join(logRoot, 'log.log');
 const errorPath = path.join(logRoot, 'error.log');
 
-console.log('Log file path is', logPath);
 
 const logger = createLogger({
   exitOnError: false,
@@ -48,4 +47,5 @@ const logger = createLogger({
   )
 });
 
+console.log('Log file path is', logPath);
 module.exports = logger;

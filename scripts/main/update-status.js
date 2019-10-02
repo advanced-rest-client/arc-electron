@@ -1,6 +1,6 @@
-const {ArcBase} = require('./arc-base');
-const {autoUpdater} = require('electron-updater');
-const {dialog, nativeImage, ipcMain} = require('electron');
+const { ArcBase } = require('./arc-base');
+const { autoUpdater } = require('electron-updater');
+const { dialog, nativeImage, ipcMain } = require('electron');
 const log = require('./logger');
 const path = require('path');
 

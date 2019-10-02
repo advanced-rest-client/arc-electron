@@ -24,7 +24,7 @@ class PayloadProcessor {
       return Promise.resolve(this.request);
     }
     if (this.request.payload instanceof FormData) {
-      let data = Object.assign({}, this.request);
+      const data = Object.assign({}, this.request);
       if (!data.payload.entries) {
         data.payload = undefined;
         return Promise.resolve(data);
@@ -36,7 +36,7 @@ class PayloadProcessor {
         return data;
       });
     } else if (this.request.payload instanceof Blob) {
-      let data = Object.assign({}, this.request);
+      const data = Object.assign({}, this.request);
       return this._blobToString(data.payload)
       .then((str) => {
         data.payload = undefined;
@@ -55,7 +55,7 @@ class PayloadProcessor {
    * @return {Promise} Promise resolved to a form part representation.
    */
   _createMultipartEntry(payload) {
-    let iterator = payload.entries();
+    const iterator = payload.entries();
     let textParts;
     if (payload._arcMeta && payload._arcMeta.textParts) {
       textParts = payload._arcMeta.textParts;
@@ -79,13 +79,13 @@ class PayloadProcessor {
    */
   _computeFormDataEntry(iterator, textParts, result) {
     result = result || [];
-    let item = iterator.next();
+    const item = iterator.next();
     if (item.done) {
       return Promise.resolve(result);
     }
-    let entry = item.value;
-    let name = entry[0];
-    let value = entry[1];
+    const entry = item.value;
+    const name = entry[0];
+    const value = entry[1];
     let promise;
     let isBlob = false;
     let isTextBlob = false;
@@ -102,7 +102,7 @@ class PayloadProcessor {
     }
     return promise
     .then((str) => {
-      let _part = {
+      const _part = {
         name: name,
         value: str,
         isFile: isBlob
@@ -125,7 +125,7 @@ class PayloadProcessor {
    */
   _blobToString(blob) {
     return new Promise((resolve, reject) => {
-      let reader = new FileReader();
+      const reader = new FileReader();
       reader.onloadend = function(e) {
         resolve(e.target.result);
       };
@@ -142,7 +142,7 @@ class PayloadProcessor {
    * @return {FormData} Restored form data
    */
   restoreMultipart(model) {
-    let fd = new FormData();
+    const fd = new FormData();
     if (!model || !model.length) {
       return fd;
     }
@@ -150,7 +150,7 @@ class PayloadProcessor {
       textParts: []
     };
     model.forEach((part) => {
-      let name = part.name;
+      const name = part.name;
       let value;
       if (part.isFile) {
         try {
@@ -181,15 +181,15 @@ class PayloadProcessor {
    * @return {Blob} Restored blob value
    */
   _dataURLtoBlob(dataurl) {
-    let arr = dataurl.split(',');
-    let mime = arr[0].match(/:(.*?);/)[1];
-    let bstr = atob(arr[1]);
+    const arr = dataurl.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
     let n = bstr.length;
-    let u8arr = new Uint8Array(n);
+    const u8arr = new Uint8Array(n);
     while (n--) {
       u8arr[n] = bstr.charCodeAt(n);
     }
-    return new Blob([u8arr], {type: mime});
+    return new Blob([u8arr], { type: mime });
   }
 }
 

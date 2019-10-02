@@ -6,19 +6,17 @@ class ImportFilePrePprocessor {
    * @param {String} filePath Location of the file.
    * @return {Promise}
    */
-  processFile(filePath) {
+  async processFile(filePath) {
     if (!filePath) {
       throw new Error('Argument not set');
     }
-    return fs.readFile(filePath)
-    .then((buffer) => {
-      const ext = path.extname(filePath);
-      if (this._isApiFile(ext)) {
-        return this._notifyApiParser(buffer);
-      }
-      // Only JSON files left. It can be either ARC, Postam or OAS
-      return this._discoverFile(buffer);
-    });
+    const buffer = await fs.readFile(filePath);
+    const ext = path.extname(filePath);
+    if (this._isApiFile(ext)) {
+      return await this._notifyApiParser(buffer);
+    }
+    // Only JSON files left. It can be either ARC, Postam or OAS
+    return await this._discoverFile(buffer);
   }
 
   _isApiFile(ext) {
@@ -45,41 +43,39 @@ class ImportFilePrePprocessor {
    * @param {File} file User file.
    * @return {Promise}
    */
-  _notifyApiParser(file) {
+  async _notifyApiParser(file) {
     const e = this._dispatch('api-process-file', {
       file
     });
     if (!e.defaultPrevented) {
-      return Promise.reject(new Error('API processor not available'));
+      throw new Error('API processor not available');
     }
-    return e.detail.result
-    .then((api) => {
-      this._dispatch('api-data-ready', {
-        model: api.model,
-        type: api.type
-      });
+    const api = await e.detail.result;
+    this._dispatch('api-data-ready', {
+      model: api.model,
+      type: api.type
     });
   }
 
-  _discoverFile(buffer) {
+  async _discoverFile(buffer) {
     const content = buffer.toString().trim();
     if (content[0] !== '{') {
-      return Promise.reject(new Error('Unsupported file.'));
+      throw new Error('Unsupported file.');
     }
     let data;
     try {
       data = JSON.parse(content);
     } catch (_) {
-      return Promise.reject(new Error('Unknown file format.'));
+      throw new Error('Unknown file format.');
     }
     if (data.swagger) {
-      return this._notifyApiParser(buffer);
+      return await this._notifyApiParser(buffer);
     }
 
     const e = this._dispatch('import-process-data', {
       data
     });
-    return e.detail.result;
+    return await e.detail.result;
   }
 }
 module.exports.ImportFilePrePprocessor = ImportFilePrePprocessor;

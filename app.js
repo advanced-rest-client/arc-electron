@@ -111,7 +111,7 @@ class ArcInit {
    * @param {Object} info Main proces initil properties. See `AppOptions` class
    * for more details.
    */
-  _stateInfoHandler(e, info) {
+  async _stateInfoHandler(e, info) {
     info = info || {};
     const initConfig = info;
     if (!window.ArcConfig) {
@@ -119,33 +119,41 @@ class ArcInit {
     }
     this.initConfig = initConfig;
     window.ArcConfig.initConfig = initConfig;
-    this.initApp()
-    .then(() => this.upgradeApp())
-    .then(() => this.processInitialPath())
-    .then(() => this.removeLoader())
-    .then(() => console.log('Application window is now ready.'));
+    await this.initApp();
+    await this.upgradeApp();
+    await this.processInitialPath();
+    await this.removeLoader();
+    console.log('Application window is now ready.');
   }
   /**
    * Initialized the application when window is ready.
    *
    * @return {Promise}
    */
-  initApp() {
+  async initApp() {
     // console.info('Initializing renderer window...');
     this.workspaceManager = new WorkspaceManager(this.initConfig.workspaceFile);
     this.workspaceManager.observe();
-    let appConfig;
-    return this.prefProxy.load()
-    .then((cnf) => {
-      appConfig = cnf;
-      return this._createApp(cnf);
-    })
-    .then(() => {
-      return this.themeManager.loadTheme(appConfig.theme)
-      // Theme is not a fatal error
-      .catch(() => {});
-    })
-    .catch((cause) => this.reportFatalError(cause));
+    let cnf;
+    try {
+      cnf = await this.prefProxy.load();
+      await this._createApp(cnf);
+    } catch (e) {
+      this.reportFatalError(e);
+      throw e;
+    }
+    if (this.initConfig.darkMode) {
+      cnf.theme = 'advanced-rest-client/arc-electron-dark-theme';
+    }
+    if (cnf.theme === 'advanced-rest-client/arc-electron-anypoint-theme') {
+      const app = this.app;
+      app.compatibility = true;
+    }
+    try {
+      await this.themeManager.loadTheme(cnf.theme);
+    } catch (e) {
+      console.error(e);
+    }
   }
   /**
    * Reports fatal application error.
@@ -163,36 +171,18 @@ class ArcInit {
    * @return {Promise} Promise resolved when element is loaded and ready
    * rendered.
    */
-  _createApp(config) {
+  async _createApp(config) {
     if (this.created) {
       return Promise.resolve();
     }
-    return this._importModule('web-module://src/arc-electron.js')
-    .then(() => {
-      const app = document.createElement('arc-electron');
-      app.id = 'app';
-      app.config = config;
-      app.componentsDir = 'web_modules';
-      this._setupApp(app);
-      document.body.appendChild(app);
-      this.created = true;
-    });
-  }
-
-  _importModule(href) {
-    return new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.type = 'module';
-      s.src = href;
-      s.async = true;
-      s.onload = () => {
-        resolve();
-      };
-      s.onerror = () => {
-        reject();
-      };
-      document.head.appendChild(s);
-    });
+    await import('web-module://src/arc-electron.js');
+    const app = document.createElement('arc-electron');
+    app.id = 'app';
+    app.config = config;
+    app.componentsDir = 'web_modules';
+    this._setupApp(app);
+    document.body.appendChild(app);
+    this.created = true;
   }
   /**
    * Sets up the application properties.
@@ -205,6 +195,7 @@ class ArcInit {
     app.appVersion = versionInfo.appVersion;
     app.browserVersion = versionInfo.chrome;
     app.initApplication();
+    app.initTutorial();
   }
   /**
    * Because window has to be setup from the main process
@@ -274,12 +265,13 @@ class ArcInit {
     }
   }
 
-  processExternalFile(filePath) {
-    return this.importPreprocessor.processFile(filePath)
-    .catch((cause) => {
+  async processExternalFile(filePath) {
+    try {
+      return await this.importPreprocessor.processFile(filePath);
+    } catch (cause) {
       this.app.notifyError(cause.message);
       console.error(cause);
-    });
+    }
   }
 
   /**
@@ -388,7 +380,8 @@ class ArcInit {
       app.menuConfig = {};
     }
     const state = !app.menuConfig.menuDisabled;
-    app.set(`menuConfig.menuDisabled`, state);
+    app.menuConfig.menuDisabled = state;
+    app.requestUpdate();
   }
 
   _popupMenuOpened(e, type) {
@@ -415,7 +408,8 @@ class ArcInit {
         console.warn('Unknown menu state');
         return;
     }
-    app.set(`menuConfig.${key}`, value);
+    app.menuConfig[key] = value;
+    app.requestUpdate();
   }
 
   removeLoader() {
@@ -429,30 +423,27 @@ class ArcInit {
     }, 150);
   }
 
-  upgradeApp() {
-    return this.prefProxy.load()
-    .then((cnf) => {
-      const inst = new UpgradeHelper(cnf.upgrades);
-      const upgrades = inst.getUpgrades();
-      if (!upgrades || upgrades.length === 0) {
-        return;
-      }
-      console.info('Applying upgrades...');
-      return inst.upgrade(upgrades);
-    });
+  async upgradeApp() {
+    const cnf = await this.prefProxy.load();
+    const inst = new UpgradeHelper(cnf.upgrades);
+    const upgrades = inst.getUpgrades();
+    if (!upgrades || upgrades.length === 0) {
+      return;
+    }
+    console.info('Applying upgrades...');
+    return await inst.upgrade(upgrades);
   }
 
-  processInitialPath() {
+  async processInitialPath() {
     const startPath = this.initConfig.startPath;
     if (!startPath) {
       return Promise.resolve();
     }
     const parts = startPath.split('/');
     if (parts[0] === 'file-protocol-action') {
-      return this.handleDefaultProtocolActon(parts.slice(1));
+      return await this.handleDefaultProtocolActon(parts.slice(1));
     } else {
       history.pushState('', null, '#' + startPath);
-      return Promise.resolve();
     }
   }
   /**
@@ -461,13 +452,12 @@ class ArcInit {
    * @param {Array} args Action arguments passed from the main process.
    * @return {Promise}
    */
-  handleDefaultProtocolActon(args) {
+  async handleDefaultProtocolActon(args) {
     const [source, action, id] = args;
     switch (source) {
-      case 'google-drive': return this.handleGoogleDriveAction(action, id);
+      case 'google-drive': return await this.handleGoogleDriveAction(action, id);
     }
     console.warn('Unknown protocol action. ', args);
-    return Promise.resolve();
   }
   /**
    * Handles opening a file from Google Drive UI.
@@ -476,44 +466,41 @@ class ArcInit {
    * @param {String} fileId File id to process
    * @return {Promise}
    */
-  handleGoogleDriveAction(action, fileId) {
+  async handleGoogleDriveAction(action, fileId) {
     if (action !== 'open') {
       console.warn('Currently only open action for Google Drive is supported.');
-      return Promise.resolve();
+      return;
     }
     const infoNode = document.querySelector('.loading-info');
     infoNode.innerText = 'Loading file from Google Drive';
-    return this.driveBridge.getFile(fileId)
-    .then((data) => {
-      if (!data) {
-        throw new Error('Google drive did not return any data.');
-      }
-      try {
-        data = JSON.parse(data);
-      } catch (e) {
-        console.error(e);
-        throw new Error('Unable to parse received data.');
-      }
-      document.body.dispatchEvent(new CustomEvent('import-process-data', {
-        bubbles: true,
-        cancelable: true,
-        detail: {
-          data
-        }
-      }));
-    })
-    .catch((cause) => {
+    let data = await this.driveBridge.getFile(fileId)
+    if (!data) {
+      const e = new Error('Google drive did not return any data.');
+      this.app.notifyError(e.message);
+      throw e;
+    }
+    try {
+      data = JSON.parse(data);
+    } catch (cause) {
       console.warn(cause);
       this.app.notifyError(cause.message);
-    });
+      throw new Error('Unable to parse received data.');
+    }
+    document.body.dispatchEvent(new CustomEvent('import-process-data', {
+      bubbles: true,
+      cancelable: true,
+      detail: {
+        data
+      }
+    }));
   }
   /**
    * Calls ARC app to serialize workspace data and exports it to a file.
    * @return {Promise}
    */
-  exportWorkspace() {
+  async exportWorkspace() {
     const workspace = this.app.workspace.serializeWorkspace();
-    return this.fs.exportFileData(workspace, 'application/json', 'arc-workspace.arc');
+    return await this.fs.exportFileData(workspace, 'application/json', 'arc-workspace.arc');
   }
 }
 

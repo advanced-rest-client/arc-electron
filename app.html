@@ -3,15 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
-  <meta http-equiv="Content-Security-Policy" content="default-src file: 'self' 'unsafe-inline'; script-src blob: themes: web-module: 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src arc-components: 'self' https://fonts.gstatic.com; connect-src 'self' https: ws: wss: https://www.google-analytics.com https://app.advancedrestclient.com https://anypoint.mulesoft.com; img-src 'self' blob: data: https://exchange2-asset-manager-kprod.s3.amazonaws.com">
+  <meta http-equiv="Content-Security-Policy" content="default-src file: 'self' 'unsafe-inline'; script-src blob: web-module: 'self' 'unsafe-inline'; style-src 'self' themes: 'unsafe-inline' https://fonts.googleapis.com; font-src arc-components: 'self' https://fonts.gstatic.com; connect-src 'self' https: ws: wss: https://www.google-analytics.com https://app.advancedrestclient.com https://anypoint.mulesoft.com; img-src 'self' blob: data: https://exchange2-asset-manager-kprod.s3.amazonaws.com">
   <title>Advanced REST client</title>
-  <script>
-    window.Polymer = {
-      dom: 'shadow',
-      lazyRegister: true,
-      passiveTouchGestures: true
-    };
-  </script>
   <style>
   html {
     --arc-bg-color: #e5e5e5;
@@ -56,74 +49,33 @@
   .loader.end {
     opacity: 0;
   }
+
+  .arc-context-menu {
+    position: absolute;
+    color: var(--anypoint-listbox-color);
+    background-color: var(--anypoint-listbox-background-color, #FAFAFA);
+    box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12), 0 3px 5px -1px rgba(0, 0, 0, 0.4);
+  }
+
+  .arc-context-menu anypoint-icon-item,
+  .arc-context-menu anypoint-item {
+    min-height: 40px;
+  }
+
   </style>
-  <custom-style>
-    <style>
-    /* Context menu */
-    .arc-context-menu {
-      position: absolute;
-      color: var(--paper-listbox-color);
-      background-color: var(--paper-listbox-background-color, #FAFAFA);
-      box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12), 0 3px 5px -1px rgba(0, 0, 0, 0.4);
-    }
-
-    .arc-context-menu iron-icon {
-      color: var(--context-menu-item-color);
-    }
-
-    .arc-context-menu paper-icon-item,
-    .arc-context-menu paper-item {
-      color: var(--context-menu-item-color);
-      background-color: var(--context-menu-item-background-color);
-      cursor: pointer;
-      min-height: 40px;
-    }
-
-    .arc-context-menu paper-icon-item:hover,
-    .arc-context-menu paper-item:hover {
-      color: var(--context-menu-item-color-hover);
-      background-color: var(--context-menu-item-background-color-hover);
-    }
-
-    .arc-context-menu paper-icon-item:hover iron-icon,
-    .arc-context-menu paper-item:hover iron-icon {
-      color: var(--context-menu-item-color-hover);
-    }
-
-    bottom-sheet {
-      width: var(--bottom-sheet-width, 100%);
-      max-width: var(--bottom-sheet-max-width, 700px);
-    }
-    </style>
-  </custom-style>
-  <script type="module">
-  import PouchDB from 'web-module://web_modules/pouchdb/dist/pouchdb.js';
-  window.PouchDB = PouchDB;
-  </script>
-  <!-- <script src="web-module://web_modules/pouchdb/dist/pouchdb.js"></script> -->
-  <!-- CodeMirror + modes loader -->
   <script src="web-module://web_modules/codemirror/lib/codemirror.js"></script>
   <script src="web-module://web_modules/codemirror/addon/mode/loadmode.js"></script>
   <script src="web-module://web_modules/codemirror/mode/meta.js"></script>
-  <!--Default set of parsers, add as many as you need -->
   <script src="web-module://web_modules/codemirror/mode/javascript/javascript.js"></script>
   <script src="web-module://web_modules/codemirror/mode/xml/xml.js"></script>
   <script src="web-module://web_modules/codemirror/mode/htmlmixed/htmlmixed.js"></script>
-  <!-- JSON linter -->
   <script src="web-module://web_modules/jsonlint/web/jsonlint.js"></script>
   <script src="web-module://web_modules/codemirror/addon/lint/lint.js"></script>
   <script src="web-module://web_modules/codemirror/addon/lint/json-lint.js"></script>
-  <!-- Headers hint support -->
-  <script src="web-module://web_modules/@advanced-rest-client/code-mirror-hint/headers-addon.js"></script>
-  <script src="web-module://web_modules/@advanced-rest-client/code-mirror-hint/show-hint.js"></script>
-  <script src="web-module://web_modules/@advanced-rest-client/code-mirror-hint/hint-http-headers.js"></script>
-
   <script>
   window.CodeMirror.modeURL = 'web-module://web_modules/codemirror/mode/%N/%N.js';
   </script>
-
-  <!-- Web animations -->
-  <script src="web-module://web_modules/web-animations-js/web-animations-next.min.js"></script>
+  <script src="web-module://web_modules/web-animations-js/web-animations.min.js"></script>
 </head>
 <body>
   <div class="loader">

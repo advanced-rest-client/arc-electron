@@ -5,20 +5,6 @@
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
   <title>Advanced REST client</title>
 
-  <script type="module">
-  import PouchDB from 'web-module://web_modules/pouchdb/dist/pouchdb.js';
-  window.PouchDB = PouchDB;
-  </script>
-  <script src="web-module://web_modules/web-animations-js/web-animations-next.min.js"></script>
-
-  <script type="module" src="web-module://web_modules/@webcomponents/shadycss/apply-shim.min.js"></script>
-  <script type="module" src="web-module://web_modules/@polymer/polymer/lib/elements/custom-style.js"></script>
-  <script type="module" src="web-module://web_modules/@polymer/font-roboto-local/roboto.js"></script>
-  <script type="module" src="web-module://web_modules/@advanced-rest-client/arc-menu/arc-menu.js"></script>
-  <script type="module" src="web-module://web_modules/@advanced-rest-client/arc-models/rest-api-model.js"></script>
-  <script type="module" src="web-module://web_modules/@advanced-rest-client/arc-models/project-model.js"></script>
-  <script type="module" src="web-module://web_modules/@advanced-rest-client/arc-models/request-model.js"></script>
-
   <style>
   body {
     font-family: Roboto, sans-serif;
@@ -81,22 +67,6 @@
         });
       }
 
-      _importModule(href) {
-        return new Promise((resolve, reject) => {
-          const s = document.createElement('script');
-          s.type = 'module';
-          s.src = href;
-          s.async = true;
-          s.onload = () => {
-            resolve();
-          };
-          s.onerror = () => {
-            reject();
-          };
-          document.head.appendChild(s);
-        });
-      }
-
       _configure(type, listType) {
         let node;
         switch (type) {
@@ -142,5 +112,7 @@
     instance.init();
   })();
   </script>
+
+  <script type="module" src="web-module://web-modules/src/arc-menu-window/arc-menu-window.js"></script>
 </body>
 </html>

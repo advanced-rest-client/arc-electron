@@ -3,7 +3,7 @@
   "description": "A default theme definition for Advanced REST Client",
   "version": "3.0.0",
   "license": "Apache-2.0",
-  "main": "arc-electron-default-theme.js",
+  "main": "arc-electron-default-theme.css",
   "authors": [
     "Pawel Psztyc",
     "The Advanced REST client authors <arc@mulesoft.com>"
