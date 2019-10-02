@@ -30,6 +30,6 @@ Temporary Items
 !.vscode/extensions.json
 
 test/tests-exe-dir
-tasks/mac-app-distribution-cert.p12
-tasks/advancedrestclient.pfx
+advancedrestclient.pfx
+arc-mac-certs.p12
 web_modules
