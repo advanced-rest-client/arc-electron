@@ -88,7 +88,7 @@ class WorkspaceHistory extends ArcPreferences {
    * @return {Promise}
    */
   async clearHistory() {
-    let data = this.load();
+    let data = await this.load();
     if (!data) {
       data = {};
       this.__settings = data;
