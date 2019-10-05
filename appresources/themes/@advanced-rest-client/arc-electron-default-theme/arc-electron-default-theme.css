@@ -131,6 +131,8 @@ body {
                 0 9px 46px 8px rgba(0, 0, 0, 0.12),
                 0 11px 15px -7px rgba(0, 0, 0, 0.4);
   --bottom-sheet-box-shadow: var(--box-shadow-6dp);
+
+  --variables-preview-overlay-background-color: var(--primary-background-color);
 }
 
 body[narrow] {

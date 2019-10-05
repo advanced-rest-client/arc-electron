@@ -1,7 +1,7 @@
 {
   "name": "advanced-rest-client",
   "description": "The Advanced REST Client desktop application.",
-  "version": "14.0.0-alpha.5",
+  "version": "14.0.0-beta.3",
   "homepage": "https://advancedrestclient.com",
   "license": "Apache-2.0",
   "author": {
@@ -18,7 +18,7 @@
     "test": "npm run test-main && npm run test-renderer && npm run test-app",
     "test-main": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron electron-mocha test/**/*.main.spec.js scripts/packages/**/*.main.spec.js",
     "test-renderer": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron electron-mocha --renderer --require-main 'test/renderer-setup-paths.js' scripts/packages/**/*.renderer.spec.js",
-    "test-app": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron mocha test/**.app.spec.js",
+    "test-app": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron mocha test/**.app.spec.js --timeout 10000",
     "test-win-all": "npm run test-win-main && npm run test-win-renderer && npm run test-win-app",
     "test-win-main": "node node_modules/.bin/electron-mocha test/**/*.main.spec.js scripts/packages/**/*.main.spec.js",
     "test-win-renderer": "node node_modules/.bin/electron-mocha --renderer scripts/packages/**/*.renderer.spec.js",
