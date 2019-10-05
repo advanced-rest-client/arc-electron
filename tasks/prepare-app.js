@@ -29,6 +29,9 @@ class PrepareApp {
     const loc = path.join(__dirname, '..', 'node_modules', dir);
     const items = await fs.readdir(loc);
     for (let i = 0, len = items.length; i < len; i++) {
+      if (items[i] === 'pouchdb-mapreduce-no-ddocs') {
+        continue;
+      }
       const candidate = path.join(loc, items[i], 'node_modules');
       let has = false;
       try {
