@@ -21,6 +21,7 @@ import styles from './AppStyles.js';
 import poweredIcon from './poweredby.js';
 window.PouchDB = PouchDB;
 window.PouchQuickSearch = PouchQuickSearch;
+window.PouchDB.plugin(window.PouchQuickSearch);
 window.marked = marked;
 window.Jexl = Jexl;
 /* eslint-disable max-len */
