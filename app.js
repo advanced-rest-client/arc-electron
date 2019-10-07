@@ -22,7 +22,7 @@ class ArcInit {
     /* global ipc, ArcContextMenu, ArcElectronDrive, OAuth2Handler,
     ThemeManager, ArcPreferencesProxy, CookieBridge, WorkspaceManager,
     FilesystemProxy, ElectronAmfService, versionInfo, WindowSearchService,
-    UpgradeHelper, ImportFilePrePprocessor */
+    UpgradeHelper, ImportFilePrePprocessor, EncryptionService */
     this.created = false;
     this.contextActions = new ArcContextMenu();
     this.driveBridge = new ArcElectronDrive();
@@ -33,6 +33,7 @@ class ArcInit {
     this.fs = new FilesystemProxy();
     this.amfService = new ElectronAmfService();
     this.search = new WindowSearchService();
+    this.encryption = new EncryptionService();
   }
   /**
    * @return {ImportFilePrePprocessor} Instance of import processor class.
@@ -66,6 +67,7 @@ class ArcInit {
     this.fs.listen();
     this.amfService.listen();
     this.search.listen();
+    this.encryption.listen();
 
     ipc.on('checking-for-update', () => {
       this.updateEventHandler('checking-for-update');
