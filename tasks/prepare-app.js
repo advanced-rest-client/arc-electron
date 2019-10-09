@@ -1,5 +1,6 @@
 const fs = require('fs-extra');
 const path = require('path');
+/* eslint-disable no-console */
 /**
  * A logic to be executed when the app is being installed from sources (local npm install).
  */
