@@ -57,6 +57,7 @@ class ArcElectron extends ArcAppMixin(LitElement) {
     /* global log */
     this.log = log;
     this.sysVars = process.env;
+    this.withEncrypt = true;
   }
 
   connectedCallback() {

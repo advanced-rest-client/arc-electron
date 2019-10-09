@@ -1,5 +1,6 @@
 const AES = require('crypto-js/aes.js');
 const CryptoJS = require('crypto-js/crypto-js.js');
+const prompt = require('electron-prompt');
 /**
  * A class that handles `encryption-*` web events in the renderer process
  * and performs data encryption/decryption.
@@ -26,11 +27,13 @@ class EncryptionService {
 
   _decodeHandler(e) {
     const { method } = e.detail;
+    e.preventDefault();
     e.detail.result = this.decode(method, e.detail);
   }
 
   _encodeHandler(e) {
     const { method } = e.detail;
+    e.preventDefault();
     e.detail.result = this.encode(method, e.detail);
   }
 
@@ -56,11 +59,22 @@ class EncryptionService {
   }
 
   async decodeAes(data, passphrase) {
-    if (!passphrase === undefined) {
-      passphrase = prompt('Enter password to open the file.');
+    if (passphrase === undefined) {
+      const win = require('electron').remote.getCurrentWindow();
+      passphrase = await prompt({
+        title: 'File password',
+        label: 'Enter password to open the file',
+      }, win);
+      if (passphrase === null) {
+        throw new Error('Password is required to open the file.');
+      }
     }
-    const bytes = AES.decrypt(data, passphrase);
-    return bytes.toString(CryptoJS.enc.Utf8);
+    try {
+      const bytes = AES.decrypt(data, passphrase);
+      return bytes.toString(CryptoJS.enc.Utf8);
+    } catch (_) {
+      throw new Error('Invalid password.');
+    }
   }
 }
 exports.EncryptionService = EncryptionService;
