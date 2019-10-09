@@ -5,4 +5,5 @@
 ## Using ARC
 
 * [Your first API call](using-arc/your-first-api-call.md)
+* [Environments and variables](using-arc/environments-and-variables.md)
 
