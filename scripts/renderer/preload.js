@@ -14,6 +14,7 @@ const { ArcContextMenu } = require('../packages/context-actions/renderer');
 const { FilesystemProxy } = require('./filesystem-proxy');
 const { ElectronAmfService } = require('@advanced-rest-client/electron-amf-service');
 const { WindowSearchService } = require('../packages/search-service/renderer');
+const { EncryptionService } = require('../packages/encryption/renderer/encryption.js');
 const { UpgradeHelper } = require('./upgrade-helper');
 const { ImportFilePrePprocessor } = require('./import-file-preprocessor');
 const setImmediateFn = setImmediate;
@@ -49,6 +50,7 @@ process.once('loaded', () => {
   global.Jexl = Jexl;
   global.UpgradeHelper = UpgradeHelper;
   global.ImportFilePrePprocessor = ImportFilePrePprocessor;
+  global.EncryptionService = EncryptionService;
   global.versionInfo = {
     chrome: versions.chrome,
     appVersion: app.getVersion()
