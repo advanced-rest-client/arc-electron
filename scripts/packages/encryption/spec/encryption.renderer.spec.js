@@ -32,7 +32,7 @@ describe('EncryptionService', function() {
 
 
   describe('Decrypting content', () => {
-    const encoded = 'U2FsdGVkX19MRBu8liXK/sbNBOQWG1mewbjEBb8cTAw=';
+    const encoded = '0f8edad5305cbd4012369ed0IbNBdWOJpsToD8EMUJi+B6XfefpULsPuBA==';
     let instance;
     before(() => {
       instance = new EncryptionService();

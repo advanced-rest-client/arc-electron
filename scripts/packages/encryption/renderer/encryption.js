@@ -1,5 +1,3 @@
-const AES = require('crypto-js/aes.js');
-const CryptoJS = require('crypto-js/crypto-js.js');
 const prompt = require('electron-prompt');
 /**
  * A class that handles `encryption-*` web events in the renderer process
@@ -45,10 +43,19 @@ class EncryptionService {
   }
 
   async encodeAes(data, passphrase) {
-    // Todo: this looks really dangerous to run file encryption in the main
-    // thread (of the renderer process). Consider other options.
-    const encrypted = AES.encrypt(data, passphrase);
-    return encrypted.toString();
+    // see https://gist.github.com/chrisveness/43bcda93af9f646d083fad678071b90a
+    const pwUtf8 = new TextEncoder().encode(passphrase);
+    const pwHash = await crypto.subtle.digest('SHA-256', pwUtf8);
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const alg = { name: 'AES-GCM', iv: iv };
+    const key = await crypto.subtle.importKey('raw', pwHash, alg, false, ['encrypt']);
+    const ptUint8 = new TextEncoder().encode(data);
+    const ctBuffer = await crypto.subtle.encrypt(alg, key, ptUint8);
+    const ctArray = Array.from(new Uint8Array(ctBuffer));
+    const ctStr = ctArray.map(byte => String.fromCharCode(byte)).join('');
+    const ctBase64 = btoa(ctStr);
+    const ivHex = Array.from(iv).map(b => ('00' + b.toString(16)).slice(-2)).join('');
+    return ivHex+ctBase64;
   }
 
   async decode(method, opts) {
@@ -58,7 +65,7 @@ class EncryptionService {
     }
   }
 
-  async decodeAes(data, passphrase) {
+  async decodeAes(ciphertext, passphrase) {
     if (passphrase === undefined) {
       const win = require('electron').remote.getCurrentWindow();
       passphrase = await prompt({
@@ -70,8 +77,16 @@ class EncryptionService {
       }
     }
     try {
-      const bytes = AES.decrypt(data, passphrase);
-      return bytes.toString(CryptoJS.enc.Utf8);
+      const pwUtf8 = new TextEncoder().encode(passphrase);
+      const pwHash = await crypto.subtle.digest('SHA-256', pwUtf8);
+      const iv = ciphertext.slice(0,24).match(/.{2}/g).map(byte => parseInt(byte, 16));
+      const alg = { name: 'AES-GCM', iv: new Uint8Array(iv) };
+      const key = await crypto.subtle.importKey('raw', pwHash, alg, false, ['decrypt']);
+      const ctStr = atob(ciphertext.slice(24));
+      const ctUint8 = new Uint8Array(ctStr.match(/[\s\S]/g).map(ch => ch.charCodeAt(0)));
+      const plainBuffer = await crypto.subtle.decrypt(alg, key, ctUint8);
+      const plaintext = new TextDecoder().decode(plainBuffer);
+      return plaintext;
     } catch (_) {
       throw new Error('Invalid password.');
     }
