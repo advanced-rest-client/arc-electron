@@ -14,7 +14,7 @@ body {
   --menu-link-color: #111111;
   --link-color: #00A1DF;
   --toolbar-color: #ffffff;
-  --toolbar-background-color: var(--primary-color);
+  --toolbar-background-color: #00569a;
   --main-section-border-color: rgba(0, 0, 0, 0.12);
   --hover-button-accent-color: #df0052;
   --pages-fixed-height: calc(100vh - 64px);
@@ -133,6 +133,9 @@ body {
   --bottom-sheet-box-shadow: var(--box-shadow-6dp);
 
   --variables-preview-overlay-background-color: var(--primary-background-color);
+  --arc-env-container-color: #fff;
+  --arc-toolbar-variables-toggle-icon-color: #fff;
+  --arc-toolbar-back-icon-color: #fff;
 }
 
 body[narrow] {
