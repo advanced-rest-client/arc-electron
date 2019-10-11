@@ -333,4 +333,9 @@ body {
                 0 11px 15px -7px rgba(0, 0, 0, 0.4);
 
   --variables-preview-overlay-background-color: var(--primary-background-color);
+  --arc-env-container-color: #000;
+  --arc-toolbar-variables-toggle-icon-color: #000;
+  --arc-toolbar-back-icon-color: #000;
+  --arc-env-selector-background-color: transparent;
+  --arc-env-selector-color: #000;
 }
