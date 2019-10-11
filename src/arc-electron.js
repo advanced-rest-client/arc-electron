@@ -6,18 +6,9 @@ import PouchDB from '../web_modules/pouchdb/dist/pouchdb.js';
 import PouchQuickSearch from
 '../web_modules/@advanced-rest-client/pouchdb-quick-search/dist/pouchdb.quick-search.min.js';
 import marked from '../web_modules/marked/lib/marked.js';
-import '../web_modules/@polymer/app-layout/app-drawer-layout/app-drawer-layout.js';
-import '../web_modules/@polymer/app-layout/app-drawer/app-drawer.js';
-import '../web_modules/@polymer/app-layout/app-header-layout/app-header-layout.js';
-import '../web_modules/@polymer/app-layout/app-header/app-header.js';
-import '../web_modules/@polymer/app-layout/app-toolbar/app-toolbar.js';
-import '../web_modules/@polymer/paper-toast/paper-toast.js';
-import '../web_modules/@advanced-rest-client/arc-info-messages/arc-info-messages.js';
-import '../web_modules/@polymer/iron-media-query/iron-media-query.js';
+import styles from '../web_modules/@advanced-rest-client/arc-app-mixin/AppStyles.js';
 import '../web_modules/@api-components/api-candidates-dialog/api-candidates-dialog.js';
-// import '../web_modules/@advanced-rest-client/arc-onboarding/arc-onboarding.js';
 import './electron-http-transport/electron-http-transport.js';
-import styles from './AppStyles.js';
 import poweredIcon from './poweredby.js';
 window.PouchDB = PouchDB;
 window.PouchQuickSearch = PouchQuickSearch;
@@ -54,6 +45,7 @@ class ArcElectron extends ArcAppMixin(LitElement) {
     this._copyContentHandler = this._copyContentHandler.bind(this);
     this._exchangeAssetHandler = this._exchangeAssetHandler.bind(this);
     this._activeThemeHandler = this._activeThemeHandler.bind(this);
+    this._apiDataHandler = this._apiDataHandler.bind(this);
     /* global log */
     this.log = log;
     this.sysVars = process.env;
@@ -64,15 +56,16 @@ class ArcElectron extends ArcAppMixin(LitElement) {
     window.addEventListener('open-external-url', this._openExternalHandler);
     window.addEventListener('content-copy', this._copyContentHandler);
     window.addEventListener('theme-activated', this._activeThemeHandler);
+    window.addEventListener('api-data-ready', this._apiDataHandler);
     this.addEventListener('process-exchange-asset-data', this._exchangeAssetHandler);
   }
 
-  firstUpdated() {
-    super.firstUpdated();
-    setTimeout(() => {
-      this._variablesButton = this.shadowRoot.querySelector('#varToggleButton');
-      this._scrollTarget = this.shadowRoot.querySelector('#scrollingRegion').$.contentContainer;
-    });
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    window.removeEventListener('open-external-url', this._openExternalHandler);
+    window.removeEventListener('content-copy', this._copyContentHandler);
+    window.removeEventListener('theme-activated', this._activeThemeHandler);
+    window.removeEventListener('api-data-ready', this._apiDataHandler);
   }
 
   _routeDataChanged() {
@@ -129,6 +122,71 @@ class ArcElectron extends ArcAppMixin(LitElement) {
     } else {
       await super._pageChanged(page);
     }
+  }
+
+  _handleNavigation(e) {
+    const { detail } = e;
+    if (detail.base === 'api-console') {
+      this.page = detail.base;
+      this.routeParams = { id: detail.id };
+      this._telemetryScreen();
+    } else {
+      super._handleNavigation(e);
+    }
+  }
+
+  _telemetryScreen() {
+    let screenName = this.page;
+    switch (this.page) {
+      case 'api-console': screenName = 'API Console'; break;
+      case 'themes-panel': screenName = 'Themes panel'; break;
+      case 'exchange-search': screenName = 'Exchange search'; break;
+      case 'hosts-rules': screenName = 'Hosts rules'; break;
+      case 'rest-projects': screenName = 'REST APIs list'; break;
+      case 'about': screenName = 'About'; break;
+      default: return super._telemetryScreen();
+    }
+    this.dispatchEvent(new CustomEvent('send-analytics', {
+      composed: true,
+      cancelable: true,
+      bubbles: true,
+      detail: {
+        type: 'screenview',
+        name: screenName
+      }
+    }));
+  }
+  /**
+   * Navigates to themes panel
+   */
+  openThemesPanel() {
+    this._dispatchNavigate({
+      base: 'themes-panel'
+    });
+  }
+  /**
+   * Opens the host rules editor.
+   */
+  openHostRules() {
+    this._dispatchNavigate({
+      base: 'hosts-rules'
+    });
+  }
+  /**
+   * Navigates to Exchange search panel
+   */
+  openExchangeSearch() {
+    this._dispatchNavigate({
+      base: 'exchange-search'
+    });
+  }
+  /**
+   * Navigates to about screen
+   */
+  openAbout() {
+    this._dispatchNavigate({
+      base: 'about'
+    });
   }
 
   _openWebUrlHandler(e) {
@@ -247,10 +305,6 @@ class ArcElectron extends ArcAppMixin(LitElement) {
   openOnboarding() {
     const node = this.shadowRoot.querySelector('arc-onboarding');
     node.opened = true;
-  }
-
-  _narrowHandler(e) {
-    this.narrow = e.detail.value;
   }
 
   async _setupApiConsole(params) {
@@ -459,6 +513,7 @@ class ArcElectron extends ArcAppMixin(LitElement) {
    * Initialized the tutorial if needed.
    */
   async initTutorial() {
+    /* global versionInfo */
     const major = versionInfo.appVersion.split('.')[0];
     const cnf = this.config;
     const passed = cnf.finishedOnboarding || [];
@@ -506,52 +561,24 @@ class ArcElectron extends ArcAppMixin(LitElement) {
     }
   }
 
-  render() {
-    const {
-      narrowLayout,
-      appMenuDisabled,
-      messageCenterOpened,
-      appMessages
-    } = this;
+  async _apiDataHandler(e) {
+    const { model, type } = e.detail;
+    await this._setApiData(model, type.type);
+    this._dispatchNavigate({
+      base: 'api-console'
+    });
+  }
+
+  _platformHelpersTemplate() {
     return html`
-    ${this.modelsTemplate()}
     ${this.importExportTemplate({ electron: true })}
-    ${this.requestLogicTemplate()}
-    ${this.variablesLogicTemplate()}
     ${this.appMessagesLogicTemplate('electron')}
+    `;
+  }
 
-    <app-drawer-layout fullbleed ?narrow="${narrowLayout}" ?force-narrow="${appMenuDisabled}" responsive-width="980px">
-      <app-drawer slot="drawer" align="start">
-        ${this.menuTemplate()}
-      </app-drawer>
-      <app-drawer
-        slot="drawer"
-        align="end"
-        .opened="${messageCenterOpened}"
-        class="info-center-drawer"
-      >
-        <arc-info-messages
-          .messages="${appMessages}"
-          @close="${this.closeInfoCenter}"
-        ></arc-info-messages>
-      </app-drawer>
-
-      <app-header-layout has-scrolling-region id="scrollingRegion">
-        <app-header slot="header" fixed shadow scroll-target="scrollingRegion">
-          <app-toolbar>
-            ${this.mainToolbarTemplate()}
-          </app-toolbar>
-        </app-header>
-        <div class="pages">
-          ${this.workspaceTemplate()}
-          ${this._pageTemplate()}
-        </div>
-      </app-header-layout>
-    </app-drawer-layout>
-    <iron-media-query query="(max-width: 700px)" @query-matches-changed="${this._narrowHandler}"></iron-media-query>
-    ${this.variablesDrawerTemplate()}
-    ${this._analyticsTemplate()}
-    ${this.licenseTemplate()}
+  render() {
+    return html`
+    ${this.applicationTemplate()}
     ${this.apiCandidatedViewTemplate()}
     <arc-onboarding></arc-onboarding>
     <paper-toast id="errorToast" duration="5000"></paper-toast>`;
@@ -767,8 +794,6 @@ class ArcElectron extends ArcAppMixin(LitElement) {
   }
 
   menuTemplate() {
-    // const { isApiConsole } = this;
-    // return isApiConsole ? this.apicNavigationTemplate() : this.arcNavigationTemplate();
     if (this.isApiConsole) {
       return this.apicNavigationTemplate();
     }

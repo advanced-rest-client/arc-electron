@@ -243,6 +243,10 @@ body {
   --project-details-description-color: #fff;
 
   --web-url-input-background-color: #616161;
+
+  --arc-env-container-color: #fff;
+  --arc-toolbar-variables-toggle-icon-color: #fff;
+  --arc-toolbar-back-icon-color: #fff;
 }
 
 body[narrow] {
