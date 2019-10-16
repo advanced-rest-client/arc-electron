@@ -1,7 +1,7 @@
 {
   "name": "@advanced-rest-client/arc-electron-default-theme",
   "description": "A default theme definition for Advanced REST Client",
-  "version": "3.0.0",
+  "version": "3.0.2",
   "license": "Apache-2.0",
   "main": "arc-electron-default-theme.css",
   "authors": [
