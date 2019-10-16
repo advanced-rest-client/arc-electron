@@ -180,6 +180,7 @@ class ThemeDefaults {
    */
   async _copyInfoFile() {
     const dest = process.env.ARC_THEMES_SETTINGS;
+    await fs.ensureDir(process.env.ARC_THEMES);
     let info = await fs.readJson(this.localThemeInfoFile, { throws: false })
     info = info || {};
     await fs.writeJson(dest, info);

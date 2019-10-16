@@ -3,36 +3,27 @@ const fs = require('fs-extra');
 const path = require('path');
 const { ThemeDefaults } = require('../../../scripts/main/defaults/theme-defaults.js');
 
-describe.only('ThemeDefaults', function() {
-  const themePath = './test/scripts/main/theme';
-  const basePath = path.join(themePath, '@advanced-rest-client');
+const testPaths = require('../../setup-paths');
+testPaths.getBasePath();
+
+describe('ThemeDefaults', function() {
+  const basePath = path.join(process.env.ARC_THEMES, '@advanced-rest-client');
   const defaultFile = path.join(basePath, 'arc-electron-default-theme', 'arc-electron-default-theme.css');
   const defaultPackage = path.join(basePath, 'arc-electron-default-theme', 'package.json');
   const anypointFile = path.join(basePath, 'arc-electron-anypoint-theme', 'arc-electron-anypoint-theme.css');
   const anypointPackage = path.join(basePath, 'arc-electron-anypoint-theme', 'package.json');
   const darkFile = path.join(basePath, 'arc-electron-dark-theme', 'arc-electron-dark-theme.css');
   const darkPackage = path.join(basePath, 'arc-electron-dark-theme', 'package.json');
-  const themeInfo = path.join(themePath, 'themes-info.json');
 
   let instance;
-  describe('Basics', function() {
-    before(function() {
-      instance = new ThemeDefaults();
-    });
-
-    it('Sets themePath property', function() {
-      assert.typeOf(instance.themePath, 'string');
-    });
-  });
 
   describe('prepareEnvironment()', function() {
     beforeEach(function() {
       instance = new ThemeDefaults();
-      instance.themePath = themePath;
     });
 
     afterEach(function() {
-      return fs.remove(instance.themePath);
+      return fs.remove(process.env.ARC_THEMES);
     });
 
     async function testContents(themeFile, pkgFile) {
@@ -59,7 +50,7 @@ describe.only('ThemeDefaults', function() {
 
     it('Copies theme info file', async () => {
       await instance.prepareEnvironment();
-      const exists = await fs.exists(themeInfo);
+      const exists = await fs.exists(process.env.ARC_THEMES_SETTINGS);
       assert.isTrue(exists, 'File exists');
     });
   });
@@ -67,26 +58,46 @@ describe.only('ThemeDefaults', function() {
   describe('Updating preinstalled theme files', () => {
     beforeEach(function() {
       instance = new ThemeDefaults();
-      instance.themePath = themePath;
     });
 
     afterEach(function() {
-      return fs.remove(instance.themePath);
+      return fs.remove(process.env.ARC_THEMES);
     });
 
     async function installDummy(version) {
-      version = version || '1.0.0';
+      version = version || '0.0.0';
       await fs.outputFile(defaultFile, 'not-a-theme-file');
       await fs.writeJson(defaultPackage, {
         version
       });
     }
 
+    async function installDb() {
+      const db = await fs.readJson(
+        path.join(__dirname, '..', '..', '..', 'appresources', 'themes', 'themes-info.json'));
+      db.themes.forEach((item) => item.version = '0.0.0');
+      await fs.outputJson(process.env.ARC_THEMES_SETTINGS, db);
+    }
+
     it('updates pre-installed theme file', async () => {
       await installDummy();
       await instance.prepareEnvironment();
       const contents = await fs.readFile(defaultFile, 'utf8');
-      assert.notEqual(contents, 'not-a-theme-file');
+      assert.notEqual(contents, 'not-a-theme-file', 'Theme content has changed');
+      const pkg = await fs.readJson(defaultPackage);
+      assert.typeOf(pkg.version, 'string', 'Theme package has a version');
+      assert.notEqual(pkg.version, '0.0.0', 'Package version is updated');
+    });
+
+    it('updates indo db', async () => {
+      await installDummy();
+      await installDb();
+      await instance.prepareEnvironment();
+      const db = await fs.readJson(process.env.ARC_THEMES_SETTINGS);
+      db.themes.forEach((item) => {
+        assert.typeOf(item.version, 'string', 'Theme has a version');
+        assert.notEqual(item.version, '0.0.0', 'Theme version is updated');
+      });
     });
   });
 });
