@@ -1,6 +1,6 @@
-const {ipcMain: ipc} = require('electron');
-const {ThemeInfo} = require('../../../main/models/theme-info');
-const {ThemePluginsManager} = require('../../plugin-manager/main');
+const { ipcMain: ipc } = require('electron');
+const { ThemeInfo } = require('../../../main/models/theme-info');
+const { ThemePluginsManager } = require('../../plugin-manager/main');
 const log = require('../../../main/logger');
 
 class ThemeManager {
@@ -57,8 +57,9 @@ class ThemeManager {
    */
   _listThemesHandler(e, id) {
     this.themeInfo.load()
-    .then((list) => {
-      e.sender.send('theme-manager-themes-list', id, list);
+    .then((info) => {
+      const { themes } = info;
+      e.sender.send('theme-manager-themes-list', id, themes);
     })
     .catch((cause) => this._handleError(e.sender, id, cause));
   }
@@ -75,7 +76,8 @@ class ThemeManager {
       this.themeInfo.load()
     ])
     .then((result) => {
-      const [settings, themes] = result;
+      const [settings, themesInfo] = result;
+      const { themes } = themesInfo;
       const themeId = settings.theme || this.defaultTheme;
       let theme = this._findThemeInfo(themeId, themes);
       if (!theme) {
@@ -111,21 +113,20 @@ class ThemeManager {
    * @param {String} id
    * @param {String} themeId
    */
-  _activateHandler(e, id, themeId) {
-    this.arcApp.config.load()
-    .then((settings) => {
+  async _activateHandler(e, id, themeId) {
+    try {
+      const settings = await this.arcApp.config.load();
       settings.theme = themeId;
-      return this.arcApp.config.store();
-    })
-    .then(() => {
-      e.sender.send('theme-manager-theme-activated', id);
-    })
-    .catch((cause) => this._handleError(e.sender, id, cause));
+      await this.arcApp.config.store();
+      e.sender.send('theme-manager-theme-activated', id, themeId);
+    } catch (cause) {
+      this._handleError(e.sender, id, cause);
+    }
   }
 
   _installHandler(e, id, name) {
     if (!name || typeof name !== 'string') {
-      e.sender.send('theme-manager-error', id, {message: 'The name is not valid.'});
+      e.sender.send('theme-manager-error', id, { message: 'The name is not valid.' });
       return;
     }
     const index = name.indexOf('#');
@@ -143,7 +144,7 @@ class ThemeManager {
 
   _uninstallHandler(e, id, name) {
     if (!name || typeof name !== 'string') {
-      e.sender.send('theme-manager-error', id, {message: 'The name is not valid.'});
+      e.sender.send('theme-manager-error', id, { message: 'The name is not valid.' });
       return;
     }
     this.manager.uninstall(name)

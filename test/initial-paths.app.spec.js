@@ -7,7 +7,7 @@ describe('Initial paths', function() {
   const basePath = path.join('test', 'tests-exe-dir');
   const settingsFilePath = path.join(basePath, 'test-settings.json');
   const workspaceFilePath = path.join(basePath, 'workspace');
-  const themesFilePath = path.join(basePath, 'themes');
+  const themesFilePath = path.join(basePath, 'themes-esm');
   const componentsFilePath = path.join(basePath, 'components');
 
   describe('Setups default file paths', function() {
@@ -96,13 +96,6 @@ describe('Initial paths', function() {
         assert.equal(variables.ARC_WORKSPACE_PATH, bootstrap.workspaceFilePath);
       });
     });
-
-    it('Sets default ARC_COMPONENTS_PATH in ARC_HOME', () => {
-      return app.mainProcess.env()
-      .then((variables) => {
-        assert.equal(variables.ARC_COMPONENTS_PATH, path.join(variables.ARC_HOME, 'components'));
-      });
-    });
   });
 
   describe('Setups configuration file paths', function() {
@@ -114,9 +107,7 @@ describe('Initial paths', function() {
         '--workspace-path',
         workspaceFilePath,
         '--themes-path',
-        themesFilePath,
-        '--components-path',
-        componentsFilePath
+        themesFilePath
       ]
     };
     let app;
@@ -149,13 +140,6 @@ describe('Initial paths', function() {
       return app.mainProcess.env()
       .then((variables) => {
         assert.equal(variables.ARC_WORKSPACE_PATH, workspaceFilePath);
-      });
-    });
-
-    it('Sets ARC_COMPONENTS_PATH variable', () => {
-      return app.mainProcess.env()
-      .then((variables) => {
-        assert.equal(variables.ARC_COMPONENTS_PATH, componentsFilePath);
       });
     });
 

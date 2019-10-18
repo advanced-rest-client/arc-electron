@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <title>Advanced REST client</title>
+
+  <style>
+  body {
+    font-family: Roboto, sans-serif;
+    color: #333;
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    background-color: #fff;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+
+  menu {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+  }
+
+  #menu {
+    height: 100%;
+  }
+  </style>
+</head>
+<body>
+  <rest-api-model></rest-api-model>
+  <project-model></project-model>
+  <request-model></request-model>
+
+  <menu id="container"></menu>
+  <script>
+  (function() {
+    class ArcMenuWindow {
+      constructor() {
+        this._settingsHandler = this._settingsHandler.bind(this);
+        this._navHandler = this._navHandler.bind(this);
+      }
+
+      init() {
+        /* global ThemeManager, ArcPreferencesProxy, ipc */
+        this.listen();
+        this.themeManager = new ThemeManager();
+        this.prefProxy = new ArcPreferencesProxy();
+        this.prefProxy.observe();
+        const u = new URL(location.href);
+        const type = u.searchParams.get('type');
+
+        return this.prefProxy.load()
+        .then((cnf) => {
+          this._configure(type, cnf.viewListType);
+          return this.themeManager.loadTheme(cnf.theme);
+        })
+        .catch((cause) => {
+          console.warn(cause);
+        });
+      }
+
+      _configure(type, listType) {
+        let node;
+        switch (type) {
+          case 'history-menu':
+          case 'saved-menu':
+          case 'projects-menu':
+          case 'rest-api-menu':
+            node = document.createElement(type);
+            node.id = 'menu';
+            break;
+          case '*':
+            node = document.createElement('arc-menu');
+            node.id = 'menu';
+            node.historyEnabled = true;
+            break;
+          default:
+            console.error('Unknown menu object');
+            return;
+        }
+        node.listType = listType;
+        const container = document.getElementById('container');
+        container.appendChild(node);
+      }
+
+      listen() {
+        document.body.addEventListener('settings-changed', this._settingsHandler);
+        document.body.addEventListener('navigate', this._navHandler);
+      }
+
+      _settingsHandler(e) {
+        if (e.detail.name === 'viewListType') {
+          const node = document.getElementById('menu');
+          node.listType = e.detail.value;
+        }
+      }
+
+      _navHandler(e) {
+        ipc.send('popup-app-menu-nav', e.detail);
+      }
+    }
+
+    const instance = new ArcMenuWindow();
+    instance.init();
+  })();
+  </script>
+
+  <script type="module" src="web-module://web-modules/src/arc-menu-window/arc-menu-window.js"></script>
+</body>
+</html>

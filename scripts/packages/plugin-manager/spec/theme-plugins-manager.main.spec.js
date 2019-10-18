@@ -286,8 +286,9 @@ describe('ThemePluginsManager - main process', function() {
       return instance._addThemeEntry(info)
       .then(() => fs.readJson(process.env.ARC_THEMES_SETTINGS))
       .then((data) => {
-        assert.typeOf(data, 'array');
-        assert.lengthOf(data, 1);
+        assert.typeOf(data, 'object');
+        assert.typeOf(data.themes, 'array');
+        assert.lengthOf(data.themes, 1);
       });
     });
 
@@ -296,8 +297,8 @@ describe('ThemePluginsManager - main process', function() {
       .then(() => instance._addThemeEntry(info))
       .then(() => fs.readJson(process.env.ARC_THEMES_SETTINGS))
       .then((data) => {
-        assert.typeOf(data, 'array');
-        assert.lengthOf(data, 2);
+        assert.typeOf(data.themes, 'array');
+        assert.lengthOf(data.themes, 2);
       });
     });
   });
@@ -335,8 +336,8 @@ describe('ThemePluginsManager - main process', function() {
         return instance.uninstall(localPackage)
         .then(() => fs.readJson(process.env.ARC_THEMES_SETTINGS))
         .then((data) => {
-          assert.typeOf(data, 'array');
-          assert.lengthOf(data, 0);
+          assert.typeOf(data.themes, 'array');
+          assert.lengthOf(data.themes, 0);
         });
       });
     });
@@ -379,8 +380,8 @@ describe('ThemePluginsManager - main process', function() {
       it('Removes entry from info file.', () => {
         return fs.readJson(path.join(process.env.ARC_THEMES_SETTINGS))
         .then((data) => {
-          assert.typeOf(data, 'array');
-          assert.lengthOf(data, 0);
+          assert.typeOf(data.themes, 'array');
+          assert.lengthOf(data.themes, 0);
         });
       });
     });
