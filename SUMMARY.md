@@ -6,4 +6,10 @@
 
 * [Your first API call](using-arc/your-first-api-call.md)
 * [Environments and variables](using-arc/environments-and-variables.md)
+* [Host rules](using-arc/host-rules.md)
+* [Request actions](using-arc/untitled.md)
+
+## Guides
+
+* [Authenticating With OAuth2 And Request Actions](guides/authenticating-with-oauth2-and-request-actions.md)
 
