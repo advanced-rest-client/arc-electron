@@ -1,6 +1,7 @@
 # Table of contents
 
 * [Installing Advanced REST Client](README.md)
+* [RESTful APIs getting started](restful-apis-getting-started.md)
 
 ## Using ARC
 
