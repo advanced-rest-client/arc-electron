@@ -10,6 +10,7 @@
 * [Host rules](using-arc/host-rules.md)
 * [Request actions](using-arc/untitled.md)
 * [Searching for a request](using-arc/searching-for-a-request.md)
+* [Cookies and session management](using-arc/cookies-and-session-management.md)
 
 ## Guides
 

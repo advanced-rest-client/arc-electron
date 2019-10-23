@@ -20,23 +20,23 @@ When you define a rule and the rule matches the URL of currently executed reques
 
 From the menu Request select Hosts. A host rules mapping screen appears. Click on the add button \(right bottom corner of the screen\) to add new entry.
 
-![Empty rule in hosts rules mapping](../.gitbook/assets/image%20%2830%29.png)
+![Empty rule in hosts rules mapping](../.gitbook/assets/image%20%2838%29.png)
 
 In the `from` filed enter the part of the URL that should be replaced with another value. It doesn't have to be a host name only. It can be a full URL or a part of it.
 
-![Defining a rule in hosts mapping editor](../.gitbook/assets/image%20%2825%29.png)
+![Defining a rule in hosts mapping editor](../.gitbook/assets/image%20%2831%29.png)
 
 In this example the rules mapping maps `https://hosts.com` to `http://127.0.0.1`. Notice that we are not only changing the host but also the scheme.
 
 Now you can test whether the mapping meets your expectations by running a request URL through rules tester.
 
-![Rules tester with result](../.gitbook/assets/image%20%2845%29.png)
+![Rules tester with result](../.gitbook/assets/image%20%2853%29.png)
 
 We are testing `https://host.com/index.html` URL against defined rules. The result shows that expected result is `http://127.0.0.1/index.html`.
 
 Now, we can run a request that uses `host.com` in the URL and the connection is made to the local host.
 
-![Request made to mapped location](../.gitbook/assets/image%20%2842%29.png)
+![Request made to mapped location](../.gitbook/assets/image%20%2850%29.png)
 
 Even though the request URL contains non-existing URL the request returned data from my locally run server.
 
