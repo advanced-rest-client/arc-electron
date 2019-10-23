@@ -9,6 +9,7 @@
 * [Environments and variables](using-arc/environments-and-variables.md)
 * [Host rules](using-arc/host-rules.md)
 * [Request actions](using-arc/untitled.md)
+* [Searching for a request](using-arc/searching-for-a-request.md)
 
 ## Guides
 

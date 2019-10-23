@@ -23,7 +23,7 @@ There are two groups of actions that can be performed during the request
 
 Currently request action only allows you to set a value on a variable before the request is made. This value is not stored in the data store bur rather in memory only. This means when you restart the application the variable value will be restored to it's original value.
 
-![Request action with definition](../.gitbook/assets/image%20%2833%29.png)
+![Request action with definition](../.gitbook/assets/image%20%2838%29.png)
 
 In this example a `myAccessToken` variable is set to empty string before the request is executed.
 
@@ -147,11 +147,11 @@ path = 'people.person.0.name.attr(first)' // george
 
 When `path` is set you can define two actions to be performed on the data. You can either permanently `Store variable` in application internal database or `Assign variable` temporarily until you restart the application. Last item is to define variable name that will be updated with the value.
 
-![Response action definition](../.gitbook/assets/image%20%288%29.png)
+![Response action definition](../.gitbook/assets/image%20%289%29.png)
 
 ## Conditions
 
-![](../.gitbook/assets/image%20%2817%29.png)
+![](../.gitbook/assets/image%20%2819%29.png)
 
 You can add a condition to the action so the action will be executed if all defined conditions are meet.
 

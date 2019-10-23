@@ -18,7 +18,7 @@ Let's say you have "production" and "stage" environments for your API. Both are 
 
 Advanced REST Client lists your application variables created for current environment and system variables available on your machine. You can use both keys to insert it into a request.
 
-![Variables list](../.gitbook/assets/image%20%2810%29.png)
+![Variables list](../.gitbook/assets/image%20%2812%29.png)
 
 To protect your data variables are masked by default. You can toggle visibility of the values using the button at the bottom of the variables list.
 
@@ -28,17 +28,17 @@ You can disable application or system variables in application settings.
 
 When switching the environment in the top toolbar you will switch between different application variables defined for this environment. System variables cannot be changed.
 
-![Empty environment](../.gitbook/assets/image%20%289%29.png)
+![Empty environment](../.gitbook/assets/image%20%2810%29.png)
 
 ## Editing variables
 
 To add a new environment first click on "Edit variables" to open variables editor.
 
-![Empty variables editor](../.gitbook/assets/image%20%2832%29.png)
+![Empty variables editor](../.gitbook/assets/image%20%2837%29.png)
 
 Then "Add" next to environment selector. It then renders a text field where you can enter new environment name. There are no limitation for environment name.
 
-![Adding an environment](../.gitbook/assets/image%20%2825%29.png)
+![Adding an environment](../.gitbook/assets/image%20%2828%29.png)
 
 When the environment is saved then you can define variables for it.
 
@@ -64,11 +64,11 @@ You can repeat this steps as many times you need for each of your environments. 
 
 To apply a variable simply as `${` before variable name and `}` after it.
 
-![Applying variable to a request](../.gitbook/assets/image%20%2828%29.png)
+![Applying variable to a request](../.gitbook/assets/image%20%2832%29.png)
 
 The value is applied to the header just before sending the request
 
-![Sent HTTP message with variable applied to a header](../.gitbook/assets/image%20%2836%29.png)
+![Sent HTTP message with variable applied to a header](../.gitbook/assets/image%20%2841%29.png)
 
 You can put a variable into a method, URL, headers, or payload field. Variables can be used as many times as you need in a request.
 
@@ -82,19 +82,19 @@ As an example, basic authorization requires both username and password. It might
 
 As a result the combined value is used with the request.
 
-![Processed variable value](../.gitbook/assets/image%20%2829%29.png)
+![Processed variable value](../.gitbook/assets/image%20%2833%29.png)
 
 ## Functions in variables
 
 You can use one of the predefined functions in your variables. The ARC's engine support various String, Math, and other functions. To run a function editor press a pencil icon next to variable value text field. It brings editor popup with available options with configuration.
 
-![Variable value editor](../.gitbook/assets/image%20%286%29.png)
+![Variable value editor](../.gitbook/assets/image%20%287%29.png)
 
 It uses JavaScript envine to evaluate the value. We will use a `slice` function from `String` class to demonstrate the principle. The `slice` function accepts two arguments start and end, and returns a string that contains characters found between start index and end index. We are going to "slice" our `${username}` variable to get a string from position 1 to 3. We would use the following syntax: `String.slice(${username}, 1, 3)` where the first argument is the string we are operating on and other arguments are arguments passed to the JavaScript function.
 
 In a programming world this would JavaScript would evaluate: `"uname".slice(1, 3)` which in result returns `na`.
 
-![Evaluated function](../.gitbook/assets/image%20%2827%29.png)
+![Evaluated function](../.gitbook/assets/image%20%2831%29.png)
 
 ### Function execution group
 
@@ -102,5 +102,5 @@ ARC support few additional functions. They are defined in miscellaneous tab. The
 
 Now and random functions support grouping that allows you to generate a value once when making a request and to reuse generated value again using the same group name. Pass a value to either of the functions as an argument and re-use the same function call more than once to recol generated value.
 
-![Grouped generated values](../.gitbook/assets/image%20%2838%29.png)
+![Grouped generated values](../.gitbook/assets/image%20%2843%29.png)
 

@@ -10,7 +10,7 @@ In most cases you can download the app from [https://github.com/advanced-rest-cl
 
 Find an installer for your platform under "Assets" section.
 
-![Assets section for a release](.gitbook/assets/image%20%2824%29.png)
+![Assets section for a release](.gitbook/assets/image%20%2827%29.png)
 
 For example, for Windows you would download `arc-setup.exe`. For MacOS download `arc-13.0.7.dmg`.
 
