@@ -19,7 +19,7 @@ Both types are stored in separate data stores. This means that when performing a
 
 To search for a request go to  history or saved screen. You can access it from the application menu:
 
-![Access to the history screen](../.gitbook/assets/image%20%2828%29.png)
+![Access to the history screen](../.gitbook/assets/image%20%2833%29.png)
 
 In the requests list screen \(for either history or saved\) there is a search text field that you can use to input your query.
 
@@ -43,7 +43,7 @@ The URL is treated slightly different. Each URL is processed to produce few mean
 
 When searching for an URL each of this fields is queried for the data. IndexedDb does not support full search queries. ARC implements an algorithm that iterates over keys and compares compares whether an URL contains search phrase. This way it is a good compromise between functionality and performance. 
 
-![Search result](../.gitbook/assets/image%20%2837%29.png)
+![Search result](../.gitbook/assets/image%20%2842%29.png)
 
 If you are more technical, you can check how searching is implemented in [url-indexer](https://github.com/advanced-rest-client/arc-models/blob/stage/url-indexer.js#L727).
 

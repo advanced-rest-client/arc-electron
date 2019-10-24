@@ -2,6 +2,7 @@
 
 * [Installing Advanced REST Client](README.md)
 * [RESTful APIs getting started](restful-apis-getting-started.md)
+* [Moving From Chrome Application To Desktop Client](moving-from-chrome-application-to-desktop-client.md)
 
 ## Using ARC
 

@@ -23,41 +23,41 @@ ARC is web based application and it has a browser included in it. To leverage th
 
 To obtain and store cookies by logging in to a web service using a browser window select Request &gt; Web Session &gt; Login to a web service menu option. This opens an URL input where you can put the login page URL.
 
-![Login to a web service URL input](../.gitbook/assets/image%20%2823%29.png)
+![Login to a web service URL input](../.gitbook/assets/image%20%2826%29.png)
 
 In this example we will use MuleSoft's Anypoint platform login scheme. The login page is accessible under `https://anypoint.mulesoft.com` URL.
 
-![Login page to Anypoint platform](../.gitbook/assets/image%20%2819%29.png)
+![Login page to Anypoint platform](../.gitbook/assets/image%20%2821%29.png)
 
 After successful login a regular page is rendered.
 
-![Authorized user view](../.gitbook/assets/image%20%2822%29.png)
+![Authorized user view](../.gitbook/assets/image%20%2825%29.png)
 
 Now the login window can be be closed. All cookies sent by the authorization server are now synchronized with ARC's cookies manager. You can see the cookies by selecting Request &gt; Web session &gt; Cookie manager menu option.
 
-![Cookies set by the web service](../.gitbook/assets/image%20%2830%29.png)
+![Cookies set by the web service](../.gitbook/assets/image%20%2835%29.png)
 
 When a request to matching domain is executed the cookies are automatically added to the request.
 
-![Request with cookies added automatically](../.gitbook/assets/image%20%2836%29.png)
+![Request with cookies added automatically](../.gitbook/assets/image%20%2841%29.png)
 
 ## Creating cookies manually
 
 In Cookie manager \(Request &gt; Web session &gt; Cookie manager\) you have an option to create a cookie manually or to edit existing cookie. I am going to create a new cookie that is going to be set to a request send to `domain.com.`
 
-![Cookie editor with values](../.gitbook/assets/image%20%2832%29.png)
+![Cookie editor with values](../.gitbook/assets/image%20%2837%29.png)
 
 After saving the cookie a new entry is added to the list of cookies.
 
-![Created cookie on the list of cookies](../.gitbook/assets/image%20%2854%29.png)
+![Created cookie on the list of cookies](../.gitbook/assets/image%20%2860%29.png)
 
 You can preview cookie details or edit the cookie after pressing "details" button next to cookie name.
 
-![Cookie details](../.gitbook/assets/image%20%2817%29.png)
+![Cookie details](../.gitbook/assets/image%20%2819%29.png)
 
 After a cookie is set it will be automatically added to a request that matches the domain `domain.com`.
 
-![Request with cookie](../.gitbook/assets/image%20%2814%29.png)
+![Request with cookie](../.gitbook/assets/image%20%2815%29.png)
 
 {% hint style="info" %}
 Because the cookie was created with dot "." in front of the cookie domain, the cookie is applied to all requests sent to the domain and all its subdomains. This means the request to domain `http://www.domain.com` will also have the cookie applied to it.
