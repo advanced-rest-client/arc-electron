@@ -34,7 +34,7 @@
   "main": "main.js",
   "devDependencies": {
     "@advanced-rest-client/about-arc-electron": "^3.0.0",
-    "@advanced-rest-client/arc-app-mixin": "^3.0.10",
+    "@advanced-rest-client/arc-app-mixin": "^3.1.2",
     "@advanced-rest-client/arc-definitions": "^3.0.0",
     "@advanced-rest-client/arc-icons": "^3.0.2",
     "@advanced-rest-client/arc-info-messages": "^3.0.0",
