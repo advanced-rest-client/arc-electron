@@ -1,52 +1,30 @@
-# Advanced Rest Client Application
-=================
+---
+description: Installation process for the Advanced REST Client application.
+---
 
-Welcome to the ARC's project repository. Please, read [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) and [ROADMAP.md](ROADMAP.md) files for more information.
+# Installing Advanced REST Client
 
-## Development
+## Installing Advanced REST Client
 
-You are welcome to contribute to the project. To start developing use following instructions.
+In most cases you can download the app from [https://github.com/advanced-rest-client/arc-electron/releases](https://github.com/advanced-rest-client/arc-electron/releases)
 
-I assume you have [Node.js][1] already installed on your machine.
+Find an installer for your platform under "Assets" section.
 
-Start with forking the repository and getting the code
+![Assets section for a release](.gitbook/assets/image%20%2839%29.png)
 
-```shell
-git clone https://github.com/[your username]/arc-electron.git
-```
+For example, for Windows you would download `arc-setup.exe`. For MacOS download `arc-13.0.7.dmg`.
 
-If you're not planing to contribute (you will not send a pull request) you can clone this repository:
+{% hint style="info" %}
+ Version number may be different to the one in the scree shoot. For normal use, please, download latest stable version.
+{% endhint %}
 
-```shell
-git clone https://github.com/advanced-rest-client/arc-electron
-```
+When downloaded, run the file. The installed will walk you through the installation process.
 
-When ready go to the directory:
+## Linux installation
 
-```shell
-cd arc-electron
-```
+ARC's build process generates several builds for Linux. Find your platform and then architecture. Wrong architecture \(x86 instead of x64\) will result with error when installing or running the application.
 
-Then install dependencies:
-
-```shell
-npm install && npm run bower
-```
-
-When all dependencies are installed run:
-
-```shell
-npm start
-```
-
-New application window is now opened.
+Please note that ARC won't update automatically on Linux platform as this is not yet supported by the build library. This may be possible in the future.
 
 
-Thanks for testing and don't forget to file an issue report if you find a bug.
-You are also welcome to send a pull request with bug fixes. Please, read [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) file first.
 
-## App design docs for developers
-Please, read wiki in this repository.
-
-
- [1]: https://docs.npmjs.com/getting-started/installing-node "Install Node.js"
