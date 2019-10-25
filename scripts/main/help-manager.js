@@ -1,5 +1,5 @@
-const {shell} = require('electron');
-const {app} = require('electron');
+const { shell } = require('electron');
+const { app } = require('electron');
 const log = require('./logger');
 const ARC_REPO_URI = 'https://github.com/advanced-rest-client/arc-electron/';
 /**
@@ -82,7 +82,7 @@ class HelpManager {
     message += `Node: ${process.versions.node}\n\n`;
     message += '## Steps to reproduce\n1. \n2. \n3. ';
     message = encodeURIComponent(message);
-    let url = ARC_REPO_URI + 'issues/new?body=' + message;
+    const url = ARC_REPO_URI + 'issues/new?body=' + message;
     shell.openExternal(url);
   }
   /**
@@ -99,7 +99,7 @@ class HelpManager {
    */
   static openWebSessionDocs() {
     log.debug('Opening Web Session docs in default browser.');
-    let url = ARC_REPO_URI + 'wiki/Session-management-in-ARC';
+    const url = ARC_REPO_URI + 'wiki/Session-management-in-ARC';
     shell.openExternal(url);
   }
 }

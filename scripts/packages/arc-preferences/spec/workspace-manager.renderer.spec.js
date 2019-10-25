@@ -25,7 +25,7 @@ describe('ArcPreferencesProxy class - renderer process', function() {
       const type = 'workspace-state-read';
       let instance;
       beforeEach(() => {
-        instance = new WorkspaceManager(0, {file});
+        instance = new WorkspaceManager(file);
         instance.observe();
       });
       afterEach(() => {
@@ -78,7 +78,7 @@ describe('ArcPreferencesProxy class - renderer process', function() {
       };
       let instance;
       beforeEach(() => {
-        instance = new WorkspaceManager(0, {file});
+        instance = new WorkspaceManager(file);
         instance.observe();
         instance.initialized = true;
         instance.storeDebounce = 1;

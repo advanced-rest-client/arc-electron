@@ -74,10 +74,10 @@ class AppOptions {
    * @return {Object} Map of configured options.
    */
   getOptions() {
-    let result = {};
-    for (let prop in this) {
-      if (this.hasOwnProperty(prop)) {
-        result[prop] = this[prop];
+    const result = {};
+    for (const key in this) {
+      if (Object.prototype.hasOwnProperty.call(this, key)) {
+        result[key] = this[key];
       }
     }
     return result;
@@ -87,7 +87,7 @@ class AppOptions {
    */
   parse() {
     for (let i = 1; i < process.argv.length; i++) {
-      let arg = process.argv[i];
+      const arg = process.argv[i];
       if (arg[0] !== '-') {
         if (arg[0] !== '.') {
           log.warn('Unknown startup option ' + arg);
@@ -147,7 +147,7 @@ class AppOptions {
    * @return {Object} Option definition or undefined if not found.
    */
   findDefinnition(arg) {
-    let eqIndex = arg.indexOf('=');
+    const eqIndex = arg.indexOf('=');
     if (eqIndex !== -1) {
       arg = arg.substr(0, eqIndex);
     }

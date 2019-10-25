@@ -1,4 +1,4 @@
-const {ipcRenderer: ipc} = require('electron');
+const { ipcRenderer: ipc } = require('electron');
 const log = require('electron-log');
 /**
  * Theme manager class for renderer process.
@@ -70,7 +70,7 @@ class ThemeManager {
     const id = (++this._lastId);
     ipc.send('theme-manager-list-themes', id);
     return new Promise((resolve, reject) => {
-      this._promises[id] = {resolve, reject};
+      this._promises[id] = { resolve, reject };
     });
   }
   /**
@@ -90,7 +90,7 @@ class ThemeManager {
     const id = (++this._lastId);
     ipc.send('theme-manager-active-theme-info', id);
     return new Promise((resolve, reject) => {
-      this._promises[id] = {resolve, reject};
+      this._promises[id] = { resolve, reject };
     });
   }
 
@@ -114,7 +114,7 @@ class ThemeManager {
     const requestid = (++this._lastId);
     ipc.send('theme-manager-activate-theme', requestid, themeId);
     return new Promise((resolve, reject) => {
-      this._promises[requestid] = {resolve, reject};
+      this._promises[requestid] = { resolve, reject };
     });
   }
 
@@ -131,7 +131,7 @@ class ThemeManager {
     const requestid = (++this._lastId);
     ipc.send('theme-manager-install-theme', requestid, name);
     return new Promise((resolve, reject) => {
-      this._promises[requestid] = {resolve, reject};
+      this._promises[requestid] = { resolve, reject };
     });
   }
 
@@ -148,7 +148,7 @@ class ThemeManager {
     const requestid = (++this._lastId);
     ipc.send('theme-manager-uninstall-theme', requestid, name);
     return new Promise((resolve, reject) => {
-      this._promises[requestid] = {resolve, reject};
+      this._promises[requestid] = { resolve, reject };
     });
   }
 
@@ -161,53 +161,36 @@ class ThemeManager {
    * it will throw error instead of loading default theme.
    * @return {Promise}
    */
-  loadTheme(themeId, noFallback) {
+  async loadTheme(themeId, noFallback) {
     const defaultTheme = 'advanced-rest-client/arc-electron-default-theme';
     if (!themeId || themeId === 'dd1b715f-af00-4ee8-8b0c-2a262b3cf0c8') {
       themeId = defaultTheme;
     } else if (themeId === '859e0c71-ce8b-44df-843b-bca602c13d06') {
       themeId = 'advanced-rest-client/arc-electron-anypoint-theme';
     }
-    return this._loadTheme(themeId)
-    .catch((cause) => {
+    try {
+      return await this._loadTheme(themeId);
+    } catch (cause) {
       if (!noFallback && themeId !== defaultTheme) {
-        return this._loadTheme(defaultTheme);
+        return await this._loadTheme(defaultTheme);
       }
       throw cause;
-    });
+    }
   }
 
-  _loadTheme(themeId) {
-    return new Promise((resolve) => {
-      // Apparently Polymer handles imports with `<custom-styles>`
-      // automatically and inserts it into the head section
-      const nodes = document.head.children;
-      let removeNextCustomStyle = false;
-      let linkNode;
-      for (let i = 0, len = nodes.length; i < len; i++) {
-        const node = nodes[i];
-        if (node.nodeName === 'LINK' && node.rel === 'import' &&
-          node.href && node.href.indexOf('themes:') === 0) {
-          removeNextCustomStyle = true;
-          linkNode = node;
-          continue;
-        }
-        if (removeNextCustomStyle && node.nodeName === 'CUSTOM-STYLE') {
-          node.parentNode.removeChild(node);
-          linkNode.parentNode.removeChild(linkNode);
-          break;
-        }
+  async _loadTheme(themeId) {
+    const nodes = document.head.querySelectorAll('link[rel="stylesheet"]');
+    for (let i = nodes.length - 1; i >= 0; i--) {
+      const href = nodes[i].href;
+      if (href && href.indexOf('themes:') === 0) {
+        nodes[i].parentNode.removeChild(nodes[i]);
       }
-      Polymer.importHref('themes://' + themeId, () => {
-        Polymer.RenderStatus.afterNextRender(this, () => {
-          Polymer.updateStyles({});
-          resolve();
-        });
-      }, () => {
-        console.error(`Unable to load theme definition for ${themeId}.`);
-        resolve();
-      }, true);
-    });
+    }
+    const link = document.createElement('link');
+    link.setAttribute('rel', 'stylesheet');
+    link.setAttribute('type', 'text/css');
+    link.setAttribute('href', 'themes://' + themeId);
+    document.head.appendChild(link);
   }
   /**
    * Gets and removes promise from the pending list.
@@ -268,15 +251,19 @@ class ThemeManager {
    * Handler for `theme-manager-theme-activated` event from the main IPC.
    * @param {Object} e
    * @param {String} id Request id
+   * @param {String} themeId ID of activated theme.
    */
-  _ipcActivatedHandler(e, id) {
+  async _ipcActivatedHandler(e, id, themeId) {
     const p = this._getPromise(id);
-    if (!p) {
-      log.error(`ThemeManager: Pending request ${id} do not exist.`);
-      return;
+    if (p) {
+      p.resolve();
     }
-    this.requireReload();
-    p.resolve();
+    // this.requireReload();
+    await this.loadTheme(themeId);
+    document.body.dispatchEvent(new CustomEvent('theme-activated', {
+      bubbles: true,
+      detail: themeId
+    }));
   }
 
   _ipcInstalledHandler(e, id, info) {

@@ -48,7 +48,7 @@ class ArcBase extends EventEmitter {
       return;
     }
     const cancelId = setTimeout(() => {
-      let index = this._debounceIndex(name);
+      const index = this._debounceIndex(name);
       this._debouncers.splice(index, 1);
       callback.call(this);
     }, time);

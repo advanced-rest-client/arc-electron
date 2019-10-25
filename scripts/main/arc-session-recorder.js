@@ -1,5 +1,4 @@
-const {ArcMeta} = require('../packages/arc-preferences/main');
-const _FormData = require('form-data');
+const { ArcMeta } = require('../packages/arc-preferences/main');
 const _fetch = require('node-fetch');
 const log = require('./logger');
 /**
@@ -16,38 +15,36 @@ class ArcSessionRecorder {
    */
   constructor() {
     this.meta = new ArcMeta();
-    this.endpoint = 'https://app.advancedrestclient.com/analytics/record';
+    this.endpoint = 'https://api.advancedrestclient.com/v1/analytics/record';
   }
   /**
    * Pings the server to record the session.
    * @return {Promise}
    */
-  record() {
-    return this.meta.getAninimizedId()
-    .then((id) => this._postSession(id))
-    .catch((cause) => {
+  async record() {
+    try {
+      const id = await this.meta.getAninimizedId();
+      await this._postSession(id);
+    } catch (cause) {
       log.error('Unable to record the session', cause.message);
-    });
+    }
   }
   /**
    * Posts session data to the analytics server.
    *
-   * @param {String} id Anonymous app id.
+   * @param {String} aid Anonymous app id.
    * @return {Promise}
    */
-  _postSession(id) {
-    const data = new _FormData();
+  async _postSession(aid) {
     const d = new Date();
-    data.append('aid', id); // anonymousId
-    data.append('tz', d.getTimezoneOffset()); // timezone
-    try {
-      return _fetch(this.endpoint, {
-        method: 'POST',
-        body: data
-      });
-    } catch (e) {
-      return Promise.rejec(e);
-    }
+    const data = {
+      aid,
+      tz: d.getTimezoneOffset()
+    };
+    return await _fetch(this.endpoint, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
   }
 }
 exports.ArcSessionRecorder = ArcSessionRecorder;

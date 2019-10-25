@@ -1,4 +1,4 @@
-const {dialog} = require('electron');
+const { dialog } = require('electron');
 const log = require('./logger');
 
 class AssetImport {
@@ -14,7 +14,7 @@ class AssetImport {
       buttonLabel: 'Import',
       properties: ['openFile'],
       filters: [
-        {name: 'All supported files', extensions: ['arc', 'json', 'raml', 'yaml', 'zip']}
+        { name: 'All supported files', extensions: ['arc', 'json', 'raml', 'yaml', 'zip'] }
       ]
     }, (filePaths) => {
       if (!filePaths || !filePaths[0]) {
@@ -23,6 +23,23 @@ class AssetImport {
       }
       log.debug('Sending file path to open in UI thread: ' + filePaths[0]);
       bWindow.webContents.send('command', 'process-external-file', filePaths[0]);
+    });
+  }
+
+  static openWorkspaceFile(bWindow) {
+    log.debug('Opening workspace import dialog.');
+    return new Promise((resolve) => {
+      dialog.showOpenDialog(bWindow, {
+        title: 'Select workspace file to open',
+        buttonLabel: 'Open',
+        properties: ['openFile'],
+        filters: [
+          { name: 'All supported files', extensions: ['arc', 'json'] }
+        ]
+      }, (filePaths) => {
+        const loc = filePaths && filePaths[0];
+        resolve(loc);
+      });
     });
   }
 }

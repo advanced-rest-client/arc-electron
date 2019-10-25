@@ -1,311 +1,373 @@
 {
-  "menu": [{
-    "label": "ARC",
-    "submenu": [{
-        "label": "About ARC",
-        "command": "application:about"
-      },
-      {
-        "label": "VERSION",
-        "enabled": false
-      },
-      {
-        "label": "Restart and Install Update",
-        "command": "application:install-update",
-        "visible": false
-      },
-      {
-        "label": "Check for Update",
-        "command": "application:check-for-update",
-        "visible": false
-      },
-      {
-        "label": "Checking for Update",
-        "enabled": false,
-        "visible": false
-      },
-      {
-        "label": "Downloading Update",
-        "enabled": false,
-        "visible": false
-      },
-      {
-        "type": "separator"
-      },
-      {
-        "label": "Preferences…",
-        "command": "application:show-settings",
-        "accelerator": "CommandOrControl+,"
-      },
-      {
-        "type": "separator"
-      }, {
-        "role": "hide"
-      }, {
-        "role": "hideothers"
-      }, {
-        "role": "unhide"
-      }, {
-        "type": "separator"
-      },
-      {
-        "label": "Quit",
-        "command": "application:quit",
-        "accelerator": "CommandOrControl+q"
-      }
-    ]
-  }, {
-    "label": "File",
-    "submenu": [{
-        "label": "New tab",
-        "command": "request:new-tab",
-        "accelerator": "CommandOrControl+t"
-      }, {
-        "label": "Close tab",
-        "command": "request:close-tab",
-        "accelerator": "CommandOrControl+w"
-      }, {
-        "label": "New window",
-        "command": "application:new-window",
-        "accelerator": "CommandOrControl+n"
-      }, {
-        "label": "Open file",
-        "command": "application:open-file",
-        "accelerator": "CommandOrControl+Shift+o"
-      }, {
-        "label": "Open saved request",
-        "command": "application:open-saved",
-        "accelerator": "CommandOrControl+o"
-      }, {
-        "label": "Open history",
-        "command": "application:open-history",
-        "accelerator": "CommandOrControl+Shift+h"
-      }, {
-        "label": "Open from Google Drive",
-        "command": "application:open-drive"
-      },
-      {
-        "type": "separator"
-      },
-      {
-        "label": "Save",
-        "command": "request:save",
-        "accelerator": "CommandOrControl+s"
-      },
-      {
-        "label": "Save as...",
-        "command": "request:save-as",
-        "accelerator": "CommandOrControl+Shift+s"
-      },
-      {
-        "type": "separator"
-      },
-
-      {
-        "label": "Import data",
-        "command": "application:import-data"
-      },
-      {
-        "label": "Export data",
-        "command": "application:export-data"
-      }
-    ]
-  }, {
-    "label": "Edit",
-    "submenu": [{
-        "role": "undo"
-      },
-      {
-        "role": "redo"
-      },
-      {
-        "type": "separator"
-      },
-      {
-        "role": "cut"
-      },
-      {
-        "role": "copy"
-      },
-      {
-        "role": "paste"
-      },
-      {
-        "role": "pasteandmatchstyle"
-      },
-      {
-        "role": "selectall"
-      },
-      {
-        "role": "delete"
-      }
-    ]
-  }, {
-    "label": "View",
-    "submenu": [{
-        "role": "togglefullscreen"
-      },
-      {
-        "label": "Developer",
-        "submenu": [{
-            "role": "reload"
-          },
-          {
-            "role": "forcereload"
-          },
-          {
-            "role": "toggledevtools"
-          },
-          {
-            "label": "Task Manager",
-            "command": "application:task-manager"
-          }
-        ]
-      },
-      {
-        "type": "separator"
-      },
-      {
-        "role": "resetzoom"
-      },
-      {
-        "role": "zoomin"
-      },
-      {
-        "role": "zoomout"
-      },
-      {
-        "role": "minimize"
-      },
-      {
-        "role": "zoom"
-      },
-      {
-        "type": "separator"
-      },
-      {
-        "label": "Find",
-        "command": "application:find",
-        "accelerator": "CommandOrControl+f"
-      },
-      {
-        "type": "separator"
-      },
-      {
-        "label": "Themes",
-        "command": "application:open-themes"
-      }
-    ]
-  }, {
-    "label": "Window",
-    "role": "window",
-    "submenu": [{
-        "role": "close"
-      }, {
-        "role": "minimize"
-      },
-      {
-        "role": "zoom"
-      },
-      {
-        "type": "separator"
-      },
-      {
-        "role": "front"
-      },
-      {
-        "type": "separator",
-        "visible": false
-      },
-      {
-        "label": "Popup application menu",
-        "command": "application:popup-menu",
-        "visible": false
-      }
-    ]
-  }, {
-    "label": "Request",
-    "submenu": [{
-      "label": "Open requests workspace",
-      "command": "application:open-requests-workspace"
-    }, {
-      "label": "Run current tab",
-      "command": "request:send-current",
-      "accelerator": "CommandOrControl+Shift+r"
-    }, {
-      "type": "separator"
-    }, {
-      "label": "Web session",
-      "submenu": [{
-          "label": "Login to a web service",
-          "command": "application:login-external-webservice"
+  "menu": [
+    {
+      "label": "ARC",
+      "submenu": [
+        {
+          "label": "About ARC",
+          "command": "application:about"
         },
         {
-          "label": "Cookie manager",
-          "command": "application:open-cookie-manager"
+          "label": "VERSION",
+          "enabled": false
+        },
+        {
+          "label": "Restart and Install Update",
+          "command": "application:install-update",
+          "visible": false
+        },
+        {
+          "label": "Check for Update",
+          "command": "application:check-for-update",
+          "visible": false
+        },
+        {
+          "label": "Checking for Update",
+          "enabled": false,
+          "visible": false
+        },
+        {
+          "label": "Downloading Update",
+          "enabled": false,
+          "visible": false
         },
         {
           "type": "separator"
         },
         {
-          "label": "Learn more",
-          "command": "application:web-session-help"
+          "label": "Preferences…",
+          "command": "application:show-settings",
+          "accelerator": "CommandOrControl+,"
+        },
+        {
+          "type": "separator"
+        },
+        {
+          "role": "hide"
+        },
+        {
+          "role": "hideothers"
+        },
+        {
+          "role": "unhide"
+        },
+        {
+          "type": "separator"
+        },
+        {
+          "label": "Quit",
+          "command": "application:quit",
+          "accelerator": "CommandOrControl+q"
         }
       ]
-    }, {
-      "label": "Hosts",
-      "command": "application:open-hosts-editor"
-    }, {
-      "type": "separator"
-    }, {
-      "label": "Web socket request",
-      "command": "application:open-web-socket"
-    }]
-  }, {
-    "label": "Help",
-    "role": "help",
-    "submenu": [{
-        "label": "Privacy policy",
-        "command": "application:open-privacy-policy"
-      },
-      {
-        "label": "Documentation",
-        "command": "application:open-documentation"
-      },
-      {
-        "label": "Frequently Asked Questions",
-        "command": "application:open-faq"
-      },
-      {
-        "label": "What's new",
-        "command": "application:open-messages"
-      },
-      {
-        "label": "Show tutorial",
-        "command": "application:open-onboarding"
-      },
-      {
-        "type": "separator"
-      },
-      {
-        "label": "Community Discussions",
-        "command": "application:open-discussions"
-      },
-      {
-        "label": "Report Issue",
-        "command": "application:report-issue"
-      },
-      {
-        "label": "Search Issues",
-        "command": "application:search-issues"
-      },
-      {
-        "type": "separator"
-      },
-      {
-        "label": "License information",
-        "command": "application:open-license"
-      }
-    ]
-  }]
+    },
+    {
+      "label": "File",
+      "submenu": [
+        {
+          "label": "New tab",
+          "command": "request:new-tab",
+          "accelerator": "CommandOrControl+t"
+        }, {
+          "label": "Close tab",
+          "command": "request:close-tab",
+          "accelerator": "CommandOrControl+w"
+        }, {
+          "label": "New window",
+          "command": "application:new-window",
+          "accelerator": "CommandOrControl+n"
+        }, {
+          "label": "Open file",
+          "command": "application:open-file",
+          "accelerator": "CommandOrControl+Shift+o"
+        }, {
+          "label": "Open saved request",
+          "command": "application:open-saved",
+          "accelerator": "CommandOrControl+o"
+        }, {
+          "label": "Open history",
+          "command": "application:open-history",
+          "accelerator": "CommandOrControl+Shift+h"
+        }, {
+          "label": "Open from Google Drive",
+          "command": "application:open-drive"
+        },
+        {
+          "type": "separator"
+        },
+        {
+          "label": "Save",
+          "command": "request:save",
+          "accelerator": "CommandOrControl+s"
+        },
+        {
+          "label": "Save as...",
+          "command": "request:save-as",
+          "accelerator": "CommandOrControl+Shift+s"
+        },
+        {
+          "type": "separator"
+        },
+
+        {
+          "label": "Import data",
+          "command": "application:import-data"
+        },
+        {
+          "label": "Export data",
+          "command": "application:export-data"
+        }
+      ]
+    },
+    {
+      "label": "Edit",
+      "submenu": [
+        {
+          "role": "undo"
+        },
+        {
+          "role": "redo"
+        },
+        {
+          "type": "separator"
+        },
+        {
+          "role": "cut"
+        },
+        {
+          "role": "copy"
+        },
+        {
+          "role": "paste"
+        },
+        {
+          "role": "pasteandmatchstyle"
+        },
+        {
+          "role": "selectall"
+        },
+        {
+          "role": "delete"
+        }
+      ]
+    },
+    {
+      "label": "View",
+      "submenu": [
+        {
+          "role": "togglefullscreen"
+        },
+        {
+          "label": "Developer",
+          "submenu": [
+            {
+              "role": "reload"
+            },
+            {
+              "role": "forcereload"
+            },
+            {
+              "role": "toggledevtools"
+            },
+            {
+              "label": "Task Manager",
+              "command": "application:task-manager"
+            }
+          ]
+        },
+        {
+          "type": "separator"
+        },
+        {
+          "role": "resetzoom"
+        },
+        {
+          "role": "zoomin"
+        },
+        {
+          "role": "zoomout"
+        },
+        {
+          "role": "minimize"
+        },
+        {
+          "role": "zoom"
+        },
+        {
+          "type": "separator"
+        },
+        {
+          "label": "Find",
+          "command": "application:find",
+          "accelerator": "CommandOrControl+f"
+        },
+        {
+          "type": "separator"
+        },
+        {
+          "label": "Themes",
+          "command": "application:open-themes"
+        }
+      ]
+    },
+    {
+      "label": "Window",
+      "role": "window",
+      "submenu": [
+        {
+          "role": "close"
+        }, {
+          "role": "minimize"
+        },
+        {
+          "role": "zoom"
+        },
+        {
+          "type": "separator"
+        },
+        {
+          "role": "front"
+        },
+        {
+          "type": "separator",
+          "visible": false
+        },
+        {
+          "label": "Popup application menu",
+          "command": "application:popup-menu",
+          "visible": false
+        }
+      ]
+    },
+    {
+      "label": "Request",
+      "submenu": [
+        {
+          "label": "Open requests workspace",
+          "command": "application:open-requests-workspace"
+        },
+        {
+          "label": "Run current tab",
+          "command": "request:send-current",
+          "accelerator": "CommandOrControl+Shift+r"
+        },
+        {
+          "type": "separator"
+        },
+        {
+          "label": "Web session",
+          "submenu": [
+            {
+              "label": "Login to a web service",
+              "command": "application:login-external-webservice"
+            },
+            {
+              "label": "Cookie manager",
+              "command": "application:open-cookie-manager"
+            },
+            {
+              "type": "separator"
+            },
+            {
+              "label": "Learn more",
+              "command": "application:web-session-help"
+            }
+          ]
+        },
+        {
+          "label": "Hosts",
+          "command": "application:open-hosts-editor"
+        },
+        {
+          "type": "separator"
+        },
+        {
+          "label": "Web socket request",
+          "command": "application:open-web-socket"
+        }
+      ]
+    },
+    {
+      "label": "Workspace",
+      "submenu": [
+        {
+          "label": "Open workspace details",
+          "command": "application:open-workspace-details"
+        },
+        {
+          "label": "Save as...",
+          "command": "application:export-workspace"
+        },
+        {
+          "label": "Open from file",
+          "command": "application:import-workspace"
+        },
+        {
+          "label": "Reopen workspace",
+          "submenu": [
+            {
+              "label": "Clear workspaces history",
+              "command": "application:clear-workspace-history"
+            },
+            {
+              "type": "separator"
+            },
+            {
+              "label": "No history found",
+              "enabled": false,
+              "id": "no-history-entry"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Help",
+      "role": "help",
+      "submenu": [
+        {
+          "label": "Privacy policy",
+          "command": "application:open-privacy-policy"
+        },
+        {
+          "label": "Documentation",
+          "command": "application:open-documentation"
+        },
+        {
+          "label": "Frequently Asked Questions",
+          "command": "application:open-faq"
+        },
+        {
+          "label": "What's new",
+          "command": "application:open-messages"
+        },
+        {
+          "label": "Show tutorial",
+          "command": "application:open-onboarding"
+        },
+        {
+          "type": "separator"
+        },
+        {
+          "label": "Community Discussions",
+          "command": "application:open-discussions"
+        },
+        {
+          "label": "Report Issue",
+          "command": "application:report-issue"
+        },
+        {
+          "label": "Search Issues",
+          "command": "application:search-issues"
+        },
+        {
+          "type": "separator"
+        },
+        {
+          "label": "License information",
+          "command": "application:open-license"
+        }
+      ]
+    }
+  ]
 }

@@ -97,7 +97,7 @@ class ArcPreferencesProxy {
     }
     e.preventDefault();
     e.stopPropagation();
-    let name = e.detail.name;
+    const { name } = e.detail;
     if (!name) {
       e.detail.result = Promise.reject(new Error('Name is not set.'));
       return;

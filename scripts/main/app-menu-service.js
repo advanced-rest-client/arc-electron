@@ -1,4 +1,4 @@
-const {BrowserWindow, ipcMain} = require('electron');
+const { BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const url = require('url');
 const log = require('./logger');
@@ -79,10 +79,10 @@ class AppMenuService {
         nativeWindowOpen: true,
         nodeIntegration: false,
         contextIsolation: false,
-        preload: path.join(__dirname, '..', 'renderer', 'app-menu-preload.js')
+        preload: path.join(__dirname, '..', '..', 'src', 'arc-menu-window', 'app-menu-preload.js')
       }
     });
-    menuWindow.setMenu(null);
+    menuWindow.removeMenu();
     menuWindow.__menuType = type;
     return menuWindow;
   }
@@ -92,7 +92,7 @@ class AppMenuService {
    * @param {BrowserWindow} bw
    */
   __loadPage(type, bw) {
-    const dest = path.join(__dirname, '..', '..', 'src', 'arc-menu-window.html');
+    const dest = path.join(__dirname, '..', '..', 'src', 'arc-menu-window', 'arc-menu-window.html');
     const full = url.format({
       pathname: dest,
       protocol: 'file:',
@@ -151,7 +151,7 @@ class AppMenuService {
    */
   clear() {
     log.debug('Removing all menu popup windows.');
-    for (let win of this.menuWindows.values()) {
+    for (const win of this.menuWindows.values()) {
       win.destroy();
     }
   }

@@ -1,0 +1,144 @@
+body {
+  --primary-color: #00A2DF;
+  --accent-color: #4CAF50;
+  --primary-text-color: rgba(0, 0, 0, 0.87);
+  --primary-background-color: #ffffff;
+  --secondary-color: #506773;
+  --secondary-text-color: #737373;
+  --disabled-text-color: #9b9b9b;
+  --divider-color: #dbdbdb;
+  --light-primary-color: var(--paper-indygo-100);
+  --dark-primary-color: var(--paper-blue-700);
+  --light-accent-color: #ff80ab;
+  --dark-accent-color: #f50057;
+  --menu-link-color: #111111;
+  --link-color: #00A1DF;
+  --toolbar-color: #ffffff;
+  --toolbar-background-color: #00569a;
+  --main-section-border-color: rgba(0, 0, 0, 0.12);
+  --hover-button-accent-color: #df0052;
+  --pages-fixed-height: calc(100vh - 64px);
+  --arc-menu-height: 100%;
+  --menu-selection-background-color: #00b9ff;
+  --arc-menu-selected-background-color: var(--menu-selection-background-color);
+  --saved-menu-selected-item-background-color: var(--menu-selection-background-color);
+  --history-menu-selected-item-background-color: var(--menu-selection-background-color);
+  --projects-menu-selected-item-background-color: var(--menu-selection-background-color);
+  --projects-menu-requests-selected-item-background-color: var(--menu-selection-background-color);
+  --rest-api-menu-selected-item-background-color: var(--menu-selection-background-color);
+  --error-color: #dd2c00;
+  --paper-dialog-background-color: #fff;
+  --arc-font-family: 'Roboto', 'Noto', sans-serif;
+  --arc-font-font-smoothing: antialiased;
+  --arc-font-code-family: 'Roboto Mono', 'Consolas', 'Menlo', monospace;
+  --arc-font-nowrap-white-space: nowrap;
+  --arc-font-nowrap-overflow: hidden;
+  --arc-font-nowrap-text-overflow: ellipsis;
+  --arc-font-expensive-kerning: optimizeLegibility;
+
+  --arc-font-display1-font-size: 34px;
+  --arc-font-display1-font-weight: 400;
+  --arc-font-display1-letter-spacing: -.01em;
+  --arc-font-display1-line-height: 40px;
+
+  --arc-font-display3-font-size: 56px;
+  --arc-font-display3-font-weight: 400;
+  --arc-font-display3-letter-spacing: -.026em;
+  --arc-font-display3-line-height: 60px;
+
+  --arc-font-title-font-size: 20px;
+  --arc-font-title-font-weight: 500;
+  --arc-font-title-line-height: 28px;
+
+  --arc-font-headline-font-size: 24px;
+  --arc-font-headline-font-weight: 400;
+  --arc-font-headline-letter-spacing: -.012em;
+  --arc-font-headline-line-height: 32px;
+
+  --arc-font-subhead-font-size: 16px;
+  --arc-font-subhead-font-weight: 400;
+  --arc-font-subhead-line-height: 24px;
+
+  --arc-font-body1-font-size: 14px;
+  --arc-font-body1-font-weight: 400;
+  --arc-font-body1-line-height: 20px;
+
+  --arc-font-body2-font-size: 14px;
+  --arc-font-body2-font-weight: 500;
+  --arc-font-body2-line-height: 24px;
+
+  --arc-font-caption-font-size: 12px;
+  --arc-font-caption-font-weight: 400;
+  --arc-font-caption-letter-spacing: 0.011em;
+  --arc-font-caption-line-height: 20px;
+
+  --select-text-user-select: text;
+  --select-text-cursor: text;
+
+  --action-button-background-color: var(--primary-color);
+  --action-button-background-image: none;
+  --action-button-color: #fff;
+  --action-button-transition: background-color 300ms linear;
+  --action-button-hover-background-color: #04b3f5;
+  --action-button-hover-color: #fff;
+  --action-button-disabled-background-color: #eaeaea;
+  --action-button-disabled-color: #a8a8a8;
+
+  --http-method-label-get-background-color: rgb(0, 128, 0);
+  --http-method-label-get-color: #fff;
+  --http-method-label-post-background-color: #006ec5;
+  --http-method-label-post-color: #fff;
+  --http-method-label-put-background-color: #ffa500;
+  --http-method-label-put-color: #1D0029;
+  --http-method-label-delete-background-color: #e93628;
+  --http-method-label-delete-color: #fff;
+  --http-method-label-patch-background-color: #811f92;
+  --http-method-label-patch-color: #F2F1EF;
+
+  --anypoiont-dropdown-shaddow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
+  --anypoiont-autocomplete-dropdown-shaddow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
+
+  --anypoint-listbox-background-color: #fff;
+  --api-navigation-list-item-selected-background-color: #E1F5FE;
+  --api-navigation-list-item-selected-color: #0277BD;
+  --api-navigation-operation-font-size: 13px;
+
+  --code-background-color: #f5f2f0;
+
+  --box-shadow-transition: box-shadow 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  --box-shadow-2dp: 0 2px 2px 0 rgba(0, 0, 0, 0.14),
+                  0 1px 5px 0 rgba(0, 0, 0, 0.12),
+                  0 3px 1px -2px rgba(0, 0, 0, 0.2);
+  --box-shadow-3dp: 0 3px 4px 0 rgba(0, 0, 0, 0.14),
+                0 1px 8px 0 rgba(0, 0, 0, 0.12),
+                0 3px 3px -2px rgba(0, 0, 0, 0.4);
+  --box-shadow-4dp: 0 4px 5px 0 rgba(0, 0, 0, 0.14),
+                0 1px 10px 0 rgba(0, 0, 0, 0.12),
+                0 2px 4px -1px rgba(0, 0, 0, 0.4);
+  --box-shadow-6dp: 0 6px 10px 0 rgba(0, 0, 0, 0.14),
+                0 1px 18px 0 rgba(0, 0, 0, 0.12),
+                0 3px 5px -1px rgba(0, 0, 0, 0.4);
+  --box-shadow-8dp: 0 8px 10px 1px rgba(0, 0, 0, 0.14),
+                0 3px 14px 2px rgba(0, 0, 0, 0.12),
+                0 5px 5px -3px rgba(0, 0, 0, 0.4);
+  --box-shadow-12dp: 0 12px 16px 1px rgba(0, 0, 0, 0.14),
+                0 4px 22px 3px rgba(0, 0, 0, 0.12),
+                0 6px 7px -4px rgba(0, 0, 0, 0.4);
+  --box-shadow-16dp: 0 16px 24px 2px rgba(0, 0, 0, 0.14),
+                0  6px 30px 5px rgba(0, 0, 0, 0.12),
+                0  8px 10px -5px rgba(0, 0, 0, 0.4);
+  --box-shadow-24dp: 0 24px 38px 3px rgba(0, 0, 0, 0.14),
+                0 9px 46px 8px rgba(0, 0, 0, 0.12),
+                0 11px 15px -7px rgba(0, 0, 0, 0.4);
+  --bottom-sheet-box-shadow: var(--box-shadow-6dp);
+
+  --variables-preview-overlay-background-color: var(--primary-background-color);
+  --arc-env-container-color: #fff;
+  --arc-toolbar-variables-toggle-icon-color: #fff;
+  --arc-toolbar-back-icon-color: #fff;
+  --arc-toolbar-icon-color: #fff;
+}
+
+body[narrow] {
+
+}

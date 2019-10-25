@@ -1,4 +1,4 @@
-const {ipcRenderer: ipc} = require('electron');
+const { ipcRenderer: ipc } = require('electron');
 const fs = require('fs-extra');
 const path = require('path');
 /**
@@ -40,13 +40,17 @@ class FilesystemProxy {
       return;
     }
     e.preventDefault();
-    const {content, file, options} = e.detail;
+    const { content, file, options } = e.detail;
+    e.detail.result = this.exportFileData(content, options && options.contentType, file);
+  }
+
+  exportFileData(content, mime, file) {
     ipc.send('save-dialog', {
       file
     });
     this.lastContent = content;
-    this.lastType = options && options.contentType;
-    e.detail.result = new Promise((resolve, reject) => {
+    this.lastType = mime;
+    new Promise((resolve, reject) => {
       this.lastResolve = resolve;
       this.lastReject = reject;
     });

@@ -1,4 +1,4 @@
-const {session} = require('electron');
+const { session } = require('electron');
 const path = require('path');
 const log = require('./logger');
 const fs = require('fs-extra');
@@ -11,7 +11,7 @@ const fs = require('fs-extra');
  * Example usage in the renderer process:
  *
  * ```
- * <link rel="import" href="themes://dd1b715f-af00-4ee8-8b0c-2a262b3cf0c8">
+ * <script type="module" src="themes://dd1b715f-af00-4ee8-8b0c-2a262b3cf0c8"></script>
  * ```
  *
  * This will load ARC's default theme.
@@ -20,7 +20,7 @@ const fs = require('fs-extra');
  * location.
  *
  * ```
- * <link rel="import" href="themes:///path/to/a/theme.html">
+ * <script type="module" src="themes:///path/to/a/theme.js"></script>
  * ```
  */
 class ThemesProtocolHandler {
@@ -35,6 +35,9 @@ class ThemesProtocolHandler {
   register() {
     log.debug('Registering themes protocol');
     session.fromPartition('persist:arc-window')
+    .protocol
+    .registerStringProtocol('themes', this._requestHandler, this._registrationHandler);
+    session.fromPartition('persist:arc-task-manager')
     .protocol
     .registerStringProtocol('themes', this._requestHandler, this._registrationHandler);
   }
@@ -52,7 +55,9 @@ class ThemesProtocolHandler {
     try {
       fs.accessSync(url, fs.constants.R_OK | fs.constants.X_OK);
       return this._loadFileTheme(url, callback);
-    } catch (_) {}
+    } catch (_) {
+      // ..
+    }
     if (url === 'dd1b715f-af00-4ee8-8b0c-2a262b3cf0c8') {
       url = 'advanced-rest-client/arc-electron-default-theme';
     }
@@ -62,7 +67,8 @@ class ThemesProtocolHandler {
   _loadInstalledTheme(location, callback) {
     log.silly('ThemesProtocolHandler::loading theme from ' + location);
     return this._loadThemeInfo()
-    .then((themes) => {
+    .then((config) => {
+      const { themes } = config;
       log.debug('Got themes list');
       const theme = this._findThemeInfo(location, themes);
       if (theme) {
@@ -76,7 +82,7 @@ class ThemesProtocolHandler {
         log.silly('Sending theme file to renderer.');
         callback({
           data,
-          mimeType: 'text/html',
+          mimeType: 'text/css',
           charset: 'utf8'
         });
       } else {
@@ -98,7 +104,7 @@ class ThemesProtocolHandler {
     .then((data) => {
       callback({
         data,
-        mimeType: 'text/html',
+        mimeType: 'text/css',
         charset: 'utf8'
       });
     })
@@ -110,12 +116,13 @@ class ThemesProtocolHandler {
     });
   }
 
-  _loadThemeInfo() {
-    return fs.readJson(process.env.ARC_THEMES_SETTINGS)
-    .catch(() => {
+  async _loadThemeInfo() {
+    try {
+      return await fs.readJson(process.env.ARC_THEMES_SETTINGS);
+    } catch (_) {
       log.warn('Theme file not found', process.env.ARC_THEMES_SETTINGS);
-      return [];
-    });
+      return {};
+    }
   }
 
   _findThemeInfo(id, themes) {
