@@ -4,7 +4,7 @@ const { ThemePluginsManager } = require('../../plugin-manager/main');
 const log = require('../../../main/logger');
 
 class ThemeManager {
-  constructor(arcApp) {
+  constructor(arcApp, skipUpdateChaeck) {
     this.arcApp = arcApp;
     /**
      * ARC default theme ID
@@ -18,7 +18,9 @@ class ThemeManager {
     this._uninstallHandler = this._uninstallHandler.bind(this);
 
     this.manager = new ThemePluginsManager();
-    this._checkUpdates();
+    if (!skipUpdateChaeck) {
+      this._checkUpdates();
+    }
   }
   /**
    * Creates a model for theme info file.
