@@ -7,10 +7,8 @@ describe('PouchDB integration', function() {
   describe('PouchdbQuickSearch', () => {
     let app;
     before(async () => {
-      app = bootstrap.getApp();
       try {
-        await app.start();
-        await app.client.waitUntilWindowLoaded(10000);
+        app = await bootstrap.runAppDeffered(2000);
       } catch(cause) {
         if (app && app.isRunning()) {
           await app.stop();

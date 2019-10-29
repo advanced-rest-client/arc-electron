@@ -18,6 +18,8 @@ describe('AppOptions', () => {
       '.',
       '--port',
       '--open',
+      '--skip-app-update',
+      '--skip-themes-update',
     ].forEach((option) => {
       it(`supports ${option} option`, () => {
         const opts = instance.availableOptions;
@@ -37,6 +39,8 @@ describe('AppOptions', () => {
       '-dot',
       '-p',
       '-o',
+      '-u',
+      '-x',
     ].forEach((option) => {
       it(`supports ${option} shortcut`, () => {
         const opts = instance.availableOptions;
@@ -56,6 +60,8 @@ describe('AppOptions', () => {
       ['.', String],
       ['--port', Number],
       ['--open', String],
+      ['--skip-themes-update', Boolean],
+      ['--skip-app-update', Boolean],
     ].forEach(([option, type]) => {
       it(`has type for ${option} option`, () => {
         const opts = instance.availableOptions;
@@ -81,6 +87,8 @@ describe('AppOptions', () => {
       ['--debug', undefined, true, 'debug'],
       ['--with-devtools', undefined, true, 'withDevtools'],
       ['--port', '8080', 8080, 'port'],
+      ['--skip-app-update', undefined, true, 'skipAppUpdate'],
+      ['--skip-themes-update', undefined, true, 'skipThemesUpdate'],
     ].forEach(([option, value, parsedValue, property]) => {
       it(`sets ${option} property to ${value}`, () => {
         const orig = process.argv;
