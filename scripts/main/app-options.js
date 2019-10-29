@@ -63,6 +63,16 @@ class AppOptions {
       shortcut: '-o',
       type: String,
       allowArray: true
+    }, {
+      // Skips application update check for this run
+      name: '--skip-app-update',
+      shortcut: '-u',
+      type: Boolean,
+    }, {
+      // Skips themes update check for this run.
+      name: '--skip-themes-update',
+      shortcut: '-x',
+      type: Boolean,
     }];
   }
   /**

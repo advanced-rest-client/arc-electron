@@ -77,8 +77,9 @@ class UpdateStatus extends ArcBase {
    * This function **must** be called after the app ready event.
    *
    * @param {Object} settings Current application configuration.
+   * @param {Boolean} skipAppUpdate When set it skips application update check
    */
-  start(settings) {
+  start(settings, skipAppUpdate) {
     log.info('Initializing Auto Updater.');
     if (settings.releaseChannel) {
       if (this.isValidChannel(settings.releaseChannel)) {
@@ -91,9 +92,9 @@ class UpdateStatus extends ArcBase {
       autoUpdater.autoDownload = false;
       return;
     }
-    setTimeout(() => {
-      this.check();
-    }, 5000);
+    if (!skipAppUpdate) {
+      setTimeout(() => this.check(), 5000);
+    }
   }
   /**
    * Sets the channel value on auto updater

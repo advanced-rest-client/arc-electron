@@ -12,7 +12,7 @@
     "url": "https://github.com/advanced-rest-client/arc-electron"
   },
   "scripts": {
-    "start": "electron . --inspect --debug --debug-level=\"silly\" --workspace-path=\"~/arc-dev/workspace\" --settings-file=\"~/arc-dev/dev-settings.json\" --themes-path=\"~/arc-dev/themes\"",
+    "start": "electron . --inspect --debug  --debug-level=\"silly\" --skip-app-update --skip-themes-update --workspace-path=\"~/arc-dev/workspace\" --settings-file=\"~/arc-dev/dev-settings.json\" --themes-path=\"~/arc-dev/themes\"",
     "start:api": "node --inspect=9227 dev-api/api.js --PORT=8080",
     "postinstall": "electron-rebuild && electron-builder install-app-deps",
     "prepare": "pika-web && node tasks/prepare-app.js",
@@ -21,7 +21,7 @@
     "test:renderer": "NODE_ENV=test ELECTRON_PATH='node_modules/.bin/electron' electron-mocha --renderer --require-main 'test/renderer-setup-paths.js' scripts/packages/**/*.renderer.spec.js",
     "test:app": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron mocha test/**/*.app.spec.js --timeout 10000",
     "test-win-all": "npm run test-win-main && npm run test-win-renderer && npm run test-win-app",
-    "test-win-main": "node node_modules/.bin/electron-mocha test/**/*.main.spec.js scripts/packages/**/*.main.spec.js",
+    "test:win:main": "node node_modules/.bin/electron-mocha test/**/*.main.spec.js scripts/packages/**/*.main.spec.js",
     "test-win-renderer": "node node_modules/.bin/electron-mocha --renderer scripts/packages/**/*.renderer.spec.js",
     "test-win-app": "node node_modules/.bin/mocha test/**.app.spec.js",
     "build-l": "npx electron-builder -l",
