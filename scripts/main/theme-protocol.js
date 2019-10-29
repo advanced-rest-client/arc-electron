@@ -64,20 +64,24 @@ class ThemesProtocolHandler {
     return this._loadInstalledTheme(url, callback);
   }
 
-  _loadInstalledTheme(location, callback) {
-    log.silly('ThemesProtocolHandler::loading theme from ' + location);
-    return this._loadThemeInfo()
-    .then((config) => {
+  async _loadInstalledTheme(location, callback) {
+    log.info(`loading theme ${location}`);
+    try {
+      const config = await this._loadThemeInfo();
       const { themes } = config;
       log.debug('Got themes list');
-      const theme = this._findThemeInfo(location, themes);
-      if (theme) {
-        const file = path.join(process.env.ARC_THEMES, theme.mainFile);
-        log.silly('Theme found. Reading theme file: ' + file);
-        return fs.readFile(file, 'utf8');
+      if (location.indexOf('advanced-rest-client/') === 0) {
+        location = '@' + location;
       }
-    })
-    .then((data) => {
+      const theme = this._findThemeInfo(location, themes);
+      if (!theme) {
+        log.error('Theme info not found');
+        callback(-6);
+        return;
+      }
+      const file = path.join(process.env.ARC_THEMES, theme.mainFile);
+      log.silly('Theme found. Reading theme file: ' + file);
+      const data = await fs.readFile(file, 'utf8');
       if (data) {
         log.silly('Sending theme file to renderer.');
         callback({
@@ -86,16 +90,14 @@ class ThemesProtocolHandler {
           charset: 'utf8'
         });
       } else {
-        log.error('Unable to find theme');
+        log.error('Theme file is empty');
         callback(-6);
       }
-    })
-    .catch((cause) => {
+    } catch (e) {
       log.error('Unable to load theme');
-      log.error(cause);
+      log.error(e.message);
       callback(-6);
-      return;
-    });
+    }
   }
 
   _loadFileTheme(location, callback) {
@@ -129,7 +131,7 @@ class ThemesProtocolHandler {
     if (!themes || !themes.length) {
       return;
     }
-    return themes.find((item) => item._id === id);
+    return themes.find((item) => item._id === id || item.name === id);
   }
 }
 

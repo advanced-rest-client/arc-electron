@@ -1,6 +1,6 @@
 const { app } = require('electron');
 const path = require('path');
-const log = require('electron-log');
+const log = require('../../../main/logger');
 const fs = require('fs-extra');
 const { ThemeInfo } = require('../../../main/models/theme-info');
 const { PluginManager } = require('live-plugin-manager');
@@ -52,15 +52,15 @@ class ThemePluginsManager {
    * @param {String} version Theme version to install.
    * @return {Promise}
    */
-  install(name, version) {
+  async install(name, version) {
     let message = 'Installing theme: ' + name;
     if (version) {
       message += ', version ' + version;
     }
     log.info(message);
-    return this._installPackage(name, version)
-    .then((info) => this._createThemeInfo(name, info))
-    .then((info) => this._addThemeEntry(info));
+    let info = await this._installPackage(name, version);
+    info = await this._createThemeInfo(name, info);
+    return await this._addThemeEntry(info);
   }
   /**
    * Implementation of installation process.
@@ -136,10 +136,10 @@ class ThemePluginsManager {
    * @param {String} name Name of the package.
    * @return {Promise}
    */
-  uninstall(name) {
+  async uninstall(name) {
     log.info('Uninstalling theme ' + name);
-    return this._uninstallPackage(name)
-    .then(() => this._removeThemeEntry(name));
+    await this._uninstallPackage(name);
+    await this._removeThemeEntry(name);
   }
   /**
    * Implementation of removing process.
@@ -147,71 +147,58 @@ class ThemePluginsManager {
    * to target location.
    * @return {Promise<Object>} Promise resolved to theme info object
    */
-  _uninstallPackage(name) {
-    return this.getInfo(name)
-    .then((info) => {
-      if (!info) {
-        throw new Error(`Package ${name} is not installed.`);
-      }
-      if (info.isSymlink) {
-        return fs.remove(info.location);
-      }
-      return this.pluginManager.uninstall(info.name);
-    });
+  async _uninstallPackage(name) {
+    const info = await this.getInfo(name);
+    if (!info) {
+      throw new Error(`Package ${name} is not installed.`);
+    }
+    if (info.isSymlink) {
+      await fs.remove(info.location);
+    } else {
+      await this.pluginManager.uninstall(info.name);
+    }
+    return info;
   }
   /**
    * Updates themes from passed list.
-   * @param {Object} info A map of theme name and version.
-   * Version is optional and if not set it installs latest version.
+   * @param {Array<Object>} data A list of objects with `name` and `version`
+   * proeprtires.
    * @return {Promise}
    */
-  update(info) {
-    const data = Object.keys(info).map((name) => {
-      return {
-        name,
-        version: info[name]
-      };
-    });
-    return this._updatesQueue(data);
-  }
-
-  _updatesQueue(queue, result) {
-    if (!result) {
-      result = {};
+  async update(data) {
+    const result = [];
+    for (let i = 0, len = data.length; i < len; i++) {
+      const { name, version } = data[i];
+      try {
+        await this._installPackage(name, version);
+        await this._updateVersionInfo(name, version);
+        result[result.length] = {
+          error: false,
+          name
+        };
+      } catch (e) {
+        result[result.length] = {
+          error: true,
+          message: e.message,
+          name
+        };
+      }
     }
-    const item = queue.shift();
-    if (!item) {
-      return Promise.resolve(result);
-    }
-    return this.install(item.name, item.version)
-    .then(() => {
-      result[item.name] = {
-        error: false
-      };
-    })
-    .catch((cause) => {
-      result[item.name] = {
-        error: true,
-        message: cause.message
-      };
-    })
-    .then(() => this._updatesQueue(queue, result));
+    return result;
   }
   /**
    * Reads information from the theme registry abiut the theme.
    * @param {String} name Name of the package (_id in info object).
    * @return {Promise<Object>} Resolves to theme info object.
    */
-  getInfo(name) {
-    return this.themeInfo.load()
-    .then((info) => {
-      const { themes } = info;
-      for (let i = 0, len = themes.length; i < len; i++) {
-        if (themes[i]._id === name) {
-          return themes[i];
-        }
+  async getInfo(name) {
+    const info = await this.themeInfo.load();
+    const { themes } = info;
+    for (let i = 0, len = themes.length; i < len; i++) {
+      if (themes[i].name === name || themes[i]._id === name) {
+        return themes[i];
       }
-    });
+    }
   }
   /**
    * Checks for updates to all installed packages.
@@ -219,83 +206,90 @@ class ThemePluginsManager {
    * info objects downloaded from the remote server. Only packages with
    * update available are returned.
    */
-  checkForUpdates() {
-    return this._getUpdateCandidates()
-    .then((names) => this._updatesInfoQueue(names));
+  async checkForUpdates() {
+    const candidates = await this._getUpdateCandidates();
+    const result = [];
+    for (let i = 0, len = candidates.length; i < len; i++) {
+      const item = candidates[i];
+      const data = await this._processCandidateUpdateInfo(item);
+      if (data) {
+        result[result.length] = data;
+      }
+    }
+    return result;
   }
 
-  _getUpdateCandidates() {
+  async _getUpdateCandidates() {
     const now = Date.now();
-    return this.themeInfo.load()
-    .then((info) => {
-      const { themes } = info;
-      const names = [];
-      themes.forEach((item) => {
-        if (item.isSymlink) {
-          return;
-        }
-        if (item.updateCheck) {
-          const delta = now - item.updateCheck;
-          if (delta < 7.2e+6) {
-            // 2 hours
-            return;
-          }
-        }
-        names[names.length] = item._id;
-      });
-      return names;
-    });
-  }
-
-  _updatesInfoQueue(queue, result) {
-    if (!result) {
-      result = {};
-    }
-    const name = queue.shift();
-    if (!name) {
-      return Promise.resolve(result);
-    }
-
-    return this.checkUpdateAvailable(name)
-    .then((info) => {
-      if (info) {
-        result[name] = info;
-      }
-      return this._updateUpdateTime(name);
-    })
-    .catch(() => {})
-    .then(() => this._updatesInfoQueue(queue, result));
-  }
-
-  _updateUpdateTime(name) {
-    const store = this.themeInfo;
-    return store.load()
-    .then((info) => {
-      const { themes } = info;
-      for (let i = 0, len = themes.length; i < len; i++) {
-        if (themes[i]._id === name) {
-          themes[i].updateCheck = Date.now();
-          return store.store();
-        }
-      }
-    });
-  }
-
-  checkUpdateAvailable(name, version) {
-    const names = this._prepareSourceAndVersion(name, version);
-    const qPromise = this.pluginManager.queryPackage(...names);
-    const iPromise = this.getInfo(name);
-    return Promise.all([iPromise, qPromise])
-    .then((data) => {
-      const localInfo = data[0];
-      const remoteInfo = data[1];
-      if (!this._compareVersions(remoteInfo, localInfo)) {
+    const info = await this.themeInfo.load();
+    const { themes } = info;
+    const names = [];
+    themes.forEach((item) => {
+      if (item.isSymlink) {
         return;
       }
-      if (this._compareEngines(remoteInfo)) {
-        return remoteInfo;
+      if (item.updateCheck) {
+        const delta = now - item.updateCheck;
+        if (delta < 7.2e+6) {
+          // 2 hours
+          return;
+        }
       }
+      names[names.length] = {
+        name: item.name,
+        version: item.version
+      };
     });
+    return names;
+  }
+
+  async _processCandidateUpdateInfo(candidate) {
+    const { name, version } = candidate;
+    /* eslint-disable require-atomic-updates */
+    let result;
+    try {
+      result = await this.checkUpdateAvailable(name, version);
+      await this._updateUpdateTime(name);
+    } catch (e) {
+      log.warn(`Unable to get theme package info ${e.message}`);
+    }
+    return result;
+  }
+
+  async _updateUpdateTime(name) {
+    const store = this.themeInfo;
+    const info = await store.load();
+    const { themes } = info;
+    for (let i = 0, len = themes.length; i < len; i++) {
+      if (themes[i].name === name || themes[i]._id === name) {
+        themes[i].updateCheck = Date.now();
+        return await store.store();
+      }
+    }
+  }
+
+  async _updateVersionInfo(name, version) {
+    const store = this.themeInfo;
+    const info = await store.load();
+    const { themes } = info;
+    for (let i = 0, len = themes.length; i < len; i++) {
+      if (themes[i].name === name || themes[i]._id === name) {
+        themes[i].version = version;
+        return await store.store();
+      }
+    }
+  }
+
+  async checkUpdateAvailable(name, version) {
+    const names = this._prepareSourceAndVersion(name, version);
+    const localInfo = await this.getInfo(name);
+    const remoteInfo = await this.pluginManager.queryPackage(names[0]);
+    if (!this._compareVersions(remoteInfo, localInfo)) {
+      return;
+    }
+    if (this._compareEngines(remoteInfo)) {
+      return remoteInfo;
+    }
   }
 
   _compareVersions(remoteInfo, localInfo) {
@@ -337,7 +331,7 @@ class ThemePluginsManager {
    * @param {Object} info
    * @return {Object} An object to be stored in theme info file.
    */
-  _createThemeInfo(id, info) {
+  async _createThemeInfo(id, info) {
     const result = {
       _id: id,
       name: info.name,
@@ -348,45 +342,39 @@ class ThemePluginsManager {
       description: '',
       isSymlink: info.isSymlink
     };
-    return fs.readJson(path.join(info.location, 'package.json'))
-    .then((pkg) => {
-      if (pkg.themeTitle) {
-        result.title = pkg.themeTitle;
-      }
-      if (pkg.description) {
-        result.description = pkg.description;
-      }
-      return result;
-    });
+    const pkg = await fs.readJson(path.join(info.location, 'package.json'));
+    if (pkg.themeTitle) {
+      result.title = pkg.themeTitle;
+    }
+    if (pkg.description) {
+      result.description = pkg.description;
+    }
+    return result;
   }
   /**
    * Adds theme info object to themes registry file.
    * @param {Object} info An object to add.
    * @return {Promise<Object>} Promise resolve to the info object.
    */
-  _addThemeEntry(info) {
+  async _addThemeEntry(info) {
     const store = this.themeInfo;
-    return store.load()
-    .then((data) => {
-      const { themes } = data;
-      themes.push(info);
-      return store.store();
-    })
-    .then(() => info);
+    const data = await store.load();
+    const { themes } = data;
+    themes.push(info);
+    await store.store();
+    return info;
   }
 
-  _removeThemeEntry(name) {
+  async _removeThemeEntry(name) {
     const store = this.themeInfo;
-    return store.load()
-    .then((info) => {
-      const { themes } = info;
-      for (let i = 0, len = themes.length; i < len; i++) {
-        if (themes[i]._id === name) {
-          themes.splice(i, 1);
-          return store.store();
-        }
+    const info = await store.load();
+    const { themes } = info;
+    for (let i = 0, len = themes.length; i < len; i++) {
+      if (themes[i].name === name || themes[i]._id === name) {
+        themes.splice(i, 1);
+        return store.store();
       }
-    });
+    }
   }
 }
 

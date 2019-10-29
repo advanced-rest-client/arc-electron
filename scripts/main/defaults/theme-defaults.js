@@ -14,7 +14,7 @@ class ThemeDefaults {
    * @return {Promise} Resolved promise when the defaults are stored.
    */
   async prepareEnvironment() {
-    log.debug('Preparing ARC environment.');
+    log.debug('Preparing themes environment...');
     const names = await this._readDefaultThemesPackages();
     if (!names) {
       return;
@@ -140,7 +140,7 @@ class ThemeDefaults {
     const file = path.join(process.env.ARC_THEMES, 'themes-info.json');
     const exists = await fs.pathExists(file);
     if (exists) {
-      log.debug(`theme-info.json exists. Checking for latest scheme.`);
+      log.debug(`${file} exists. Ensuring info scheme.`);
       return await this._ensureThemesInfoVersion(file);
     }
     log.info('Creating themes-info.json file');

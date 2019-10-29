@@ -1,4 +1,8 @@
 body {
+  background-color: #424242;
+  height: 100vh;
+  color: #fff;
+
   --arc-font-family: 'Roboto', 'Noto', sans-serif;
   --arc-font-font-smoothing: antialiased;
   --arc-font-code-family: 'Roboto Mono', 'Consolas', 'Menlo', monospace;
@@ -41,9 +45,6 @@ body {
   --select-text-user-select: text;
   --select-text-cursor: text;
 
-  background-color: #424242;
-  height: 100vh;
-  color: #fff;
   --primary-color: #BBDEFB;
   --primary-text-color: #fff;
   --error-color: #FF5722;
@@ -183,6 +184,13 @@ body {
   --api-console-menu-color: #fff;
 
   --api-endpoint-documentation-bottom-navigation-color: #fff;
+  --api-navigation-section-title-focus-background-color: #616161;
+  --api-endpoint-documentation-tryit-background-color: #424242;
+  --api-endpoint-documentation-tryit-panels-background-color: #424242;
+  --api-type-document-property-color: #fff;
+  --api-endpoint-documentation-description-color: #fff;
+  --api-body-document-code-color: #fff;
+
 
   --arc-menu-color: #fff;
   --request-list-item-history-group-header-color: #fff;
@@ -248,6 +256,10 @@ body {
   --arc-toolbar-variables-toggle-icon-color: #fff;
   --arc-toolbar-back-icon-color: #fff;
   --arc-toolbar-icon-color: #fff;
+  --arc-toolbar-button-background-color: #212121;
+
+  --about-arc-version-label-color: #fff;
+  --about-arc-updates-section-background-color: #424242;
 }
 
 body[narrow] {
