@@ -1,11 +1,17 @@
 const assert = require('chai').assert;
 const fs = require('fs-extra');
 const path = require('path');
-const {ThemePluginsManager} = require('../main');
-const testPaths = require('../../../../test/setup-paths');
+const { ThemePluginsManager } = require('../../scripts/packages/plugin-manager/main');
+const testPaths = require('../setup-paths');
 
 describe('ThemePluginsManager - main process', function() {
-  const basePath = testPaths.getBasePath();
+  let basePath;
+
+  before(async () => {
+    basePath = testPaths.getBasePath();
+    const logFile = path.join(basePath, 'log.log');
+    await fs.ensureFile(logFile);
+  });
 
   after(() => fs.remove(basePath));
 
@@ -148,7 +154,7 @@ describe('ThemePluginsManager - main process', function() {
     it('mainFile is set', () => {
       return instance._installLocalPackage(localPackage)
       .then((result) => {
-        assert.equal(result.mainFile, path.join(process.env.ARC_THEMES, 'test-package', 'theme.js'));
+        assert.equal(result.mainFile, path.join(process.env.ARC_THEMES, 'test-package', 'theme.css'));
       });
     });
   });
@@ -191,7 +197,7 @@ describe('ThemePluginsManager - main process', function() {
         name: 'test-name',
         version: 'test-version',
         location: __dirname + '/local-package',
-        mainFile: __dirname + '/local-package/theme.js',
+        mainFile: __dirname + '/local-package/theme.css',
         isSymlink: true
       };
     });
@@ -270,7 +276,7 @@ describe('ThemePluginsManager - main process', function() {
         name: 'test-name',
         version: 'test-version',
         location: __dirname + '/local-package',
-        mainFile: __dirname + '/local-package/theme.js'
+        mainFile: __dirname + '/local-package/theme.css'
       };
     });
 
@@ -324,21 +330,17 @@ describe('ThemePluginsManager - main process', function() {
         .then((exists) => assert.isTrue(exists));
       });
 
-      it('Removes local package', () => {
-        return instance.uninstall(localPackage)
-        .then(() => fs.pathExists(path.join(process.env.ARC_THEMES, 'test-package')))
-        .then((exists) => {
-          assert.isFalse(exists);
-        });
+      it('Removes local package', async () => {
+        await instance.uninstall(localPackage);
+        const exists  = await fs.pathExists(path.join(process.env.ARC_THEMES, 'test-package'));
+        assert.isFalse(exists);
       });
 
-      it('Removes entry from info file.', () => {
-        return instance.uninstall(localPackage)
-        .then(() => fs.readJson(process.env.ARC_THEMES_SETTINGS))
-        .then((data) => {
-          assert.typeOf(data.themes, 'array');
-          assert.lengthOf(data.themes, 0);
-        });
+      it('Removes entry from info file.', async () => {
+        await instance.uninstall(localPackage);
+        const data = await fs.readJson(process.env.ARC_THEMES_SETTINGS);
+        assert.typeOf(data.themes, 'array');
+        assert.lengthOf(data.themes, 0);
       });
     });
 

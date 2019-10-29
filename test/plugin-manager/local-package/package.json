@@ -2,6 +2,6 @@
   "name": "test-package",
   "version": "0.1.0",
   "description": "Test description",
-  "main": "theme.js",
+  "main": "theme.css",
   "themeTitle": "Test title"
 }

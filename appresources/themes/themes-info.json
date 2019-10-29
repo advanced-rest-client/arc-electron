@@ -3,7 +3,7 @@
   "kind": "ARC#ThemeInfo",
   "themes": [
     {
-      "_id": "advanced-rest-client/arc-electron-default-theme",
+      "_id": "@advanced-rest-client/arc-electron-default-theme",
       "title": "Default theme",
       "name": "@advanced-rest-client/arc-electron-default-theme",
       "version": "3.0.2",
@@ -13,7 +13,7 @@
       "isDefault": true
     },
     {
-      "_id": "advanced-rest-client/arc-electron-anypoint-theme",
+      "_id": "@advanced-rest-client/arc-electron-anypoint-theme",
       "title": "Anypoint theme",
       "name": "@advanced-rest-client/arc-electron-anypoint-theme",
       "version": "3.0.2",
@@ -23,7 +23,7 @@
       "isDefault": true
     },
     {
-      "_id": "advanced-rest-client/arc-electron-dark-theme",
+      "_id": "@advanced-rest-client/arc-electron-dark-theme",
       "title": "Dark theme",
       "name": "@advanced-rest-client/arc-electron-dark-theme",
       "version": "3.0.2",
