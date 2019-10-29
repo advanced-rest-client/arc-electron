@@ -187,7 +187,7 @@ body {
   --warning-contrast-color: #fff;
   --pages-fixed-height: calc(100vh - 64px);
   --arc-menu-height: 100%;
-  --arc-toolbar-color: #ffffff;
+  --arc-toolbar-color: #000;
   --arc-toolbar-background-color: var(--anypoint-color-steel5);
   --arc-toolbar-environment-selector-input-color: var(--anypoint-color-tertiary);
   --arc-toolbar-paper-icon-button-active-color: var(--anypoint-color-tertiary);
@@ -333,4 +333,13 @@ body {
                 0 11px 15px -7px rgba(0, 0, 0, 0.4);
 
   --variables-preview-overlay-background-color: var(--primary-background-color);
+  --arc-env-container-color: #000;
+  --arc-env-selector-background-color: transparent;
+  --arc-env-selector-color: #000;
+
+  --arc-toolbar-variables-toggle-icon-color: #000;
+  --arc-toolbar-back-icon-color: #000;
+  --arc-toolbar-icon-color: #000;
+
+  --anypoint-item-hover-background-color: #EEEEEE;
 }

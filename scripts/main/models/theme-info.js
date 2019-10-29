@@ -9,10 +9,10 @@ class ThemeInfo extends ArcPreferences {
     });
   }
 
-  defaultSettings() {
-    return Promise.resolve({
+  async defaultSettings() {
+    return {
       themes: []
-    });
+    };
   }
 }
 module.exports.ThemeInfo = ThemeInfo;

@@ -5,7 +5,7 @@ const fs = require('fs-extra');
 
 const appPath = path.join(__dirname, '..', 'main.js');
 const basePath = path.join('test', 'playground');
-console.log('App path ', appPath);
+// console.log('App path ', appPath);
 
 const settingsFilePath = module.exports.settingsFilePath = path.join(basePath, 'settings.json');
 const workspaceFilePath = module.exports.workspaceFilePath = path.join(basePath, 'workspace');
@@ -61,15 +61,12 @@ function runAppDeffered(timeout, opts) {
   });
 }
 
-function stopAndClean(app, clearPath) {
+async function stopAndClean(app, clearPath) {
   clearPath = clearPath || basePath;
-  let p;
   if (app && app.isRunning()) {
-    p = app.stop();
-  } else {
-    p = Promise.resolve();
+    await app.stop();
   }
-  return p.then(() => fs.remove(clearPath));
+  await fs.remove(clearPath);
 }
 
 module.exports.getApp = getApp;

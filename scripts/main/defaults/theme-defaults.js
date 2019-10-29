@@ -1,6 +1,7 @@
 const fs = require('fs-extra');
 const path = require('path');
 const log = require('../logger');
+const semver = require('semver');
 /**
  * A class that is responsible for setting up theme defaults.
  */
@@ -13,13 +14,13 @@ class ThemeDefaults {
    * @return {Promise} Resolved promise when the defaults are stored.
    */
   async prepareEnvironment() {
-    log.debug('Preparing ARC environment.');
+    log.debug('Preparing themes environment...');
     const names = await this._readDefaultThemesPackages();
     if (!names) {
       return;
     }
-    await this._ensureThemes(names);
     await this._setThemeInfo();
+    await this._ensureThemes(names);
   }
 
   async _readDefaultThemesPackages() {
@@ -107,19 +108,28 @@ class ThemeDefaults {
   async _ensureTheme(info) {
     const file = path.join(process.env.ARC_THEMES, info.name, info.main);
     const exists = await fs.pathExists(file);
-    if (exists) {
-      log.silly(`Theme ${file} exists. Skipping initialization.`);
-      return;
+    if (!exists) {
+      return await this._copyThemeFiles(info);
     }
-    log.silly(`Theme ${file} do not exists. Initializing.`);
-    return await this._copyThemeFiles(info);
+    const localPkgFile = path.join(info.location, 'package.json');
+    const localPkg = await fs.readJson(localPkgFile);
+    const installedPkgFile = path.join(process.env.ARC_THEMES, info.name, 'package.json');
+    const installedPkg = await fs.readJson(installedPkgFile);
+    const localVersion = localPkg.version;
+    const installedVersion = installedPkg.version;
+    if (semver.gt(localVersion, installedVersion)) {
+      return await this._copyThemeFiles(info);
+    }
+    log.silly(`Theme ${file} exists. Skipping initialization.`);
   }
 
   async _copyThemeFiles(info) {
+    log.debug(`Creating ${info.name} theme...`);
     const dest = path.join(process.env.ARC_THEMES, info.name);
     try {
       await fs.emptyDir(dest);
       await fs.copy(info.location, dest);
+      await this._updateThemeVersion(info);
     } catch (cause) {
       log.error('Unable to copy default theme from ' + info.location + ' to ' + dest);
       log.error(cause);
@@ -130,7 +140,7 @@ class ThemeDefaults {
     const file = path.join(process.env.ARC_THEMES, 'themes-info.json');
     const exists = await fs.pathExists(file);
     if (exists) {
-      log.debug(`theme-info.json exists. Checking for latest scheme.`);
+      log.debug(`${file} exists. Ensuring info scheme.`);
       return await this._ensureThemesInfoVersion(file);
     }
     log.info('Creating themes-info.json file');
@@ -170,6 +180,7 @@ class ThemeDefaults {
    */
   async _copyInfoFile() {
     const dest = process.env.ARC_THEMES_SETTINGS;
+    await fs.ensureDir(process.env.ARC_THEMES);
     let info = await fs.readJson(this.localThemeInfoFile, { throws: false })
     info = info || {};
     await fs.writeJson(dest, info);
@@ -195,7 +206,24 @@ class ThemeDefaults {
       }
       info.themes.push(item);
     });
-    return await fs.writeJson(file, info);
+    await fs.writeJson(file, info);
+  }
+
+  async _updateThemeVersion(info) {
+    const dbFile = process.env.ARC_THEMES_SETTINGS;
+    const db = await fs.readJson(dbFile);
+    // name contains path separator that is different on different platforms.
+    const normalizedName = info.name.replace(/[\\/]/g, '');
+    const theme = db.themes.find((i) => i.name.replace(/[\\/]/g, '') === normalizedName);
+    if (!theme) {
+      return;
+    }
+    const localPkgFile = path.join(info.location, 'package.json');
+    const localPkg = await fs.readJson(localPkgFile);
+    theme.version = localPkg.version;
+    await fs.writeJson(dbFile, db, {
+      spaces: 2
+    });
   }
 }
 exports.ThemeDefaults = ThemeDefaults;

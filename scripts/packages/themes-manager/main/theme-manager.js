@@ -169,28 +169,27 @@ class ThemeManager {
     }, 10000);
   }
 
-  __updateCheck() {
-    log.debug('Checking for themes updates.');
-    return this.manager.checkForUpdates()
-    .then((info) => {
-      if (!info) {
-        log.debug('Update not available.');
+  async __updateCheck() {
+    log.debug('Checking for themes updates...');
+    try {
+      const info = await this.manager.checkForUpdates();
+      if (!info || !info.length) {
+        log.debug('Themes update not available.');
         return;
       }
-      const themes = Object.keys(info);
-      if (!themes.length) {
-        log.debug('Update not available.');
-        return;
-      }
-      log.debug('Themes to update', themes);
-      return this.manager.update(info)
-      .then(() => {
-        log.info('Themes updated. The change will be applied with next app reload.');
+      log.debug('Updating themes....');
+      const result = await this.manager.update(info);
+      result.forEach((item) => {
+        if (!result.error) {
+          return;
+        }
+        const { name, message } = item;
+        log.info(`Theme ${name} update error: ${message}`);
       });
-    })
-    .catch((cause) => {
-      log.error(cause);
-    });
+      log.info('Themes updated. The change will be applied with next app reload.');
+    } catch (e) {
+      log.error(e);
+    }
   }
 }
 module.exports.ThemeManager = ThemeManager;
