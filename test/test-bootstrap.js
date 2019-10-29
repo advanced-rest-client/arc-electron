@@ -35,7 +35,6 @@ function getApp(opts) {
 }
 
 function deffer(timeout) {
-  console.log('Deffering init script for ', timeout, ' ms');
   return new Promise(function(resolve) {
     setTimeout(function() {
       resolve();
@@ -43,22 +42,20 @@ function deffer(timeout) {
   });
 }
 
-function runAppDeffered(timeout, opts) {
+async function runAppDeffered(timeout, opts) {
   const app = getApp(opts);
   timeout = timeout || 5000;
-  return app.start()
-  .then(() => app.client.waitUntilWindowLoaded(10000))
-  .then(() => deffer(timeout))
-  .then(() => app)
-  .catch((cause) => {
+  try {
+    await app.start();
+    await app.client.waitUntilWindowLoaded(10000);
+    await deffer(timeout);
+    return app;
+  } catch (e) {
     if (app && app.isRunning()) {
-      return app.stop()
-      .then(() => {
-        throw cause;
-      });
+      await app.stop();
     }
-    throw cause;
-  });
+    throw e;
+  }
 }
 
 async function stopAndClean(app, clearPath) {
