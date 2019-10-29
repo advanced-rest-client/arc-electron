@@ -1,4 +1,4 @@
-const bootstrap = require('./test-bootstrap.js');
+const bootstrap = require('../test-bootstrap.js');
 const { assert } = require('chai');
 const path = require('path');
 const fs = require('fs-extra');

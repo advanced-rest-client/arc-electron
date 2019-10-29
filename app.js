@@ -1,5 +1,8 @@
 // Scrips are moved to scripts/renderer/preload.js so node integration can be disabled
 // in the application window.
+
+/* eslint-disable no-console */
+
 /**
  * Class responsible for initializing the main ARC elements
  * and setup base options.
@@ -94,6 +97,7 @@ class ArcInit {
     ipc.on('app-navigate', this._appNavHandler.bind(this));
     ipc.on('popup-app-menu-opened', this._popupMenuOpened.bind(this));
     ipc.on('popup-app-menu-closed', this._popupMenuClosed.bind(this));
+    ipc.on('system-theme-changed', this._systemThemeChangeHandler.bind(this));
   }
   /**
    * Requests initial state information from the main process for current
@@ -145,9 +149,9 @@ class ArcInit {
       throw e;
     }
     if (this.initConfig.darkMode) {
-      cnf.theme = 'advanced-rest-client/arc-electron-dark-theme';
+      cnf.theme = '@advanced-rest-client/arc-electron-dark-theme';
     }
-    if (cnf.theme === 'advanced-rest-client/arc-electron-anypoint-theme') {
+    if (cnf.theme === '@advanced-rest-client/arc-electron-anypoint-theme') {
       const app = this.app;
       app.compatibility = true;
     }
@@ -177,6 +181,7 @@ class ArcInit {
     if (this.created) {
       return Promise.resolve();
     }
+    /* eslint-disable-next-line import/no-unresolved */
     await import('web-module://src/arc-electron.js');
     const app = document.createElement('arc-electron');
     app.id = 'app';
@@ -503,6 +508,26 @@ class ArcInit {
   async exportWorkspace() {
     const workspace = this.app.workspace.serializeWorkspace();
     return await this.fs.exportFileData(workspace, 'application/json', 'arc-workspace.arc');
+  }
+  /**
+   * Handler for system theme change event dispatche in the IO thread.
+   * Updates theme depending on current setting.
+   *
+   * @param {Event} e
+   * @param {Boolean} isDarkMode true when Electron detected dark mode
+   * @return {Promise}
+   */
+  async _systemThemeChangeHandler(e, isDarkMode) {
+    const theme = isDarkMode ?
+      '@advanced-rest-client/arc-electron-dark-theme' :
+      '@advanced-rest-client/arc-electron-default-theme';
+    const app = this.app;
+    app.compatibility = false;
+    try {
+      await this.themeManager.loadTheme(theme);
+    } catch (e) {
+      console.error(e);
+    }
   }
 }
 

@@ -26,7 +26,6 @@ const fs = require('fs-extra');
 class ThemesProtocolHandler {
   constructor() {
     this._requestHandler = this._requestHandler.bind(this);
-    this._registrationHandler = this._registrationHandler.bind(this);
   }
   /**
    * Registers the protocol handler.
@@ -36,17 +35,10 @@ class ThemesProtocolHandler {
     log.debug('Registering themes protocol');
     session.fromPartition('persist:arc-window')
     .protocol
-    .registerStringProtocol('themes', this._requestHandler, this._registrationHandler);
+    .registerStringProtocol('themes', this._requestHandler);
     session.fromPartition('persist:arc-task-manager')
     .protocol
-    .registerStringProtocol('themes', this._requestHandler, this._registrationHandler);
-  }
-
-  _registrationHandler(err) {
-    if (err) {
-      log.error('Unable to register themes protocol');
-      log.error(err);
-    }
+    .registerStringProtocol('themes', this._requestHandler);
   }
 
   _requestHandler(request, callback) {

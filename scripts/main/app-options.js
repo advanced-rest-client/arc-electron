@@ -63,10 +63,6 @@ class AppOptions {
       shortcut: '-o',
       type: String,
       allowArray: true
-    }, {
-      name: '--test',
-      shortcut: '-test',
-      type: Boolean
     }];
   }
   /**
@@ -89,11 +85,10 @@ class AppOptions {
     for (let i = 1; i < process.argv.length; i++) {
       const arg = process.argv[i];
       if (arg[0] !== '-') {
-        if (arg[0] !== '.') {
-          log.warn('Unknown startup option ' + arg);
-        }
         if (this.isDefaultProtocolFile(arg)) {
           this.setDefaultProtocolFile(arg);
+        } else if (arg[0] !== '.') {
+          log.warn('Unknown startup option ' + arg);
         }
         continue;
       }

@@ -1,5 +1,5 @@
-const bootstrap = require('./test-bootstrap.js');
-const {assert} = require('chai');
+const bootstrap = require('../test-bootstrap.js');
+const { assert } = require('chai');
 const fs = require('fs-extra');
 const path = require('path');
 
@@ -8,10 +8,8 @@ describe('Initial paths', function() {
   const settingsFilePath = path.join(basePath, 'test-settings.json');
   const workspaceFilePath = path.join(basePath, 'workspace');
   const themesFilePath = path.join(basePath, 'themes-esm');
-  const componentsFilePath = path.join(basePath, 'components');
 
   describe('Setups default file paths', function() {
-    this.timeout(10000);
     let app;
     before(function() {
       app = bootstrap.getApp();
@@ -99,7 +97,6 @@ describe('Initial paths', function() {
   });
 
   describe('Setups configuration file paths', function() {
-    this.timeout(10000);
     const opts = {
       args: [
         '--settings-file',

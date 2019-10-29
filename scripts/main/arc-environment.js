@@ -1,4 +1,4 @@
-const { ipcMain, app, shell } = require('electron');
+const { ipcMain, app, shell, nativeTheme } = require('electron');
 const { PreferencesManager } = require('../packages/arc-preferences/main');
 const { ArcMainMenu } = require('./main-menu');
 const { AppMenuService } = require('./app-menu-service');
@@ -161,6 +161,11 @@ class ArcEnvironment {
   _initializeThemes() {
     this.themes = new ThemeManager(this);
     this.themes.listen();
+    nativeTheme.on('updated', this._osThemeUpdated.bind(this));
+  }
+
+  _osThemeUpdated() {
+    this.wm.notifyAll('system-theme-changed', nativeTheme.shouldUseDarkColors);
   }
 
   /**

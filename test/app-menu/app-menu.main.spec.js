@@ -1,7 +1,7 @@
 const { assert } = require('chai');
 const path = require('path');
 const fs = require('fs-extra');
-const { ArcMainMenu } = require('../scripts/main/main-menu.js');
+const { ArcMainMenu } = require('../../scripts/main/main-menu.js');
 const sinon = require('sinon');
 const { Menu } = require('electron');
 
