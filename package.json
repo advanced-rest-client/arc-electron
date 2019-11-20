@@ -80,7 +80,7 @@
     "camelcase": "^4.1.0",
     "codemirror": "^5.49.0",
     "crypto-js": "^3.1.9-1",
-    "electron-log": "^3.0.8",
+    "electron-log": "^3.0.9",
     "electron-prompt": "^1.3.1",
     "electron-updater": "4.1.2",
     "fs-extra": "^8.1.0",
