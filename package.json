@@ -14,7 +14,7 @@
   "scripts": {
     "start": "electron . --inspect --debug  --debug-level=\"silly\" --skip-app-update --skip-themes-update --workspace-path=\"~/arc-dev/workspace\" --settings-file=\"~/arc-dev/dev-settings.json\" --themes-path=\"~/arc-dev/themes\"",
     "start:api": "node --inspect=9227 dev-api/api.js --PORT=8080",
-    "postinstall": "electron-rebuild && electron-builder install-app-deps",
+    "postinstall": "electron-builder install-app-deps",
     "prepare": "pika-web && node tasks/prepare-app.js",
     "test": "npm run test:main && npm run test:renderer && npm run test:app",
     "test:main": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron electron-mocha test/**/*.main.spec.js scripts/packages/**/*.main.spec.js",
@@ -62,7 +62,6 @@
     "electron": "^7.0.0",
     "electron-builder": "^21.2.0",
     "electron-mocha": "^8.1.2",
-    "electron-rebuild": "^1.8.6",
     "eslint-config-google": "^0.14.0",
     "esm": "^3.2.25",
     "express": "^4.17.1",
