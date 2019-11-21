@@ -24,7 +24,6 @@ const mime = require('mime-types');
 class EsmProtocolHandler {
   constructor() {
     this._requestHandler = this._requestHandler.bind(this);
-    this._registrationHandler = this._registrationHandler.bind(this);
     /**
      * Base path to the themes folder.
      * @type {String}
@@ -40,19 +39,12 @@ class EsmProtocolHandler {
     log.debug('Registering components protocol');
     session.fromPartition('persist:arc-window')
     .protocol
-    .registerBufferProtocol('web-module', this._requestHandler, this._registrationHandler);
+    .registerBufferProtocol('web-module', this._requestHandler);
     session.fromPartition('persist:arc-task-manager')
     .protocol
-    .registerBufferProtocol('web-module', this._requestHandler, this._registrationHandler);
+    .registerBufferProtocol('web-module', this._requestHandler);
     protocol
-    .registerBufferProtocol('web-module', this._requestHandler, this._registrationHandler);
-  }
-
-  _registrationHandler(err) {
-    if (err) {
-      log.error('Unable to register web-module protocol');
-      log.error(err);
-    }
+    .registerBufferProtocol('web-module', this._requestHandler);
   }
 
   _requestHandler(request, respond) {

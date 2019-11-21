@@ -1,4 +1,4 @@
-const { ipcMain, app, shell } = require('electron');
+const { ipcMain, app, shell, nativeTheme } = require('electron');
 const { PreferencesManager } = require('../packages/arc-preferences/main');
 const { ArcMainMenu } = require('./main-menu');
 const { AppMenuService } = require('./app-menu-service');
@@ -18,6 +18,7 @@ const fs = require('fs-extra');
 
 class ArcEnvironment {
   constructor(params = {}) {
+    this.initParams = params;
     this.isDebug = params.isDebug || false;
     this.withDevtools = params.withDevtools || false;
     this._initializeConfiguration(params);
@@ -73,7 +74,7 @@ class ArcEnvironment {
       this.menu.enableAppMenuPopup();
     }
     if (!this.isDebug) {
-      this.us.start(config);
+      this.us.start(config, this.initParams.skipAppUpdate);
     }
   }
 
@@ -159,8 +160,13 @@ class ArcEnvironment {
   }
 
   _initializeThemes() {
-    this.themes = new ThemeManager(this);
+    this.themes = new ThemeManager(this, this.initParams.skipThemesUpdate);
     this.themes.listen();
+    nativeTheme.on('updated', this._osThemeUpdated.bind(this));
+  }
+
+  _osThemeUpdated() {
+    this.wm.notifyAll('system-theme-changed', nativeTheme.shouldUseDarkColors);
   }
 
   /**

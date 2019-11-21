@@ -1,18 +1,11 @@
 const { assert } = require('chai');
-const bootstrap = require('./test-bootstrap.js');
 const fs = require('fs-extra');
 const path = require('path');
-
-async function aTimeout(timeout) {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(), timeout);
-  });
-}
+const bootstrap = require('../test-bootstrap.js');
 
 describe('Renderer configuration', function() {
   let app;
   before(function() {
-    this.timeout(10000);
     return bootstrap.runAppDeffered(2000)
     .then((result) => {
       app = result;
@@ -40,7 +33,6 @@ describe('Renderer configuration', function() {
   });
 
   it('Sets configuration on arc-electron component', (done) => {
-    this.timeout(10000);
     app.client.element('arc-electron')
     .then((result) => {
       assert.ok(result);
@@ -69,7 +61,6 @@ describe('Renderer configuration', function() {
   });
 
   it('Sets configuration on electron-http-transport component', (done) => {
-    this.timeout(10000);
     app.client.element('arc-electron')
     .then((result) => {
       assert.ok(result);
@@ -102,7 +93,6 @@ describe('Renderer configuration', function() {
   });
 
   it('Sets configuration on variables-manager component', async () => {
-    this.timeout(10000);
     const result = await app.client.element('arc-electron');
     assert.ok(result);
     const call = await app.client.execute(() => {
@@ -119,7 +109,6 @@ describe('Renderer configuration', function() {
   });
 
   it('Sets configuration on arc-request-logic component', async () => {
-    this.timeout(10000);
     const init = await app.client.element('arc-electron');
     assert.ok(init);
     const result = await app.client.execute(() => {
@@ -134,7 +123,6 @@ describe('Renderer configuration', function() {
   });
 
   it('Sets configuration on arc-menu component', async () => {
-    this.timeout(10000);
     const init = await app.client.element('arc-electron');
     assert.ok(init);
     const result = await app.client.execute(() => {
@@ -151,7 +139,6 @@ describe('Renderer configuration', function() {
   });
 
   it('Sets configuration on history-panel component', async () => {
-    this.timeout(10000);
     const init = await app.client.element('arc-electron');
     assert.ok(init);
     const result = await app.client.executeAsync((done) => {
@@ -169,7 +156,6 @@ describe('Renderer configuration', function() {
   });
 
   it('Sets configuration on saved-requests-panel component', async () => {
-    this.timeout(10000);
     const init = await app.client.element('arc-electron');
     assert.ok(init);
     const result = await app.client.executeAsync((done) => {
@@ -187,7 +173,6 @@ describe('Renderer configuration', function() {
   });
 
   it('Renders app-analytics elements', async () => {
-    this.timeout(10000);
     const init = await app.client.element('arc-electron');
     assert.ok(init);
     const result = await app.client.execute(() => {

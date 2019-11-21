@@ -1,4 +1,4 @@
-const { BrowserWindow, dialog, ipcMain, systemPreferences } = require('electron');
+const { BrowserWindow, dialog, ipcMain, nativeTheme } = require('electron');
 const path = require('path');
 const url = require('url');
 const { ArcSessionControl } = require('../packages/arc-preferences/main');
@@ -132,7 +132,7 @@ class ArcWindowsManager {
    * Notifies all opened windows with event data.
    *
    * @param {String} type Event type (channel name)
-   * @param {?Array} args List of arguments.
+   * @param {?Array|any} args List of arguments or a single argument
    */
   notifyAll(type, args) {
     log.debug('[WM] Notyfying all windows with type: ' + type);
@@ -354,7 +354,7 @@ class ArcWindowsManager {
     }
     const cnf = {
       workspaceFile: this._computeWorkspaceFile(workspaceOptions),
-      darkMode: systemPreferences.isDarkMode()
+      darkMode: nativeTheme.shouldUseDarkColors
     };
     if (win) {
       cnf.startPath = win._startPath;

@@ -1,4 +1,4 @@
-const bootstrap = require('./test-bootstrap.js');
+const bootstrap = require('../test-bootstrap.js');
 const { assert } = require('chai');
 const fs = require('fs-extra');
 const path = require('path');
@@ -8,12 +8,10 @@ describe('Loading default window', function() {
   const settingsFilePath = path.join(basePath, 'test-settings.json');
   const workspaceFilePath = path.join(basePath, 'workspace');
   const themesFilePath = path.join(basePath, 'themes-esm');
-  const componentsFilePath = path.join(basePath, 'components');
 
   after(() => fs.remove(basePath));
 
   describe('Loading app.html', function() {
-    this.timeout(10000);
     let app;
     before(function() {
       app = bootstrap.getApp();
@@ -64,7 +62,6 @@ describe('Loading default window', function() {
   });
 
   describe('Workspace preparation', function() {
-    this.timeout(10000);
     const opts = {
       args: [
         '--settings-file',
