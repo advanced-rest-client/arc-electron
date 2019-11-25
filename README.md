@@ -26,5 +26,6 @@ ARC's build process generates several builds for Linux. Find your platform and t
 
 Please note that ARC won't update automatically on Linux platform as this is not yet supported by the build library. This may be possible in the future.
 
-
-
+------
+<!-- noreferrer for user's privacy -->
+ARC uses <a href="https://www.browserstack.com/" target="_blank" rel="noreferrer"><img src="assets/Browserstack-logo@2x.png" width="200"></a> for testing
