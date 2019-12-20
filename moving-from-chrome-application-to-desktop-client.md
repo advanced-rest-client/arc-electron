@@ -17,11 +17,11 @@ Open Chrome application. You can recognize it by green baner in the left-bottom 
 
 In the top right application menu select Import and export data.
 
-![Chrome application menu](.gitbook/assets/image%20%2832%29.png)
+![Chrome application menu](.gitbook/assets/image%20%2835%29.png)
 
 Click on the **Prepare data** button to create export object. Depending on the amount of data it may take a minute or two.
 
-![Export configuration options](.gitbook/assets/image%20%2824%29.png)
+![Export configuration options](.gitbook/assets/image%20%2827%29.png)
 
 On the next screen choose "Download file" tile. 
 
@@ -29,7 +29,7 @@ On the next screen choose "Download file" tile.
 Do not export to Google Drive as desktop client don't have access to the data created by Chrome application.
 {% endhint %}
 
-![Export destination options](.gitbook/assets/image%20%2831%29.png)
+![Export destination options](.gitbook/assets/image%20%2834%29.png)
 
 This opens a dialog to save the file on disk. Select any location to store the file. We will use this file later to import it in desktop client.
 
@@ -45,7 +45,7 @@ At this point your system tells you there are two Advanced REST Client applicati
 
 Select **File** &gt; **Import data** from application system menu.
 
-![Import menu option in Advanced REST Client](.gitbook/assets/image%20%2850%29.png)
+![Import menu option in Advanced REST Client](.gitbook/assets/image%20%2855%29.png)
 
 In the import screen choose "Open from file" option and point to the file saved in the previous step. After the data are processed the import inspector screen is rendered.
 
