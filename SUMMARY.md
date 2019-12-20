@@ -17,3 +17,8 @@
 
 * [Authenticating With OAuth2 And Request Actions](guides/authenticating-with-oauth2-and-request-actions.md)
 
+## API School
+
+* [Web APIs basics](api-school/web-apis-basics.md)
+* [Building an API \(Node\)](api-school/building-an-api-node.md)
+

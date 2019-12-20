@@ -15,7 +15,7 @@ Find an installer for your platform under "Assets" section.
 For example, for Windows you would download `arc-setup.exe`. For MacOS download `arc-13.0.7.dmg`.
 
 {% hint style="info" %}
- Version number may be different to the one in the scree shoot. For normal use, please, download latest stable version.
+Version number may be different to the one in the scree shoot. For normal use, please, download latest stable version.
 {% endhint %}
 
 When downloaded, run the file. The installed will walk you through the installation process.
@@ -26,6 +26,5 @@ ARC's build process generates several builds for Linux. Find your platform and t
 
 Please note that ARC won't update automatically on Linux platform as this is not yet supported by the build library. This may be possible in the future.
 
-------
-<!-- noreferrer for user's privacy -->
-ARC uses <a href="https://www.browserstack.com/" target="_blank" rel="noreferrer"><img src="assets/Browserstack-logo@2x.png" width="200"></a> for testing
+ARC uses  for testing
+
