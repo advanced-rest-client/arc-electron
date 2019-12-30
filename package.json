@@ -92,7 +92,7 @@
     "fs-extra": "^8.1.0",
     "jexl": "^2.2.2",
     "jsonlint": "^1.6.3",
-    "live-plugin-manager": "^0.13.2",
+    "live-plugin-manager": "^0.14.0",
     "mime-types": "^2.1.25",
     "node-fetch": "^2.6.0",
     "ntlm": "^0.1.3",
