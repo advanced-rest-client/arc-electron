@@ -13,7 +13,7 @@
   },
   "scripts": {
     "start": "electron . --inspect --debug  --debug-level=\"silly\" --skip-app-update --skip-themes-update --workspace-path=\"~/arc-dev/workspace\" --settings-file=\"~/arc-dev/dev-settings.json\" --themes-path=\"~/arc-dev/themes\"",
-    "start:api": "node --inspect=9227 dev-api/api.js --PORT=8080",
+    "start:api": "node dev-api/api.js",
     "postinstall": "electron-builder install-app-deps",
     "prepare": "pika-web && node tasks/prepare-app.js",
     "test": "npm run test:main && npm run test:renderer && npm run test:app",
