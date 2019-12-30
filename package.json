@@ -96,7 +96,7 @@
     "mime-types": "^2.1.25",
     "node-fetch": "^2.6.0",
     "ntlm": "^0.1.3",
-    "semver": "^6.3.0",
+    "semver": "^7.1.1",
     "uuid": "^3.3.3",
     "winston": "^3.2.1",
     "yargs": "^14.2.2"
