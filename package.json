@@ -40,11 +40,13 @@
     "@advanced-rest-client/arc-icons": "^3.0.5",
     "@advanced-rest-client/arc-info-messages": "^3.0.0",
     "@advanced-rest-client/arc-onboarding": "^3.0.1",
+    "@advanced-rest-client/client-certificates-panel": "^1.0.4",
     "@advanced-rest-client/eslint-config": "^1.1.4",
     "@advanced-rest-client/exchange-search-panel": "^3.0.3",
     "@advanced-rest-client/host-rules-editor": "^3.0.0",
     "@advanced-rest-client/rest-apis-list-panel": "^3.0.0",
     "@advanced-rest-client/themes-panel": "^3.0.0",
+    "@anypoint-web-components/anypoint-dialog": "^0.1.1",
     "@api-components/api-candidates-dialog": "^3.0.0",
     "@api-components/api-documentation": "^4.0.4",
     "@api-components/api-navigation": "^4.0.2",
@@ -286,7 +288,12 @@
       "@anypoint-web-components/anypoint-item/anypoint-item.js",
       "lit-html/directives/repeat.js",
       "@advanced-rest-client/arc-onboarding/arc-onboarding.js",
-      "@advanced-rest-client/rest-apis-list-panel/rest-apis-list-panel.js"
+      "@advanced-rest-client/rest-apis-list-panel/rest-apis-list-panel.js",
+      "@advanced-rest-client/client-certificates-panel/client-certificates-panel.js",
+      "@advanced-rest-client/client-certificates-panel/certificate-import.js",
+      "@advanced-rest-client/arc-models/client-certificate-model.js",
+      "@anypoint-web-components/anypoint-dialog/anypoint-dialog.js",
+      "@anypoint-web-components/anypoint-dialog/anypoint-dialog-scrollable.js"
     ]
   }
 }
