@@ -34,11 +34,11 @@ When switching the environment in the top toolbar you will switch between differ
 
 To add a new environment first click on "Edit variables" to open variables editor.
 
-![Empty variables editor](../.gitbook/assets/image%20%2851%29.png)
+![Empty variables editor](../.gitbook/assets/image%20%2856%29.png)
 
 Then "Add" next to environment selector. It then renders a text field where you can enter new environment name. There are no limitation for environment name.
 
-![Adding an environment](../.gitbook/assets/image%20%2840%29.png)
+![Adding an environment](../.gitbook/assets/image%20%2844%29.png)
 
 When the environment is saved then you can define variables for it.
 
@@ -64,11 +64,11 @@ You can repeat this steps as many times you need for each of your environments. 
 
 To apply a variable simply as `${` before variable name and `}` after it.
 
-![Applying variable to a request](../.gitbook/assets/image%20%2845%29.png)
+![Applying variable to a request](../.gitbook/assets/image%20%2850%29.png)
 
 The value is applied to the header just before sending the request
 
-![Sent HTTP message with variable applied to a header](../.gitbook/assets/image%20%2855%29.png)
+![Sent HTTP message with variable applied to a header](../.gitbook/assets/image%20%2860%29.png)
 
 You can put a variable into a method, URL, headers, or payload field. Variables can be used as many times as you need in a request.
 
@@ -82,7 +82,7 @@ As an example, basic authorization requires both username and password. It might
 
 As a result the combined value is used with the request.
 
-![Processed variable value](../.gitbook/assets/image%20%2846%29.png)
+![Processed variable value](../.gitbook/assets/image%20%2851%29.png)
 
 ## Functions in variables
 
@@ -94,7 +94,7 @@ It uses JavaScript envine to evaluate the value. We will use a `slice` function 
 
 In a programming world this would JavaScript would evaluate: `"uname".slice(1, 3)` which in result returns `na`.
 
-![Evaluated function](../.gitbook/assets/image%20%2844%29.png)
+![Evaluated function](../.gitbook/assets/image%20%2849%29.png)
 
 ### Function execution group
 
@@ -102,5 +102,5 @@ ARC support few additional functions. They are defined in miscellaneous tab. The
 
 Now and random functions support grouping that allows you to generate a value once when making a request and to reuse generated value again using the same group name. Pass a value to either of the functions as an argument and re-use the same function call more than once to recol generated value.
 
-![Grouped generated values](../.gitbook/assets/image%20%2857%29.png)
+![Grouped generated values](../.gitbook/assets/image%20%2863%29.png)
 

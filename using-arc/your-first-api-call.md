@@ -8,13 +8,13 @@ description: This guide describes how to make your first request to the API endp
 
 You will use the request panel to enter request properties like method, URL, headers, and the body.
 
-![Empty request panel](../.gitbook/assets/image%20%2838%29.png)
+![Empty request panel](../.gitbook/assets/image%20%2842%29.png)
 
 ### Request URL
 
 The request URL it is an API endpoint URL you want to connect to. The input field allows to provide any valid URL data, like, `https://api.domain.com/endpoint?param=value`
 
-![URL editor with url](../.gitbook/assets/image%20%2828%29.png)
+![URL editor with url](../.gitbook/assets/image%20%2831%29.png)
 
 {% hint style="info" %}
 The URL is passed to the HTTP client unprocessed to give you more control over request parameters. This means that special characters must be encoded before sending the request.
@@ -24,17 +24,17 @@ The URL is passed to the HTTP client unprocessed to give you more control over r
 
 The URL editor has an alternative view to provide URL data. It allows to define each part of the URL separately. It also has a convenient way of defining query parameters.
 
-![](../.gitbook/assets/image%20%2848%29.png)
+![](../.gitbook/assets/image%20%2853%29.png)
 
 Query parameters can be added, removed, or disabled. 
 
 You can add as much query parameters as you need. Names and values must be valid query parameter string.  
 
-![Invalid parameters values](../.gitbook/assets/image%20%2854%29.png)
+![Invalid parameters values](../.gitbook/assets/image%20%2859%29.png)
 
 Don't worry, when the application say that the parameter is invalid you can use "Encode URL" button to fix the problem. 
 
-![Encoded correct values in the URL editor](../.gitbook/assets/image%20%2862%29.png)
+![Encoded correct values in the URL editor](../.gitbook/assets/image%20%2869%29.png)
 
 {% hint style="info" %}
 Once encoded value will be encoded again producing invalid entry. When you want to encode values again, decode the values first and then encode.
@@ -77,13 +77,13 @@ By default ARC renders a form view with autofill options when defining headers.
 
 When a header is recognized as one of the standard header is renders a help icon that opens a description for the header.
 
-![Hint message for known header](../.gitbook/assets/image%20%2829%29.png)
+![Hint message for known header](../.gitbook/assets/image%20%2832%29.png)
 
 Similarly to query parameters editor, headers can be temporarily disabled to test various options. When the checkbox is unselected then the header value is kept in the editor but it is excluded from the request.
 
 For more advanced use you can switch to "Source view" which renders a text editor to provide header values manually.
 
-![Source view in headers editor](../.gitbook/assets/image%20%2847%29.png)
+![Source view in headers editor](../.gitbook/assets/image%20%2852%29.png)
 
 The editor support suggestions for header names and values.
 
@@ -105,7 +105,7 @@ The body editor supports syntax highlighting for several content types like JSON
 
 Form data editor can be a form based editor that allows you to enter and encode the data if needed.
 
-![x-www-urlencode media type editor](../.gitbook/assets/image%20%2822%29.png)
+![x-www-urlencode media type editor](../.gitbook/assets/image%20%2824%29.png)
 
 Multipart values are also supported. The editor allows you to add both file and text part to the message. You need to provide a name of the part and the value \(either a text for text part or a file for file part\). Additionally you can define a media type for the text part.
 
@@ -138,7 +138,7 @@ Payload:
 
 When the response is ready ARC renders a response view below the request panel. By default it renders information about response status, processing time, and the received message.
 
-![Response view](../.gitbook/assets/image%20%2830%29.png)
+![Response view](../.gitbook/assets/image%20%2833%29.png)
 
 In most cases the response is parsed and syntax is highlighted for your convenience. You can see the original message by pressing "Source view" button.
 
@@ -152,13 +152,13 @@ Advanced REST Client collect detailed information about the request, response, a
 
 **Request headers** contains a final list of headers sent to the server. It also has a view that renders full HTTP message sent to the server.
 
-![](../.gitbook/assets/image%20%2834%29.png)
+![](../.gitbook/assets/image%20%2838%29.png)
 
 In this case the HTTP client added Host, Connection, and Content-Length headers to manage the the connection process and inform the server about the content.
 
 The **response headers** contains a list of all headers received from the server.
 
-![Response headers](../.gitbook/assets/image%20%2858%29.png)
+![Response headers](../.gitbook/assets/image%20%2864%29.png)
 
 {% hint style="success" %}
 Cookies are processed like a web browser would process it. Cookies are stored in internal protected storage and applied to a request send to the same domain and path.
@@ -166,7 +166,7 @@ Cookies are processed like a web browser would process it. Cookies are stored in
 
 The **redirects** panel renders a response for each redirect that happened during the request. It shows information where the request was redirect to, status code, and the list of headers.
 
-![](../.gitbook/assets/image%20%2823%29.png)
+![](../.gitbook/assets/image%20%2825%29.png)
 
 {% hint style="info" %}
 Only the final response is reported in the response body view.
@@ -180,7 +180,7 @@ The **timings tab** renders detailed information about each part of the request 
 
 If the request was redirected this will render timing information for each redirect.
 
-![Timings panel with redirects](../.gitbook/assets/image%20%2853%29.png)
+![Timings panel with redirects](../.gitbook/assets/image%20%2858%29.png)
 
 {% hint style="info" %}
 The reported timing in the main response view is for the last request in the redirects chain. The timing panel shows the total time for all requests.
