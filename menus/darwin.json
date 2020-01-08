@@ -266,6 +266,10 @@
               "command": "application:open-cookie-manager"
             },
             {
+              "label": "Client certificates",
+              "command": "application:open-client-certificates"
+            },
+            {
               "type": "separator"
             },
             {
