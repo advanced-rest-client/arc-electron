@@ -15,10 +15,10 @@ Find an installer for your platform under "Assets" section.
 For example, for Windows you would download `arc-setup.exe`. For MacOS download `arc-13.0.7.dmg`.
 
 {% hint style="info" %}
-Version number may be different to the one in the scree shoot. For normal use, please, download latest stable version.
+Version number may be different to the one in the screen shoot. For normal use, please, download latest stable version.
 {% endhint %}
 
-When downloaded, run the file. The installed will walk you through the installation process.
+When downloaded, run the file. The installer will walk you through the installation process.
 
 ## Linux installation
 
