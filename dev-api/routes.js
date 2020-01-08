@@ -1,5 +1,6 @@
 import express from 'express';
 import statusCodesRoute from './status-codes.route.js';
+import authBasicRoute from './auth-basic.route.js';
 
 /* eslint-disable no-console */
 
@@ -8,6 +9,7 @@ export default router;
 
 // Test scenarios for status codes
 router.use('/status', statusCodesRoute);
+router.use('/auth/basic', authBasicRoute);
 
 // Errors
 router.use((req, res) => {

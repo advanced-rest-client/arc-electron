@@ -23,7 +23,7 @@ There are two groups of actions that can be performed during the request
 
 Currently request action only allows you to set a value on a variable before the request is made. This value is not stored in the data store bur rather in memory only. This means when you restart the application the variable value will be restored to it's original value.
 
-![Request action with definition](../.gitbook/assets/image%20%2852%29.png)
+![Request action with definition](../.gitbook/assets/image%20%2857%29.png)
 
 In this example a `myAccessToken` variable is set to empty string before the request is executed.
 
@@ -151,7 +151,7 @@ When `path` is set you can define two actions to be performed on the data. You c
 
 ## Conditions
 
-![](../.gitbook/assets/image%20%2827%29.png)
+![](../.gitbook/assets/image%20%2830%29.png)
 
 You can add a condition to the action so the action will be executed if all defined conditions are meet.
 

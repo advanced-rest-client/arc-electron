@@ -41,13 +41,11 @@ class ArcEnvironment {
     ipcMain.on('open-external-url', this._externalUrlHandler.bind(this));
   }
 
-  loadEnvironment() {
+  async loadEnvironment() {
     log.debug('Loading user configuration.');
-    return this.config.load()
-    .then((settings) => {
-      log.debug('User configuration ready.');
-      this._postConfig(settings);
-    });
+    const settings = await this.config.load();
+    log.debug('User configuration ready.');
+    this._postConfig(settings);
   }
 
   registerHandlers() {

@@ -242,7 +242,7 @@ class ArcInit {
    */
   commandHandler(e, action, ...args) {
     // console.info('Renderer command handled: ', action);
-    const app = this.app;
+    const { app } = this;
     switch (action) {
       case 'show-settings': app.openSettings(); break;
       case 'about': app.openAbout(); break;
@@ -267,6 +267,7 @@ class ArcInit {
       case 'open-onboarding': app.openOnboarding(); break;
       case 'open-workspace-details': app.openWorkspaceDetails(); break;
       case 'export-workspace': this.exportWorkspace(); break;
+      case 'open-client-certificates': app.openClientCertificates(); break;
       default:
         console.warn('Unknown command', action, args);
     }
