@@ -15,24 +15,14 @@ const path = require('path');
 class FilesystemProxy {
   constructor() {
     this._exportHandler = this._exportHandler.bind(this);
-    this._fileSavedHandler = this._fileSavedHandler.bind(this);
   }
 
   listen() {
     window.addEventListener('file-data-save', this._exportHandler);
-    ipc.on('saved-file', this._fileSavedHandler);
   }
 
   unlisten() {
     window.removeEventListener('file-data-save', this._exportHandler);
-    ipc.removeListener('saved-file', this._fileSavedHandler);
-  }
-
-  _clear() {
-    this.lastType = undefined;
-    this.lastContent = undefined;
-    this.lastResolve = undefined;
-    this.lastReject = undefined;
   }
 
   _exportHandler(e) {
@@ -40,47 +30,49 @@ class FilesystemProxy {
       return;
     }
     e.preventDefault();
-    const { content, file, options } = e.detail;
-    e.detail.result = this.exportFileData(content, options && options.contentType, file);
+    const { content, file, options={} } = e.detail;
+    e.detail.result = this.exportFileData(content, options.contentType, file);
   }
-
-  exportFileData(content, mime, file) {
-    ipc.send('save-dialog', {
+  /**
+   * Requests a save file dialog and saves the data to selected path if not cancelled.
+   * This does nothing when dialog is canceled.
+   *
+   * @param {String|Object|Buffer} content Data to write
+   * @param {String=} mime Content media type. Currently only `application/json` is
+   * supported when the `content` is an object or an array.
+   * @param {String=} file Suggested file name
+   * @return {Promise}
+   */
+  async exportFileData(content, mime, file) {
+    const opts = {
       file
-    });
-    this.lastContent = content;
-    this.lastType = mime;
-    new Promise((resolve, reject) => {
-      this.lastResolve = resolve;
-      this.lastReject = reject;
-    });
-  }
-
-  _fileSavedHandler(e, selectedPath) {
-    if (!selectedPath) {
-      this.lastResolve();
-      this._clear();
+    };
+    const result = await ipc.invoke('save-dialog', opts)
+    const { filePath, canceled } = result;
+    if (canceled) {
       return;
     }
-    return this._writeContent(selectedPath)
-    .then(() => this.lastResolve())
-    .catch((cause) => this.lastReject(cause))
-    .then(() => this._clear());
+    await this._writeContent(filePath, content, mime);
   }
-
-  _writeContent(path) {
-    let data = this.lastContent;
-    if (typeof data !== 'string') {
-      data = this._prepareData(data);
+  /**
+   * Writes content to a file
+   * @param {String} path Absolute path to a file
+   * @param {String|Object|Buffer} content Data to be written
+   * @param {String=} mime Content media type.
+   * @return {Promise}
+   */
+  _writeContent(path, content, mime) {
+    if (typeof content !== 'string') {
+      content = this._prepareData(content, mime);
     }
-    return fs.writeFile(path, data, 'utf8');
+    return fs.writeFile(path, content, 'utf8');
   }
 
-  _prepareData(data) {
-    switch (this.lastType) {
+  _prepareData(data, mime) {
+    switch (mime) {
       case 'application/json': return JSON.stringify(data);
+      default: return String(data);
     }
-    return String(data);
   }
   /**
    * Allows to read file from user filesystem.
