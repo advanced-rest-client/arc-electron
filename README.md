@@ -12,7 +12,7 @@ Find an installer for your platform under "Assets" section.
 
 ![Assets section for a release](.gitbook/assets/image%20%2843%29.png)
 
-For example, for Windows you would download `arc-setup.exe`. For MacOS download `arc-13.0.7.dmg`.
+For example, for Windows you would download [`arc-setup.exe`](https://github.com/advanced-rest-client/arc-electron/releases/latest/download/arc-setup.exe). For MacOS download `arc-13.0.7.dmg`.
 
 {% hint style="info" %}
 Version number may be different to the one in the screen shoot. For normal use, please, download latest stable version.
