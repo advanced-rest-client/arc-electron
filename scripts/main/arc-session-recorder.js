@@ -1,5 +1,4 @@
 const { ArcMeta } = require('../packages/arc-preferences/main');
-const _FormData = require('form-data');
 const _fetch = require('node-fetch');
 const log = require('./logger');
 /**
@@ -16,7 +15,7 @@ class ArcSessionRecorder {
    */
   constructor() {
     this.meta = new ArcMeta();
-    this.endpoint = 'https://app.advancedrestclient.com/analytics/record';
+    this.endpoint = 'https://api.advancedrestclient.com/v1/analytics/record';
   }
   /**
    * Pings the server to record the session.
@@ -33,17 +32,18 @@ class ArcSessionRecorder {
   /**
    * Posts session data to the analytics server.
    *
-   * @param {String} id Anonymous app id.
+   * @param {String} aid Anonymous app id.
    * @return {Promise}
    */
-  async _postSession(id) {
-    const data = new _FormData();
+  async _postSession(aid) {
     const d = new Date();
-    data.append('aid', id); // anonymousId
-    data.append('tz', d.getTimezoneOffset()); // timezone
+    const data = {
+      aid,
+      tz: d.getTimezoneOffset()
+    };
     return await _fetch(this.endpoint, {
       method: 'POST',
-      body: data
+      body: JSON.stringify(data)
     });
   }
 }

@@ -8,6 +8,10 @@ import PouchQuickSearch from
 import marked from '../web_modules/marked/lib/marked.js';
 import styles from '../web_modules/@advanced-rest-client/arc-app-mixin/AppStyles.js';
 import '../web_modules/@api-components/api-candidates-dialog/api-candidates-dialog.js';
+import '../web_modules/@advanced-rest-client/arc-models/client-certificate-model.js';
+import '../web_modules/@anypoint-web-components/anypoint-dialog/anypoint-dialog.js';
+import '../web_modules/@anypoint-web-components/anypoint-dialog/anypoint-dialog-scrollable.js';
+import '../web_modules/@advanced-rest-client/client-certificates-panel/certificate-import.js';
 import './electron-http-transport/electron-http-transport.js';
 import poweredIcon from './poweredby.js';
 window.PouchDB = PouchDB;
@@ -32,6 +36,11 @@ class ArcElectron extends ArcAppMixin(LitElement) {
        * When true it is rendering API console view.
        */
       isApiConsole: { type: Boolean },
+      /**
+       * When set the certificates import panel is currently rendered.
+       * @type {Object}
+       */
+      ccImportOpened: { type: Boolean },
     };
   }
 
@@ -46,9 +55,12 @@ class ArcElectron extends ArcAppMixin(LitElement) {
     this._exchangeAssetHandler = this._exchangeAssetHandler.bind(this);
     this._activeThemeHandler = this._activeThemeHandler.bind(this);
     this._apiDataHandler = this._apiDataHandler.bind(this);
+    this._certCcImportHandler = this._certCcImportHandler.bind(this);
     /* global log */
     this.log = log;
     this.sysVars = process.env;
+    this.withEncrypt = true;
+    this.clientCertificateImport = true;
   }
 
   connectedCallback() {
@@ -58,6 +70,7 @@ class ArcElectron extends ArcAppMixin(LitElement) {
     window.addEventListener('theme-activated', this._activeThemeHandler);
     window.addEventListener('api-data-ready', this._apiDataHandler);
     this.addEventListener('process-exchange-asset-data', this._exchangeAssetHandler);
+    window.addEventListener('client-certificate-import', this._certCcImportHandler);
   }
 
   disconnectedCallback() {
@@ -66,6 +79,7 @@ class ArcElectron extends ArcAppMixin(LitElement) {
     window.removeEventListener('content-copy', this._copyContentHandler);
     window.removeEventListener('theme-activated', this._activeThemeHandler);
     window.removeEventListener('api-data-ready', this._apiDataHandler);
+    window.removeEventListener('client-certificate-import', this._certCcImportHandler);
   }
 
   _routeDataChanged() {
@@ -106,6 +120,11 @@ class ArcElectron extends ArcAppMixin(LitElement) {
       case 'hosts-rules':
         id = 'host-rules-editor';
         path = 'host-rules-editor/host-rules-editor';
+        scope = '@advanced-rest-client';
+        break;
+      case 'client-certificates':
+        id = 'client-certificates-panel';
+        path = 'client-certificates-panel/client-certificates-panel';
         scope = '@advanced-rest-client';
         break;
     }
@@ -576,12 +595,29 @@ class ArcElectron extends ArcAppMixin(LitElement) {
     `;
   }
 
+  /**
+   * Opens cliet cetrificates panel by setting `page` to `client-certificates`.
+   */
+  openClientCertificates() {
+    this.page = 'client-certificates';
+  }
+
+  _certCcImportHandler() {
+    this.ccImportOpened = true;
+  }
+
+  _closeCcImportHandler() {
+    this.ccImportOpened = false;
+  }
+
   render() {
     return html`
     ${this.applicationTemplate()}
     ${this.apiCandidatedViewTemplate()}
+    ${this._ccImportDialogTemplate()}
     <arc-onboarding></arc-onboarding>
-    <paper-toast id="errorToast" duration="5000"></paper-toast>`;
+    <paper-toast id="errorToast" duration="5000"></paper-toast>
+    <client-certificate-model></client-certificate-model>`;
   }
 
   _pageTemplate() {
@@ -597,6 +633,7 @@ class ArcElectron extends ArcAppMixin(LitElement) {
       case 'rest-projects': return this.restApisViewTemplate({ explore: true });
       case 'hosts-rules': return this.hostsViewTemplate();
       case 'themes-panel': return this.themesViewTemplate();
+      case 'client-certificates': return this.clientCertificatesTemplate();
       default: return super._pageTemplate();
     }
   }
@@ -828,13 +865,27 @@ class ArcElectron extends ArcAppMixin(LitElement) {
     </div>`;
   }
 
-  apiCandidatedViewTemplate(opts) {
-    const {
-      compatibility
-    } = this;
+  apiCandidatedViewTemplate(opts={}) {
+    const { compatibility } = this;
     return html`<api-candidates-dialog
       ?compatibility="${compatibility}"
     ></api-candidates-dialog>`;
+  }
+
+  clientCertificatesTemplate() {
+    return html`<client-certificates-panel></client-certificates-panel>`;
+  }
+
+  _ccImportDialogTemplate() {
+    const { ccImportOpened } = this;
+    return html`
+    <anypoint-dialog ?opened="${ccImportOpened}" modal id="ccImportDialog">
+      <h2>Import a certificate</h2>
+      <anypoint-dialog-scrollable>
+        <certificate-import @close="${this._closeCcImportHandler}"></certificate-import>
+      </anypoint-dialog-scrollable>
+    </anypoint-dialog>
+    `;
   }
 }
 window.customElements.define('arc-electron', ArcElectron);
