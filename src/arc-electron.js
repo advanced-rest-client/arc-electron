@@ -879,7 +879,7 @@ class ArcElectron extends ArcAppMixin(LitElement) {
   _ccImportDialogTemplate() {
     const { ccImportOpened } = this;
     return html`
-    <anypoint-dialog ?opened="${ccImportOpened}" modal>
+    <anypoint-dialog ?opened="${ccImportOpened}" modal id="ccImportDialog">
       <h2>Import a certificate</h2>
       <anypoint-dialog-scrollable>
         <certificate-import @close="${this._closeCcImportHandler}"></certificate-import>
