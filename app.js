@@ -98,6 +98,7 @@ class ArcInit {
     ipc.on('popup-app-menu-opened', this._popupMenuOpened.bind(this));
     ipc.on('popup-app-menu-closed', this._popupMenuClosed.bind(this));
     ipc.on('system-theme-changed', this._systemThemeChangeHandler.bind(this));
+    document.body.addEventListener('settings-changed', this._settingsHandler.bind(this));
   }
   /**
    * Requests initial state information from the main process for current
@@ -134,7 +135,9 @@ class ArcInit {
       this.reportFatalError(e);
       throw e;
     }
-
+    if (typeof cnf.ignoreSessionCookies === 'boolean') {
+      this.cookieBridge.ignoreSessionCookies = cnf.ignoreSessionCookies;
+    }
     await this.initApp(cnf);
     await this.upgradeApp(cnf);
     await this.processInitialPath();
@@ -530,6 +533,21 @@ class ArcInit {
       await this.themeManager.loadTheme(theme);
     } catch (e) {
       console.error(e);
+    }
+  }
+
+  /**
+   * A handler for settings change event.
+   * Performs actions that are important when a confic object has changed.
+   *
+   * @param {CustomEvent} e An event dispatched by preferences proxy.
+   */
+  _settingsHandler(e) {
+    const { name, value } = e.detail;
+    switch (name) {
+      case 'ignoreSessionCookies':
+        this.cookieBridge.ignoreSessionCookies = value;
+        break;
     }
   }
 }
