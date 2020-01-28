@@ -1,4 +1,4 @@
-const {ipcRenderer} = require('electron');
+const { ipcRenderer } = require('electron');
 /**
  * Class that provides access to user settings file in the renderer process.
  */
@@ -150,8 +150,8 @@ class ArcPreferencesProxy {
     document.body.dispatchEvent(new CustomEvent('settings-changed', {
       bubbles: true,
       detail: {
-        name: name,
-        value: value
+        name,
+        value,
       }
     }));
   }
