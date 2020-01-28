@@ -125,21 +125,7 @@ class ArcInit {
     }
     this.initConfig = initConfig;
     window.ArcConfig.initConfig = initConfig;
-    await this.initApp();
-    await this.upgradeApp();
-    await this.processInitialPath();
-    await this.removeLoader();
-    console.log('Application window is now ready.');
-  }
-  /**
-   * Initialized the application when window is ready.
-   *
-   * @return {Promise}
-   */
-  async initApp() {
-    // console.info('Initializing renderer window...');
-    this.workspaceManager = new WorkspaceManager(this.initConfig.workspaceFile);
-    this.workspaceManager.observe();
+
     let cnf;
     try {
       cnf = await this.prefProxy.load();
@@ -148,6 +134,23 @@ class ArcInit {
       this.reportFatalError(e);
       throw e;
     }
+
+    await this.initApp(cnf);
+    await this.upgradeApp(cnf);
+    await this.processInitialPath();
+    await this.removeLoader();
+    console.log('Application window is now ready.');
+  }
+  /**
+   * Initialized the application when window is ready.
+   *
+   * @param {Object} cnf Current qapplication configuration
+   * @return {Promise}
+   */
+  async initApp(cnf) {
+    // console.info('Initializing renderer window...');
+    this.workspaceManager = new WorkspaceManager(this.initConfig.workspaceFile);
+    this.workspaceManager.observe();
     if (this.initConfig.darkMode) {
       cnf.theme = '@advanced-rest-client/arc-electron-dark-theme';
     }
@@ -431,8 +434,7 @@ class ArcInit {
     }, 150);
   }
 
-  async upgradeApp() {
-    const cnf = await this.prefProxy.load();
+  async upgradeApp(cnf) {
     const inst = new UpgradeHelper(cnf.upgrades);
     const upgrades = inst.getUpgrades();
     if (!upgrades || upgrades.length === 0) {
