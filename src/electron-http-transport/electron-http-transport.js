@@ -219,6 +219,9 @@ class ElectronHttpTransport extends HTMLElement {
     if (opts.sentMessageLimit) {
       opts.sentMessageLimit = Number(opts.sentMessageLimit);
     }
+    if (request.clientCertificate) {
+      opts.clientCertificate = request.clientCertificate;
+    }
     return opts;
   }
   /**

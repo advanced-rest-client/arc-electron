@@ -1,5 +1,5 @@
-const {WorkspaceHistory} = require('../scripts/main/models/workspace-history');
-const {assert} = require('chai');
+const { WorkspaceHistory } = require('../../scripts/main/models/workspace-history');
+const { assert } = require('chai');
 const path = require('path');
 const fs = require('fs-extra');
 
@@ -70,22 +70,22 @@ describe('WorkspaceHistory model class', function() {
     });
 
     it('Returns 1 when a is older', () => {
-      const a = {used: 1};
-      const b = {used: 2};
+      const a = { used: 1 };
+      const b = { used: 2 };
       const result = instance.sortEntries(a, b);
       assert.equal(result, 1);
     });
 
     it('Returns -1 when a is yonger', () => {
-      const a = {used: 2};
-      const b = {used: 1};
+      const a = { used: 2 };
+      const b = { used: 1 };
       const result = instance.sortEntries(a, b);
       assert.equal(result, -1);
     });
 
     it('Returns 0 when equal', () => {
-      const a = {used: 1};
-      const b = {used: 1};
+      const a = { used: 1 };
+      const b = { used: 1 };
       const result = instance.sortEntries(a, b);
       assert.equal(result, 0);
     });
@@ -132,7 +132,7 @@ describe('WorkspaceHistory model class', function() {
     });
 
     it('Returns undefined when entires is not an array', () => {
-      instance.load = () => Promise.resolve({entries: {}});
+      instance.load = () => Promise.resolve({ entries: {} });
       return instance.loadEntries()
       .then((result) => {
         assert.isUndefined(result);
@@ -140,8 +140,8 @@ describe('WorkspaceHistory model class', function() {
     });
 
     it('Returns list of entires', () => {
-      const entries = [{used: 1, file: 'test'}];
-      instance.load = () => Promise.resolve({entries});
+      const entries = [{ used: 1, file: 'test' }];
+      instance.load = () => Promise.resolve({ entries });
       return instance.loadEntries()
       .then((result) => {
         assert.deepEqual(result, entries);

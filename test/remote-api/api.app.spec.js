@@ -1,11 +1,10 @@
-const {assert} = require('chai');
-const bootstrap = require('./test-bootstrap.js');
+const { assert } = require('chai');
+const bootstrap = require('../test-bootstrap.js');
 
 describe('ARC API', function() {
   describe('View control commands', function() {
     let app;
     before(function() {
-      this.timeout(10000);
       return bootstrap.runAppDeffered(2000)
       .then((result) => {
         app = result;

@@ -1,5 +1,5 @@
-const {ArcBase} = require('../scripts/main/arc-base');
-const {assert} = require('chai');
+const { ArcBase } = require('../../scripts/main/arc-base');
+const { assert } = require('chai');
 
 describe('ArcBase class', function() {
   describe('Debounce', function() {
