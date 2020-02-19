@@ -14,6 +14,8 @@ function getConfig(settingsFile) {
   return config.loadSync();
 }
 
+app.allowRendererProcessReuse = true;
+
 module.exports = function(startTime) {
   global.shellStartTime = startTime;
 

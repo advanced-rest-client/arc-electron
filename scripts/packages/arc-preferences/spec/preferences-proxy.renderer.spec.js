@@ -1,5 +1,5 @@
-const assert = require('chai').assert;
-const {ArcPreferencesProxy} = require('../renderer');
+const { assert } = require('chai');
+const { ArcPreferencesProxy } = require('../renderer');
 
 describe('ArcPreferencesProxy class - renderer process', function() {
   function fire(type, detail) {
@@ -11,7 +11,8 @@ describe('ArcPreferencesProxy class - renderer process', function() {
     document.body.dispatchEvent(e);
     return e;
   }
-  describe('Read data web event handler', function() {
+
+  describe('Reading data via web event', function() {
     let instance;
     beforeEach(() => {
       instance = new ArcPreferencesProxy();
@@ -44,7 +45,7 @@ describe('ArcPreferencesProxy class - renderer process', function() {
 
     it('Handler resolves the promise when ready', function() {
       const e = fire('settings-read', {});
-      const data = {test: true};
+      const data = { test: true };
       setTimeout(() => {
         instance._mainPrefsHandler({}, data, 1);
       }, 1);
@@ -56,7 +57,7 @@ describe('ArcPreferencesProxy class - renderer process', function() {
 
     it('Handler clears the promise when ready', function() {
       const e = fire('settings-read', {});
-      const data = {test: true};
+      const data = { test: true };
       setTimeout(() => {
         instance._mainPrefsHandler({}, data, 1);
       }, 1);
@@ -67,7 +68,7 @@ describe('ArcPreferencesProxy class - renderer process', function() {
     });
   });
 
-  describe('Store data web event handler', function() {
+  describe('Storing data via web event', function() {
     let instance;
     const name = 'test-name';
     const value = 'test-value';
@@ -81,18 +82,18 @@ describe('ArcPreferencesProxy class - renderer process', function() {
     });
 
     it('Handles the event', function() {
-      const e = fire('settings-changed', {name, value});
+      const e = fire('settings-changed', { name, value });
       assert.isTrue(e.defaultPrevented, 'Event is canceled');
       assert.ok(e.detail.result, 'Has promise on detail');
     });
 
     it('Do not increase request ID', function() {
-      fire('settings-changed', {name, value});
+      fire('settings-changed', { name, value });
       assert.equal(instance.lastRequestId, 0);
     });
 
     it('Handler adds promise', function() {
-      fire('settings-changed', {name, value});
+      fire('settings-changed', { name, value });
       const p = instance.promises[0];
       assert.typeOf(p, 'object');
       assert.equal(p.type, 'store');
@@ -101,7 +102,7 @@ describe('ArcPreferencesProxy class - renderer process', function() {
     });
 
     it('Handler resolves the promise when ready', function() {
-      const e = fire('settings-changed', {name, value});
+      const e = fire('settings-changed', { name, value });
       setTimeout(() => {
         instance._mainChangedHandler({}, name, value);
       }, 1);
@@ -109,7 +110,7 @@ describe('ArcPreferencesProxy class - renderer process', function() {
     });
 
     it('Handler clears the promise when ready', function() {
-      const e = fire('settings-changed', {name, value});
+      const e = fire('settings-changed', { name, value });
       setTimeout(() => {
         instance._mainChangedHandler({}, name, value);
       }, 1);
@@ -119,8 +120,8 @@ describe('ArcPreferencesProxy class - renderer process', function() {
       });
     });
 
-    it('Dispatches non-0cancelable settings-changed event', function(done) {
-      fire('settings-changed', {name, value});
+    it('dispatches non-cancelable settings-changed event', function(done) {
+      fire('settings-changed', { name, value });
       document.body.addEventListener('settings-changed', function f(e) {
         document.body.removeEventListener('settings-changed', f);
         assert.isFalse(e.cancelable, 'Event is not cancelable');

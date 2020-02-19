@@ -98,6 +98,7 @@ class ArcInit {
     ipc.on('popup-app-menu-opened', this._popupMenuOpened.bind(this));
     ipc.on('popup-app-menu-closed', this._popupMenuClosed.bind(this));
     ipc.on('system-theme-changed', this._systemThemeChangeHandler.bind(this));
+    document.body.addEventListener('settings-changed', this._settingsHandler.bind(this));
   }
   /**
    * Requests initial state information from the main process for current
@@ -125,21 +126,7 @@ class ArcInit {
     }
     this.initConfig = initConfig;
     window.ArcConfig.initConfig = initConfig;
-    await this.initApp();
-    await this.upgradeApp();
-    await this.processInitialPath();
-    await this.removeLoader();
-    console.log('Application window is now ready.');
-  }
-  /**
-   * Initialized the application when window is ready.
-   *
-   * @return {Promise}
-   */
-  async initApp() {
-    // console.info('Initializing renderer window...');
-    this.workspaceManager = new WorkspaceManager(this.initConfig.workspaceFile);
-    this.workspaceManager.observe();
+
     let cnf;
     try {
       cnf = await this.prefProxy.load();
@@ -148,6 +135,25 @@ class ArcInit {
       this.reportFatalError(e);
       throw e;
     }
+    if (typeof cnf.ignoreSessionCookies === 'boolean') {
+      this.cookieBridge.ignoreSessionCookies = cnf.ignoreSessionCookies;
+    }
+    await this.initApp(cnf);
+    await this.upgradeApp(cnf);
+    await this.processInitialPath();
+    await this.removeLoader();
+    console.log('Application window is now ready.');
+  }
+  /**
+   * Initialized the application when window is ready.
+   *
+   * @param {Object} cnf Current qapplication configuration
+   * @return {Promise}
+   */
+  async initApp(cnf) {
+    // console.info('Initializing renderer window...');
+    this.workspaceManager = new WorkspaceManager(this.initConfig.workspaceFile);
+    this.workspaceManager.observe();
     if (this.initConfig.darkMode) {
       cnf.theme = '@advanced-rest-client/arc-electron-dark-theme';
     }
@@ -431,8 +437,7 @@ class ArcInit {
     }, 150);
   }
 
-  async upgradeApp() {
-    const cnf = await this.prefProxy.load();
+  async upgradeApp(cnf) {
     const inst = new UpgradeHelper(cnf.upgrades);
     const upgrades = inst.getUpgrades();
     if (!upgrades || upgrades.length === 0) {
@@ -528,6 +533,21 @@ class ArcInit {
       await this.themeManager.loadTheme(theme);
     } catch (e) {
       console.error(e);
+    }
+  }
+
+  /**
+   * A handler for settings change event.
+   * Performs actions that are important when a confic object has changed.
+   *
+   * @param {CustomEvent} e An event dispatched by preferences proxy.
+   */
+  _settingsHandler(e) {
+    const { name, value } = e.detail;
+    switch (name) {
+      case 'ignoreSessionCookies':
+        this.cookieBridge.ignoreSessionCookies = value;
+        break;
     }
   }
 }

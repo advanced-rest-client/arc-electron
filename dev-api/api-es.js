@@ -1,7 +1,10 @@
 import express from 'express';
 import session from 'express-session';
+import fs from 'fs';
+import path from 'path';
+import http from 'http';
+import https from 'https';
 import apiRouter from './routes.js';
-
 /* eslint-disable no-console */
 
 const app = express();
@@ -21,17 +24,25 @@ const sessionConfig = {
 app.use(session(sessionConfig));
 app.use('/v1', apiRouter);
 
-const portStr = process.argv.slice(2).find((arg) => arg.indexOf('--PORT') === 0);
-let port;
-if (!isNaN(portStr)) {
-  port = Number(portStr);
-} else {
-  port = 8080;
-}
+const findOpt = (name) => process.argv.slice(2).find((arg) => arg.indexOf(`--${name}`) === 0);
+const findPortValue = (name, defaultValue) => {
+  const str = findOpt(name);
+  if (isNaN(str)) {
+    return defaultValue;
+  }
+  return Number(str);
+};
+
+const port = findPortValue('PORT', 3080);
+const portSsl = findPortValue('SSLPORT', 3443);
+
 
 // Basic 404 handler
 app.use((req, res) => {
-  res.status(404).send('Not Found');
+  res.status(404).send({
+    error: true,
+    message: `Route ${req.url} not found`
+  });
 });
 
 // Basic error handler
@@ -43,7 +54,17 @@ app.use((err, req, res) => {
   });
 });
 
-const server = app.listen(port, () => {
-  const port = server.address().port;
-  console.info(`App listening on port ${port}`);
+const options = {
+  key: fs.readFileSync(path.join(__dirname, 'cc', 'server_key.pem')),
+  cert: fs.readFileSync(path.join(__dirname, 'cc', 'server_cert.pem')),
+  requestCert: true,
+  rejectUnauthorized: false,
+  ca: [fs.readFileSync(path.join(__dirname, 'cc', 'server_cert.pem'))],
+};
+
+http.createServer(app).listen(port, () => {
+  console.info(`HTTP listening on port ${port}`);
+});
+https.createServer(options, app).listen(portSsl, () => {
+  console.info(`HTTPS listening on port ${portSsl}`);
 });

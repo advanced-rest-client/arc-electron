@@ -4,7 +4,7 @@ import { BaseApi } from './base-api.js';
 const router = express.Router();
 export default router;
 
-class AuthBaiscRoute extends BaseApi {
+class AuthBasicRoute extends BaseApi {
   sendUnauthorized(res) {
     res.status(401);
     res.set('WWW-Authenticate', 'Basic realm="This resource is protected"');
@@ -35,7 +35,7 @@ class AuthBaiscRoute extends BaseApi {
   }
 }
 
-const api = new AuthBaiscRoute();
+const api = new AuthBasicRoute();
 api.setCors(router);
 api.wrapApi(router, [
   ['/:username/:password', 'requireAuthorized'],
