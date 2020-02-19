@@ -3,6 +3,14 @@ if [ $TRAVIS_BRANCH != 'alpha' ] && [ $TRAVIS_BRANCH != 'master' ] && [ $TRAVIS_
   exit 0
 fi
 
+echo "Decrypting signing keys..."
+openssl aes-256-cbc -K $encrypted_cb8606543db7_key -iv $encrypted_cb8606543db7_iv -in certs.tar.enc -out certs.tar -d
+echo "Extracting certificates to certs/..."
+tar xvf certs.tar
+echo "Copying certificate files to main directory..."
+cp certs/advancedrestclient.pfx .
+cp certs/arc-mac-certs.p12 .
+
 export CSC_NAME="Pawel Psztyc"
 export WIN_CSC_LINK="advancedrestclient.pfx"
 export CSC_LINK="arc-mac-certs.p12"
