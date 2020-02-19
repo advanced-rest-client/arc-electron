@@ -65,6 +65,7 @@
     "electron": "^8.0.1",
     "electron-builder": "^22.2.0",
     "electron-mocha": "^8.2.1",
+    "electron-windows-store": "^2.1.0",
     "eslint-config-google": "^0.14.0",
     "esm": "^3.2.25",
     "express": "^4.17.1",
