@@ -34,3 +34,4 @@ advancedrestclient.pfx
 arc-mac-certs.p12
 certs.tar
 web_modules
+.env
