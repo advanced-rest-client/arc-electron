@@ -11,6 +11,9 @@ echo "Copying certificate files to main directory..."
 cp certs/advancedrestclient.pfx .
 cp certs/arc-mac-certs.p12 .
 
+echo "Decrypting .env file..."
+openssl aes-256-cbc -K $encrypted_cb8606543db7_key -iv $encrypted_cb8606543db7_iv -in .env.enc -out .env -d
+
 export CSC_NAME="Pawel Psztyc"
 export WIN_CSC_LINK="advancedrestclient.pfx"
 export CSC_LINK="arc-mac-certs.p12"

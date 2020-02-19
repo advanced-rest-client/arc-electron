@@ -1,4 +1,4 @@
-matrix:
+jobs:
   include:
   - os: osx
     osx_image: xcode10.2
@@ -8,7 +8,6 @@ matrix:
     - ELECTRON_CACHE=$HOME/.cache/electron
     - ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder
   - os: linux
-    sudo: required
     language: node_js
     node_js: stable
     services:

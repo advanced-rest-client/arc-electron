@@ -62,9 +62,12 @@
     "chai": "^4.2.0",
     "cors": "^2.8.5",
     "cross-env": "^6.0.3",
+    "dotenv": "^8.2.0",
     "electron": "^8.0.1",
     "electron-builder": "^22.2.0",
     "electron-mocha": "^8.2.1",
+    "electron-notarize": "^0.2.1",
+    "electron-windows-store": "^2.1.0",
     "eslint-config-google": "^0.14.0",
     "esm": "^3.2.25",
     "express": "^4.17.1",
@@ -115,6 +118,7 @@
     "detectUpdateChannel": true,
     "npmRebuild": true,
     "buildDependenciesFromSource": false,
+    "afterSign": "tasks/notarize.js",
     "files": [
       "app.html",
       "app.js",
@@ -131,6 +135,10 @@
     "mac": {
       "category": "public.app-category.developer-tools",
       "icon": "build/icon.icns",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
       "target": [
         {
           "target": "dmg",
@@ -147,6 +155,7 @@
       ]
     },
     "dmg": {
+      "sign": false,
       "contents": [
         {
           "x": 110,
