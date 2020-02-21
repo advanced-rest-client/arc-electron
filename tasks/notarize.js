@@ -9,6 +9,9 @@ exports.default = async function notarizing(context) {
 
   const appName = context.packager.appInfo.productFilename;
 
+  /* eslint-disable-next-line no-console */
+  console.log('Notarizing macOS application...');
+
   return await notarize({
     appBundleId: 'com.mulesoft.arc',
     appPath: `${appOutDir}/${appName}.app`,
