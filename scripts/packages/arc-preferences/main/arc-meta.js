@@ -1,6 +1,5 @@
 const { ArcPreferences } = require('../lib/preferences');
-const uuidv4 = require('uuid/v4');
-const uuidv5 = require('uuid/v5');
+const { v4: uuidv4, v5: uuidv5 } = require('uuid');
 /**
  * ARC metadata
  *
