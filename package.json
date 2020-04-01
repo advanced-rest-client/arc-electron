@@ -85,7 +85,7 @@
     "@advanced-rest-client/electron-drive": "^0.5.0",
     "@advanced-rest-client/electron-oauth2": "^3.0.0",
     "@advanced-rest-client/electron-request": "^2.2.4",
-    "@advanced-rest-client/electron-session-state": "^2.1.0",
+    "@advanced-rest-client/electron-session-state": "^3.0.0",
     "amf-client-js": "^4.0.6",
     "camelcase": "^5.3.1",
     "codemirror": "^5.52.2",
