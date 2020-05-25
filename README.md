@@ -26,5 +26,5 @@ ARC's build process generates several builds for Linux. Find your platform and t
 
 Please note that ARC won't update automatically on Linux platform as this is not yet supported by the build library. This may be possible in the future.
 
-ARC uses  for testing
+ARC uses for testing
 
