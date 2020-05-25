@@ -13,13 +13,6 @@ jobs:
     services:
     - docker
     - xvfb
-cache:
-  directories:
-  - node_modules
-  - "$HOME/.cache/electron"
-  - "$HOME/.cache/electron-builder"
-before_cache:
-- rm -rf $HOME/.cache/electron-builder/wine
 branches:
   except:
   - "/^\\d+\\.\\d+\\.\\d+$/"
