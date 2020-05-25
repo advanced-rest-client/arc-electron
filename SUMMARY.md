@@ -22,3 +22,10 @@
 
 * [Web APIs basics](api-school/web-apis-basics.md)
 
+## ARC Actions
+
+* [Introduction](arc-actions/introduction/README.md)
+  * [Set variable action](arc-actions/introduction/set-variable-action.md)
+  * [Set cookie action](arc-actions/introduction/set-cookie-action.md)
+  * [Remove cookie\(s\) action](arc-actions/introduction/remove-cookie-s-action.md)
+
