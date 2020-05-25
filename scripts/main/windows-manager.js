@@ -206,7 +206,7 @@ class ArcWindowsManager {
   open(path) {
     log.debug('[WM] Opening new window' + (path ? ': ' + path : ''));
     const index = this._getWindowIndex();
-    log.debug('Generated index for the widnow: ' + index);
+    log.debug('Generated index for the window: ' + index);
     const session = new ArcSessionControl(index);
     return session.load()
     .then((data) => {
