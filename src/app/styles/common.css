@@ -31,6 +31,11 @@ html {
   justify-content: center;
 }
 
+.app-loader .message {
+  font-size: 24px;
+  font-weight: 300;
+}
+
 h2 {
   font-size: var(--theme-h2-font-size, 56px);
   font-weight: var(--theme-h2-font-weight, 200);

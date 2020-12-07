@@ -2,6 +2,8 @@ import { ThemeDefaults } from './defaults/ThemeDefaults.js';
 import { WorkspaceDefaults } from  './defaults/WorkspaceDefaults.js';
 import { DataStore } from  './defaults/DataStore.js';
 
+/** @typedef {import('./WindowsManager').WindowsManager} WindowsManager */
+
 /**
  * Class responsible for keeping application base environment stable.
  *
@@ -19,7 +21,13 @@ export class ApplicationDefaults {
     await td.prepareEnvironment();
     const wd = new WorkspaceDefaults();
     await wd.prepareEnvironment();
-    const db = new DataStore();
+  }
+
+  /**
+   * @param {WindowsManager} vm
+   */
+  async prepareDatabaseUpgrade(vm) {
+    const db = new DataStore(vm);
     await db.ensureDataUpgraded();
   }
 }

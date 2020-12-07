@@ -47,6 +47,9 @@ async function readyHandler(prefManager, init) {
   // @ts-ignore
   global.Arc = env;
   env.registerHandlers();
+
+  // this has to be done after the protocols are registered.
+  await defaults.prepareDatabaseUpgrade(env.wm);
   await env.loadEnvironment();
   // @ts-ignore
   global.appLoadingTime = Date.now();

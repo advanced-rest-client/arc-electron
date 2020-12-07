@@ -37,7 +37,9 @@
   "devDependencies": {
     "@advanced-rest-client/arc-definitions": "^3.1.1",
     "@advanced-rest-client/arc-icons": "^3.1.2",
+    "@advanced-rest-client/arc-ie": "^1.0.1",
     "@advanced-rest-client/monaco-support": "^1.0.1",
+    "@advanced-rest-client/pouchdb-quick-search": "^2.0.3",
     "@anypoint-web-components/anypoint-button": "^1.1.1",
     "@anypoint-web-components/anypoint-dialog": "^0.1.6",
     "@open-wc/dedupe-mixin": "^1.3.0",
@@ -306,17 +308,15 @@
       "@advanced-rest-client/arc-request-ui/arc-request-workspace.d.ts",
       "@advanced-rest-client/arc-request-ui/src/*",
       "@advanced-rest-client/arc-request-ui/src/**",
-      "@advanced-rest-client/arc-models/request-model.js",
-      "@advanced-rest-client/arc-models/project-model.js",
-      "@advanced-rest-client/arc-models/url-history-model.js",
-      "@advanced-rest-client/arc-models/history-data-model.js",
-      "@advanced-rest-client/arc-models/client-certificate-model.js",
-      "@advanced-rest-client/arc-models/variables-model.js",
-      "@advanced-rest-client/arc-models/host-rules-model.js",
-      "@advanced-rest-client/arc-models/rest-api-model.js",
-      "@advanced-rest-client/arc-models/url-indexer.js",
-      "@advanced-rest-client/arc-models/websocket-url-history-model.js",
-      "@advanced-rest-client/arc-models/auth-data-model.js"
+      "@advanced-rest-client/pouchdb-quick-search/dist/pouchdb.quick-search.min.js",
+      "@advanced-rest-client/arc-ie/*.js",
+      "@advanced-rest-client/arc-ie/*.d.ts",
+      "@advanced-rest-client/arc-ie/src/*",
+      "@advanced-rest-client/arc-ie/src/**",
+      "@advanced-rest-client/arc-models/*.js",
+      "@advanced-rest-client/arc-models/*.d.ts",
+      "@advanced-rest-client/arc-models/src/*",
+      "@advanced-rest-client/arc-models/src/**"
     ]
   }
 }
