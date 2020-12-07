@@ -1,96 +1,49 @@
 {
   "menu": [
     {
-      "label": "ARC",
-      "submenu": [
-        {
-          "label": "About ARC",
-          "command": "application:about"
-        },
-        {
-          "label": "VERSION",
-          "enabled": false
-        },
-        {
-          "label": "Restart and Install Update",
-          "command": "application:install-update",
-          "visible": false
-        },
-        {
-          "label": "Check for Update",
-          "command": "application:check-for-update",
-          "visible": false
-        },
-        {
-          "label": "Checking for Update",
-          "enabled": false,
-          "visible": false
-        },
-        {
-          "label": "Downloading Update",
-          "enabled": false,
-          "visible": false
-        },
-        {
-          "type": "separator"
-        },
-        {
-          "label": "Preferences…",
-          "command": "application:show-settings",
-          "accelerator": "CommandOrControl+,"
-        },
-        {
-          "type": "separator"
-        },
-        {
-          "role": "hide"
-        },
-        {
-          "role": "hideothers"
-        },
-        {
-          "role": "unhide"
-        },
-        {
-          "type": "separator"
-        },
-        {
-          "label": "Quit",
-          "command": "application:quit",
-          "accelerator": "CommandOrControl+q"
-        }
-      ]
-    },
-    {
       "label": "File",
       "submenu": [
         {
           "label": "New tab",
           "command": "request:new-tab",
           "accelerator": "CommandOrControl+t"
-        }, {
+        },
+        {
           "label": "Close tab",
           "command": "request:close-tab",
           "accelerator": "CommandOrControl+w"
-        }, {
-          "label": "New window",
+        },
+        {
+          "label": "New Window",
           "command": "application:new-window",
           "accelerator": "CommandOrControl+n"
-        }, {
+        },
+        {
           "label": "Open file",
           "command": "application:open-file",
           "accelerator": "CommandOrControl+Shift+o"
-        }, {
+        },
+        {
           "label": "Open saved request",
           "command": "application:open-saved",
           "accelerator": "CommandOrControl+o"
-        }, {
+        },
+        {
           "label": "Open history",
           "command": "application:open-history",
-          "accelerator": "CommandOrControl+Shift+h"
-        }, {
+          "accelerator": "CommandOrControl+h"
+        },
+        {
           "label": "Open from Google Drive",
           "command": "application:open-drive"
+        },
+        {
+          "type": "separator"
+        },
+        {
+          "label": "Settings",
+          "command": "application:show-settings",
+          "accelerator": "CommandOrControl+,"
         },
         {
           "type": "separator"
@@ -108,7 +61,6 @@
         {
           "type": "separator"
         },
-
         {
           "label": "Import data",
           "command": "application:import-data"
@@ -116,6 +68,14 @@
         {
           "label": "Export data",
           "command": "application:export-data"
+        },
+        {
+          "type": "separator"
+        },
+        {
+          "label": "Quit",
+          "command": "application:quit",
+          "accelerator": "CommandOrControl+q"
         }
       ]
     },
@@ -191,9 +151,6 @@
           "role": "minimize"
         },
         {
-          "role": "zoom"
-        },
-        {
           "type": "separator"
         },
         {
@@ -215,8 +172,6 @@
       "role": "window",
       "submenu": [
         {
-          "role": "close"
-        }, {
           "role": "minimize"
         },
         {
@@ -229,13 +184,11 @@
           "role": "front"
         },
         {
-          "type": "separator",
-          "visible": false
+          "type": "separator"
         },
         {
           "label": "Popup application menu",
-          "command": "application:popup-menu",
-          "visible": false
+          "command": "application:popup-menu"
         }
       ]
     },
@@ -330,6 +283,30 @@
       "role": "help",
       "submenu": [
         {
+          "label": "VERSION",
+          "enabled": false
+        },
+        {
+          "label": "Restart and Install Update",
+          "command": "application:install-update",
+          "visible": false
+        },
+        {
+          "label": "Check for Update",
+          "command": "application:check-for-update",
+          "visible": false
+        },
+        {
+          "label": "Checking for Update",
+          "enabled": false,
+          "visible": false
+        },
+        {
+          "label": "Downloading Update",
+          "enabled": false,
+          "visible": false
+        },
+        {
           "label": "Privacy policy",
           "command": "application:open-privacy-policy"
         },
@@ -366,6 +343,10 @@
         },
         {
           "type": "separator"
+        },
+        {
+          "label": "About ARC",
+          "command": "application:about"
         },
         {
           "label": "License information",

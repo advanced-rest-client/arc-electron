@@ -178,13 +178,11 @@
           "role": "front"
         },
         {
-          "type": "separator",
-          "visible": false
+          "type": "separator"
         },
         {
           "label": "Popup application menu",
-          "command": "application:popup-menu",
-          "visible": false
+          "command": "application:popup-menu"
         }
       ]
     },

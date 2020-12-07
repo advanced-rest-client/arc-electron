@@ -1,0 +1,142 @@
+body,
+html {
+  /* background-color: #F5F5F5; */
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Roboto', 'Noto', sans-serif;
+  font-size: 16px;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  background-color: #fff;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.app-loader {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+}
+
+h2 {
+  font-size: var(--theme-h2-font-size, 56px);
+  font-weight: var(--theme-h2-font-weight, 200);
+  color: var(--theme-h1-color, currentColor);
+}
+
+h2.title {
+  font-size: 1.25rem;
+  line-height: 2rem;
+  font-weight: 500;
+}
+
+.title-line {
+  padding: 60px 0;
+  margin: 0;
+  text-align: center;
+}
+
+header {
+  height: 64px;
+  background-color: #fff;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  border-bottom: 1px solid #e5e5e5;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: auto;
+}
+
+.content {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  overflow: hidden;
+}
+
+nav {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px #e5e5e5 solid;
+}
+
+.page {
+  flex: 1;
+}
+
+.full-page {
+  height: 100%;
+  width: 100%;
+}
+
+.spacer {
+  flex: 1;
+  display: block;
+}
+
+.drop-info,
+.file-processing {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.84);
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.drop-info {
+  box-sizing: border-box;
+  border-width: 2px;
+  border-color: transparent;
+  border-style: dashed;
+}
+
+.drop-target .drop-info,
+.processing-domain .file-processing {
+  display: flex;
+}
+
+.drop-target .drop-info {
+  border-color: var(--file-drop-zone-border-color-active, #8f1d5a);
+}
+
+.drop-info > * {
+  pointer-events: none;
+}
+
+.drop-icon {
+  width: 80px;
+  height: 80px;
+  color: #8f1d5a;
+}
+
+.drop-message,
+.processing-message {
+  font-size: 2rem;
+  font-weight: 300;
+}
