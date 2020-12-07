@@ -1,6 +1,6 @@
 import { LitElement, html } from '../web_modules/lit-element/lit-element.js';
 import { ArcAppMixin } from '../web_modules/@advanced-rest-client/arc-app-mixin/arc-app-mixin.js';
-import { Jexl } from '../web_modules/jexl/lib/Jexl.js';
+import { Jexl } from '../web_modules/jexl/dist/Jexl.js';
 import { moreVert } from '../web_modules/@advanced-rest-client/arc-icons/ArcIcons.js';
 import PouchDB from '../web_modules/pouchdb/dist/pouchdb.js';
 import PouchQuickSearch from

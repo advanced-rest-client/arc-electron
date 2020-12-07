@@ -54,6 +54,7 @@
     "@pika/web": "^0.6.1",
     "@polymer/app-layout": "^3.1.0",
     "@polymer/font-roboto-local": "^3.0.2",
+    "@polymer/iron-iconset-svg": "^3.0.1",
     "@polymer/iron-media-query": "^3.0.1",
     "@polymer/iron-test-helpers": "^3.0.1",
     "babel-eslint": "^10.1.0",
@@ -250,7 +251,7 @@
   },
   "@pika/web": {
     "webDependencies": [
-      "jexl/lib/Jexl.js",
+      "jexl/dist/Jexl.js",
       "lit-element/lit-element.js",
       "@polymer/paper-toast/paper-toast.js",
       "@polymer/iron-test-helpers/iron-test-helpers.js",
