@@ -36,8 +36,10 @@
   "main": "src/io/main.js",
   "devDependencies": {
     "@advanced-rest-client/arc-definitions": "^3.1.1",
-    "@advanced-rest-client/arc-icons": "^3.1.2",
+    "@advanced-rest-client/arc-icons": "^3.2.1",
     "@advanced-rest-client/arc-ie": "^1.0.1",
+    "@advanced-rest-client/arc-menu": "^4.0.2",
+    "@advanced-rest-client/client-certificates": "^0.1.0",
     "@advanced-rest-client/monaco-support": "^1.0.1",
     "@advanced-rest-client/pouchdb-quick-search": "^2.0.3",
     "@anypoint-web-components/anypoint-button": "^1.1.1",
@@ -49,20 +51,20 @@
     "@types/chai": "^4.2.14",
     "@types/electron": "^1.6.10",
     "@types/fs-extra": "^9.0.3",
-    "@types/mocha": "^8.0.3",
+    "@types/mocha": "^8.2.0",
     "@types/pouchdb": "^6.4.0",
     "babel-eslint": "^10.1.0",
     "chai": "^4.2.0",
     "dotenv": "^8.2.0",
-    "electron": "^11.0.3",
+    "electron": "^11.0.4",
     "electron-builder": "^22.9.1",
     "electron-mocha": "^10.0.0",
     "electron-notarize": "^1.0.0",
     "electron-reloader": "^1.0.1",
     "electron-windows-store": "^2.1.0",
     "eslint": "^7.12.1",
-    "eslint-config-prettier": "^6.14.0",
-    "husky": "^4.3.0",
+    "eslint-config-prettier": "^7.0.0",
+    "husky": "^4.3.5",
     "lint-staged": "^10.5.1",
     "lit-element": "^2.4.0",
     "mocha": "^8.2.1",
@@ -74,7 +76,7 @@
     "typescript-lit-html-plugin": "^0.9.0"
   },
   "dependencies": {
-    "@advanced-rest-client/arc-events": "^0.2.7",
+    "@advanced-rest-client/arc-events": "^0.2.8",
     "@advanced-rest-client/arc-request-ui": "^0.1.1",
     "@advanced-rest-client/arc-types": "^0.2.32",
     "@advanced-rest-client/cookie-parser": "^3.2.0",
@@ -91,7 +93,7 @@
     "live-plugin-manager": "^0.15.1",
     "mime-types": "^2.1.27",
     "node-fetch": "^2.6.1",
-    "uuid": "^8.3.1",
+    "uuid": "^8.3.2",
     "winston": "^3.3.3"
   },
   "eslintConfig": {
@@ -281,6 +283,7 @@
       "lit-element/lib/*",
       "@polymer/font-roboto-local/roboto.js",
       "@polymer/font-roboto-local/fonts/roboto/*",
+      "marked/lib/marked.js",
       "@anypoint-web-components/anypoint-dialog/index.js",
       "@anypoint-web-components/anypoint-dialog/index.d.ts",
       "@anypoint-web-components/anypoint-dialog/anypoint-dialog.js",
@@ -316,7 +319,19 @@
       "@advanced-rest-client/arc-models/*.js",
       "@advanced-rest-client/arc-models/*.d.ts",
       "@advanced-rest-client/arc-models/src/*",
-      "@advanced-rest-client/arc-models/src/**"
+      "@advanced-rest-client/arc-models/src/**",
+      "@advanced-rest-client/arc-menu/*.js",
+      "@advanced-rest-client/arc-menu/*.d.ts",
+      "@advanced-rest-client/arc-menu/src/*",
+      "@advanced-rest-client/arc-menu/src/**",
+      "@advanced-rest-client/requests-list/*.js",
+      "@advanced-rest-client/requests-list/*.d.ts",
+      "@advanced-rest-client/requests-list/src/*",
+      "@advanced-rest-client/requests-list/src/**",
+      "@advanced-rest-client/client-certificates/*.js",
+      "@advanced-rest-client/client-certificates/*.d.ts",
+      "@advanced-rest-client/client-certificates/src/*",
+      "@advanced-rest-client/client-certificates/src/**"
     ]
   }
 }

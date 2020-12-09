@@ -17,13 +17,17 @@ import '../../../../web_modules/@advanced-rest-client/arc-models/request-model.j
 import '../../../../web_modules/@advanced-rest-client/arc-models/host-rules-model.js';
 import '../../../../web_modules/@advanced-rest-client/arc-models/rest-api-model.js';
 import '../../../../web_modules/@advanced-rest-client/arc-models/url-indexer.js';
-import '../pouchdb.js';
+import '../../../../web_modules/@advanced-rest-client/arc-menu/arc-menu.js';
+import '../../../../web_modules/@advanced-rest-client/requests-list/history-panel.js';
+import '../../../../web_modules/@advanced-rest-client/requests-list/saved-panel.js';
+import '../../../../web_modules/@advanced-rest-client/client-certificates/client-certificates-panel.js';
+import { ArcNavigationEventTypes, ProjectActions } from '../../../../web_modules/@advanced-rest-client/arc-events/index.js';
 
-/* global PreferencesProxy, OAuth2Handler, WindowProxy, ArcContextMenu, ThemeManager, logger, EncryptionService, WorkspaceManager */
+/* global PreferencesProxy, OAuth2Handler, WindowManagerProxy, ArcContextMenu, ThemeManager, logger, EncryptionService, WorkspaceManager, ipc */
 
 /** @typedef {import('../../../preload/PreferencesProxy').PreferencesProxy} PreferencesProxy */
 /** @typedef {import('../../../preload/ArcContextMenu').ArcContextMenu} ArcContextMenu */
-/** @typedef {import('../../../preload/WindowProxy').WindowProxy} WindowProxy */
+/** @typedef {import('../../../preload/WindowProxy').WindowProxy} WindowManagerProxy */
 /** @typedef {import('../../../preload/ThemeManager').ThemeManager} ThemeManager */
 /** @typedef {import('../../../preload/EncryptionService').EncryptionService} EncryptionService */
 /** @typedef {import('../../../preload/WorkspaceManager').WorkspaceManager} WorkspaceManager */
@@ -31,17 +35,56 @@ import '../pouchdb.js';
 /** @typedef {import('lit-html').TemplateResult} TemplateResult */
 /** @typedef {import('@advanced-rest-client/electron-oauth2/renderer/OAuth2Handler').OAuth2Handler} OAuth2Handler */
 /** @typedef {import('@advanced-rest-client/arc-types').Config.ARCConfig} ARCConfig */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCRequestNavigationEvent} ARCRequestNavigationEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCProjectNavigationEvent} ARCProjectNavigationEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCNavigationEvent} ARCNavigationEvent */
+/** @typedef {import('../../../../web_modules/@advanced-rest-client/arc-request-ui').ArcRequestWorkspaceElement} ArcRequestWorkspaceElement */
 
 const unhandledRejectionHandler = Symbol('unhandledRejectionHandler');
 const headerTemplate = Symbol('headerTemplate');
 const pageTemplate = Symbol('pageTemplate');
 const workspaceTemplate = Symbol('workspaceTemplate');
+const navigationTemplate = Symbol('navigationTemplate');
+const navigateRequestHandler = Symbol('navigateRequestHandler');
+const navigateHandler = Symbol('navigateHandler');
+const navigateProjectHandler = Symbol('navigateProjectHandler');
+const mainBackHandler = Symbol('mainBackHandler');
+const historyPanelTemplate = Symbol('historyPanelTemplate');
+const savedPanelTemplate = Symbol('savedPanelTemplate');
+const clientCertScreenTemplate = Symbol('clientCertScreenTemplate');
+const commandHandler = Symbol('commandHandler');
+const requestActionHandler = Symbol('requestActionHandler');
 
 export class AdvancedRestClientApplication extends ApplicationPage {
   static get routes() {
-    return [{
+    return [
+    {
       name: 'workspace',
       pattern: 'workspace/'
+    },
+    {
+      name: 'rest-projects',
+      pattern: 'rest-projects'
+    },
+    {
+      name: 'exchange-search',
+      pattern: 'exchange-search'
+    },
+    {
+      name: 'history',
+      pattern: 'history'
+    },
+    {
+      name: 'saved',
+      pattern: 'saved'
+    },
+    {
+      name: 'client-certificates',
+      pattern: 'client-certificates'
+    },
+    {
+      name: 'project',
+      pattern: 'project/(?<pid>[^/]*)/(?<action>.*)'
     },
     // {
     //   name: 'model',
@@ -54,6 +97,21 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       name: 'workspace',
       pattern: '*'
     }];
+  }
+
+  /**
+   * @type {ArcRequestWorkspaceElement}
+   */
+  #workspace = undefined;
+
+  /**
+   * @returns {ArcRequestWorkspaceElement}
+   */
+  get workspaceElement() {
+    if (!this.#workspace) {
+      this.#workspace = document.querySelector('arc-request-workspace');
+    }
+    return this.#workspace;
   }
 
   constructor() {
@@ -82,42 +140,31 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     /**
      * @type {PreferencesProxy}
      */
-    // @ts-ignore
     this.settings = new PreferencesProxy();
     /**
      * @type {OAuth2Handler}
      */
-    // @ts-ignore
     this.oauth2Proxy = new OAuth2Handler();
     /**
-     * @type {WindowProxy}
+     * @type {WindowManagerProxy}
      */
-    // @ts-ignore
-    this.windowProxy = new WindowProxy();
+    this.windowProxy = new WindowManagerProxy();
     /**
      * @type {ArcContextMenu}
      */
-    // @ts-ignore
     this.contextMenu = new ArcContextMenu(this);
     /**
      * @type {ThemeManager}
      */
-    // @ts-ignore
-    this.themeProxy = new ThemeManager(this);
+    this.themeProxy = new ThemeManager();
     /**
      * @type {EncryptionService}
      */
-    // @ts-ignore
-    this.encryption = new EncryptionService(this);
+    this.encryption = new EncryptionService();
     /**
      * @type {WorkspaceManager}
      */
-    // @ts-ignore
     this.workspace = new WorkspaceManager();
-    /**
-     * @type {import('electron-log')}
-     */
-    // @ts-ignore
     this.logger = logger;
 
     window.onunhandledrejection = this[unhandledRejectionHandler].bind(this);
@@ -130,6 +177,12 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     
     this.oauth2RedirectUri = 'http://auth.advancedrestclient.com/arc.html';
     this.compatibility = false;
+
+    /**
+     * A list of detached menu panels.
+     * @type {string[]}
+     */
+    this.menuPopup = [];
   }
 
   async initialize() {
@@ -160,6 +213,13 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     this.themeProxy.listen();
     this.encryption.listen();
     this.workspace.listen();
+
+    window.addEventListener(ArcNavigationEventTypes.navigateRequest, this[navigateRequestHandler].bind(this));
+    window.addEventListener(ArcNavigationEventTypes.navigate, this[navigateHandler].bind(this));
+    window.addEventListener(ArcNavigationEventTypes.navigateProject, this[navigateProjectHandler].bind(this));
+
+    ipc.on('command', this[commandHandler].bind(this));
+    ipc.on('request-action', this[requestActionHandler].bind(this));
   }
 
   /**
@@ -239,14 +299,14 @@ export class AdvancedRestClientApplication extends ApplicationPage {
    * @param {number} index 
    */
   closeWorkspaceTab(index) {
-
+    this.workspaceElement.removeRequest(index);
   }
 
   /**
    * Closes all tabs in the request workspace
    */
   closeAllWorkspaceTabs() {
-
+    this.workspaceElement.clear();
   }
 
   /**
@@ -254,7 +314,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
    * @param {number} index 
    */
   closeOtherWorkspaceTabs(index) {
-
+    
   }
 
   /**
@@ -262,7 +322,121 @@ export class AdvancedRestClientApplication extends ApplicationPage {
    * @param {number} index 
    */
   duplicateWorkspaceTab(index) {
+    this.workspaceElement.duplicateTab(index);
+  }
 
+  /**
+   * @param {ARCRequestNavigationEvent} e 
+   */
+  [navigateRequestHandler](e) {
+    const { requestId, requestType, action } = e;
+    if (action !== 'open') {
+      return;
+    }
+    this.workspaceElement.addByRequestId(requestType, requestId);
+    if (this.route !== 'workspace') {
+      navigate('workspace');
+    }
+  }
+
+  /**
+   * @param {ARCProjectNavigationEvent} e
+   */
+  [navigateProjectHandler](e) {
+    const { id, action, route } = e;
+    if (route !== 'project') {
+      return;
+    }
+    if (action === ProjectActions.addWorkspace) {
+      this.workspaceElement.appendByProjectId(id);
+    } else if (action === ProjectActions.replaceWorkspace) {
+      this.workspaceElement.replaceByProjectId(id);
+    } else if (action === 'open') {
+      navigate(route, id, action);
+    } else {
+      // eslint-disable-next-line no-console
+      console.warn('Unhandled project event', id, action, route);
+    }
+  }
+
+  /**
+   * @param {ARCNavigationEvent} e
+   */
+  [navigateHandler](e) {
+    const allowed = [
+      'rest-projects',
+      'exchange-search',
+      'history',
+      'saved',
+    ];
+    if (e.route === 'client-certificate-import') {
+      this.importingCertificate = true;
+    } else if (allowed.includes(e.route)) {
+      navigate(e.route);
+    } else {
+      // eslint-disable-next-line no-console
+      console.warn('Unhandled navigate event', e);
+    }
+  }
+
+  /**
+   * A handler for the main toolbar arrow back click.
+   * Always navigates to the workspace.
+   */
+  [mainBackHandler]() {
+    navigate('workspace');
+  }
+
+  /**
+   * Handler for application command.
+   *
+   * @param {EventEmitter} e Node's event
+   * @param {string} action
+   * @param {...any} args
+   */
+  [commandHandler](e, action, ...args) {
+    switch (action) {
+      case 'open-saved': navigate('saved'); break;
+      case 'open-history': navigate('history'); break;
+      case 'open-drive': navigate('google-drive'); break;
+      case 'open-cookie-manager': navigate('cookie-manager'); break;
+      case 'open-hosts-editor': navigate('hosts-editor'); break;
+      case 'open-themes': navigate('themes'); break;
+      case 'open-client-certificates': navigate('client-certificates'); break;
+      case 'open-requests-workspace': navigate('workspace'); break;
+      case 'open-web-socket': navigate('web-socket'); break;
+      default:
+        this.logger.warn(`Unhandled IO command ${action}`);
+    }
+  }
+
+  /**
+   * Handles action performed in main thread (menu action) related to a request.
+   *
+   * @param {EventEmitter} e
+   * @param {string} action Action name to perform.
+   * @param {...any} args
+   */
+  [requestActionHandler](e, action, ...args) {
+    if (this.route !== 'workspace') {
+      navigate('workspace');
+    }
+    switch (action) {
+      case 'save':
+        this.workspaceElement.saveOpened();
+        break;
+      case 'new-tab':
+        this.workspaceElement.addEmpty();
+        break;
+      case 'send-current':
+        this.workspaceElement.sendCurrent();
+        break;
+      case 'close-tab':
+        this.workspaceElement.closeActiveTab();
+        break;
+      default:
+        this.logger.warn(`Unhandled IO request command ${action}`);
+    }
   }
 
   appTemplate() {
@@ -271,8 +445,10 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       return this.loaderTemplate();
     }
     return html`
-    ${this[headerTemplate]()}
-    ${this[pageTemplate](this.route)}
+    <div class="content">
+      ${this[navigationTemplate]()}
+      ${this[pageTemplate](this.route)}
+    </div>
     `;
   }
 
@@ -292,11 +468,46 @@ export class AdvancedRestClientApplication extends ApplicationPage {
    * @returns {TemplateResult} The template for the header
    */
   [headerTemplate]() {
+    const { route, compatibility } = this;
+    const isWorkspace = route === 'workspace';
     return html`
     <header>
+      ${isWorkspace ? '' : 
+      html`
+      <anypoint-icon-button ?compatibility="${compatibility}" title="Back to the request workspace" @click="${this[mainBackHandler]}">
+        <arc-icon icon="arrowBack"></arc-icon>
+      </anypoint-icon-button>`}
       ARC
       <span class="spacer"></span>
     </header>`;
+  }
+
+  /**
+   * @returns {TemplateResult} The template for the application main navigation
+   */
+  [navigationTemplate]() {
+    const { compatibility, config, menuPopup } = this;
+    const { view, history } = config;
+    const historyEnabled = !history || typeof history.enabled !== 'boolean' || history.enabled;
+    const hideHistory = menuPopup.includes('history-menu');
+    const hideSaved = menuPopup.includes('saved-menu');
+    const hideProjects = menuPopup.includes('projects-menu');
+    const hideApis = menuPopup.includes('rest-api-menu');
+    return html`
+    <nav>
+      <arc-menu
+        ?compatibility="${compatibility}"
+        .listType="${view && view.listType}"
+        ?history="${historyEnabled}"
+        ?hideHistory="${hideHistory}"
+        ?hideSaved="${hideSaved}"
+        ?hideProjects="${hideProjects}"
+        ?hideApis="${hideApis}"
+        popup
+        dataTransfer
+      ></arc-menu>
+    </nav>
+    `;
   }
 
   /**
@@ -304,12 +515,16 @@ export class AdvancedRestClientApplication extends ApplicationPage {
    * @returns {TemplateResult} The template for the page content
    */
   [pageTemplate](route) {
+    // eslint-disable-next-line no-console
+    console.log(route);
     return html`
-    <div class="content">
-      <main>
-        ${this[workspaceTemplate](route === 'workspace')}
-      </main>
-    </div>
+    <main>
+      ${this[headerTemplate]()}
+      ${this[workspaceTemplate](route === 'workspace')}
+      ${this[historyPanelTemplate](route)}
+      ${this[savedPanelTemplate](route)}
+      ${this[clientCertScreenTemplate](route)}
+    </main>
     `;
   }
 
@@ -326,7 +541,72 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       .oauth2RedirectUri="${oauth2RedirectUri}"
       backendId="${initOptions.workspaceId}"
       autoRead
+      class="screen"
     ></arc-request-workspace>
     `;
+  }
+
+  /**
+   * @param {string} route The current route
+   * @returns {TemplateResult|string} The template for the history screen
+   */
+  [historyPanelTemplate](route) {
+    if (route !== 'history') {
+      return '';
+    }
+    const { compatibility, config } = this;
+    const { view, history } = config;
+    const historyEnabled = !history || typeof history.enabled !== 'boolean' || history.enabled;
+    if (!historyEnabled) {
+      return '';
+    }
+    return html`
+    <history-panel 
+      listActions
+      selectable
+      ?compatibility="${compatibility}"
+      .listType="${view && view.listType}"
+      draggableEnabled
+      class="screen"
+    ></history-panel>
+    `;
+  }
+
+  /**
+   * @param {string} route The current route
+   * @returns {TemplateResult|string} The template for the history screen
+   */
+  [savedPanelTemplate](route) {
+    if (route !== 'saved') {
+      return '';
+    }
+    const { compatibility, config } = this;
+    const { view } = config;
+    return html`
+    <saved-panel 
+      listActions
+      selectable
+      ?compatibility="${compatibility}"
+      .listType="${view && view.listType}"
+      draggableEnabled
+      class="screen"
+    ></saved-panel>
+    `;
+  }
+
+  /**
+   * @param {string} route The current route
+   * @returns {TemplateResult|string} The template for client certificates screen
+   */
+  [clientCertScreenTemplate](route) {
+    if (route !== 'client-certificates') {
+      return '';
+    }
+    const { compatibility } = this;
+    return html`
+    <client-certificates-panel
+      ?compatibility="${compatibility}"
+      class="screen"
+    ></client-certificates-panel>`;
   }
 }

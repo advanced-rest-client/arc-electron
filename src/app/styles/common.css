@@ -55,8 +55,9 @@ h2.title {
 }
 
 header {
-  height: 64px;
-  background-color: #fff;
+  height: 56px;
+  background-color: var(--arc-toolbar-background);
+  color: var(--arc-toolbar-color);
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -81,9 +82,7 @@ main {
 }
 
 nav {
-  display: flex;
-  flex-direction: column;
-  border-right: 1px #e5e5e5 solid;
+  width: 360px;
 }
 
 .page {

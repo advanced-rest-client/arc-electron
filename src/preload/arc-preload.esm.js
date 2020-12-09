@@ -1,5 +1,6 @@
 import { OAuth2Handler } from '@advanced-rest-client/electron-oauth2/renderer/OAuth2Handler.js';
 import logger from 'electron-log';
+import { ipcRenderer, clipboard } from 'electron';
 import { SocketRequest, ElectronRequest } from '@advanced-rest-client/electron-request';
 import { PreferencesProxy } from './PreferencesProxy.js';
 import { WindowProxy } from './WindowProxy.js';
@@ -14,10 +15,9 @@ process.once('loaded', () => {
   global.OAuth2Handler = OAuth2Handler;
   // @ts-ignore
   global.PreferencesProxy = PreferencesProxy;
-  // @ts-ignore
   global.logger = logger;
   // @ts-ignore
-  global.WindowProxy = WindowProxy;
+  global.WindowManagerProxy = WindowProxy;
   // @ts-ignore
   global.CookieBridge = CookieBridge;
   // @ts-ignore
@@ -32,4 +32,6 @@ process.once('loaded', () => {
   global.EncryptionService = EncryptionService;
   // @ts-ignore
   global.WorkspaceManager = WorkspaceManager;
+  global.ipc = ipcRenderer;
+  global.clipboard = clipboard;
 });

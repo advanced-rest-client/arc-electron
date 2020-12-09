@@ -34,6 +34,7 @@ export class ArcEnvironment {
     this.initializeUpdater();
     this.initializeOAuth2();
     this.initializeMenu();
+    this.initializePopupMenu();
     this.initializeThemes();
     this.initializeSessionManager();
 

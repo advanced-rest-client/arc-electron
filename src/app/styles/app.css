@@ -1,6 +1,6 @@
-arc-request-workspace {
-  margin: 20px;
+main > .screen {
   flex: 1;
   height: 100vh;
   overflow: hidden;
+  margin: 12px 20px;
 }

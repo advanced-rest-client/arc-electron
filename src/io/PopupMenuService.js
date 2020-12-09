@@ -37,6 +37,7 @@ export class PopupMenuService {
     ipcMain.on('popup-app-menu', this[popupAppMenuHandler]);
     ipcMain.on('popup-app-menu-nav', this[popupNavHandler]);
   }
+
   /**
    * Handler for `popup-app-menu` event dispatched by ARC windows.
    * @param {Event} e
@@ -53,6 +54,7 @@ export class PopupMenuService {
     }
     this.createMenuWindow(type, sizing);
   }
+  
   /**
    * Creates menu window object.
    * If the `type` already exists then nothing happens.
@@ -63,7 +65,7 @@ export class PopupMenuService {
     if (this.menuWindows.has(type)) {
       return;
     }
-    logger.debug('Creating menu popup window for type: ' + type);
+    logger.debug(`Creating menu popup window for type: ${type}`);
     const bw = this[createWindow](sizing);
     this.menuWindows.set(type, bw);
     this[loadPage](type, bw);
@@ -128,6 +130,7 @@ export class PopupMenuService {
   [removeListeners](bw) {
     bw.removeListener('closed', this[windowClosedHandler]);
   }
+
   /**
    * Handler for the BrowserWindow `closed` event.
    *
@@ -151,6 +154,7 @@ export class PopupMenuService {
     this.menuWindows.delete(type);
     this.app.wm.notifyAll('popup-app-menu-closed', type);
   }
+
   /**
    * Handler for an event dispatched by popup menu when navigation action was
    * performed.
@@ -174,6 +178,7 @@ export class PopupMenuService {
     logger.debug('Sending navigate event to the renderer process.');
     win.webContents.send('app-navigate', detail);
   }
+
   /**
    * Removes all generated menu windows.
    */
@@ -183,6 +188,7 @@ export class PopupMenuService {
       win.destroy();
     }
   }
+  
   /**
    * Toggles entire menu window.
    */
