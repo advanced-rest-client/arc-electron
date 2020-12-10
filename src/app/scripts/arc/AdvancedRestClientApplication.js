@@ -21,9 +21,11 @@ import '../../../../web_modules/@advanced-rest-client/arc-menu/arc-menu.js';
 import '../../../../web_modules/@advanced-rest-client/requests-list/history-panel.js';
 import '../../../../web_modules/@advanced-rest-client/requests-list/saved-panel.js';
 import '../../../../web_modules/@advanced-rest-client/client-certificates/client-certificates-panel.js';
-import { ArcNavigationEventTypes, ProjectActions } from '../../../../web_modules/@advanced-rest-client/arc-events/index.js';
+import '../../../../web_modules/@advanced-rest-client/arc-ie/arc-data-export.js';
+import { ArcNavigationEventTypes, ProjectActions, ConfigEventTypes } from '../../../../web_modules/@advanced-rest-client/arc-events/index.js';
+import { Request } from './Request.js';
 
-/* global PreferencesProxy, OAuth2Handler, WindowManagerProxy, ArcContextMenu, ThemeManager, logger, EncryptionService, WorkspaceManager, ipc */
+/* global PreferencesProxy, OAuth2Handler, WindowManagerProxy, ArcContextMenu, ThemeManager, logger, EncryptionService, WorkspaceManager, ipc, CookieBridge, ImportFilePreProcessor, FilesystemProxy, ApplicationSearchProxy */
 
 /** @typedef {import('../../../preload/PreferencesProxy').PreferencesProxy} PreferencesProxy */
 /** @typedef {import('../../../preload/ArcContextMenu').ArcContextMenu} ArcContextMenu */
@@ -31,6 +33,9 @@ import { ArcNavigationEventTypes, ProjectActions } from '../../../../web_modules
 /** @typedef {import('../../../preload/ThemeManager').ThemeManager} ThemeManager */
 /** @typedef {import('../../../preload/EncryptionService').EncryptionService} EncryptionService */
 /** @typedef {import('../../../preload/WorkspaceManager').WorkspaceManager} WorkspaceManager */
+/** @typedef {import('../../../preload/ImportFilePreProcessor').ImportFilePreProcessor} ImportFilePreProcessor */
+/** @typedef {import('../../../preload/FilesystemProxy').FilesystemProxy} FilesystemProxy */
+/** @typedef {import('../../../preload/ApplicationSearchProxy').ApplicationSearchProxy} ApplicationSearchProxy */
 /** @typedef {import('../../../types').ArcAppInitOptions} ArcAppInitOptions */
 /** @typedef {import('lit-html').TemplateResult} TemplateResult */
 /** @typedef {import('@advanced-rest-client/electron-oauth2/renderer/OAuth2Handler').OAuth2Handler} OAuth2Handler */
@@ -38,6 +43,7 @@ import { ArcNavigationEventTypes, ProjectActions } from '../../../../web_modules
 /** @typedef {import('@advanced-rest-client/arc-events').ARCRequestNavigationEvent} ARCRequestNavigationEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ARCProjectNavigationEvent} ARCProjectNavigationEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ARCNavigationEvent} ARCNavigationEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ConfigStateUpdateEvent} ConfigStateUpdateEvent */
 /** @typedef {import('../../../../web_modules/@advanced-rest-client/arc-request-ui').ArcRequestWorkspaceElement} ArcRequestWorkspaceElement */
 
 const unhandledRejectionHandler = Symbol('unhandledRejectionHandler');
@@ -54,6 +60,10 @@ const savedPanelTemplate = Symbol('savedPanelTemplate');
 const clientCertScreenTemplate = Symbol('clientCertScreenTemplate');
 const commandHandler = Symbol('commandHandler');
 const requestActionHandler = Symbol('requestActionHandler');
+const configStateChangeHandler = Symbol('configStateChangeHandler');
+const systemThemeChangeHandler = Symbol('systemThemeChangeHandler');
+const popupMenuOpenedHandler = Symbol('popupMenuOpenedHandler');
+const popupMenuClosedHandler = Symbol('popupMenuClosedHandler');
 
 export class AdvancedRestClientApplication extends ApplicationPage {
   static get routes() {
@@ -120,6 +130,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     this.initObservableProperties(
       'route', 'initializing', 'loadingStatus',
       'compatibility', 'oauth2RedirectUri',
+      'navigationDetached', 'updateState', 'hasAppUpdate',
     );
 
     /** 
@@ -167,22 +178,44 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     this.workspace = new WorkspaceManager();
     this.logger = logger;
 
+    this.cookieBridge = new CookieBridge();
+    this.importPreprocessor = new ImportFilePreProcessor();
+    this.fs = new FilesystemProxy();
+    this.search = new ApplicationSearchProxy();
+    this.requestFactory = new Request();
+
     window.onunhandledrejection = this[unhandledRejectionHandler].bind(this);
-
+    
     // todo: do the below when the application is already initialized.
-
+    
     // this[navigationHandler] = this[navigationHandler].bind(this);
-
+    
     // window.addEventListener(ModelingEventTypes.State.Navigation.change, this[navigationHandler]);
     
     this.oauth2RedirectUri = 'http://auth.advancedrestclient.com/arc.html';
     this.compatibility = false;
-
+    
     /**
      * A list of detached menu panels.
      * @type {string[]}
      */
     this.menuPopup = [];
+    /** 
+     * When set the navigation element is detached from the main application window.
+     */
+    this.navigationDetached = false;
+
+    /** 
+     * Whether application update is available.
+     */
+    this.hasAppUpdate = false;
+    /** 
+     * The current state of checking for update.
+     * @type {string}
+     */
+    this.updateState = undefined;
+    
+    this[configStateChangeHandler] = this[configStateChangeHandler].bind(this);
   }
 
   async initialize() {
@@ -198,7 +231,10 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       this.reportCriticalError(e);
       throw e;
     }
-    this.config = cnf;    
+    this.config = cnf;
+    if (cnf.request && typeof cnf.request.ignoreSessionCookies === 'boolean') {
+      this.cookieBridge.ignoreSessionCookies = cnf.request.ignoreSessionCookies;
+    }
     await this.loadTheme();
     this.workspace.id = init.workspaceId;
     await this.afterInitialization();
@@ -213,13 +249,44 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     this.themeProxy.listen();
     this.encryption.listen();
     this.workspace.listen();
+    this.cookieBridge.listen();
+    this.fs.listen();
+    this.search.listen();
+    this.requestFactory.listen();
 
     window.addEventListener(ArcNavigationEventTypes.navigateRequest, this[navigateRequestHandler].bind(this));
     window.addEventListener(ArcNavigationEventTypes.navigate, this[navigateHandler].bind(this));
     window.addEventListener(ArcNavigationEventTypes.navigateProject, this[navigateProjectHandler].bind(this));
+    window.addEventListener(ConfigEventTypes.State.update, this[configStateChangeHandler]);
 
     ipc.on('command', this[commandHandler].bind(this));
     ipc.on('request-action', this[requestActionHandler].bind(this));
+    ipc.on('system-theme-changed', this[systemThemeChangeHandler].bind(this));
+
+    ipc.on('popup-app-menu-opened', this[popupMenuOpenedHandler].bind(this));
+    ipc.on('popup-app-menu-closed', this[popupMenuClosedHandler].bind(this));
+
+    ipc.on('checking-for-update', () => {
+      this.updateState = 'checking-for-update';
+    });
+    ipc.on('update-available', (info) => {
+      this.updateState = 'update-available';
+    });
+    ipc.on('update-not-available', () => {
+      this.updateState = 'update-not-available';
+    });
+    ipc.on('autoupdate-error', (error) => {
+      this.updateState = 'autoupdate-error';
+      this.logger.error(error);
+    });
+    ipc.on('download-progress', (progressObj) => {
+      this.updateState = 'download-progress';
+      this.logger.info(progressObj);
+    });
+    ipc.on('update-downloaded', (info) => {
+      this.updateState = 'update-downloaded';
+      this.hasAppUpdate = true;
+    });
   }
 
   /**
@@ -405,6 +472,12 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       case 'open-client-certificates': navigate('client-certificates'); break;
       case 'open-requests-workspace': navigate('workspace'); break;
       case 'open-web-socket': navigate('web-socket'); break;
+      case 'process-external-file': this.processExternalFile(args[0]); break;
+      case 'import-data': navigate('data-import'); break;
+      case 'export-data': navigate('data-export'); break;
+      case 'show-settings': navigate('settings'); break;
+      case 'popup-menu': this.navigationDetached = !this.navigationDetached; break;
+      case 'export-workspace': this.exportWorkspace(); break;
       default:
         this.logger.warn(`Unhandled IO command ${action}`);
     }
@@ -439,12 +512,95 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     }
   }
 
+  /**
+   * @param {ConfigStateUpdateEvent} e
+   */
+  [configStateChangeHandler](e) {
+    const { key, value } = e.detail;
+    if (key === 'ignoreSessionCookies') {
+      this.cookieBridge.ignoreSessionCookies = value;
+    }
+  }
+
+  /**
+   * Handler for system theme change event dispatched by the IO thread.
+   * Updates theme depending on current setting.
+   *
+   * @param {any} e
+   * @param {Boolean} isDarkMode true when Electron detected dark mode
+   * @returns {Promise<void>}
+   */
+  async [systemThemeChangeHandler](e, isDarkMode) {
+    const theme = isDarkMode ?
+      '@advanced-rest-client/arc-electron-dark-theme' :
+      '@advanced-rest-client/arc-electron-default-theme';
+    this.compatibility = false;
+    try {
+      await this.themeProxy.loadTheme(theme);
+    } catch (err) {
+      this.logger.error(err);
+    }
+  }
+
+  /**
+   * @param {string} filePath
+   */
+  async processExternalFile(filePath) {
+    try {
+      await this.importPreprocessor.processFile(filePath);
+    } catch (cause) {
+      this.logger.error(cause);
+      this.reportCriticalError(cause);
+    }
+  }
+
+  [popupMenuOpenedHandler](e, type) {
+    this.menuToggleOption(type, true);
+  }
+
+  [popupMenuClosedHandler](e, type) {
+    this.menuToggleOption(type, false);
+  }
+
+  /**
+   * @param {string} type The menu name
+   * @param {boolean} value Whether the menu is rendered in an external window.
+   */
+  menuToggleOption(type, value) {
+    if (type === '*') {
+      this.navigationDetached = value;
+      return;
+    }
+    const { menuPopup } = this;
+    if (value && !menuPopup.includes(type)) {
+      menuPopup.push(type);
+      this.render();
+    } else if (!value && menuPopup.includes(type)) {
+      const index = menuPopup.indexOf(type);
+      menuPopup.splice(index, 1);
+      this.render();
+    }
+  }
+
+  /**
+   * Calls ARC app to serialize workspace data and exports it to a file.
+   * @return {Promise}
+   */
+  async exportWorkspace() {
+    // @TODO: add workspace serialize function.
+    // const workspace = this.workspaceElement.serializeWorkspace();
+    // return this.fs.exportFileData(workspace, 'application/json', 'arc-workspace.arc');
+  }
+
   appTemplate() {
     const { initializing } = this;
     if (initializing) {
       return this.loaderTemplate();
     }
+    // @ts-ignore
+    const { appVersion } = window.versionInfo;
     return html`
+    <arc-data-export appVersion="${appVersion}"></arc-data-export>
     <div class="content">
       ${this[navigationTemplate]()}
       ${this[pageTemplate](this.route)}
@@ -483,9 +639,12 @@ export class AdvancedRestClientApplication extends ApplicationPage {
   }
 
   /**
-   * @returns {TemplateResult} The template for the application main navigation
+   * @returns {TemplateResult|string} The template for the application main navigation
    */
   [navigationTemplate]() {
+    if (this.navigationDetached) {
+      return '';
+    }
     const { compatibility, config, menuPopup } = this;
     const { view, history } = config;
     const historyEnabled = !history || typeof history.enabled !== 'boolean' || history.enabled;

@@ -10,6 +10,7 @@ import { PopupMenuService } from './PopupMenuService.js';
 import { ThemeManager } from './ThemeManager.js';
 import { SessionManager } from './SessionManager.js';
 import { AssetImport } from './AssetImport.js';
+import { ContentSearchService } from './ContentSearchService.js';
 
 /** @typedef {import('../types').ApplicationOptionsConfig} ApplicationOptionsConfig */
 /** @typedef {import('../types').ProtocolFile} ProtocolFile */
@@ -37,6 +38,7 @@ export class ArcEnvironment {
     this.initializePopupMenu();
     this.initializeThemes();
     this.initializeSessionManager();
+    this.initializeSearchService();
 
     app.on('activate', () => this.activateHandler.bind(this));
     app.on('window-all-closed', this.allClosedHandler.bind(this));
@@ -117,6 +119,12 @@ export class ArcEnvironment {
     ]);
     this.sm.listen();
     this.sm.on('cookie-changed', (cookies) => this.wm.notifyAll('cookie-changed', [cookies]));
+  }
+
+  initializeSearchService() {
+    logger.debug('Initializing content search service.');
+    this.search = new ContentSearchService();
+    this.search.listen();
   }
 
   /**

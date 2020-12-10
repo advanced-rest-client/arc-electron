@@ -8,6 +8,9 @@ import { ThemeManager as ThemeManagerBase } from "./src/preload/ThemeManager";
 import { WorkspaceManager as WorkspaceManagerBase } from "./src/preload/WorkspaceManager";
 import { WindowProxy as WindowProxyBase } from "./src/preload/WindowProxy";
 import { PreferencesProxy as PreferencesProxyBase } from "./src/preload/PreferencesProxy";
+import { ImportFilePreProcessor as ImportFilePreProcessorBase } from "./src/preload/ImportFilePreProcessor";
+import { FilesystemProxy as FilesystemProxyBase } from "./src/preload/FilesystemProxy";
+import { ApplicationSearchProxy as ApplicationSearchProxyBase } from "./src/preload/ApplicationSearchProxy";
 import logger from "electron-log";
 
 // declare global {
@@ -33,4 +36,7 @@ declare global {
   class WindowManagerProxy extends WindowProxyBase {}
   class PreferencesProxy extends PreferencesProxyBase {}
   class OAuth2Handler extends OAuth2HandlerBase {}
+  class ImportFilePreProcessor extends ImportFilePreProcessorBase {}
+  class FilesystemProxy extends FilesystemProxyBase {}
+  class ApplicationSearchProxy extends ApplicationSearchProxyBase {}
 }

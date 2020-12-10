@@ -2,7 +2,13 @@
   "cSpell.words": [
     "Renderable",
     "appresources",
+    "autoupdate",
+    "firstbyte",
+    "headersreceived",
     "monospace",
+    "requestfirstbytereceived",
+    "requestloadend",
+    "requestloadstart",
     "settingschanged",
     "settingsread",
     "settingsupdate"
