@@ -22,7 +22,9 @@ import '../../../../web_modules/@advanced-rest-client/requests-list/history-pane
 import '../../../../web_modules/@advanced-rest-client/requests-list/saved-panel.js';
 import '../../../../web_modules/@advanced-rest-client/client-certificates/client-certificates-panel.js';
 import '../../../../web_modules/@advanced-rest-client/arc-ie/arc-data-export.js';
+import '../../../../web_modules/@advanced-rest-client/arc-environment/variables-overlay.js';
 import { ArcNavigationEventTypes, ProjectActions, ConfigEventTypes } from '../../../../web_modules/@advanced-rest-client/arc-events/index.js';
+import { ArcModelEvents } from '../../../../web_modules/@advanced-rest-client/arc-models/index.js';
 import { Request } from './Request.js';
 
 /* global PreferencesProxy, OAuth2Handler, WindowManagerProxy, ArcContextMenu, ThemeManager, logger, EncryptionService, WorkspaceManager, ipc, CookieBridge, ImportFilePreProcessor, FilesystemProxy, ApplicationSearchProxy */
@@ -64,6 +66,9 @@ const configStateChangeHandler = Symbol('configStateChangeHandler');
 const systemThemeChangeHandler = Symbol('systemThemeChangeHandler');
 const popupMenuOpenedHandler = Symbol('popupMenuOpenedHandler');
 const popupMenuClosedHandler = Symbol('popupMenuClosedHandler');
+const environmentTemplate = Symbol('environmentTemplate');
+const environmentSelectorHandler = Symbol('environmentSelectorHandler');
+const environmentSelectorKeyHandler = Symbol('environmentSelectorKeyHandler');
 
 export class AdvancedRestClientApplication extends ApplicationPage {
   static get routes() {
@@ -592,6 +597,24 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     // return this.fs.exportFileData(workspace, 'application/json', 'arc-workspace.arc');
   }
 
+  /**
+   * @param {Event} e
+   */
+  [environmentSelectorHandler](e) {
+    const overlay = document.querySelector('variables-overlay');
+    overlay.positionTarget = /** @type HTMLElement */ (e.target);
+    overlay.opened = true;
+  }
+
+  /**
+   * @param {KeyboardEvent} e
+   */
+  [environmentSelectorKeyHandler](e) {
+    if (['Space', 'Enter', 'ArrowDown'].includes(e.code)) {
+      this[environmentSelectorHandler](e);
+    }
+  }
+
   appTemplate() {
     const { initializing } = this;
     if (initializing) {
@@ -633,9 +656,47 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       <anypoint-icon-button ?compatibility="${compatibility}" title="Back to the request workspace" @click="${this[mainBackHandler]}">
         <arc-icon icon="arrowBack"></arc-icon>
       </anypoint-icon-button>`}
-      ARC
+      API Client
       <span class="spacer"></span>
+      ${this[environmentTemplate]()}
     </header>`;
+  }
+
+  /**
+   * @returns {TemplateResult} The template for the environment selector and the overlay.
+   */
+  [environmentTemplate]() {
+    const { compatibility } = this;
+    let { currentEnvironment } = this;
+    if (!currentEnvironment) {
+      // this can be `null` so default values won't work
+      currentEnvironment = 'Default';
+    }
+    const { env } = process;
+    return html`
+    <div 
+      class="environment-selector" 
+      title="The current environment" 
+      aria-label="Activate to select an environment"
+      tabindex="0"
+      @click="${this[environmentSelectorHandler]}"
+      @keydown="${this[environmentSelectorKeyHandler]}"
+    >
+      Environment: ${currentEnvironment}
+      <arc-icon icon="chevronRight" class="env-dropdown"></arc-icon>
+    </div>
+
+    <variables-overlay 
+      id="overlay" 
+      verticalAlign="top" 
+      withBackdrop 
+      horizontalAlign="right"
+      noCancelOnOutsideClick
+      ?compatibility="${compatibility}"
+      systemVariablesEnabled
+      .systemVariables="${env}"
+    ></variables-overlay>
+    `;
   }
 
   /**

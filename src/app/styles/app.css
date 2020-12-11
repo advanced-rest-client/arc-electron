@@ -5,15 +5,18 @@ main > .screen {
   margin: 12px 20px;
 }
 
-#searchFrame {
-  position: fixed;
-  top: 56px;
-  right: 40px;
-  width: 360px;
-  height: 56px;
-  border: 1px #e5e5e5 solid;
-  border-radius: 0 0 6px 6px;
-  background-color: var(--search-bar-background-color, #fff);
-  box-shadow: var(--anypoint-dropdown-shadow);
-  z-index: 100;
+.environment-selector {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+.env-dropdown {
+  transform: rotate(90deg);
+  margin-left: 8px;
+}
+
+variables-overlay {
+  color: initial;
 }

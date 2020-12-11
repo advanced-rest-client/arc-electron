@@ -36,6 +36,7 @@
   "main": "src/io/main.js",
   "devDependencies": {
     "@advanced-rest-client/arc-definitions": "^3.1.1",
+    "@advanced-rest-client/arc-environment": "^0.1.0",
     "@advanced-rest-client/arc-icons": "^3.2.1",
     "@advanced-rest-client/arc-ie": "^1.0.1",
     "@advanced-rest-client/arc-menu": "^4.0.2",
@@ -339,7 +340,11 @@
       "@advanced-rest-client/request-engine/*.js",
       "@advanced-rest-client/request-engine/*.d.ts",
       "@advanced-rest-client/request-engine/src/*",
-      "@advanced-rest-client/request-engine/src/**"
+      "@advanced-rest-client/request-engine/src/**",
+      "@advanced-rest-client/arc-environment/*.js",
+      "@advanced-rest-client/arc-environment/*.d.ts",
+      "@advanced-rest-client/arc-environment/src/*",
+      "@advanced-rest-client/arc-environment/src/**"
     ]
   }
 }

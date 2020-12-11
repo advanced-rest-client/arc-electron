@@ -18,6 +18,7 @@ export class ArcMeta extends ArcPreferences {
   constructor() {
     super(path.join(process.env.ARC_HOME, 'app-meta.json'));
   }
+
   /**
    * Returns generated application ID.
    *
@@ -27,6 +28,7 @@ export class ArcMeta extends ArcPreferences {
     const meta = await this.load();
     return meta.appId;
   }
+
   /**
    * To ensure anonymous app usage reporting the app is using generated UUID
    * from the instance ID. Both are not stored together anywhere outside user's
@@ -38,6 +40,7 @@ export class ArcMeta extends ArcPreferences {
     const meta = await this.load()
     return meta.aid;
   }
+
   /**
    * Creates default metadata for ARC.
    *
@@ -48,8 +51,8 @@ export class ArcMeta extends ArcPreferences {
     const appId = v4();
     const aid = v5('arc-electron', appId);
     const result = {
-      appId: appId,
-      aid: aid
+      appId,
+      aid
     };
     return result;
   }
