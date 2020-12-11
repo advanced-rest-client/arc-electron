@@ -236,18 +236,11 @@ export class WindowsManager {
   }
 
   /**
-   * Creates a configured browser window.
-   * @param {WindowSession} info
    * @param {string=} preload The preload script to load from the `src/preload/` folder.
-   * @returns {BrowserWindow}
+   * @returns {Electron.BrowserWindowConstructorOptions} The base options for ARC windows.
    */
-  createWindow(info, preload) {
-    const { x, y, width, height } = info;
+  createBaseWindowOptions(preload) {
     const options = /** @type Electron.BrowserWindowConstructorOptions */({
-      width,
-      height,
-      x,
-      y,
       backgroundColor: '#00A2DF',
       show: false,
       title: 'Advanced REST Client',
@@ -256,11 +249,22 @@ export class WindowsManager {
         nativeWindowOpen: true,
         nodeIntegration: false,
         contextIsolation: false,
-      }
+      },
     });
     if (preload) {
       options.webPreferences.preload = path.join(__dirname, '..', 'preload', preload);
     }
+    return options;
+  }
+
+  /**
+   * Creates a configured browser window.
+   * @param {WindowSession} info
+   * @param {string=} preload The preload script to load from the `src/preload/` folder.
+   * @returns {BrowserWindow}
+   */
+  createWindow(info, preload) {
+    const options = { ...this.createBaseWindowOptions(preload), ...info };
     const mainWindow = new BrowserWindow(options);
     return mainWindow;
   }

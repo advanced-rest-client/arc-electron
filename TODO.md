@@ -1,1 +1,0 @@
-- The `BaseRequest` should not use request object's configuration. This is happening in the `Request` class.

@@ -27,7 +27,7 @@ export class ArcEnvironment {
   constructor(prefMgr, params={}) {
     this.config = prefMgr; 
     this.initParams = params;
-    this.isDebug = params.debug || false;
+    this.isDebug = params.dev || false;
     this.withDevTools = params.withDevtools || false;
 
     this.initializeConfiguration(prefMgr);
@@ -123,7 +123,7 @@ export class ArcEnvironment {
 
   initializeSearchService() {
     logger.debug('Initializing content search service.');
-    this.search = new ContentSearchService();
+    this.search = new ContentSearchService(this.wm);
     this.search.listen();
   }
 
@@ -260,6 +260,9 @@ export class ArcEnvironment {
         break;
       case 'import-workspace':
         this[importWorkspaceHandler](win);
+        break;
+      case 'find':
+        this.search.start(win);
         break;
       default:
         logger.debug(`Sending "${action}" action to the UI thread.`);

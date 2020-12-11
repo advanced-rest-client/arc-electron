@@ -93,8 +93,8 @@ export default async function start(startTime) {
   const startupOptions = new ApplicationOptions();
   startupOptions.parse();
   initOptions = startupOptions.getOptions();
-  if (initOptions.debug) {
-    setLevel(initOptions.debugLevel || 'warn');
+  if (initOptions.dev) {
+    setLevel(initOptions.debugLevel || 'silly');
     // logger.level = initOptions.debugLevel || 'warn';
   } else if (initOptions.debugLevel) {
     // logger.level = initOptions.debugLevel;

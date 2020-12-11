@@ -6,7 +6,7 @@ html {
   user-select: none;
   margin: 0;
   padding: 0;
-  background-color: transparent;
+  background-color: var(--search-bar-background-color, #fff);
   overflow: hidden;
 }
 
@@ -14,11 +14,14 @@ html {
   display: flex;
   flex-direction: row;
   align-items: center;
-  background-color: transparent;
   padding: 8px;
   z-index: 100;
 
   --anypoint-input-border-color: transparent;
+
+  /* border: 1px #e5e5e5 solid;
+  border-radius: 0 0 6px 6px;
+  box-shadow: var(--anypoint-dropdown-shadow); */
 }
 
 .counters {
@@ -44,4 +47,9 @@ anypoint-input {
   flex: 1;
   width: auto;
   margin: 0;
+}
+
+.close-icon {
+  width: 20px;
+  height: 20px;
 }

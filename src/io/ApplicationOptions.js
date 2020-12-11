@@ -37,7 +37,7 @@ export class ApplicationOptions {
       type: String
     }, {
       // Opens ARC in dev mode (opened console, verbose log)
-      name: '--debug',
+      name: '--dev',
       shortcut: '-d',
       type: Boolean
     }, {

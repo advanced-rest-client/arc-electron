@@ -21,7 +21,7 @@ export declare interface ApplicationOptionsConfig {
   settingsFile?: string;
   themesPath?: string;
   workspacePath?: string;
-  debug?: boolean;
+  dev?: boolean;
   debugLevel?: 'debug'|'error'|'info'|'silly'|'verbose'|'warn';
   withDevtools?: boolean;
   // this is for development purposes only
