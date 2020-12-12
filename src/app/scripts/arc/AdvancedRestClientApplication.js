@@ -25,7 +25,10 @@ import '../../../../web_modules/@advanced-rest-client/requests-list/history-pane
 import '../../../../web_modules/@advanced-rest-client/requests-list/saved-panel.js';
 import '../../../../web_modules/@advanced-rest-client/client-certificates/client-certificates-panel.js';
 import '../../../../web_modules/@advanced-rest-client/arc-ie/arc-data-export.js';
+import '../../../../web_modules/@advanced-rest-client/arc-ie/arc-export-form.js';
+import '../../../../web_modules/@advanced-rest-client/arc-ie/arc-data-import.js';
 import '../../../../web_modules/@advanced-rest-client/arc-environment/variables-overlay.js';
+import '../../../../web_modules/@advanced-rest-client/arc-cookies/cookie-manager.js';
 import { Request } from './Request.js';
 import { processRequestCookies, processResponseCookies } from './RequestCookies.js';
 
@@ -71,6 +74,9 @@ const popupMenuClosedHandler = Symbol('popupMenuClosedHandler');
 const environmentTemplate = Symbol('environmentTemplate');
 const environmentSelectorHandler = Symbol('environmentSelectorHandler');
 const environmentSelectorKeyHandler = Symbol('environmentSelectorKeyHandler');
+const dataImportScreenTemplate = Symbol('dataImportScreenTemplate');
+const dataExportScreenTemplate = Symbol('dataExportScreenTemplate');
+const cookieManagerScreenTemplate = Symbol('cookieManagerScreenTemplate');
 
 export class AdvancedRestClientApplication extends ApplicationPage {
   static get routes() {
@@ -98,6 +104,18 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     {
       name: 'client-certificates',
       pattern: 'client-certificates'
+    },
+    {
+      name: 'data-import',
+      pattern: 'data-import'
+    },
+    {
+      name: 'data-export',
+      pattern: 'data-export'
+    },
+    {
+      name: 'cookie-manager',
+      pattern: 'cookie-manager'
     },
     {
       name: 'project',
@@ -239,7 +257,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       throw e;
     }
     this.config = cnf;
-    if (cnf.request && typeof cnf.request.ignoreSessionCookies === 'boolean' && cnf.request.ignoreSessionCookies) {
+    if (!!cnf.request || (cnf.request && typeof cnf.request.ignoreSessionCookies === 'boolean' && cnf.request.ignoreSessionCookies)) {
       ModulesRegistry.register(ModulesRegistry.request, 'arc/request/cookies', processRequestCookies, ['events']);
       ModulesRegistry.register(ModulesRegistry.response, 'arc/response/cookies', processResponseCookies, ['events']);
     }
@@ -633,6 +651,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     const { appVersion } = window.versionInfo;
     return html`
     <arc-data-export appVersion="${appVersion}"></arc-data-export>
+    <arc-data-import></arc-data-import>
     <div class="content">
       ${this[navigationTemplate]()}
       ${this[pageTemplate](this.route)}
@@ -753,6 +772,9 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       ${this[historyPanelTemplate](route)}
       ${this[savedPanelTemplate](route)}
       ${this[clientCertScreenTemplate](route)}
+      ${this[dataImportScreenTemplate](route)}
+      ${this[dataExportScreenTemplate](route)}
+      ${this[cookieManagerScreenTemplate](route)}
     </main>
     `;
   }
@@ -837,5 +859,53 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       ?compatibility="${compatibility}"
       class="screen"
     ></client-certificates-panel>`;
+  }
+
+  /**
+   * @param {string} route The current route
+   * @returns {TemplateResult|string} The template for the data import screen
+   */
+  [dataImportScreenTemplate](route) {
+    if (route !== 'data-import') {
+      return '';
+    }
+    const { compatibility } = this;
+    return html`
+    TODO: change the flow to open a file when triggering menu item
+    `;
+  }
+
+  /**
+   * @param {string} route The current route
+   * @returns {TemplateResult|string} The template for the data export screen
+   */
+  [dataExportScreenTemplate](route) {
+    if (route !== 'data-export') {
+      return '';
+    }
+    const { compatibility } = this;
+    return html`
+    <arc-export-form
+      ?compatibility="${compatibility}"
+      class="screen"
+    ></arc-export-form>
+    `;
+  }
+
+  /**
+   * @param {string} route The current route
+   * @returns {TemplateResult|string} The template for the cookie manager
+   */
+  [cookieManagerScreenTemplate](route) {
+    if (route !== 'cookie-manager') {
+      return '';
+    }
+    const { compatibility } = this;
+    return html`
+    <cookie-manager
+      ?compatibility="${compatibility}"
+      class="screen"
+    ></export-form>
+    `;
   }
 }
