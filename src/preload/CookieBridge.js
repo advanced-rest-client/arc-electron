@@ -20,7 +20,7 @@ export const cookieChangeHandler = Symbol('cookieChangeHandler');
 /**
  * Computes a cookie URL from the cookie definition
  *
- * @param {ArcCookie} cookie
+ * @param {ARCCookie} cookie
  * @param {boolean=} secured
  * @return {string}
  */
@@ -38,11 +38,11 @@ function computeCookieUrl(cookie, secured=false) {
 }
 
 /**
- * @param {Cookie} electronCookie
- * @return {ArcCookie}
+ * @param {Electron.Cookie} electronCookie
+ * @return {ARCCookie}
  */
 export function electronToArcCookie(electronCookie) {
-  const cookie = /** @type ArcCookie */ ({
+  const cookie = /** @type ARCCookie */ ({
     domain: electronCookie.domain,
     httpOnly: electronCookie.httpOnly,
     hostOnly: electronCookie.hostOnly,
@@ -62,7 +62,7 @@ export function electronToArcCookie(electronCookie) {
   return cookie;
 }
 /**
- * @param {ArcCookie} cookie
+ * @param {ARCCookie} cookie
  * @return {CookiesSetDetails} A copy of the cookie that is translated into an Electron cookie
  */
 export function arcCookieToElectron(cookie) {
@@ -121,8 +121,8 @@ export class CookieBridge {
    * @return {Promise<ARCCookie[]>} List of all cookies in the cookie session partition.
    */
   async getAllCookies() {
-    const result = await ipc.invoke('cookies-session-get-all');
-    return electronToArcCookie(result);
+    const result = /** @type Electron.Cookie[] */ (await ipc.invoke('cookies-session-get-all'));
+    return result.map((item) => electronToArcCookie(item));
   }
 
   /**
@@ -130,8 +130,8 @@ export class CookieBridge {
    * @return {Promise<ARCCookie[]>} List of domain cookies in the cookie session partition.
    */
   async getDomainCookies(domain) {
-    const result = await ipc.invoke('cookies-session-get-domain', domain);
-    return electronToArcCookie(result);
+    const result = /** @type Electron.Cookie[] */ (await ipc.invoke('cookies-session-get-domain', domain));
+    return result.map((item) => electronToArcCookie(item));
   }
 
   /**
@@ -142,8 +142,8 @@ export class CookieBridge {
    * @return {Promise<ARCCookie[]>} List of database objects that matches cookies.
    */
   async getUrlCookies(url) {
-    const result = await ipc.invoke('cookies-session-get-url', url);
-    return electronToArcCookie(result);
+    const result = /** @type Electron.Cookie[] */ (await ipc.invoke('cookies-session-get-url', url));
+    return result.map((item) => electronToArcCookie(item));
   }
 
   /**
