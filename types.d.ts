@@ -1,4 +1,4 @@
-import { ElectronRequest as ElectronRequestBase, SocketRequest as SocketRequestBase } from "@advanced-rest-client/electron-request";
+import { ElectronRequest as ElectronRequestBase, SocketRequest as SocketRequestBase, ArcHeaders as ArcHeadersBase } from "@advanced-rest-client/electron-request";
 import { OAuth2Handler as OAuth2HandlerBase } from "@advanced-rest-client/electron-oauth2/renderer/OAuth2Handler";
 import { Clipboard, IpcRenderer } from "electron";
 import { ArcContextMenu as ArcContextMenuBase } from "./src/preload/ArcContextMenu";
@@ -39,4 +39,5 @@ declare global {
   class ImportFilePreProcessor extends ImportFilePreProcessorBase {}
   class FilesystemProxy extends FilesystemProxyBase {}
   class ApplicationSearchProxy extends ApplicationSearchProxyBase {}
+  class ArcHeaders extends ArcHeadersBase {}
 }

@@ -3,6 +3,9 @@ import { ApplicationPage } from '../../ApplicationPage.js';
 import { findRoute, navigate } from '../lib/route.js';
 import { html } from '../../../../web_modules/lit-html/lit-html.js';
 import { MonacoLoader } from '../../../../web_modules/@advanced-rest-client/monaco-support/index.js';
+import { ArcNavigationEventTypes, ProjectActions, ConfigEventTypes } from '../../../../web_modules/@advanced-rest-client/arc-events/index.js';
+import { ArcModelEvents } from '../../../../web_modules/@advanced-rest-client/arc-models/index.js';
+import { ModulesRegistry } from '../../../../web_modules/@advanced-rest-client/request-engine/index.js';
 import '../../arc-alert-dialog.js';
 import '../../../../web_modules/@polymer/font-roboto-local/roboto.js';
 import '../../../../web_modules/@advanced-rest-client/arc-request-ui/arc-request-workspace.js';
@@ -23,9 +26,8 @@ import '../../../../web_modules/@advanced-rest-client/requests-list/saved-panel.
 import '../../../../web_modules/@advanced-rest-client/client-certificates/client-certificates-panel.js';
 import '../../../../web_modules/@advanced-rest-client/arc-ie/arc-data-export.js';
 import '../../../../web_modules/@advanced-rest-client/arc-environment/variables-overlay.js';
-import { ArcNavigationEventTypes, ProjectActions, ConfigEventTypes } from '../../../../web_modules/@advanced-rest-client/arc-events/index.js';
-import { ArcModelEvents } from '../../../../web_modules/@advanced-rest-client/arc-models/index.js';
 import { Request } from './Request.js';
+import { processRequestCookies, processResponseCookies } from './RequestCookies.js';
 
 /* global PreferencesProxy, OAuth2Handler, WindowManagerProxy, ArcContextMenu, ThemeManager, logger, EncryptionService, WorkspaceManager, ipc, CookieBridge, ImportFilePreProcessor, FilesystemProxy, ApplicationSearchProxy */
 
@@ -237,8 +239,9 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       throw e;
     }
     this.config = cnf;
-    if (cnf.request && typeof cnf.request.ignoreSessionCookies === 'boolean') {
-      this.cookieBridge.ignoreSessionCookies = cnf.request.ignoreSessionCookies;
+    if (cnf.request && typeof cnf.request.ignoreSessionCookies === 'boolean' && cnf.request.ignoreSessionCookies) {
+      ModulesRegistry.register(ModulesRegistry.request, 'arc/request/cookies', processRequestCookies, ['events']);
+      ModulesRegistry.register(ModulesRegistry.response, 'arc/response/cookies', processResponseCookies, ['events']);
     }
     await this.loadTheme();
     this.workspace.id = init.workspaceId;
@@ -522,8 +525,14 @@ export class AdvancedRestClientApplication extends ApplicationPage {
    */
   [configStateChangeHandler](e) {
     const { key, value } = e.detail;
-    if (key === 'ignoreSessionCookies') {
-      this.cookieBridge.ignoreSessionCookies = value;
+    if (key === 'request.ignoreSessionCookies') {
+      if (value) {
+        ModulesRegistry.register(ModulesRegistry.request, 'arc/request/cookies', processRequestCookies, ['events']);
+        ModulesRegistry.register(ModulesRegistry.response, 'arc/response/cookies', processResponseCookies, ['events']);
+      } else {
+        ModulesRegistry.unregister(ModulesRegistry.request, 'arc/request/cookies');
+        ModulesRegistry.unregister(ModulesRegistry.response, 'arc/response/cookies');
+      }
     }
   }
 

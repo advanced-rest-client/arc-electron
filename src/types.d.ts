@@ -1,3 +1,5 @@
+import { Cookie } from 'electron';
+
 /**
  * Configuration for an application config option.
  */
@@ -126,4 +128,33 @@ export declare interface ArcAppInitOptions {
    * The backend id of the workspace file.
    */
   workspaceId?: string;
+}
+
+
+export interface SessionManagerConfig {
+  /**
+   * A list of application internal URLs for
+   * which certificate error should not be ignored.
+   */
+  appUrls?: string[];
+}
+
+export interface ElectronCookieChangeRecord {
+  /**
+   * The cookie that was changed.
+   */
+  cookie: Cookie;
+  /**
+   * The cause of the change with one of the following values:
+   * - `explicit` - The cookie was changed directly by a consumer's action.
+   * - `overwrite` - The cookie was automatically removed due to an insert operation that overwrote it.
+   * - `expired` - The cookie was automatically removed as it expired.
+   * - `evicted` - The cookie was automatically evicted during garbage collection.
+   * - `expired-overwrite` - The cookie was overwritten with an already-expired expiration date.
+   */
+  cause: string;
+  /**
+   * `true` if the cookie was removed, `false` otherwise.
+   */
+  removed: boolean;
 }
