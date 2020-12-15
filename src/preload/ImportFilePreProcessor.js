@@ -1,45 +1,77 @@
 import path from 'path';
 import fs from 'fs-extra';
-import { RestApiEvents, ImportEvents } from '@advanced-rest-client/arc-events';
 
-export const notifyApiParser = Symbol('notifyApiParser');
 export const isApiFile = Symbol('isApiFile');
-export const discoverFile = Symbol('discoverFile');
 
+/**
+ * Simple class to read file picked by the user and that helps to decide whether the file
+ * is an API file to process with the AMF factory or is it ARC import file.
+ * 
+ * @todo This has no sense to handle all imports through a single import file.
+ * THese should be specialized paths to import API data and to import ARC data.
+ */
 export class ImportFilePreProcessor {
   /**
-   * Recognizes file type and sends to appropriate parser.
-   * @param {String} filePath Location of the file.
-   * @returns {Promise<void>}
+   * @param {string} filePath The path to the imported file
    */
-  async processFile(filePath) {
+  constructor(filePath) {
+    this.filePath = filePath;
+
+    /** 
+     * @type {Buffer}
+     */
+    this.buffer = undefined;
+  }
+
+  async prepare() {
+    const { filePath } = this;
     if (!filePath) {
-      throw new Error('Argument not set');
+      throw new Error('The file path is not set');
     }
-    const buffer = await fs.readFile(filePath);
-    const ext = path.extname(filePath);
-    if (this[isApiFile](ext)) {
-      await this[notifyApiParser](buffer);
-      return;
+    const exists = await fs.pathExists(filePath);
+    if (!exists) {
+      throw new Error('The file path does not exists');
     }
-    // Only JSON files left. It can be either ARC, Postman or OAS
-    await this[discoverFile](buffer);
+    try {
+      await fs.access(filePath, fs.constants.R_OK);
+    } catch (e) {
+      throw new Error('Unable to read import file. The current user has no permissions to the file.');
+    }
+    this.buffer = await fs.readFile(filePath);
   }
 
   /**
-   * Dispatches `api-process-file` to parse API data with a separate module.
-   * In ARC electron it is `@advanced-rest-client/electron-amf-service`
-   * node module. In other it might be other component.
-   * @param {Buffer} file User file.
-   * @return {Promise<void>}
+   * Tests whether the buffer should be sent to the API processor instead of import processor.
+   * 
+   * Note, the contents may be still an API as OAS (swagger) support JSON format. This is not here tested
+   * because the file content can be encrypted with password.
+   * 
+   * @returns {Promise<boolean>}
    */
-  async [notifyApiParser](file) {
-    // @ts-ignore
-    const result = await RestApiEvents.processFile(document.body, file);
-    if (!result) {
-      throw new Error('API processor not available');
+  async isApiFile() {
+    const { filePath } = this;
+    if (!filePath) {
+      throw new Error('The file path is not set');
     }
-    RestApiEvents.dataReady(document.body, result.model, result.type);
+    const ext = path.extname(filePath);
+    if (this[isApiFile](ext)) {
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Call `isApiFile()` first to test whether the file is the zip file.
+   * 
+   * @return {string} The contents as string.
+   */
+  readContents() {
+    const { buffer } = this;
+    if (!buffer) {
+      throw new Error('Call the prepare function first.');
+    }
+    const content = buffer.toString().trim();
+    return content;
   }
 
   /**
@@ -49,28 +81,5 @@ export class ImportFilePreProcessor {
   [isApiFile](ext) {
     const apiTypes = ['.zip', '.yaml', '.raml'];
     return apiTypes.includes(ext);
-  }
-
-  /**
-   * @param {Buffer} buffer
-   * @returns {Promise<void>}
-   */
-  async [discoverFile](buffer) {
-    const content = buffer.toString().trim();
-    if (content[0] !== '{') {
-      throw new Error('Unsupported file.');
-    }
-    let data;
-    try {
-      data = JSON.parse(content);
-    } catch (_) {
-      throw new Error('Unknown file format.');
-    }
-    if (data.swagger) {
-      await this[notifyApiParser](buffer);
-      return;
-    }
-
-    await ImportEvents.processData(document.body, data);
   }
 }

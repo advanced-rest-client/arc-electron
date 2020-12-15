@@ -3,8 +3,8 @@ import { ApplicationPage } from '../../ApplicationPage.js';
 import { findRoute, navigate } from '../lib/route.js';
 import { html } from '../../../../web_modules/lit-html/lit-html.js';
 import { MonacoLoader } from '../../../../web_modules/@advanced-rest-client/monaco-support/index.js';
-import { ArcNavigationEventTypes, ProjectActions, ConfigEventTypes } from '../../../../web_modules/@advanced-rest-client/arc-events/index.js';
-import { ArcModelEvents } from '../../../../web_modules/@advanced-rest-client/arc-models/index.js';
+import { ArcNavigationEventTypes, ProjectActions, ConfigEventTypes, DataImportEventTypes, WorkspaceEvents, ImportEvents } from '../../../../web_modules/@advanced-rest-client/arc-events/index.js';
+import { ArcModelEvents, ImportFactory, ImportNormalize, readFile, isSingleRequest } from '../../../../web_modules/@advanced-rest-client/arc-models/index.js';
 import { ModulesRegistry } from '../../../../web_modules/@advanced-rest-client/request-engine/index.js';
 import '../../arc-alert-dialog.js';
 import '../../../../web_modules/@polymer/font-roboto-local/roboto.js';
@@ -27,8 +27,10 @@ import '../../../../web_modules/@advanced-rest-client/client-certificates/client
 import '../../../../web_modules/@advanced-rest-client/arc-ie/arc-data-export.js';
 import '../../../../web_modules/@advanced-rest-client/arc-ie/arc-export-form.js';
 import '../../../../web_modules/@advanced-rest-client/arc-ie/arc-data-import.js';
+import '../../../../web_modules/@advanced-rest-client/arc-ie/import-data-inspector.js';
 import '../../../../web_modules/@advanced-rest-client/arc-environment/variables-overlay.js';
 import '../../../../web_modules/@advanced-rest-client/arc-cookies/cookie-manager.js';
+import '../../../../web_modules/@anypoint-web-components/anypoint-input/anypoint-masked-input.js';
 import { Request } from './Request.js';
 import { processRequestCookies, processResponseCookies } from './RequestCookies.js';
 
@@ -51,6 +53,7 @@ import { processRequestCookies, processResponseCookies } from './RequestCookies.
 /** @typedef {import('@advanced-rest-client/arc-events').ARCProjectNavigationEvent} ARCProjectNavigationEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ARCNavigationEvent} ARCNavigationEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ConfigStateUpdateEvent} ConfigStateUpdateEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ArcImportInspectEvent} ArcImportInspectEvent */
 /** @typedef {import('../../../../web_modules/@advanced-rest-client/arc-request-ui').ArcRequestWorkspaceElement} ArcRequestWorkspaceElement */
 
 const unhandledRejectionHandler = Symbol('unhandledRejectionHandler');
@@ -77,6 +80,17 @@ const environmentSelectorKeyHandler = Symbol('environmentSelectorKeyHandler');
 const dataImportScreenTemplate = Symbol('dataImportScreenTemplate');
 const dataExportScreenTemplate = Symbol('dataExportScreenTemplate');
 const cookieManagerScreenTemplate = Symbol('cookieManagerScreenTemplate');
+const fileImportHandler = Symbol('fileImportHandler');
+const importInspectorTemplate = Symbol('importInspectorTemplate');
+const dataInspectHandler = Symbol('dataInspectHandler');
+const inspectDataValue = Symbol('inspectDataValue');
+const importDataHandler = Symbol('importDataHandler');
+const notifyIndexer = Symbol('notifyIndexer');
+
+/**
+ * A routes that does not go through the router and should not be remembered in the history.
+ */
+const HiddenRoutes = ['data-inspect'];
 
 export class AdvancedRestClientApplication extends ApplicationPage {
   static get routes() {
@@ -204,7 +218,6 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     this.logger = logger;
 
     this.cookieBridge = new CookieBridge();
-    this.importPreprocessor = new ImportFilePreProcessor();
     this.fs = new FilesystemProxy();
     this.search = new ApplicationSearchProxy();
     this.requestFactory = new Request();
@@ -283,7 +296,8 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     window.addEventListener(ArcNavigationEventTypes.navigateRequest, this[navigateRequestHandler].bind(this));
     window.addEventListener(ArcNavigationEventTypes.navigate, this[navigateHandler].bind(this));
     window.addEventListener(ArcNavigationEventTypes.navigateProject, this[navigateProjectHandler].bind(this));
-    window.addEventListener(ConfigEventTypes.State.update, this[configStateChangeHandler]);
+    window.addEventListener(ConfigEventTypes.State.update, this[configStateChangeHandler].bind(this));
+    window.addEventListener(DataImportEventTypes.inspect, this[dataInspectHandler].bind(this));
 
     ipc.on('command', this[commandHandler].bind(this));
     ipc.on('request-action', this[requestActionHandler].bind(this));
@@ -578,12 +592,55 @@ export class AdvancedRestClientApplication extends ApplicationPage {
    * @param {string} filePath
    */
   async processExternalFile(filePath) {
+    const factory = new ImportFilePreProcessor(filePath);
     try {
-      await this.importPreprocessor.processFile(filePath);
+      await factory.prepare();
+      const isApiFile = await factory.isApiFile();
+      if (isApiFile) {
+        throw new Error(`Implement API processing`);
+      }
+      const contents = factory.readContents();
+      const decrypted = await this.decryptIfNeeded(contents);
+      const data = JSON.parse(decrypted);
+      if (data.swagger) {
+        throw new Error(`Implement API processing`);
+      }
+      const processor = new ImportNormalize();
+      const normalized = await processor.normalize(data);
+
+      if (isSingleRequest(data)) {
+        WorkspaceEvents.appendRequest(document.body, data);
+        return;
+      }
+      if (data.loadToWorkspace) {
+        WorkspaceEvents.appendExport(document.body, data);
+        return;
+      }
+      this.route = 'data-inspect';
+      this[inspectDataValue] = data;
+      this.render();
     } catch (cause) {
       this.logger.error(cause);
       this.reportCriticalError(cause);
     }
+  }
+
+  /**
+   * Processes incoming data and if encryption is detected then id processes
+   * the file for decryption.
+   *
+   * @param {string} content File content
+   * @return {Promise<string>} The content of the file.
+   */
+  async decryptIfNeeded(content) {
+    const headerIndex = content.indexOf('\n');
+    const header = content.substr(0, headerIndex).trim();
+    if (header === 'aes') {
+      const data = content.substr(headerIndex + 1);
+      // eslint-disable-next-line no-param-reassign
+      content = await this.encryption.decode('aes', data);
+    }
+    return content;
   }
 
   [popupMenuOpenedHandler](e, type) {
@@ -640,6 +697,59 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     if (['Space', 'Enter', 'ArrowDown'].includes(e.code)) {
       this[environmentSelectorHandler](e);
     }
+  }
+
+  async [fileImportHandler]() {
+    const result = await this.fs.pickFile();
+    if (result.canceled) {
+      return;
+    }
+    const [file] = result.filePaths;
+    this.processExternalFile(file);
+  }
+
+  /**
+   * @param {ArcImportInspectEvent} e
+   */
+  [dataInspectHandler](e) {
+    const { data } = e.detail;
+    this.route = 'data-inspect';
+    this[inspectDataValue] = data;
+    this.render();
+  }
+
+  /**
+   * @param {CustomEvent} e
+   */
+  async [importDataHandler](e) {
+    const { detail } = e;
+    const store = new ImportFactory();
+    const result = await store.importData(detail);
+    
+    const { savedIndexes, historyIndexes } = store;
+    this[notifyIndexer](savedIndexes, historyIndexes);
+    ImportEvents.dataImported(this);
+    this[mainBackHandler]();
+  }
+
+  /**
+   * Dispatches `url-index-update` event handled by `arc-models/url-indexer`.
+   * It will index URL data for search function.
+   * @param {IndexableRequest[]} saved List of saved requests indexes
+   * @param {IndexableRequest[]} history List of history requests indexes
+   */
+  [notifyIndexer](saved, history) {
+    let indexes = [];
+    if (saved) {
+      indexes = indexes.concat(saved);
+    }
+    if (history) {
+      indexes = indexes.concat(history);
+    }
+    if (!indexes.length) {
+      return;
+    }
+    ArcModelEvents.UrlIndexer.update(this, indexes);
   }
 
   appTemplate() {
@@ -763,8 +873,6 @@ export class AdvancedRestClientApplication extends ApplicationPage {
    * @returns {TemplateResult} The template for the page content
    */
   [pageTemplate](route) {
-    // eslint-disable-next-line no-console
-    console.log(route);
     return html`
     <main>
       ${this[headerTemplate]()}
@@ -775,6 +883,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       ${this[dataImportScreenTemplate](route)}
       ${this[dataExportScreenTemplate](route)}
       ${this[cookieManagerScreenTemplate](route)}
+      ${this[importInspectorTemplate](route)}
     </main>
     `;
   }
@@ -871,7 +980,26 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     }
     const { compatibility } = this;
     return html`
-    TODO: change the flow to open a file when triggering menu item
+    <div class="screen">
+      <h2>Data import</h2>
+      <p>You can import ARC data from any previous version, Postman export and backup, and API specification (RAML or OAS)</p>
+      <anypoint-button @click="${this[fileImportHandler]}">Select file</anypoint-button>
+    </div>
+    `;
+  }
+
+  [importInspectorTemplate](route) {
+    if (route !== 'data-inspect') {
+      return '';
+    }
+    const data = this[inspectDataValue];
+    return html`
+    <import-data-inspector
+      .data="${data}"
+      class="screen"
+      @cancel="${this[mainBackHandler]}"
+      @import="${this[importDataHandler]}"
+    ></import-data-inspector>
     `;
   }
 
@@ -886,6 +1014,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     const { compatibility } = this;
     return html`
     <arc-export-form
+      withEncrypt
       ?compatibility="${compatibility}"
       class="screen"
     ></arc-export-form>
@@ -905,7 +1034,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     <cookie-manager
       ?compatibility="${compatibility}"
       class="screen"
-    ></export-form>
+    ></cookie-manager>
     `;
   }
 }

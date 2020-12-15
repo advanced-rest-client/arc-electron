@@ -9,8 +9,8 @@ import { ApplicationMenu } from './ApplicationMenu.js';
 import { PopupMenuService } from './PopupMenuService.js';
 import { ThemeManager } from './ThemeManager.js';
 import { SessionManager } from './SessionManager.js';
-import { AssetImport } from './AssetImport.js';
 import { ContentSearchService } from './ContentSearchService.js';
+import { AppPrompts } from './AppPrompts.js';
 
 /** @typedef {import('../types').ApplicationOptionsConfig} ApplicationOptionsConfig */
 /** @typedef {import('../types').ProtocolFile} ProtocolFile */
@@ -39,6 +39,7 @@ export class ArcEnvironment {
     this.initializeThemes();
     this.initializeSessionManager();
     this.initializeSearchService();
+    this.initializePrompts();
 
     app.on('activate', () => this.activateHandler.bind(this));
     app.on('window-all-closed', this.allClosedHandler.bind(this));
@@ -113,10 +114,12 @@ export class ArcEnvironment {
 
   initializeSessionManager() {
     logger.debug('Initializing session manager.');
-    this.sm = new SessionManager([
-      'https://advancedrestclient-1155.appspot.com',
-      'advancedrestclient.com'
-    ]);
+    this.sm = new SessionManager({
+      appUrls: [
+        'https://advancedrestclient-1155.appspot.com',
+        'advancedrestclient.com'
+      ],
+    });
     this.sm.listen();
     this.sm.on('cookie-changed', (cookies) => this.wm.notifyAll('cookie-changed', [cookies]));
   }
@@ -125,6 +128,11 @@ export class ArcEnvironment {
     logger.debug('Initializing content search service.');
     this.search = new ContentSearchService(this.wm);
     this.search.listen();
+  }
+
+  initializePrompts() {
+    this.prompts = new AppPrompts();
+    this.prompts.listen();
   }
 
   /**
@@ -256,7 +264,7 @@ export class ArcEnvironment {
         this.menu.clearWorkspaceHistory();
         break;
       case 'open-file':
-        AssetImport.openAssetDialog(win);
+        AppPrompts.openAssetDialog(win);
         break;
       case 'import-workspace':
         this[importWorkspaceHandler](win);
@@ -280,7 +288,7 @@ export class ArcEnvironment {
    * @return {Promise}
    */
   async [importWorkspaceHandler](win) {
-    const path = await AssetImport.openWorkspaceFile(win);
+    const path = await AppPrompts.openWorkspaceFile(win);
     if (path) {
       logger.info('Opening workspace file in a new window.');
       await this.wm.open({

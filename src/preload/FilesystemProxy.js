@@ -62,7 +62,7 @@ export class FilesystemProxy {
     };
     let dialogResult;
     try {
-      dialogResult = await ipcRenderer.invoke('save-dialog', opts)
+      dialogResult = await ipcRenderer.invoke('save-dialog', opts);
     } catch (e) {
       log.error(e);
       return /** @type ArcExportResult */ ({
@@ -104,11 +104,25 @@ export class FilesystemProxy {
     return fs.writeFile(filePath, data, 'utf8');
   }
 
+  /**
+   * @param {any} data
+   * @param {string} mime
+   * @return {string} 
+   */
   [prepareData](data, mime) {
     switch (mime) {
       case 'application/json': return JSON.stringify(data);
       default: return String(data);
     }
+  }
+
+  /**
+   * Triggers the open file dialog pre-configured to pick supported by ARC files.
+   * 
+   * @returns {Promise<Electron.OpenDialogReturnValue>}
+   */
+  async pickFile() {
+    return ipcRenderer.invoke('open-dialog');
   }
 
   // /**

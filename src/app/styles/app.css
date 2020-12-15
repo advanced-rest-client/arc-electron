@@ -20,3 +20,11 @@ main > .screen {
 variables-overlay {
   color: initial;
 }
+
+#passwordPrompt {
+  min-width: 460px;
+}
+
+#passwordPrompt anypoint-masked-input {
+  width: auto;
+}

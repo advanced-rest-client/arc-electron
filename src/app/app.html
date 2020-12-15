@@ -35,5 +35,16 @@
   <host-rules-model></host-rules-model>
   <rest-api-model></rest-api-model>
   <url-indexer></url-indexer>
+  <!-- This is used by the EncryptionService -->
+  <anypoint-dialog id="passwordPrompt">
+    <h2 class="title">Enter password</h2>
+    <anypoint-masked-input>
+      <label slot="label">File password</label>
+    </anypoint-masked-input>
+    <div class="buttons">
+      <anypoint-button data-dialog-dismiss>Cancel</anypoint-button>
+      <anypoint-button data-dialog-confirm>OK</anypoint-button>
+    </div>
+  </anypoint-dialog>
 </body>
 </html>

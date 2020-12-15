@@ -98,14 +98,7 @@ export class EncryptionService {
   async decodeAes(data, passphrase) {
     if (passphrase === undefined) {
       // eslint-disable-next-line no-param-reassign
-      // passphrase = await prompt({
-      //   title: 'File password',
-      //   label: 'Enter password to open the file',
-      // });
-      // if (passphrase === null) {
-      //   throw new Error('Password is required to open the file.');
-      // }
-      throw new Error('Implement me.');
+      passphrase = await this.requestPassword();
     }
     try {
       const pwUtf8 = new TextEncoder().encode(passphrase);
@@ -121,5 +114,29 @@ export class EncryptionService {
     } catch (_) {
       throw new Error('Invalid password.');
     }
+  }
+
+  /**
+   * Opens a password dialog, which is hard-coded into the `app.html` file to ask for the file password.
+   * @returns {Promise<string>} User input or throws when cancelled.
+   */
+  async requestPassword() {
+    return new Promise((resolve, reject) => {
+      const dialog = document.getElementById('passwordPrompt');
+      // @ts-ignore
+      dialog.opened = true;
+      dialog.addEventListener('closed', function f(e) {
+        dialog.removeEventListener('closed', f);
+        // @ts-ignore
+        const { detail } = e;
+        if (detail.cancelled || !detail.confirmed) {
+          reject(new Error('The password is required.'));
+        } else {
+          const input = dialog.querySelector('anypoint-masked-input');
+          // no validation here, password can be an empty string
+          resolve(input.value);
+        }
+      });
+    });
   }
 }
