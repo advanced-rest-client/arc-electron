@@ -3,7 +3,7 @@ import { ApplicationPage } from '../../ApplicationPage.js';
 import { findRoute, navigate } from '../lib/route.js';
 import { html } from '../../../../web_modules/lit-html/lit-html.js';
 import { MonacoLoader } from '../../../../web_modules/@advanced-rest-client/monaco-support/index.js';
-import { ArcNavigationEventTypes, ProjectActions, ConfigEventTypes, DataImportEventTypes, WorkspaceEvents, ImportEvents } from '../../../../web_modules/@advanced-rest-client/arc-events/index.js';
+import { ArcNavigationEventTypes, ProjectActions, ConfigEventTypes, DataImportEventTypes, WorkspaceEvents, ImportEvents, WorkspaceEventTypes } from '../../../../web_modules/@advanced-rest-client/arc-events/index.js';
 import { ArcModelEvents, ImportFactory, ImportNormalize, readFile, isSingleRequest } from '../../../../web_modules/@advanced-rest-client/arc-models/index.js';
 import { ModulesRegistry } from '../../../../web_modules/@advanced-rest-client/request-engine/index.js';
 import '../../arc-alert-dialog.js';
@@ -54,6 +54,9 @@ import { processRequestCookies, processResponseCookies } from './RequestCookies.
 /** @typedef {import('@advanced-rest-client/arc-events').ARCNavigationEvent} ARCNavigationEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ConfigStateUpdateEvent} ConfigStateUpdateEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ArcImportInspectEvent} ArcImportInspectEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').WorkspaceAppendRequestEvent} WorkspaceAppendRequestEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').WorkspaceAppendExportEvent} WorkspaceAppendExportEvent */
+/** @typedef {import('@advanced-rest-client/arc-models').IndexableRequest} IndexableRequest */
 /** @typedef {import('../../../../web_modules/@advanced-rest-client/arc-request-ui').ArcRequestWorkspaceElement} ArcRequestWorkspaceElement */
 
 const unhandledRejectionHandler = Symbol('unhandledRejectionHandler');
@@ -86,6 +89,8 @@ const dataInspectHandler = Symbol('dataInspectHandler');
 const inspectDataValue = Symbol('inspectDataValue');
 const importDataHandler = Symbol('importDataHandler');
 const notifyIndexer = Symbol('notifyIndexer');
+const workspaceAppendRequestHandler = Symbol('workspaceAppendRequestHandler');
+const workspaceAppendExportHandler = Symbol('workspaceAppendExportHandler');
 
 /**
  * A routes that does not go through the router and should not be remembered in the history.
@@ -252,8 +257,6 @@ export class AdvancedRestClientApplication extends ApplicationPage {
      * @type {string}
      */
     this.updateState = undefined;
-    
-    this[configStateChangeHandler] = this[configStateChangeHandler].bind(this);
   }
 
   async initialize() {
@@ -296,6 +299,8 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     window.addEventListener(ArcNavigationEventTypes.navigateRequest, this[navigateRequestHandler].bind(this));
     window.addEventListener(ArcNavigationEventTypes.navigate, this[navigateHandler].bind(this));
     window.addEventListener(ArcNavigationEventTypes.navigateProject, this[navigateProjectHandler].bind(this));
+    window.addEventListener(WorkspaceEventTypes.appendRequest, this[workspaceAppendRequestHandler].bind(this));
+    window.addEventListener(WorkspaceEventTypes.appendExport, this[workspaceAppendExportHandler].bind(this));
     window.addEventListener(ConfigEventTypes.State.update, this[configStateChangeHandler].bind(this));
     window.addEventListener(DataImportEventTypes.inspect, this[dataInspectHandler].bind(this));
 
@@ -750,6 +755,26 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       return;
     }
     ArcModelEvents.UrlIndexer.update(this, indexes);
+  }
+
+  /**
+   * @param {WorkspaceAppendRequestEvent} e
+   */
+  [workspaceAppendRequestHandler](e) {
+    const { request } = e.detail;
+    this.workspaceElement.add(request);
+    navigate('workspace');
+  }
+
+  /**
+   * @param {WorkspaceAppendExportEvent} e
+   */
+  [workspaceAppendExportHandler](e) {
+    const { requests, history } = e.detail.data;
+    const { workspaceElement } = this;
+    (requests || []).forEach((request) => workspaceElement.add(request));
+    (history || []).forEach((request) => workspaceElement.add(request));
+    navigate('workspace');
   }
 
   appTemplate() {
