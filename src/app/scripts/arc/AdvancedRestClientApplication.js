@@ -4,7 +4,7 @@ import { findRoute, navigate } from '../lib/route.js';
 import { html } from '../../../../web_modules/lit-html/lit-html.js';
 import { MonacoLoader } from '../../../../web_modules/@advanced-rest-client/monaco-support/index.js';
 import { ArcNavigationEventTypes, ProjectActions, ConfigEventTypes, DataImportEventTypes, WorkspaceEvents, ImportEvents, WorkspaceEventTypes } from '../../../../web_modules/@advanced-rest-client/arc-events/index.js';
-import { ArcModelEvents, ImportFactory, ImportNormalize, readFile, isSingleRequest } from '../../../../web_modules/@advanced-rest-client/arc-models/index.js';
+import { ArcModelEvents, ArcModelEventTypes, ImportFactory, ImportNormalize, isSingleRequest } from '../../../../web_modules/@advanced-rest-client/arc-models/index.js';
 import { ModulesRegistry } from '../../../../web_modules/@advanced-rest-client/request-engine/index.js';
 import '../../arc-alert-dialog.js';
 import '../../../../web_modules/@polymer/font-roboto-local/roboto.js';
@@ -58,6 +58,7 @@ import { processRequestCookies, processResponseCookies } from './RequestCookies.
 /** @typedef {import('@advanced-rest-client/arc-events').WorkspaceAppendRequestEvent} WorkspaceAppendRequestEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').WorkspaceAppendExportEvent} WorkspaceAppendExportEvent */
 /** @typedef {import('@advanced-rest-client/arc-models').IndexableRequest} IndexableRequest */
+/** @typedef {import('@advanced-rest-client/arc-models').ARCEnvironmentStateSelectEvent} ARCEnvironmentStateSelectEvent */
 /** @typedef {import('../../../../web_modules/@advanced-rest-client/arc-request-ui').ArcRequestWorkspaceElement} ArcRequestWorkspaceElement */
 
 const unhandledRejectionHandler = Symbol('unhandledRejectionHandler');
@@ -93,6 +94,7 @@ const importDataHandler = Symbol('importDataHandler');
 const notifyIndexer = Symbol('notifyIndexer');
 const workspaceAppendRequestHandler = Symbol('workspaceAppendRequestHandler');
 const workspaceAppendExportHandler = Symbol('workspaceAppendExportHandler');
+const environmentSelectedHandler = Symbol('environmentSelectedHandler');
 
 /**
  * A routes that does not go through the router and should not be remembered in the history.
@@ -183,6 +185,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       'navigationDetached', 'updateState', 'hasAppUpdate',
       'popupMenuEnabled', 'draggableEnabled', 'historyEnabled',
       'listType', 'detailedSearch', 'currentEnvironment',
+      'systemVariablesEnabled', 'variablesEnabled',
     );
 
     /** 
@@ -294,6 +297,15 @@ export class AdvancedRestClientApplication extends ApplicationPage {
      * The name of the currently selected environment. Null for the default.
      */
     this.currentEnvironment = null;
+
+    /** 
+     * Whether the application should process system variables.
+     */
+    this.systemVariablesEnabled = true;
+    /** 
+     * Enables variables processor.
+     */
+    this.variablesEnabled = true;
   }
 
   async initialize() {
@@ -343,7 +355,6 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     if (cnf.view && typeof cnf.view.listType === 'string') {
       this.listType = cnf.view.listType;
     }
-
     if (cnf.request && typeof cnf.request.timeout === 'number') {
       this.requestFactory.requestTimeout = cnf.request.timeout;
     }
@@ -359,7 +370,12 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     if (cnf.request && typeof cnf.request.nativeTransport === 'boolean') {
       this.requestFactory.nativeTransport = cnf.request.nativeTransport;
     }
-
+    if (cnf.request && typeof cnf.request.useSystemVariables === 'boolean') {
+      this.systemVariablesEnabled = cnf.request.useSystemVariables;
+    }
+    if (cnf.request && typeof cnf.request.useAppVariables === 'boolean') {
+      this.variablesEnabled = cnf.request.useAppVariables;
+    }
     if (cnf.history && typeof cnf.history.fastSearch === 'boolean') {
       this.detailedSearch = !cnf.history.fastSearch;
     }
@@ -384,6 +400,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     window.addEventListener(WorkspaceEventTypes.appendExport, this[workspaceAppendExportHandler].bind(this));
     window.addEventListener(ConfigEventTypes.State.update, this[configStateChangeHandler].bind(this));
     window.addEventListener(DataImportEventTypes.inspect, this[dataInspectHandler].bind(this));
+    window.addEventListener(ArcModelEventTypes.Environment.State.select, this[environmentSelectedHandler].bind(this));
 
     ipc.on('command', this[commandHandler].bind(this));
     ipc.on('request-action', this[requestActionHandler].bind(this));
@@ -673,6 +690,10 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       this.historyEnabled = value;
     } else if (key === 'history.fastSearch') {
       this.detailedSearch = !value;
+    } else if (key === 'request.useSystemVariables') {
+      this.systemVariablesEnabled = value;
+    } else if (key === 'request.useAppVariables') {
+      this.variablesEnabled = value;
     }
   }
 
@@ -880,6 +901,18 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     navigate('workspace');
   }
 
+  /**
+   * @param {ARCEnvironmentStateSelectEvent} e
+   */
+  [environmentSelectedHandler](e) {
+    const { environment } = e.detail;
+    if (environment) {
+      this.currentEnvironment = environment.name;
+    } else {
+      this.currentEnvironment = null;
+    }
+  }
+
   appTemplate() {
     const { initializing } = this;
     if (initializing) {
@@ -932,7 +965,10 @@ export class AdvancedRestClientApplication extends ApplicationPage {
    * @returns {TemplateResult} The template for the environment selector and the overlay.
    */
   [environmentTemplate]() {
-    const { compatibility } = this;
+    const { compatibility, variablesEnabled } = this;
+    if (!variablesEnabled) {
+      return '';
+    }
     let { currentEnvironment } = this;
     if (!currentEnvironment) {
       // this can be `null` so default values won't work
@@ -959,7 +995,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       horizontalAlign="right"
       noCancelOnOutsideClick
       ?compatibility="${compatibility}"
-      systemVariablesEnabled
+      ?systemVariablesEnabled="${this.systemVariablesEnabled}"
       .systemVariables="${env}"
     ></variables-overlay>
     `;
