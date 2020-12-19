@@ -44,21 +44,40 @@ export class PreferencesManager extends ArcPreferences {
    * Handler for the IPC `update-app-preference` event
    * 
    * @param {Event} event
-   * @param {string} name Preference name
+   * @param {string} path Preference name
    * @param {any} value Preference value
    */
-  async [changeHandler](event, name, value) {
+  async [changeHandler](event, path, value) {
     try {
       const data = await this.load();
-      data[name] = value;
+      this.updateValue(data, path, value);
       await this.store();
-      this.informChange(name, value);
+      this.informChange(path, value);
     } catch (cause) {
       log.error(cause);
       // eslint-disable-next-line no-console
       console.error(cause);
       throw cause;
     }
+  }
+
+  /**
+   * Updates the value by path in the settings object
+   * @param {any} settings
+   * @param {string} path The path to the data
+   * @param {any} value The value to set.
+   */
+  updateValue(settings, path, value) {
+    const parts = path.split('.');
+    const last = parts.pop();
+    let current = settings;
+    parts.forEach((part) => {
+      if (!current[part]) {
+        current[part] = {};
+      }
+      current = current[part];
+    });
+    current[last] = value;
   }
 
   /**

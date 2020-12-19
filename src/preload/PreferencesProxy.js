@@ -1,6 +1,8 @@
 import { ipcRenderer } from 'electron';
+import { ConfigEvents, ConfigEventTypes } from '@advanced-rest-client/arc-events';
 
 /** @typedef {import('@advanced-rest-client/arc-types').Config.ARCConfig} ARCConfig */
+/** @typedef {import('@advanced-rest-client/arc-events').ConfigUpdateEvent} ConfigUpdateEvent */
 
 export const domReadHandler = Symbol('domReadHandler');
 export const domChangeHandler = Symbol('domChangeHandler');
@@ -20,8 +22,8 @@ export class PreferencesProxy {
    * Observers window and IPC events which makes this class work.
    */
   observe() {
-    window.addEventListener('settingsread', this[domReadHandler]);
-    window.addEventListener('settingsupdate', this[domChangeHandler]);
+    window.addEventListener(ConfigEventTypes.readAll, this[domReadHandler]);
+    window.addEventListener(ConfigEventTypes.update, this[domChangeHandler]);
     ipcRenderer.on('preferences-value-updated', this[ioChangeHandler]);
   }
 
@@ -29,8 +31,8 @@ export class PreferencesProxy {
    * Stop observing window and IPC events
    */
   unobserve() {
-    window.removeEventListener('settingsread', this[domReadHandler]);
-    window.removeEventListener('settingsupdate', this[domChangeHandler]);
+    window.removeEventListener(ConfigEventTypes.readAll, this[domReadHandler]);
+    window.removeEventListener(ConfigEventTypes.update, this[domChangeHandler]);
     ipcRenderer.removeListener('preferences-value-updated', this[ioChangeHandler]);
   }
 
@@ -62,15 +64,15 @@ export class PreferencesProxy {
 
   /**
    * A handler for the preferences read event emitted on the DOM.
-   * @param {CustomEvent} e
+   * @param {ConfigUpdateEvent} e
    */
   [domChangeHandler](e) {
-    const { name, value } = e.detail;
-    if (!name) {
+    const { key, value } = e.detail;
+    if (!key) {
       e.detail.result = Promise.reject(new Error(`The name cannot be empty`));
       return;
     }
-    e.detail.result = this.update(name, value);
+    e.detail.result = this.update(key, value);
   }
 
   /**
@@ -81,12 +83,6 @@ export class PreferencesProxy {
    * @param {any} value
    */
   [ioChangeHandler](e, name, value) {
-    document.body.dispatchEvent(new CustomEvent('settingschanged', {
-      bubbles: true,
-      detail: {
-        name,
-        value,
-      }
-    }));
+    ConfigEvents.State.update(document.body, name, value);
   }
 }

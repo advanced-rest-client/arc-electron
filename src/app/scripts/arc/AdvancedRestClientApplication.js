@@ -30,6 +30,7 @@ import '../../../../web_modules/@advanced-rest-client/arc-ie/arc-data-import.js'
 import '../../../../web_modules/@advanced-rest-client/arc-ie/import-data-inspector.js';
 import '../../../../web_modules/@advanced-rest-client/arc-environment/variables-overlay.js';
 import '../../../../web_modules/@advanced-rest-client/arc-cookies/cookie-manager.js';
+import '../../../../web_modules/@advanced-rest-client/arc-settings/arc-settings.js';
 import '../../../../web_modules/@anypoint-web-components/anypoint-input/anypoint-masked-input.js';
 import { Request } from './Request.js';
 import { processRequestCookies, processResponseCookies } from './RequestCookies.js';
@@ -83,6 +84,7 @@ const environmentSelectorKeyHandler = Symbol('environmentSelectorKeyHandler');
 const dataImportScreenTemplate = Symbol('dataImportScreenTemplate');
 const dataExportScreenTemplate = Symbol('dataExportScreenTemplate');
 const cookieManagerScreenTemplate = Symbol('cookieManagerScreenTemplate');
+const settingsScreenTemplate = Symbol('settingsScreenTemplate');
 const fileImportHandler = Symbol('fileImportHandler');
 const importInspectorTemplate = Symbol('importInspectorTemplate');
 const dataInspectHandler = Symbol('dataInspectHandler');
@@ -137,6 +139,10 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       pattern: 'cookie-manager'
     },
     {
+      name: 'settings',
+      pattern: 'settings'
+    },
+    {
       name: 'project',
       pattern: 'project/(?<pid>[^/]*)/(?<action>.*)'
     },
@@ -175,6 +181,8 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       'route', 'initializing', 'loadingStatus',
       'compatibility', 'oauth2RedirectUri',
       'navigationDetached', 'updateState', 'hasAppUpdate',
+      'popupMenuEnabled', 'draggableEnabled', 'historyEnabled',
+      'listType', 'detailedSearch', 'currentEnvironment',
     );
 
     /** 
@@ -257,6 +265,35 @@ export class AdvancedRestClientApplication extends ApplicationPage {
      * @type {string}
      */
     this.updateState = undefined;
+    
+    /** 
+     * Whether the application menu can be detached to a new window.
+     */
+    this.popupMenuEnabled = true;
+    /** 
+     * Whether the application support request object drag and drop
+     */
+    this.draggableEnabled = true;
+
+    /** 
+     * Whether the requests history is enabled.
+     */
+    this.historyEnabled = true;
+
+    /** 
+     * The current setting for the list types view.
+     */
+    this.listType = 'default';
+
+    /** 
+     * Whether the history / saved search should perform slower but more detailed search
+     */
+    this.detailedSearch = false;
+
+    /** 
+     * The name of the currently selected environment. Null for the default.
+     */
+    this.currentEnvironment = null;
   }
 
   async initialize() {
@@ -265,7 +302,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     const init = this.collectInitOptions();
     this.initOptions = init;
     
-    let cnf;
+    let cnf = {};
     try {
       cnf = await this.settings.read();
     } catch (e) {
@@ -273,15 +310,59 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       throw e;
     }
     this.config = cnf;
-    if (!!cnf.request || (cnf.request && typeof cnf.request.ignoreSessionCookies === 'boolean' && cnf.request.ignoreSessionCookies)) {
-      ModulesRegistry.register(ModulesRegistry.request, 'arc/request/cookies', processRequestCookies, ['events']);
-      ModulesRegistry.register(ModulesRegistry.response, 'arc/response/cookies', processResponseCookies, ['events']);
-    }
+    this.setConfigVariables(cnf);
+    
     await this.loadTheme();
     this.workspace.id = init.workspaceId;
     await this.afterInitialization();
     await this.loadMonaco();
     this.initializing = false;
+  }
+
+  /**
+   * Sets local variables from the config object
+   * @param {ARCConfig} cnf
+   */
+  setConfigVariables(cnf) {
+    if (cnf.view && typeof cnf.view.popupMenu === 'boolean') {
+      this.popupMenuEnabled = cnf.view.popupMenu;
+    }
+    if (cnf.view && typeof cnf.view.draggableEnabled === 'boolean') {
+      this.draggableEnabled = cnf.view.draggableEnabled;
+    }
+    if (!!cnf.request || (cnf.request && typeof cnf.request.ignoreSessionCookies === 'boolean' && cnf.request.ignoreSessionCookies)) {
+      ModulesRegistry.register(ModulesRegistry.request, 'arc/request/cookies', processRequestCookies, ['events']);
+      ModulesRegistry.register(ModulesRegistry.response, 'arc/response/cookies', processResponseCookies, ['events']);
+    }
+    if (cnf.request && cnf.request.oauth2redirectUri) {
+      this.oauth2RedirectUri = cnf.request.oauth2redirectUri;
+    }
+    if (cnf.history && typeof cnf.history.enabled === 'boolean') {
+      this.historyEnabled = cnf.history.enabled;
+    }
+    if (cnf.view && typeof cnf.view.listType === 'string') {
+      this.listType = cnf.view.listType;
+    }
+
+    if (cnf.request && typeof cnf.request.timeout === 'number') {
+      this.requestFactory.requestTimeout = cnf.request.timeout;
+    }
+    if (cnf.request && typeof cnf.request.followRedirects === 'boolean') {
+      this.requestFactory.followRedirects = cnf.request.followRedirects;
+    }
+    if (cnf.request && typeof cnf.request.defaultHeaders === 'boolean') {
+      this.requestFactory.defaultHeaders = cnf.request.defaultHeaders;
+    }
+    if (cnf.request && typeof cnf.request.validateCertificates === 'boolean') {
+      this.requestFactory.validateCertificates = cnf.request.validateCertificates;
+    }
+    if (cnf.request && typeof cnf.request.nativeTransport === 'boolean') {
+      this.requestFactory.nativeTransport = cnf.request.nativeTransport;
+    }
+
+    if (cnf.history && typeof cnf.history.fastSearch === 'boolean') {
+      this.detailedSearch = !cnf.history.fastSearch;
+    }
   }
 
   listen() {
@@ -570,6 +651,28 @@ export class AdvancedRestClientApplication extends ApplicationPage {
         ModulesRegistry.unregister(ModulesRegistry.request, 'arc/request/cookies');
         ModulesRegistry.unregister(ModulesRegistry.response, 'arc/response/cookies');
       }
+    } else if (key === 'view.popupMenu') {
+      this.popupMenuEnabled = value;
+    } else if (key === 'view.draggableEnabled') {
+      this.draggableEnabled = value;
+    } else if (key === 'request.timeout') {
+      this.requestFactory.requestTimeout = value;
+    } else if (key === 'request.followRedirects') {
+      this.requestFactory.followRedirects = value;
+    } else if (key === 'request.defaultHeaders') {
+      this.requestFactory.defaultHeaders = value;
+    } else if (key === 'request.validateCertificates') {
+      this.requestFactory.validateCertificates = value;
+    } else if (key === 'request.nativeTransport') {
+      this.requestFactory.nativeTransport = value;
+    } else if (key === 'request.oauth2redirectUri') {
+      this.oauth2RedirectUri = value;
+    } else if (key === 'view.listType') {
+      this.listType = value;
+    } else if (key === 'history.enabled') {
+      this.historyEnabled = value;
+    } else if (key === 'history.fastSearch') {
+      this.detailedSearch = !value;
     }
   }
 
@@ -870,8 +973,6 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       return '';
     }
     const { compatibility, config, menuPopup } = this;
-    const { view, history } = config;
-    const historyEnabled = !history || typeof history.enabled !== 'boolean' || history.enabled;
     const hideHistory = menuPopup.includes('history-menu');
     const hideSaved = menuPopup.includes('saved-menu');
     const hideProjects = menuPopup.includes('projects-menu');
@@ -880,14 +981,14 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     <nav>
       <arc-menu
         ?compatibility="${compatibility}"
-        .listType="${view && view.listType}"
-        ?history="${historyEnabled}"
+        .listType="${this.listType}"
+        ?history="${this.historyEnabled}"
         ?hideHistory="${hideHistory}"
         ?hideSaved="${hideSaved}"
         ?hideProjects="${hideProjects}"
         ?hideApis="${hideApis}"
-        popup
-        dataTransfer
+        ?popup="${this.popupMenuEnabled}"
+        ?dataTransfer="${this.draggableEnabled}"
       ></arc-menu>
     </nav>
     `;
@@ -908,6 +1009,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       ${this[dataImportScreenTemplate](route)}
       ${this[dataExportScreenTemplate](route)}
       ${this[cookieManagerScreenTemplate](route)}
+      ${this[settingsScreenTemplate](route)}
       ${this[importInspectorTemplate](route)}
     </main>
     `;
@@ -939,18 +1041,17 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     if (route !== 'history') {
       return '';
     }
-    const { compatibility, config } = this;
-    const { view, history } = config;
-    const historyEnabled = !history || typeof history.enabled !== 'boolean' || history.enabled;
-    if (!historyEnabled) {
+    const { compatibility } = this;
+    if (!this.historyEnabled) {
       return '';
     }
     return html`
     <history-panel 
       listActions
       selectable
+      ?detailedSearch="${this.detailedSearch}"
       ?compatibility="${compatibility}"
-      .listType="${view && view.listType}"
+      .listType="${this.listType}"
       draggableEnabled
       class="screen"
     ></history-panel>
@@ -965,14 +1066,14 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     if (route !== 'saved') {
       return '';
     }
-    const { compatibility, config } = this;
-    const { view } = config;
+    const { compatibility } = this;
     return html`
     <saved-panel 
       listActions
       selectable
+      ?detailedSearch="${this.detailedSearch}"
       ?compatibility="${compatibility}"
-      .listType="${view && view.listType}"
+      .listType="${this.listType}"
       draggableEnabled
       class="screen"
     ></saved-panel>
@@ -1060,6 +1161,23 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       ?compatibility="${compatibility}"
       class="screen"
     ></cookie-manager>
+    `;
+  }
+
+  /**
+   * @param {string} route The current route
+   * @returns {TemplateResult|string} The template for the application settings
+   */
+  [settingsScreenTemplate](route) {
+    if (route !== 'settings') {
+      return '';
+    }
+    const { compatibility } = this;
+    return html`
+    <arc-settings
+      ?compatibility="${compatibility}"
+      class="screen scroll"
+    ></arc-settings>
     `;
   }
 }

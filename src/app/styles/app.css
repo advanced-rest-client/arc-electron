@@ -5,6 +5,10 @@ main > .screen {
   margin: 12px 20px;
 }
 
+main > .screen.scroll {
+  overflow: auto;
+}
+
 .environment-selector {
   display: flex;
   align-items: center;
