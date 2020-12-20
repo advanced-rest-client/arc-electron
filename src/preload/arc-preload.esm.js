@@ -1,7 +1,7 @@
 import { ipcRenderer, clipboard } from 'electron';
 import logger from 'electron-log';
 import { OAuth2Handler } from '@advanced-rest-client/electron-oauth2/renderer/OAuth2Handler.js';
-import { SocketRequest, ElectronRequest, ArcHeaders } from '@advanced-rest-client/electron-request';
+import { SocketRequest, ElectronRequest } from '@advanced-rest-client/electron-request';
 import { PreferencesProxy } from './PreferencesProxy.js';
 import { WindowProxy } from './WindowProxy.js';
 import { CookieBridge } from './CookieBridge.js';
@@ -53,8 +53,6 @@ process.once('loaded', () => {
   global.FilesystemProxy = FilesystemProxy;
   // @ts-ignore
   global.ApplicationSearchProxy = ApplicationSearchProxy;
-  // @ts-ignore
-  global.ArcHeaders = ArcHeaders;
   global.ipc = ipcRenderer;
   global.clipboard = clipboard;
 
