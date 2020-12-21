@@ -83,6 +83,22 @@ main {
 
 nav {
   width: 360px;
+  position: relative;
+}
+
+nav.minimized {
+  width: 56px !important;
+  border-right: 1px solid #e5e5e5;
+}
+
+.nav-resize-rail {
+  background-color: transparent;
+  width: 8px;
+  right: -4px;
+  top: 0;
+  bottom: 0;
+  position: absolute;
+  cursor: col-resize;
 }
 
 .page {

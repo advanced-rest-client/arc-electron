@@ -6,6 +6,8 @@ import { MonacoLoader } from '../../../../web_modules/@advanced-rest-client/mona
 import { ArcNavigationEventTypes, ProjectActions, ConfigEventTypes, DataImportEventTypes, WorkspaceEvents, ImportEvents, WorkspaceEventTypes } from '../../../../web_modules/@advanced-rest-client/arc-events/index.js';
 import { ArcModelEvents, ArcModelEventTypes, ImportFactory, ImportNormalize, isSingleRequest } from '../../../../web_modules/@advanced-rest-client/arc-models/index.js';
 import { ModulesRegistry, RequestCookies } from '../../../../web_modules/@advanced-rest-client/request-engine/index.js';
+import { classMap } from '../../../../web_modules/lit-html/directives/class-map.js';
+import { styleMap } from '../../../../web_modules/lit-html/directives/style-map.js';
 import '../../arc-alert-dialog.js';
 import '../../../../web_modules/@polymer/font-roboto-local/roboto.js';
 import '../../../../web_modules/@advanced-rest-client/arc-request-ui/arc-request-workspace.js';
@@ -59,6 +61,7 @@ import { Request } from './Request.js';
 /** @typedef {import('@advanced-rest-client/arc-models').IndexableRequest} IndexableRequest */
 /** @typedef {import('@advanced-rest-client/arc-models').ARCEnvironmentStateSelectEvent} ARCEnvironmentStateSelectEvent */
 /** @typedef {import('../../../../web_modules/@advanced-rest-client/arc-request-ui').ArcRequestWorkspaceElement} ArcRequestWorkspaceElement */
+/** @typedef {import('../../../../web_modules/@advanced-rest-client/arc-menu').ArcMenuElement} ArcMenuElement */
 
 const unhandledRejectionHandler = Symbol('unhandledRejectionHandler');
 const headerTemplate = Symbol('headerTemplate');
@@ -94,6 +97,11 @@ const notifyIndexer = Symbol('notifyIndexer');
 const workspaceAppendRequestHandler = Symbol('workspaceAppendRequestHandler');
 const workspaceAppendExportHandler = Symbol('workspaceAppendExportHandler');
 const environmentSelectedHandler = Symbol('environmentSelectedHandler');
+const navMinimizedHandler = Symbol('navMinimizedHandler');
+const navResizeMousedown = Symbol('navResizeMousedown');
+const resizeMouseUp = Symbol('resizeMouseUp');
+const resizeMouseMove = Symbol('resizeMouseMove');
+const isResizing = Symbol('isResizing');
 
 /**
  * A routes that does not go through the router and should not be remembered in the history.
@@ -186,6 +194,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       'listType', 'detailedSearch', 'currentEnvironment',
       'systemVariablesEnabled', 'variablesEnabled', 
       'workspaceSendButton', 'workspaceProgressInfo', 'workspaceBodyEditor', 'workspaceAutoEncode',
+      'navigationWidth',
     );
 
     /** 
@@ -433,6 +442,8 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     window.addEventListener(ConfigEventTypes.State.update, this[configStateChangeHandler].bind(this));
     window.addEventListener(DataImportEventTypes.inspect, this[dataInspectHandler].bind(this));
     window.addEventListener(ArcModelEventTypes.Environment.State.select, this[environmentSelectedHandler].bind(this));
+    window.addEventListener('mousemove', this[resizeMouseMove].bind(this));
+    window.addEventListener('mouseup', this[resizeMouseUp].bind(this));
 
     ipc.on('command', this[commandHandler].bind(this));
     ipc.on('request-action', this[requestActionHandler].bind(this));
@@ -955,6 +966,54 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     }
   }
 
+  /**
+   * @param {Event} e
+   */
+  [navMinimizedHandler](e) {
+    const menu = /** @type ArcMenuElement */ (e.target);
+    if (menu.minimized) {
+      menu.parentElement.classList.add('minimized');
+    } else {
+      menu.parentElement.classList.remove('minimized');
+    }
+  }
+
+  /**
+   * @param {MouseEvent} e
+   */
+  [navResizeMousedown](e) {
+    this[isResizing] = true;
+    e.preventDefault();
+  }
+
+  /**
+   * @param {MouseEvent} e
+   */
+  [resizeMouseUp](e) {
+    if (!this[isResizing]) {
+      return;
+    }
+    this[isResizing] = false;
+    e.preventDefault();
+  }
+
+  /**
+   * @param {MouseEvent} e
+   */
+  [resizeMouseMove](e) {
+    if (!this[isResizing]) {
+      return;
+    }
+    const { pageX } = e;
+    if (pageX < 100) {
+      return;
+    }
+    if (pageX > window.innerWidth - 100) {
+      return;
+    }
+    this.navigationWidth = pageX;
+  }
+
   appTemplate() {
     const { initializing } = this;
     if (initializing) {
@@ -1055,8 +1114,20 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     const hideSaved = menuPopup.includes('saved-menu');
     const hideProjects = menuPopup.includes('projects-menu');
     const hideApis = menuPopup.includes('rest-api-menu');
+    const { navigationWidth } = this;
+    const hasWidth = typeof navigationWidth === 'number';
+    const classes = {
+      'auto-width': hasWidth,
+    };
+    const styles = {};
+    if (hasWidth) {
+      styles.width = `${navigationWidth}px`;
+    }
     return html`
-    <nav>
+    <nav
+      class="${classMap(classes)}"
+      style="${styleMap(styles)}"
+    >
       <arc-menu
         ?compatibility="${compatibility}"
         .listType="${this.listType}"
@@ -1067,7 +1138,9 @@ export class AdvancedRestClientApplication extends ApplicationPage {
         ?hideApis="${hideApis}"
         ?popup="${this.popupMenuEnabled}"
         ?dataTransfer="${this.draggableEnabled}"
+        @minimized="${this[navMinimizedHandler]}"
       ></arc-menu>
+      <div class="nav-resize-rail" @mousedown="${this[navResizeMousedown]}"></div>
     </nav>
     `;
   }
