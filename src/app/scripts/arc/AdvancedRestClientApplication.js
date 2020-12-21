@@ -184,7 +184,8 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       'navigationDetached', 'updateState', 'hasAppUpdate',
       'popupMenuEnabled', 'draggableEnabled', 'historyEnabled',
       'listType', 'detailedSearch', 'currentEnvironment',
-      'systemVariablesEnabled', 'variablesEnabled',
+      'systemVariablesEnabled', 'variablesEnabled', 
+      'workspaceSendButton', 'workspaceProgressInfo', 'workspaceBodyEditor', 'workspaceAutoEncode',
     );
 
     /** 
@@ -305,6 +306,11 @@ export class AdvancedRestClientApplication extends ApplicationPage {
      * Enables variables processor.
      */
     this.variablesEnabled = true;
+
+    this.workspaceSendButton = true;
+    this.workspaceProgressInfo = true;
+    this.workspaceBodyEditor = 'Monaco';
+    this.workspaceAutoEncode = false;
   }
 
   async initialize() {
@@ -335,48 +341,75 @@ export class AdvancedRestClientApplication extends ApplicationPage {
    * @param {ARCConfig} cnf
    */
   setConfigVariables(cnf) {
-    if (cnf.view && typeof cnf.view.popupMenu === 'boolean') {
-      this.popupMenuEnabled = cnf.view.popupMenu;
-    }
-    if (cnf.view && typeof cnf.view.draggableEnabled === 'boolean') {
-      this.draggableEnabled = cnf.view.draggableEnabled;
-    }
     if (!!cnf.request || (cnf.request && typeof cnf.request.ignoreSessionCookies === 'boolean' && cnf.request.ignoreSessionCookies)) {
       ModulesRegistry.register(ModulesRegistry.request, 'arc/request/cookies', RequestCookies.processRequestCookies, ['events']);
       ModulesRegistry.register(ModulesRegistry.response, 'arc/response/cookies', RequestCookies.processResponseCookies, ['events']);
     }
-    if (cnf.request && cnf.request.oauth2redirectUri) {
-      this.oauth2RedirectUri = cnf.request.oauth2redirectUri;
+    
+    if (cnf.history) {
+      if (typeof cnf.history.enabled === 'boolean') {
+        this.historyEnabled = cnf.history.enabled;
+      }
+      
+      if (typeof cnf.history.fastSearch === 'boolean') {
+        this.detailedSearch = !cnf.history.fastSearch;
+      }
     }
-    if (cnf.history && typeof cnf.history.enabled === 'boolean') {
-      this.historyEnabled = cnf.history.enabled;
+
+    if (cnf.request) {
+      if (typeof cnf.request.timeout === 'number') {
+        this.requestFactory.requestTimeout = cnf.request.timeout;
+      }
+      if (typeof cnf.request.followRedirects === 'boolean') {
+        this.requestFactory.followRedirects = cnf.request.followRedirects;
+      }
+      if (typeof cnf.request.defaultHeaders === 'boolean') {
+        this.requestFactory.defaultHeaders = cnf.request.defaultHeaders;
+      }
+      if (typeof cnf.request.validateCertificates === 'boolean') {
+        this.requestFactory.validateCertificates = cnf.request.validateCertificates;
+      }
+      if (typeof cnf.request.nativeTransport === 'boolean') {
+        this.requestFactory.nativeTransport = cnf.request.nativeTransport;
+      }
+      if (typeof cnf.request.useSystemVariables === 'boolean') {
+        this.systemVariablesEnabled = cnf.request.useSystemVariables;
+      }
+      if (typeof cnf.request.useAppVariables === 'boolean') {
+        this.variablesEnabled = cnf.request.useAppVariables;
+      }
+      if (cnf.request.oauth2redirectUri) {
+        this.oauth2RedirectUri = cnf.request.oauth2redirectUri;
+      }
     }
-    if (cnf.view && typeof cnf.view.listType === 'string') {
-      this.listType = cnf.view.listType;
+    
+    if (cnf.view) {
+      if (typeof cnf.view.fontSize === 'number') {
+        document.body.style.fontSize = `${cnf.view.fontSize}px`;
+      }
+      if (typeof cnf.view.popupMenu === 'boolean') {
+        this.popupMenuEnabled = cnf.view.popupMenu;
+      }
+      if (typeof cnf.view.draggableEnabled === 'boolean') {
+        this.draggableEnabled = cnf.view.draggableEnabled;
+      }
+      if (typeof cnf.view.listType === 'string') {
+        this.listType = cnf.view.listType;
+      }
     }
-    if (cnf.request && typeof cnf.request.timeout === 'number') {
-      this.requestFactory.requestTimeout = cnf.request.timeout;
-    }
-    if (cnf.request && typeof cnf.request.followRedirects === 'boolean') {
-      this.requestFactory.followRedirects = cnf.request.followRedirects;
-    }
-    if (cnf.request && typeof cnf.request.defaultHeaders === 'boolean') {
-      this.requestFactory.defaultHeaders = cnf.request.defaultHeaders;
-    }
-    if (cnf.request && typeof cnf.request.validateCertificates === 'boolean') {
-      this.requestFactory.validateCertificates = cnf.request.validateCertificates;
-    }
-    if (cnf.request && typeof cnf.request.nativeTransport === 'boolean') {
-      this.requestFactory.nativeTransport = cnf.request.nativeTransport;
-    }
-    if (cnf.request && typeof cnf.request.useSystemVariables === 'boolean') {
-      this.systemVariablesEnabled = cnf.request.useSystemVariables;
-    }
-    if (cnf.request && typeof cnf.request.useAppVariables === 'boolean') {
-      this.variablesEnabled = cnf.request.useAppVariables;
-    }
-    if (cnf.history && typeof cnf.history.fastSearch === 'boolean') {
-      this.detailedSearch = !cnf.history.fastSearch;
+    if (cnf.requestEditor) {
+      if (typeof cnf.requestEditor.sendButton === 'boolean') {
+        this.workspaceSendButton = cnf.requestEditor.sendButton;
+      }
+      if (typeof cnf.requestEditor.progressInfo === 'boolean') {
+        this.workspaceProgressInfo = cnf.requestEditor.progressInfo;
+      }
+      if (typeof cnf.requestEditor.bodyEditor === 'string') {
+        this.workspaceBodyEditor = cnf.requestEditor.bodyEditor;
+      }
+      if (typeof cnf.requestEditor.autoEncode === 'boolean') {
+        this.workspaceAutoEncode = cnf.requestEditor.autoEncode;
+      }
     }
   }
 
@@ -693,6 +726,16 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       this.systemVariablesEnabled = value;
     } else if (key === 'request.useAppVariables') {
       this.variablesEnabled = value;
+    } else if (key === 'requestEditor.sendButton') {
+      this.workspaceSendButton = value;
+    } else if (key === 'requestEditor.progressInfo') {
+      this.workspaceProgressInfo = value;
+    } else if (key === 'requestEditor.bodyEditor') {
+      this.workspaceBodyEditor = value;
+    } else if (key === 'requestEditor.autoEncode') {
+      this.workspaceAutoEncode = value;
+    } else if (key === 'view.fontSize') {
+      document.body.style.fontSize = `${value}px`;
     }
   }
 
@@ -1055,11 +1098,19 @@ export class AdvancedRestClientApplication extends ApplicationPage {
    * @returns
    */
   [workspaceTemplate](visible) {
-    const { oauth2RedirectUri, compatibility, initOptions } = this;
+    const { oauth2RedirectUri, compatibility, initOptions, workspaceSendButton, workspaceProgressInfo } = this;
+    // if (typeof cnf.requestEditor.bodyEditor === 'string') {
+    //   this.workspaceBodyEditor = cnf.requestEditor.bodyEditor;
+    // }
+    // if (typeof cnf.requestEditor.autoEncode === 'boolean') {
+    //   this.workspaceAutoEncode = cnf.requestEditor.autoEncode;
+    // }
     return html`
     <arc-request-workspace
       ?hidden="${!visible}"
       ?compatibility="${compatibility}"
+      ?renderSend="${workspaceSendButton}"
+      ?progressInfo="${workspaceProgressInfo}"
       .oauth2RedirectUri="${oauth2RedirectUri}"
       backendId="${initOptions.workspaceId}"
       autoRead
