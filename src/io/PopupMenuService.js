@@ -1,10 +1,7 @@
-import { BrowserWindow, ipcMain } from 'electron';
-import path from 'path';
-import url from 'url';
+import { ipcMain } from 'electron';
 import { logger } from './Logger.js';
-import { MainWindowPersist } from './Constants.js';
 
-/** @typedef {import('./ArcEnvironment').ArcEnvironment} ArcEnvironment */
+/** @typedef {import('./WindowsManager').WindowsManager} WindowsManager */
 
 export const popupAppMenuHandler = Symbol('popupAppMenuHandler');
 export const windowClosedHandler = Symbol('windowClosedHandler');
@@ -21,10 +18,10 @@ export const loadPage = Symbol('loadPage');
  */
 export class PopupMenuService {
   /**
-   * @param {ArcEnvironment} app
+   * @param {WindowsManager} wm
    */
-  constructor(app) {
-    this.app = app;
+  constructor(wm) {
+    this.wm = wm;
     this.menuWindows = new Map();
 
     this[popupAppMenuHandler] = this[popupAppMenuHandler].bind(this);
@@ -61,71 +58,39 @@ export class PopupMenuService {
    * @param {string} type Menu type
    * @param {object=} sizing `width` and `height`
    */
-  createMenuWindow(type, sizing) {
+  async createMenuWindow(type, sizing={}) {
     if (this.menuWindows.has(type)) {
       return;
     }
     logger.debug(`Creating menu popup window for type: ${type}`);
-    const bw = this[createWindow](sizing);
-    this.menuWindows.set(type, bw);
-    this[loadPage](type, bw);
-    this[addListeners](bw);
-    this.app.wm.notifyAll('popup-app-menu-opened', type);
-  }
-
-  /**
-   * Creates new menu window.
-   *
-   * @param {object=} sizing
-   * @return {BrowserWindow} Created window.
-   */
-  [createWindow](sizing={}) {
     const width = sizing.width ? sizing.width : 320;
     const height = sizing.height ? sizing.height : 800;
-    const menuWindow = new BrowserWindow({
-      width,
-      height,
-      backgroundColor: '#00A2DF',
-      show: true,
-      webPreferences: {
-        partition: MainWindowPersist,
-        nativeWindowOpen: true,
-        nodeIntegration: false,
-        contextIsolation: false,
-        preload: path.join(__dirname, '..', '..', 'src', 'arc-menu-window', 'app-menu-preload.js')
-      }
-    });
-    menuWindow.removeMenu();
-    return menuWindow;
-  }
-
-  /**
-   * Creates application URL and loads app into the window.
-   * @param {string} type
-   * @param {BrowserWindow} bw
-   */
-  [loadPage](type, bw) {
-    const full = url.format({
-      hostname: 'advanced-rest-client',
-      pathname: `/src/app/menu.html`,
-      protocol: 'web-module:',
-      slashes: true,
-      query: {
+    const win = await this.wm.open({
+      sizing: {
+        width,
+        height,
+      },
+      params: {
         type
-      }
+      },
+      // noMenu: true,
+      page: 'popup-menu.html',
+      preload: 'popup-menu.js',
     });
-    bw.loadURL(full);
+    this[addListeners](win);
+    this.menuWindows.set(type, win);
+    this.wm.notifyAll('popup-app-menu-opened', type);
   }
 
   /**
-   * @param {BrowserWindow} bw 
+   * @param {Electron.BrowserWindow} bw 
    */
   [addListeners](bw) {
     bw.addListener('closed', this[windowClosedHandler]);
   }
 
    /**
-   * @param {BrowserWindow} bw 
+   * @param {Electron.BrowserWindow} bw 
    */
   [removeListeners](bw) {
     bw.removeListener('closed', this[windowClosedHandler]);
@@ -152,31 +117,29 @@ export class PopupMenuService {
     }
     this[removeListeners](win);
     this.menuWindows.delete(type);
-    this.app.wm.notifyAll('popup-app-menu-closed', type);
+    this.wm.notifyAll('popup-app-menu-closed', type);
   }
 
   /**
    * Handler for an event dispatched by popup menu when navigation action was
    * performed.
    * @param {Event} e
-   * @param {any} detail Event detail
+   * @param {string} type Navigation type
+   * @param {...string[]} detail Arguments
    */
-  [popupNavHandler](e, detail) {
+  [popupNavHandler](e, type, ...detail) {
     logger.debug('Handling popup menu event from the menu.');
-    if (!this.app.wm.hasWindow) {
+    if (!this.wm.hasWindow) {
       logger.warn('Popup menu event handled without menu window registered.');
       return;
     }
-    let win = this.app.wm.lastFocused;
-    if (!win) {
-      win = this.app.wm.lastActive;
-    }
+    const win = this.wm.lastArcFocused;
     if (!win) {
       logger.warn('Unable to perform navigation. No active window found.');
       return;
     }
     logger.debug('Sending navigate event to the renderer process.');
-    win.webContents.send('app-navigate', detail);
+    win.webContents.send('app-navigate', type, detail);
   }
 
   /**

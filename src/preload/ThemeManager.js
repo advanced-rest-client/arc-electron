@@ -4,7 +4,6 @@ import logger from 'electron-log';
 /** @typedef {import('@advanced-rest-client/arc-types').Themes.ArcThemeStore} ArcThemeStore */
 /** @typedef {import('@advanced-rest-client/arc-types').Themes.InstalledTheme} InstalledTheme */
 
-const defaultTheme = '@advanced-rest-client/arc-electron-default-theme';
 const themeActivatedHandler = Symbol('themeActivatedHandler');
 
 /**
@@ -13,6 +12,14 @@ const themeActivatedHandler = Symbol('themeActivatedHandler');
  * It listens for web and ipc events to manage themes.
  */
 export class ThemeManager {
+  static get defaultTheme() {
+    return '@advanced-rest-client/arc-electron-default-theme';
+  }
+
+  static get anypointTheme() {
+    return '@advanced-rest-client/arc-electron-anypoint-theme';
+  }
+
   constructor() {
     this[themeActivatedHandler] = this[themeActivatedHandler].bind(this);
   }
@@ -110,15 +117,15 @@ export class ThemeManager {
     logger.silly(`loading theme: ${themeId}`);
     let id = themeId;
     if (!id || id === 'dd1b715f-af00-4ee8-8b0c-2a262b3cf0c8') {
-      id = defaultTheme;
+      id = ThemeManager.defaultTheme;
     } else if (id === '859e0c71-ce8b-44df-843b-bca602c13d06') {
-      id = 'advanced-rest-client/arc-electron-anypoint-theme';
+      id = ThemeManager.anypointTheme;
     }
     try {
       await this._loadTheme(id);
     } catch (cause) {
-      if (!noFallback && id !== defaultTheme) {
-        await this._loadTheme(defaultTheme);
+      if (!noFallback && id !== ThemeManager.defaultTheme) {
+        await this._loadTheme(ThemeManager.defaultTheme);
         return;
       }
       throw cause;

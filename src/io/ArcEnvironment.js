@@ -100,7 +100,7 @@ export class ArcEnvironment {
 
   initializePopupMenu() {
     logger.debug('Initializing app menu service (popup listener).');
-    const instance = new PopupMenuService(this);
+    const instance = new PopupMenuService(this.wm);
     instance.listen();
     this.appMenuService = instance;
   }

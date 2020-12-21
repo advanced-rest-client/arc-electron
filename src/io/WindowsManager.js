@@ -35,6 +35,12 @@ export class WindowsManager {
    */
   #lastFocused = undefined;
 
+  /** 
+   * A list of focused windows, in order of latest focus
+   * @type {BrowserWindow[]}
+   */
+  #focusQueue = [];
+
   /**
    * @param {ApplicationOptionsConfig} startupOptions Application startup options. 
    */
@@ -86,6 +92,19 @@ export class WindowsManager {
       return null;
     }
     return this.#lastFocused;
+  }
+
+  /**
+   * @return {BrowserWindow|undefined} Reference to last focused browser window that is ARC main window.
+   */
+  get lastArcFocused() {
+    return this.#focusQueue.find((item) => {
+      if (item.isDestroyed()) {
+        return false;
+      }
+      const pageUrl = item.webContents.getURL();
+      return pageUrl.includes('/app.html');
+    })
   }
 
   /**
@@ -190,7 +209,7 @@ export class WindowsManager {
    * Opens a new application window.
    *
    * @param {OpenPageOptions=} [options={}] Page create options. Don't set for the default ARC window.
-   * @return {Promise<void>} Resolved promise when the window is ready.
+   * @return {Promise<Electron.BrowserWindow>} Resolved promise when the window is ready.
    */
   async open(options={}) {
     const { page, route, params={}, workspaceFile } = options;
@@ -205,7 +224,12 @@ export class WindowsManager {
     }
     logger.debug('[WM] Opening new window');
     const id = this.findIndex();
-    const info = options.ignoreWindowSessionSettings ? {} : await this.workspace.restoreWindowState(id);
+    let info;
+    if (options.sizing) {
+      info = options.sizing;
+    } else {
+      info = options.ignoreWindowSessionSettings ? {} : await this.workspace.restoreWindowState(id);
+    }
     const win = this.createWindow(info, preload);
     if (options.noMenu) {
       win.removeMenu();
@@ -218,6 +242,7 @@ export class WindowsManager {
     }
     this.recorder.record();
     // win.webContents.openDevTools();
+    return win;
   }
 
   /**
@@ -405,6 +430,11 @@ export class WindowsManager {
   [focusedHandler](e) {
     const win = /** @type Electron.BrowserWindow  */ (e.sender);
     this.#lastFocused = win;
+    const index = this.#focusQueue.indexOf(win);
+    if (index !== -1) {
+      this.#focusQueue.splice(index, 1);
+    }
+    this.#focusQueue.unshift(win);
   }
 
   [resizedHandler](e) {
@@ -427,6 +457,10 @@ export class WindowsManager {
     const win = /** @type BrowserWindow */ (e.sender);
     if (this.#lastFocused === win) {
       this.#lastFocused = undefined;
+    }
+    const focusIndex = this.#focusQueue.indexOf(win);
+    if (focusIndex !== -1) {
+      this.#focusQueue.splice(focusIndex, 1);
     }
     const index = this.findWindowIndex(win);
     if (index === -1) {

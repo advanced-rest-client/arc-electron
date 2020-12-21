@@ -3,7 +3,7 @@ import { ApplicationPage } from '../../ApplicationPage.js';
 import { findRoute, navigate } from '../lib/route.js';
 import { html } from '../../../../web_modules/lit-html/lit-html.js';
 import { MonacoLoader } from '../../../../web_modules/@advanced-rest-client/monaco-support/index.js';
-import { ArcNavigationEventTypes, ProjectActions, ConfigEventTypes, DataImportEventTypes, WorkspaceEvents, ImportEvents, WorkspaceEventTypes } from '../../../../web_modules/@advanced-rest-client/arc-events/index.js';
+import { ArcNavigationEventTypes, ProjectActions, ConfigEventTypes, DataImportEventTypes, WorkspaceEvents, ImportEvents, WorkspaceEventTypes, ArcNavigationEvents } from '../../../../web_modules/@advanced-rest-client/arc-events/index.js';
 import { ArcModelEvents, ArcModelEventTypes, ImportFactory, ImportNormalize, isSingleRequest } from '../../../../web_modules/@advanced-rest-client/arc-models/index.js';
 import { ModulesRegistry, RequestCookies } from '../../../../web_modules/@advanced-rest-client/request-engine/index.js';
 import { classMap } from '../../../../web_modules/lit-html/directives/class-map.js';
@@ -53,6 +53,7 @@ import { Request } from './Request.js';
 /** @typedef {import('@advanced-rest-client/arc-types').Config.ARCConfig} ARCConfig */
 /** @typedef {import('@advanced-rest-client/arc-events').ARCRequestNavigationEvent} ARCRequestNavigationEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ARCProjectNavigationEvent} ARCProjectNavigationEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCMenuPopupEvent} ARCMenuPopupEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ARCNavigationEvent} ARCNavigationEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ConfigStateUpdateEvent} ConfigStateUpdateEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ArcImportInspectEvent} ArcImportInspectEvent */
@@ -71,6 +72,7 @@ const navigationTemplate = Symbol('navigationTemplate');
 const navigateRequestHandler = Symbol('navigateRequestHandler');
 const navigateHandler = Symbol('navigateHandler');
 const navigateProjectHandler = Symbol('navigateProjectHandler');
+const popupMenuHandler = Symbol('popupMenuHandler');
 const mainBackHandler = Symbol('mainBackHandler');
 const historyPanelTemplate = Symbol('historyPanelTemplate');
 const savedPanelTemplate = Symbol('savedPanelTemplate');
@@ -102,6 +104,7 @@ const navResizeMousedown = Symbol('navResizeMousedown');
 const resizeMouseUp = Symbol('resizeMouseUp');
 const resizeMouseMove = Symbol('resizeMouseMove');
 const isResizing = Symbol('isResizing');
+const mainNavigateHandler = Symbol('mainNavigateHandler');
 
 /**
  * A routes that does not go through the router and should not be remembered in the history.
@@ -437,6 +440,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     window.addEventListener(ArcNavigationEventTypes.navigateRequest, this[navigateRequestHandler].bind(this));
     window.addEventListener(ArcNavigationEventTypes.navigate, this[navigateHandler].bind(this));
     window.addEventListener(ArcNavigationEventTypes.navigateProject, this[navigateProjectHandler].bind(this));
+    window.addEventListener(ArcNavigationEventTypes.popupMenu, this[popupMenuHandler].bind(this));
     window.addEventListener(WorkspaceEventTypes.appendRequest, this[workspaceAppendRequestHandler].bind(this));
     window.addEventListener(WorkspaceEventTypes.appendExport, this[workspaceAppendExportHandler].bind(this));
     window.addEventListener(ConfigEventTypes.State.update, this[configStateChangeHandler].bind(this));
@@ -445,7 +449,8 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     window.addEventListener('mousemove', this[resizeMouseMove].bind(this));
     window.addEventListener('mouseup', this[resizeMouseUp].bind(this));
     window.addEventListener('themeactivated', (e) => {
-      this.compatibility = e.detail === '@advanced-rest-client/arc-electron-anypoint-theme';
+      // @ts-ignore
+      this.compatibility = e.detail === ThemeManager.anypointTheme;
     });
 
     ipc.on('command', this[commandHandler].bind(this));
@@ -454,6 +459,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
 
     ipc.on('popup-app-menu-opened', this[popupMenuOpenedHandler].bind(this));
     ipc.on('popup-app-menu-closed', this[popupMenuClosedHandler].bind(this));
+    ipc.on('app-navigate', this[mainNavigateHandler].bind(this));
 
     ipc.on('checking-for-update', () => {
       this.updateState = 'checking-for-update';
@@ -613,6 +619,20 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       // eslint-disable-next-line no-console
       console.warn('Unhandled project event', id, action, route);
     }
+  }
+
+  /**
+   * @param {ARCMenuPopupEvent} e
+   */
+  [popupMenuHandler](e) {
+    const { menu } = e;
+    const element = document.querySelector('arc-menu');
+    const rect = element.getBoundingClientRect();
+    const sizing = {
+      height: rect.height,
+      width: rect.width
+    };
+    ipc.send('popup-app-menu', menu, sizing);
   }
 
   /**
@@ -857,6 +877,20 @@ export class AdvancedRestClientApplication extends ApplicationPage {
   }
 
   /**
+   * @param {*} e
+   * @param {string} type
+   * @param {string[]} args
+   */
+  [mainNavigateHandler](e, type, args) {
+    switch (type) {
+      case 'request': ArcNavigationEvents.navigateRequest(document.body, ...args); break;
+      case 'project': ArcNavigationEvents.navigateProject(document.body, ...args); break;
+      case 'navigate': ArcNavigationEvents.navigate(document.body, ...args); break;
+      default:
+    }
+  }
+
+  /**
    * Calls ARC app to serialize workspace data and exports it to a file.
    * @return {Promise}
    */
@@ -1050,13 +1084,13 @@ export class AdvancedRestClientApplication extends ApplicationPage {
    * @returns {TemplateResult} The template for the header
    */
   [headerTemplate]() {
-    const { route, compatibility } = this;
+    const { route } = this;
     const isWorkspace = route === 'workspace';
     return html`
     <header>
       ${isWorkspace ? '' : 
       html`
-      <anypoint-icon-button ?compatibility="${compatibility}" title="Back to the request workspace" @click="${this[mainBackHandler]}">
+      <anypoint-icon-button title="Back to the request workspace" @click="${this[mainBackHandler]}">
         <arc-icon icon="arrowBack"></arc-icon>
       </anypoint-icon-button>`}
       API Client
@@ -1066,7 +1100,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
   }
 
   /**
-   * @returns {TemplateResult} The template for the environment selector and the overlay.
+   * @returns {TemplateResult|string} The template for the environment selector and the overlay.
    */
   [environmentTemplate]() {
     const { compatibility, variablesEnabled } = this;
@@ -1122,7 +1156,9 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     const classes = {
       'auto-width': hasWidth,
     };
-    const styles = {};
+    const styles = {
+      width: '',
+    };
     if (hasWidth) {
       styles.width = `${navigationWidth}px`;
     }

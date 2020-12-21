@@ -125,6 +125,10 @@ export declare interface OpenPageOptions {
    * When set it removed the default menu
    */
   noMenu?: boolean;
+  /**
+   * Optional size and position to set on the window.
+   */
+  sizing?: WindowSession;
 }
 
 export declare interface ArcAppInitOptions {
