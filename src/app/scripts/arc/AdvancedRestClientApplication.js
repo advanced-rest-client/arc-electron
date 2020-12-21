@@ -707,6 +707,9 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       case 'save':
         this.workspaceElement.saveOpened();
         break;
+      case 'save-as':
+        this.workspaceElement.saveAsOpened();
+        break;
       case 'new-tab':
         this.workspaceElement.addEmpty();
         break;
