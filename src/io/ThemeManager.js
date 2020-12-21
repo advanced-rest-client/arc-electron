@@ -23,7 +23,7 @@ export class ThemeManager {
      * ARC default theme ID
      * @type {string}
      */
-    this.defaultTheme = 'advanced-rest-client/arc-electron-default-theme';
+    this.defaultTheme = '@advanced-rest-client/arc-electron-default-theme';
     this.readState = this.readState.bind(this);
     this.readActive = this.readActive.bind(this);
     this.activateTheme = this.activateTheme.bind(this);
@@ -127,8 +127,8 @@ export class ThemeManager {
       version = name.substr(index + 1);
       name = name.substr(0, index);
     }
-    await this.manager.install(name, version);
-    await this.activateTheme(e, name);
+    const info = await this.manager.install(name, version);
+    await this.activateTheme(e, info.name);
   }
 
   /**

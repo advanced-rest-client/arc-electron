@@ -272,6 +272,14 @@ export class ArcEnvironment {
       case 'find':
         this.search.start(win);
         break;
+      case 'open-themes':
+        this.wm.open({
+          page: 'themes.html',
+          preload: 'themes-preload.js',
+          ignoreWindowSessionSettings: true,
+          noMenu: true,
+        });
+        break;
       default:
         logger.debug(`Sending "${action}" action to the UI thread.`);
         win.webContents.send('command', action);

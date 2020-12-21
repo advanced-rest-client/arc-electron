@@ -36,4 +36,10 @@ body {
   --arc-rail-menu-icon-color: #de1643;
   --arc-menu-title-background-color: #0073ad;
   --arc-menu-title-color: #fff;
+
+  /* List items */
+  /* --anypoint-item-before-background: #fff; */
+
+  /* Dividers */
+  --dark-divider-opacity: 0.14;
 }

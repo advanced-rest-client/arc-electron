@@ -117,6 +117,14 @@ export declare interface OpenPageOptions {
    * This is only for the main application window.
    */
   workspaceFile?: string;
+  /**
+   * When set it ignores reading window sizing and position from the workspace file.
+   */
+  ignoreWindowSessionSettings?: boolean;
+  /**
+   * When set it removed the default menu
+   */
+  noMenu?: boolean;
 }
 
 export declare interface ArcAppInitOptions {

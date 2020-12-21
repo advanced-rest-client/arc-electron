@@ -4,6 +4,9 @@ import logger from 'electron-log';
 /** @typedef {import('@advanced-rest-client/arc-types').Themes.ArcThemeStore} ArcThemeStore */
 /** @typedef {import('@advanced-rest-client/arc-types').Themes.InstalledTheme} InstalledTheme */
 
+const defaultTheme = '@advanced-rest-client/arc-electron-default-theme';
+const themeActivatedHandler = Symbol('themeActivatedHandler');
+
 /**
  * Theme manager class for renderer process.
  *
@@ -11,43 +14,34 @@ import logger from 'electron-log';
  */
 export class ThemeManager {
   constructor() {
-    this._listThemesHandler = this._listThemesHandler.bind(this);
-    this._activeThemeHandler = this._activeThemeHandler.bind(this);
-    this._activateHandler = this._activateHandler.bind(this);
-    this._installHandler = this._installHandler.bind(this);
-    this._uninstallHandler = this._uninstallHandler.bind(this);
+    this[themeActivatedHandler] = this[themeActivatedHandler].bind(this);
   }
   
   /**
    * Listens for the ipc events to support theme changes
    */
   listen() {
-    window.addEventListener('themes-list', this._listThemesHandler);
-    window.addEventListener('theme-active-info', this._activeThemeHandler);
-    window.addEventListener('theme-activate', this._activateHandler);
-    window.addEventListener('theme-install', this._installHandler);
-    window.addEventListener('theme-uninstall', this._uninstallHandler);
+    ipc.on('theme-manager-theme-activated', this[themeActivatedHandler]);
   }
 
   /**
    * Removes event listeners
    */
   unlisten() {
-    window.removeEventListener('themes-list', this._listThemesHandler);
-    window.removeEventListener('theme-active-info', this._activeThemeHandler);
-    window.removeEventListener('theme-activate', this._activateHandler);
-    window.removeEventListener('theme-install', this._installHandler);
-    window.removeEventListener('theme-uninstall', this._uninstallHandler);
+    ipc.off('theme-manager-theme-activated', this[themeActivatedHandler]);
   }
 
   /**
-   * Handler for the `themes-list` custom event from theme panel.
-   *
-   * @param {CustomEvent} e
+   * Handler for the theme activated event. Updates the theme in the current window.
+   * @param {*} e
+   * @param {string} id
    */
-  _listThemesHandler(e) {
-    e.preventDefault();
-    e.detail.result = this.readState();
+  async [themeActivatedHandler](e, id) {
+    await this.loadTheme(id);
+    document.body.dispatchEvent(new CustomEvent('themeactivated', {
+      detail: id,
+      bubbles: true,
+    }));
   }
 
   /**
@@ -60,16 +54,6 @@ export class ThemeManager {
   }
 
   /**
-   * Handler for the `theme-active-info` custom event from theme panel.
-   *
-   * @param {CustomEvent} e
-   */
-  _activeThemeHandler(e) {
-    e.preventDefault();
-    e.detail.result = this.readActiveThemeInfo();
-  }
-
-  /**
    * Reads information about current theme.
    * @return {Promise<InstalledTheme>} A promise resolved to the theme info
    */
@@ -79,31 +63,14 @@ export class ThemeManager {
   }
 
   /**
-   * Activates the theme selected by the user.
-   *
-   * @param {CustomEvent} e
-   */
-  _activateHandler(e) {
-    e.preventDefault();
-    const id = e.detail.theme;
-    e.detail.result = this.activate(id);
-  }
-
-  /**
    * Activates the theme. It stores theme id in user preferences and loads the
    * theme.
    * @param {string} name Theme name to activate
    * @return {Promise<void>} Promise resolved when the theme is activated
    */
   activate(name) {
-    logger.silly(`activating a theme: ${name}`);
+    logger.info(`activating theme: ${name}`);
     return ipc.invoke('theme-manager-activate-theme', name);
-  }
-
-  _installHandler(e) {
-    e.preventDefault();
-    const {name} = e.detail;
-    e.detail.result = this.installTheme(name);
   }
 
   /**
@@ -111,17 +78,11 @@ export class ThemeManager {
    * @returns {Promise<void>} 
    */
   installTheme(name) {
-    logger.silly(`installing a theme: ${name}`);
+    logger.info(`installing theme: ${name}`);
     if (!name) {
       return Promise.reject(new Error('Name is required'));
     }
     return ipc.invoke('theme-manager-install-theme', name);
-  }
-
-  _uninstallHandler(e) {
-    e.preventDefault();
-    const {name} = e.detail;
-    e.detail.result = this.uninstallTheme(name);
   }
 
   /**
@@ -129,7 +90,7 @@ export class ThemeManager {
    * @returns {Promise<void>} 
    */
   uninstallTheme(name) {
-    logger.silly(`uninstalling a theme: ${name}`);
+    logger.info(`uninstalling a theme: ${name}`);
     if (!name) {
       return Promise.reject(new Error('Name is required'));
     }
@@ -147,7 +108,6 @@ export class ThemeManager {
    */
   async loadTheme(themeId, noFallback) {
     logger.silly(`loading theme: ${themeId}`);
-    const defaultTheme = 'advanced-rest-client/arc-electron-default-theme';
     let id = themeId;
     if (!id || id === 'dd1b715f-af00-4ee8-8b0c-2a262b3cf0c8') {
       id = defaultTheme;

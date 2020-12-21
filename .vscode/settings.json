@@ -13,6 +13,7 @@
     "requestloadstart",
     "settingschanged",
     "settingsread",
-    "settingsupdate"
+    "settingsupdate",
+    "themeactivated"
   ]
 }

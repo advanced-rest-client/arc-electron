@@ -205,8 +205,11 @@ export class WindowsManager {
     }
     logger.debug('[WM] Opening new window');
     const id = this.findIndex();
-    const info = await this.workspace.restoreWindowState(id);
+    const info = options.ignoreWindowSessionSettings ? {} : await this.workspace.restoreWindowState(id);
     const win = this.createWindow(info, preload);
+    if (options.noMenu) {
+      win.removeMenu();
+    }
     this.addWidowListeners(win);
     this.windows.push(win);
     this.loadPage(win, page, route, params);
@@ -397,7 +400,7 @@ export class WindowsManager {
   }
 
   /**
-   * @param {Electron.IpcMainEvent} e
+   * @param {*} e
    */
   [focusedHandler](e) {
     const win = /** @type Electron.BrowserWindow  */ (e.sender);
@@ -418,7 +421,7 @@ export class WindowsManager {
    * Handler for the BrowserWindow `closed` event.
    * Removes the window from the windows array.
    *
-   * @param {Electron.Event} e Event emitted by the window.
+   * @param {*} e Event emitted by the window.
    */
   [closedHandler](e) {
     const win = /** @type BrowserWindow */ (e.sender);

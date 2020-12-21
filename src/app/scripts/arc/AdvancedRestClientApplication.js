@@ -444,6 +444,9 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     window.addEventListener(ArcModelEventTypes.Environment.State.select, this[environmentSelectedHandler].bind(this));
     window.addEventListener('mousemove', this[resizeMouseMove].bind(this));
     window.addEventListener('mouseup', this[resizeMouseUp].bind(this));
+    window.addEventListener('themeactivated', (e) => {
+      this.compatibility = e.detail === '@advanced-rest-client/arc-electron-anypoint-theme';
+    });
 
     ipc.on('command', this[commandHandler].bind(this));
     ipc.on('request-action', this[requestActionHandler].bind(this));

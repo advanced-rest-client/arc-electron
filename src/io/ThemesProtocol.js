@@ -64,7 +64,7 @@ export class ThemesProtocol {
       // ..
     }
     if (url === 'dd1b715f-af00-4ee8-8b0c-2a262b3cf0c8') {
-      url = 'advanced-rest-client/arc-electron-default-theme';
+      url = '@advanced-rest-client/arc-electron-default-theme';
     }
     await this.loadInstalledTheme(url, callback);
   }
@@ -85,6 +85,7 @@ export class ThemesProtocol {
     } catch (cause) {
       logger.error('Unable to load theme');
       logger.error(cause);
+      // @ts-ignore
       callback(-6);
     }
   }
@@ -103,10 +104,12 @@ export class ThemesProtocol {
       }
       if (!info) {
         logger.error('Theme info not found');
+        // @ts-ignore
         callback(-6);
         return;
       }
-      const file = path.join(process.env.ARC_THEMES, info.mainFile);
+      const mainExists = await fs.pathExists(info.mainFile);
+      const file = mainExists ? info.mainFile : path.join(process.env.ARC_THEMES, info.mainFile);
       logger.silly(`Theme found. Reading theme file: ${file}`);
       const data = await fs.readFile(file, 'utf8');
       if (data) {
@@ -118,12 +121,14 @@ export class ThemesProtocol {
         });
       } else {
         logger.error('Theme file is empty');
+        // @ts-ignore
         callback(-6);
       }
     } catch (e) {
       logger.error('Unable to load theme');
       logger.error(e.message);
       logger.error(e.stack);
+      // @ts-ignore
       callback(-6);
     }
   }

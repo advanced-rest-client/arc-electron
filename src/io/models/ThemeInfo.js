@@ -74,7 +74,7 @@ export class ThemeInfo extends ArcPreferences {
     }
     const index = data.themes.findIndex((item) => item.name === name);
     if (index === -1) {
-      throw new Error(`The selected them not installed.`);
+      throw new Error(`The ${name} theme is not installed.`);
     }
     data.active = name;
     await this.store();

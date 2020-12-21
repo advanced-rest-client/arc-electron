@@ -47,7 +47,7 @@ export class ThemePluginsManager {
    * @param {String} name NPM name or Github repo. Local paths are symlink
    * to target location.
    * @param {String} version Theme version to install.
-   * @return {Promise}
+   * @returns {Promise<InstalledTheme>}
    */
   async install(name, version) {
     let message = `Installing theme: ${name}`;
@@ -56,7 +56,8 @@ export class ThemePluginsManager {
     }
     logger.info(message);
     const info = await this._installPackage(name, version);
-    return this.themeInfo.addTheme(info);
+    await this.themeInfo.addTheme(info);
+    return info;
   }
   
   /**
