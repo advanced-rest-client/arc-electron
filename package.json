@@ -37,7 +37,7 @@
   "devDependencies": {
     "@advanced-rest-client/arc-cookies": "^0.1.0",
     "@advanced-rest-client/arc-definitions": "^3.1.1",
-    "@advanced-rest-client/arc-environment": "^0.1.0",
+    "@advanced-rest-client/arc-environment": "^0.1.2",
     "@advanced-rest-client/arc-icons": "^3.2.2",
     "@advanced-rest-client/arc-ie": "^1.0.1",
     "@advanced-rest-client/arc-menu": "^4.0.3",
@@ -59,7 +59,7 @@
     "babel-eslint": "^10.1.0",
     "chai": "^4.2.0",
     "dotenv": "^8.2.0",
-    "electron": "^11.1.0",
+    "electron": "^11.1.1",
     "electron-builder": "^22.9.1",
     "electron-mocha": "^10.0.0",
     "electron-notarize": "^1.0.0",
@@ -82,10 +82,10 @@
     "@advanced-rest-client/arc-events": "^0.2.10",
     "@advanced-rest-client/arc-headers": "^0.1.5",
     "@advanced-rest-client/arc-request-ui": "^0.1.4",
-    "@advanced-rest-client/arc-types": "^0.2.38",
+    "@advanced-rest-client/arc-types": "^0.2.39",
     "@advanced-rest-client/electron-oauth2": "^4.0.1",
     "@advanced-rest-client/electron-request": "^3.1.1",
-    "@advanced-rest-client/request-engine": "^0.1.6",
+    "@advanced-rest-client/request-engine": "^0.1.9",
     "camelcase": "^6.2.0",
     "electron-log": "^4.3.1",
     "electron-prompt": "^1.6.0",
@@ -371,7 +371,9 @@
       "@advanced-rest-client/arc-headers/*.js",
       "@advanced-rest-client/arc-headers/*.d.ts",
       "@advanced-rest-client/arc-headers/src/*.js",
-      "@advanced-rest-client/arc-headers/src/*.d.ts"
+      "@advanced-rest-client/arc-headers/src/*.d.ts",
+      "@advanced-rest-client/authorization-method/auth-dialog-basic.js",
+      "@advanced-rest-client/authorization-method/auth-dialog-ntlm.js"
     ]
   }
 }

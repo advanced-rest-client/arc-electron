@@ -105,6 +105,8 @@ const resizeMouseUp = Symbol('resizeMouseUp');
 const resizeMouseMove = Symbol('resizeMouseMove');
 const isResizing = Symbol('isResizing');
 const mainNavigateHandler = Symbol('mainNavigateHandler');
+const variablesEnabledValue = Symbol('variablesEnabledValue');
+const systemVariablesEnabledValue = Symbol('systemVariablesEnabledValue');
 
 /**
  * A routes that does not go through the router and should not be remembered in the history.
@@ -186,6 +188,39 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     return this.#workspace;
   }
 
+  get variablesEnabled() {
+    return this[variablesEnabledValue];
+  }
+
+  set variablesEnabled(value) {
+    const old = this[variablesEnabledValue];
+    if (old === value) {
+      return;
+    }
+    this[variablesEnabledValue] = value;
+    this.requestFactory.evaluateVariables = value;
+    this.render();
+  }
+
+  get systemVariablesEnabled() {
+    return this[systemVariablesEnabledValue];
+  }
+
+  set systemVariablesEnabled(value) {
+    const old = this[systemVariablesEnabledValue];
+    if (old === value) {
+      return;
+    }
+    this[systemVariablesEnabledValue] = value;
+    const model = document.body.querySelector('variables-model');
+    if (value) {
+      model.systemVariables = process.env;
+    } else {
+      model.systemVariables = undefined;
+    }
+    this.render();
+  }
+
   constructor() {
     super();
 
@@ -195,7 +230,6 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       'navigationDetached', 'updateState', 'hasAppUpdate',
       'popupMenuEnabled', 'draggableEnabled', 'historyEnabled',
       'listType', 'detailedSearch', 'currentEnvironment',
-      'systemVariablesEnabled', 'variablesEnabled', 
       'workspaceSendButton', 'workspaceProgressInfo', 'workspaceBodyEditor', 'workspaceAutoEncode',
       'navigationWidth',
     );
@@ -317,7 +351,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     /** 
      * Enables variables processor.
      */
-    this.variablesEnabled = true;
+    this[variablesEnabledValue] = true;
 
     this.workspaceSendButton = true;
     this.workspaceProgressInfo = true;
@@ -1115,7 +1149,6 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       // this can be `null` so default values won't work
       currentEnvironment = 'Default';
     }
-    const { env } = process;
     return html`
     <div 
       class="environment-selector" 
@@ -1137,7 +1170,6 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       noCancelOnOutsideClick
       ?compatibility="${compatibility}"
       ?systemVariablesEnabled="${this.systemVariablesEnabled}"
-      .systemVariables="${env}"
     ></variables-overlay>
     `;
   }

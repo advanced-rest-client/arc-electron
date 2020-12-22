@@ -62,6 +62,14 @@ export class Request {
      * @type {number}
      */
     this.sentMessageLimit = undefined;
+    /** 
+     * @type {boolean}
+     */
+    this.evaluateVariables = true;
+    /** 
+     * @type {boolean}
+     */
+    this.evaluateSystemVariables = true;
 
     /** 
      * @type {Map<string, {connection: ElectronRequest|SocketRequest, request: ArcBaseRequest ,aborted: boolean}>}
@@ -85,7 +93,10 @@ export class Request {
 
   async [makeRequestHandler](e) {
     const transportRequest = e.detail;
-    const request = await this.factory.processRequest(transportRequest);
+    const request = await this.factory.processRequest(transportRequest, {
+      evaluateVariables: this.evaluateVariables,
+      evaluateSystemVariables: this.evaluateSystemVariables,
+    });
     // this event is significant, even though it is handled by the same class.
     TransportEvents.transport(document.body, request.id, request.request);
   }
@@ -97,16 +108,6 @@ export class Request {
     const transportRequest = e.detail;
     const { config, id, request } = transportRequest;
     await this.run(request, id, config);
-    // const result = await this.requestRunner.execute(e.detail, e.detail.config);
-    // if (!result) {
-    //   // the request has been aborted.
-    //   return;
-    // }
-
-    // await this.factory.processResponse(result.request, result.transport, result.response);
-    // TransportEvents.response(document.body, transportRequest.id, transportRequest.request, result.transport, result.response);
-
-    // console.log(result);
   }
 
   /**
@@ -114,7 +115,7 @@ export class Request {
    * @param {string} id
    * @param {RequestConfig=} config
    */
-  async run(request, id, config={}) {
+  async run(request, id, config={ enabled: false }) {
     const rConf = request.config || {};
     const finalConfig = this.prepareRequestOptions(config, rConf.enabled ? rConf : {});
     if (request.clientCertificate) {
@@ -141,9 +142,9 @@ export class Request {
 
   [abortRequestHandler](e) {
     const { id } = e.detail;
-    console.log('abort, abort!', id);
-    // this.factory.abort(id);
-    // this.requestRunner.abort(id);
+    this.factory.abort(id);
+    const info = this.connections.get(id);
+    info.connection.abort();
   }
 
   /**
@@ -345,7 +346,10 @@ export class Request {
       id,
       request: info.request,
     }
-    await this.factory.processResponse(fr, transport, response);
+    await this.factory.processResponse(fr, transport, response, {
+      evaluateVariables: this.evaluateVariables,
+      evaluateSystemVariables: this.evaluateSystemVariables,
+    });
     TransportEvents.response(document.body, id, info.request, transport, response);
   }
 
