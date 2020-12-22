@@ -33,6 +33,9 @@ import '../../../../web_modules/@advanced-rest-client/arc-ie/import-data-inspect
 import '../../../../web_modules/@advanced-rest-client/arc-environment/variables-overlay.js';
 import '../../../../web_modules/@advanced-rest-client/arc-cookies/cookie-manager.js';
 import '../../../../web_modules/@advanced-rest-client/arc-settings/arc-settings.js';
+import '../../../../web_modules/@advanced-rest-client/arc-request-ui/request-meta-details.js';
+import '../../../../web_modules/@advanced-rest-client/arc-request-ui/request-meta-editor.js';
+import '../../../../web_modules/@advanced-rest-client/bottom-sheet/bottom-sheet.js';
 import '../../../../web_modules/@anypoint-web-components/anypoint-input/anypoint-masked-input.js';
 import { Request } from './Request.js';
 
@@ -107,6 +110,11 @@ const isResizing = Symbol('isResizing');
 const mainNavigateHandler = Symbol('mainNavigateHandler');
 const variablesEnabledValue = Symbol('variablesEnabledValue');
 const systemVariablesEnabledValue = Symbol('systemVariablesEnabledValue');
+const requestDetailTemplate = Symbol('requestDetailTemplate');
+const requestMetaTemplate = Symbol('requestMetaTemplate');
+const sheetClosedHandler = Symbol('sheetClosedHandler');
+const metaRequestHandler = Symbol('metaRequestHandler');
+const requestMetaCloseHandler = Symbol('requestMetaCloseHandler');
 
 /**
  * A routes that does not go through the router and should not be remembered in the history.
@@ -232,6 +240,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       'listType', 'detailedSearch', 'currentEnvironment',
       'workspaceSendButton', 'workspaceProgressInfo', 'workspaceBodyEditor', 'workspaceAutoEncode',
       'navigationWidth',
+      'requestDetailsOpened', 'requestMetaOpened', 'metaRequestId', 'metaRequestType'
     );
 
     /** 
@@ -357,6 +366,12 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     this.workspaceProgressInfo = true;
     this.workspaceBodyEditor = 'Monaco';
     this.workspaceAutoEncode = false;
+
+
+    this.requestDetailsOpened = false;
+    this.requestMetaOpened = false;
+    this.metaRequestId = undefined;
+    this.metaRequestType = undefined;
   }
 
   async initialize() {
@@ -626,12 +641,25 @@ export class AdvancedRestClientApplication extends ApplicationPage {
    */
   [navigateRequestHandler](e) {
     const { requestId, requestType, action } = e;
-    if (action !== 'open') {
+    if (action === 'open') {
+      this.workspaceElement.addByRequestId(requestType, requestId);
+      if (this.route !== 'workspace') {
+        navigate('workspace');
+      }
       return;
     }
-    this.workspaceElement.addByRequestId(requestType, requestId);
-    if (this.route !== 'workspace') {
-      navigate('workspace');
+    if (action === 'detail') {
+      this.requestMetaOpened = false;
+      this.requestDetailsOpened = true;
+      this.metaRequestId = requestId;
+      this.metaRequestType = requestType;
+      return;
+    }
+    if (action === 'edit') {
+      this.requestDetailsOpened = false;
+      this.requestMetaOpened = true;
+      this.metaRequestId = requestId;
+      this.metaRequestType = requestType;
     }
   }
 
@@ -1088,6 +1116,20 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     this.navigationWidth = pageX;
   }
 
+  [metaRequestHandler]() {
+    this.requestMetaOpened = true;
+    this.requestDetailsOpened = false;
+  }
+
+  [requestMetaCloseHandler]() {
+    this.requestMetaOpened = false;
+  }
+
+  [sheetClosedHandler](e) {
+    const prop = e.target.dataset.openProperty;
+    this[prop] = e.detail.value;
+  }
+
   appTemplate() {
     const { initializing } = this;
     if (initializing) {
@@ -1236,6 +1278,8 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       ${this[cookieManagerScreenTemplate](route)}
       ${this[settingsScreenTemplate](route)}
       ${this[importInspectorTemplate](route)}
+      ${this[requestDetailTemplate]()}
+      ${this[requestMetaTemplate]()}
     </main>
     `;
   }
@@ -1412,5 +1456,47 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       class="screen scroll"
     ></arc-settings>
     `;
+  }
+
+  /**
+   * @returns {TemplateResult} The template for the request metadata info dialog
+   */
+  [requestDetailTemplate]() {
+    const { compatibility, requestDetailsOpened, metaRequestId, metaRequestType } = this;
+    return html`
+    <bottom-sheet
+      class="bottom-sheet-container"
+      .opened="${requestDetailsOpened}"
+      data-open-property="requestDetailsOpened"
+      @closed="${this[sheetClosedHandler]}"
+    >
+      <request-meta-details
+        ?compatibility="${compatibility}"
+        .requestId="${metaRequestId}"
+        .requestType="${metaRequestType}"
+        @edit="${this[metaRequestHandler]}"
+      ></request-meta-details>
+    </bottom-sheet>`;
+  }
+
+  /**
+   * @returns {TemplateResult} The template for the request metadata editor dialog
+   */
+  [requestMetaTemplate]() {
+    const { compatibility, requestMetaOpened, metaRequestId, metaRequestType } = this;
+    return html`
+    <bottom-sheet
+      class="bottom-sheet-container"
+      .opened="${requestMetaOpened}"
+      data-open-property="requestMetaOpened"
+      @closed="${this[sheetClosedHandler]}"
+    >
+      <request-meta-editor
+        ?compatibility="${compatibility}"
+        .requestId="${metaRequestId}"
+        .requestType="${metaRequestType}"
+        @close="${this[requestMetaCloseHandler]}"
+      ></request-meta-editor>
+    </bottom-sheet>`;
   }
 }
