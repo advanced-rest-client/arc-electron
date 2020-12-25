@@ -346,11 +346,23 @@ export class Request {
       id,
       request: info.request,
     }
-    await this.factory.processResponse(fr, transport, response, {
-      evaluateVariables: this.evaluateVariables,
-      evaluateSystemVariables: this.evaluateSystemVariables,
-    });
-    TransportEvents.response(document.body, id, info.request, transport, response);
+    try {
+      await this.factory.processResponse(fr, transport, response, {
+        evaluateVariables: this.evaluateVariables,
+        evaluateSystemVariables: this.evaluateSystemVariables,
+      });
+      TransportEvents.response(document.body, id, info.request, transport, response);
+    } catch (e) {
+      const errorResponse = /** @type ErrorResponse */ ({
+        error: e,
+        status: response.status,
+        headers: response.headers,
+        payload: response.payload,
+        statusText: response.statusText,
+        id: response.id,
+      });
+      TransportEvents.response(document.body, id, info.request, transport, errorResponse);
+    }
   }
 
   /**

@@ -58,6 +58,7 @@ import { Request } from './Request.js';
 /** @typedef {import('@advanced-rest-client/arc-events').ARCProjectNavigationEvent} ARCProjectNavigationEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ARCMenuPopupEvent} ARCMenuPopupEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ARCNavigationEvent} ARCNavigationEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCExternalNavigationEvent} ARCExternalNavigationEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ConfigStateUpdateEvent} ConfigStateUpdateEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ArcImportInspectEvent} ArcImportInspectEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').WorkspaceAppendRequestEvent} WorkspaceAppendRequestEvent */
@@ -115,6 +116,7 @@ const requestMetaTemplate = Symbol('requestMetaTemplate');
 const sheetClosedHandler = Symbol('sheetClosedHandler');
 const metaRequestHandler = Symbol('metaRequestHandler');
 const requestMetaCloseHandler = Symbol('requestMetaCloseHandler');
+const externalNavigationHandler = Symbol('externalNavigationHandler');
 
 /**
  * A routes that does not go through the router and should not be remembered in the history.
@@ -490,6 +492,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     window.addEventListener(ArcNavigationEventTypes.navigate, this[navigateHandler].bind(this));
     window.addEventListener(ArcNavigationEventTypes.navigateProject, this[navigateProjectHandler].bind(this));
     window.addEventListener(ArcNavigationEventTypes.popupMenu, this[popupMenuHandler].bind(this));
+    window.addEventListener(ArcNavigationEventTypes.navigateExternal, this[externalNavigationHandler].bind(this));
     window.addEventListener(WorkspaceEventTypes.appendRequest, this[workspaceAppendRequestHandler].bind(this));
     window.addEventListener(WorkspaceEventTypes.appendExport, this[workspaceAppendExportHandler].bind(this));
     window.addEventListener(ConfigEventTypes.State.update, this[configStateChangeHandler].bind(this));
@@ -718,6 +721,15 @@ export class AdvancedRestClientApplication extends ApplicationPage {
   }
 
   /**
+   * @param {ARCExternalNavigationEvent} e
+   */
+  [externalNavigationHandler](e) {
+    const { url, detail } = e;
+    const { purpose } = detail;
+    ipc.send('open-web-url', url, purpose);
+  }
+
+  /**
    * A handler for the main toolbar arrow back click.
    * Always navigates to the workspace.
    */
@@ -749,6 +761,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       case 'show-settings': navigate('settings'); break;
       case 'popup-menu': this.navigationDetached = !this.navigationDetached; break;
       case 'export-workspace': this.exportWorkspace(); break;
+      case 'login-external-webservice': this.workspaceElement.openWebUrlInput(); break;
       default:
         this.logger.warn(`Unhandled IO command ${action}`);
     }

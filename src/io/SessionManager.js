@@ -2,6 +2,7 @@
 import { session, BrowserWindow, ipcMain, app } from 'electron';
 import { EventEmitter } from 'events';
 import { WebSessionPersist } from './Constants.js';
+import { logger } from './Logger.js';
 
 /** @typedef {import('../types').SessionManagerConfig} SessionManagerConfig */
 /** @typedef {import('electron').Cookie} Cookie */
@@ -195,8 +196,14 @@ export class SessionManager extends EventEmitter {
     if (!typedSet.url) {
       typedSet.url = this[computeCookieUrl](typed, cookie.secure);
     }
-    await this.session.set(typedSet);
-    await this.session.flushStore();
+    try {
+      await this.session.remove(typedSet.url, typedSet.name);
+      await this.session.set(typedSet);
+      await this.session.flushStore();
+    } catch (e) {
+      logger.error(e.message);
+      logger.error(e);
+    }
     return typedSet;
   }
 

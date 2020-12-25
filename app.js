@@ -80,7 +80,6 @@ class ArcInit {
       case 'about': app.openAbout(); break;
       case 'open-license': app.openLicense(); break;
       case 'open-messages': app.openInfoCenter(); break;
-      case 'login-external-webservice': app.openWebUrl(); break;
       case 'open-onboarding': app.openOnboarding(); break;
       case 'open-workspace-details': app.openWorkspaceDetails(); break;
       default:
