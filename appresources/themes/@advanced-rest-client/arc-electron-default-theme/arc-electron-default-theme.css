@@ -42,4 +42,7 @@ body {
 
   /* Dividers */
   --dark-divider-opacity: 0.14;
+
+  /* shadows */
+  --box-shadow-6dp: 0 19px 38px rgba(0,0,0,0.30), 0 15px 12px rgba(0,0,0,0.22);
 }
