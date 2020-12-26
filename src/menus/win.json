@@ -4,38 +4,52 @@
       "label": "File",
       "submenu": [
         {
-          "label": "New tab",
-          "command": "request:new-tab",
-          "accelerator": "CommandOrControl+t"
+          "label": "New",
+          "submenu": [
+            {
+              "label": "HTTP request",
+              "command": "request:new-http-tab",
+              "accelerator": "CommandOrControl+t"
+            },
+            {
+              "label": "Web socket request",
+              "command": "request:new-websocket-tab"
+            }, 
+            {
+              "label": "Window",
+              "command": "application:new-window",
+              "accelerator": "CommandOrControl+n"
+            }
+          ]
+        },
+        {
+          "label": "Open",
+          "submenu": [
+            {
+              "label": "Open file",
+              "command": "application:open-file",
+              "accelerator": "CommandOrControl+Shift+o"
+            },
+            {
+              "label": "Open saved request",
+              "command": "application:open-saved",
+              "accelerator": "CommandOrControl+o"
+            }, 
+            {
+              "label": "Open history",
+              "command": "application:open-history",
+              "accelerator": "CommandOrControl+h"
+            }, 
+            {
+              "label": "Open from Google Drive",
+              "command": "application:open-drive"
+            }
+          ]
         },
         {
           "label": "Close tab",
           "command": "request:close-tab",
           "accelerator": "CommandOrControl+w"
-        },
-        {
-          "label": "New Window",
-          "command": "application:new-window",
-          "accelerator": "CommandOrControl+n"
-        },
-        {
-          "label": "Open file",
-          "command": "application:open-file",
-          "accelerator": "CommandOrControl+Shift+o"
-        },
-        {
-          "label": "Open saved request",
-          "command": "application:open-saved",
-          "accelerator": "CommandOrControl+o"
-        },
-        {
-          "label": "Open history",
-          "command": "application:open-history",
-          "accelerator": "CommandOrControl+h"
-        },
-        {
-          "label": "Open from Google Drive",
-          "command": "application:open-drive"
         },
         {
           "type": "separator"
@@ -128,10 +142,6 @@
             },
             {
               "role": "toggledevtools"
-            },
-            {
-              "label": "Task Manager",
-              "command": "application:task-manager"
             }
           ]
         },
@@ -195,10 +205,6 @@
     {
       "label": "Request",
       "submenu": [
-        {
-          "label": "Open requests workspace",
-          "command": "application:open-requests-workspace"
-        },
         {
           "label": "Run current tab",
           "command": "request:send-current",

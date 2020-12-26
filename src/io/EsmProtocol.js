@@ -64,7 +64,7 @@ export class EsmProtocol {
     const url = new URL(request.url);
     let fileLocation = this.findFile(url.pathname);
     fileLocation = decodeURI(fileLocation);
-    logger.silly(`EsmProtocolHandler::[requestHandler]: ${fileLocation}`);
+    // logger.silly(`EsmProtocolHandler::[requestHandler]: ${fileLocation}`);
     fs.readFile(fileLocation, async (error, data) => {
       if (error) {
         logger.error(error);

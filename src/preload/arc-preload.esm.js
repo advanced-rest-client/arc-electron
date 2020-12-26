@@ -5,7 +5,6 @@ import { SocketRequest, ElectronRequest } from '@advanced-rest-client/electron-r
 import { PreferencesProxy } from './PreferencesProxy.js';
 import { WindowProxy } from './WindowProxy.js';
 import { CookieBridge } from './CookieBridge.js';
-import { ArcContextMenu } from './ArcContextMenu.js';
 import { ThemeManager } from './ThemeManager.js';
 import { EncryptionService } from './EncryptionService.js';
 import { WorkspaceManager } from './WorkspaceManager.js';
@@ -39,8 +38,6 @@ process.once('loaded', () => {
   global.SocketRequest = SocketRequest;
   // @ts-ignore
   global.ElectronRequest = ElectronRequest;
-  // @ts-ignore
-  global.ArcContextMenu = ArcContextMenu;
   // @ts-ignore
   global.ThemeManager = ThemeManager;
   // @ts-ignore

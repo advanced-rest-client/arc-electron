@@ -45,4 +45,33 @@ body {
 
   /* shadows */
   --box-shadow-6dp: 0 19px 38px rgba(0,0,0,0.30), 0 15px 12px rgba(0,0,0,0.22);
+
+  /* HTTP method colors */
+  --http-get-color: rgba(0, 128, 0, 0.74);
+  --http-post-color: rgba(33, 150, 243, 0.74);
+  --http-put-color: rgba(255, 165, 0, 0.74);
+  --http-patch-color: rgb(156, 39, 176);
+  --http-delete-color: rgba(244, 67, 54, 0.74);
+  --http-options-color: rgba(128, 128, 128, 0.74);
+  --http-head-color: rgba(128, 128, 128, 0.74);
+  --http-connect-color: rgba(128, 128, 128, 0.74);
+  --http-trace-color: rgba(128, 128, 128, 0.74);
+  --http-method-label-get-background-color: var(--http-get-color);
+  --http-method-label-get-color: #fff;
+  --http-method-label-post-background-color: var(--http-post-color);
+  --http-method-label-post-color: #fff;
+  --http-method-label-patch-background-color: var(--http-patch-color);
+  --http-method-label-patch-color: #fff;
+  --http-method-label-put-background-color: var(--http-put-color);
+  --http-method-label-put-color: #fff;
+  --http-method-label-delete-background-color: var(--http-delete-color);
+  --http-method-label-delete-color: #fff;
+  --http-method-label-options-background-color: var(--http-options-color);
+  --http-method-label-options-background-color: #fff;
+  --http-method-label-head-background-color: var(--http-head-color);
+  --http-method-label-head-background-color: #fff;
+  --http-method-label-trace-background-color: var(--http-trace-color);
+  --http-method-label-trace-background-color: #fff;
+  --http-method-label-connect-background-color: var(--http-connect-color);
+  --http-method-label-connect-background-color: #fff;
 }

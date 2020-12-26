@@ -1,7 +1,6 @@
 import { ElectronRequest as ElectronRequestBase, SocketRequest as SocketRequestBase } from "@advanced-rest-client/electron-request";
 import { OAuth2Handler as OAuth2HandlerBase } from "@advanced-rest-client/electron-oauth2/renderer/OAuth2Handler";
 import { Clipboard, IpcRenderer } from "electron";
-import { ArcContextMenu as ArcContextMenuBase } from "./src/preload/ArcContextMenu";
 import { CookieBridge as CookieBridgeBase } from "./src/preload/CookieBridge";
 import { EncryptionService as EncryptionServiceBase } from "./src/preload/EncryptionService";
 import { ThemeManager as ThemeManagerBase } from "./src/preload/ThemeManager";
@@ -29,7 +28,6 @@ declare global {
   class WorkspaceManager extends WorkspaceManagerBase {}
   class EncryptionService extends EncryptionServiceBase {}
   class ThemeManager extends ThemeManagerBase {}
-  class ArcContextMenu extends ArcContextMenuBase {}
   class ElectronRequest extends ElectronRequestBase {}
   class SocketRequest extends SocketRequestBase {}
   class CookieBridge extends CookieBridgeBase {}

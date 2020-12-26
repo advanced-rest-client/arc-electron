@@ -36,13 +36,20 @@ import '../../../../web_modules/@advanced-rest-client/arc-settings/arc-settings.
 import '../../../../web_modules/@advanced-rest-client/arc-request-ui/request-meta-details.js';
 import '../../../../web_modules/@advanced-rest-client/arc-request-ui/request-meta-editor.js';
 import '../../../../web_modules/@advanced-rest-client/bottom-sheet/bottom-sheet.js';
+import '../../../../web_modules/@advanced-rest-client/arc-icons/arc-icon.js';
 import '../../../../web_modules/@anypoint-web-components/anypoint-input/anypoint-masked-input.js';
 import { Request } from './Request.js';
+import { ContextMenu } from '../context-menu/ContextMenu.js';
+import { ContextMenuStyles } from '../context-menu/ContextMenu.styles.js';
+import ContextMenuCommands from './ArcContextMenuCommands.js';
+import { getTabClickIndex } from './Utils.js';
 
-/* global PreferencesProxy, OAuth2Handler, WindowManagerProxy, ArcContextMenu, ThemeManager, logger, EncryptionService, WorkspaceManager, ipc, CookieBridge, ImportFilePreProcessor, FilesystemProxy, ApplicationSearchProxy */
+// @ts-ignore
+document.adoptedStyleSheets = document.adoptedStyleSheets.concat(ContextMenuStyles.styleSheet);
+
+/* global PreferencesProxy, OAuth2Handler, WindowManagerProxy, ThemeManager, logger, EncryptionService, WorkspaceManager, ipc, CookieBridge, ImportFilePreProcessor, FilesystemProxy, ApplicationSearchProxy */
 
 /** @typedef {import('../../../preload/PreferencesProxy').PreferencesProxy} PreferencesProxy */
-/** @typedef {import('../../../preload/ArcContextMenu').ArcContextMenu} ArcContextMenu */
 /** @typedef {import('../../../preload/WindowProxy').WindowProxy} WindowManagerProxy */
 /** @typedef {import('../../../preload/ThemeManager').ThemeManager} ThemeManager */
 /** @typedef {import('../../../preload/EncryptionService').EncryptionService} EncryptionService */
@@ -67,6 +74,7 @@ import { Request } from './Request.js';
 /** @typedef {import('@advanced-rest-client/arc-models').ARCEnvironmentStateSelectEvent} ARCEnvironmentStateSelectEvent */
 /** @typedef {import('../../../../web_modules/@advanced-rest-client/arc-request-ui').ArcRequestWorkspaceElement} ArcRequestWorkspaceElement */
 /** @typedef {import('../../../../web_modules/@advanced-rest-client/arc-menu').ArcMenuElement} ArcMenuElement */
+/** @typedef {import('../context-menu/interfaces').ExecuteOptions} ExecuteOptions */
 
 const unhandledRejectionHandler = Symbol('unhandledRejectionHandler');
 const headerTemplate = Symbol('headerTemplate');
@@ -117,6 +125,7 @@ const sheetClosedHandler = Symbol('sheetClosedHandler');
 const metaRequestHandler = Symbol('metaRequestHandler');
 const requestMetaCloseHandler = Symbol('requestMetaCloseHandler');
 const externalNavigationHandler = Symbol('externalNavigationHandler');
+const contextCommandHandler = Symbol('contextCommandHandler');
 
 /**
  * A routes that does not go through the router and should not be remembered in the history.
@@ -187,6 +196,8 @@ export class AdvancedRestClientApplication extends ApplicationPage {
    * @type {ArcRequestWorkspaceElement}
    */
   #workspace = undefined;
+
+  #contextMenu = new ContextMenu(document.body);
 
   /**
    * @returns {ArcRequestWorkspaceElement}
@@ -272,10 +283,6 @@ export class AdvancedRestClientApplication extends ApplicationPage {
      * @type {WindowManagerProxy}
      */
     this.windowProxy = new WindowManagerProxy();
-    /**
-     * @type {ArcContextMenu}
-     */
-    this.contextMenu = new ArcContextMenu(this);
     /**
      * @type {ThemeManager}
      */
@@ -479,7 +486,6 @@ export class AdvancedRestClientApplication extends ApplicationPage {
   listen() {
     this.settings.observe();
     this.oauth2Proxy.listen();
-    this.contextMenu.listenMainEvents();
     this.themeProxy.listen();
     this.encryption.listen();
     this.workspace.listen();
@@ -487,6 +493,9 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     this.fs.listen();
     this.search.listen();
     this.requestFactory.listen();
+    this.#contextMenu.connect();
+    this.#contextMenu.registerCommands(ContextMenuCommands);
+    this.#contextMenu.registerCallback(this[contextCommandHandler].bind(this));
 
     window.addEventListener(ArcNavigationEventTypes.navigateRequest, this[navigateRequestHandler].bind(this));
     window.addEventListener(ArcNavigationEventTypes.navigate, this[navigateHandler].bind(this));
@@ -628,7 +637,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
    * @param {number} index 
    */
   closeOtherWorkspaceTabs(index) {
-    
+    // this.workspaceElement.removeRequest();
   }
 
   /**
@@ -754,7 +763,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       case 'open-themes': navigate('themes'); break;
       case 'open-client-certificates': navigate('client-certificates'); break;
       case 'open-requests-workspace': navigate('workspace'); break;
-      case 'open-web-socket': navigate('web-socket'); break;
+      case 'open-web-socket': this.workspaceElement.addWsRequest(); break;
       case 'process-external-file': this.processExternalFile(args[0]); break;
       case 'import-data': navigate('data-import'); break;
       case 'export-data': navigate('data-export'); break;
@@ -785,8 +794,11 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       case 'save-as':
         this.workspaceElement.saveAsOpened();
         break;
-      case 'new-tab':
-        this.workspaceElement.addEmpty();
+      case 'new-http-tab':
+        this.workspaceElement.addHttpRequest();
+        break;
+      case 'new-websocket-tab':
+        this.workspaceElement.addWsRequest();
         break;
       case 'send-current':
         this.workspaceElement.sendCurrent();
@@ -796,6 +808,20 @@ export class AdvancedRestClientApplication extends ApplicationPage {
         break;
       default:
         this.logger.warn(`Unhandled IO request command ${action}`);
+    }
+  }
+
+  /**
+   * @param {ExecuteOptions} args
+   */
+  [contextCommandHandler](args) {
+    const { command } = args;
+    switch (command) {
+      case 'close-tab': this.workspaceElement.removeRequest(getTabClickIndex(args.target)); break;
+      case 'close-other-tabs': this.workspaceElement.closeAllTabs(getTabClickIndex(args.target)); break;
+      case 'close-all-tabs': this.workspaceElement.closeAllTabs(); break;
+      case 'duplicate-tab': this.workspaceElement.duplicateTab(getTabClickIndex(args.target)); break;
+      default:
     }
   }
 
