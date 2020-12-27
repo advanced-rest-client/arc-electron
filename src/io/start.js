@@ -120,6 +120,7 @@ export default async function start(startTime) {
   appPaths.setSettingsFile(initOptions.settingsFile);
   appPaths.setThemesPath(initOptions.themesPath);
   appPaths.setWorkspacePath(initOptions.workspacePath);
+  appPaths.setStateFile(initOptions.stateFile);
 
   // Overrides initial user path to processed by ApplicationPaths
   initOptions.settingsFile = appPaths.settingsFile;

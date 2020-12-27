@@ -62,25 +62,6 @@ export class PreferencesManager extends ArcPreferences {
   }
 
   /**
-   * Updates the value by path in the settings object
-   * @param {any} settings
-   * @param {string} path The path to the data
-   * @param {any} value The value to set.
-   */
-  updateValue(settings, path, value) {
-    const parts = path.split('.');
-    const last = parts.pop();
-    let current = settings;
-    parts.forEach((part) => {
-      if (!current[part]) {
-        current[part] = {};
-      }
-      current = current[part];
-    });
-    current[last] = value;
-  }
-
-  /**
    * Informs all available windows about the change in the preferences.
    * @param {string} name Preference name
    * @param {string} value New value
@@ -108,9 +89,19 @@ export class PreferencesManager extends ArcPreferences {
       privacy: {
         telemetry: true,
       },
-      request: {},
+      request: {
+        followRedirects: true,
+        useAppVariables: true,
+        useSystemVariables: true,
+      },
       requestEditor: {
-        
+        bodyEditor: 'Monaco',
+        progressInfo: true,
+        sendButton: true,
+      },
+      response: {
+        warningResponseMaxSize: 2048,
+        forceRawSize: 4096,
       },
     });
   }

@@ -11,6 +11,7 @@ import { WorkspaceManager } from './WorkspaceManager.js';
 import { ImportFilePreProcessor } from './ImportFilePreProcessor.js';
 import { FilesystemProxy } from './FilesystemProxy.js';
 import { ApplicationSearchProxy } from './ApplicationSearchProxy.js';
+import { AppStateProxy } from './AppStateProxy.js';
 
 const env = {};
 const APP_VERSION = process.env.npm_package_version;
@@ -29,6 +30,8 @@ process.once('loaded', () => {
   global.OAuth2Handler = OAuth2Handler;
   // @ts-ignore
   global.PreferencesProxy = PreferencesProxy;
+  // @ts-ignore
+  global.AppStateProxy = AppStateProxy;
   global.logger = logger;
   // @ts-ignore
   global.WindowManagerProxy = WindowProxy;

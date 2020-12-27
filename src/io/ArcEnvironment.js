@@ -11,6 +11,7 @@ import { ThemeManager } from './ThemeManager.js';
 import { SessionManager } from './SessionManager.js';
 import { ContentSearchService } from './ContentSearchService.js';
 import { AppPrompts } from './AppPrompts.js';
+import { AppStateManager } from './AppStateManager.js';
 
 /** @typedef {import('../types').ApplicationOptionsConfig} ApplicationOptionsConfig */
 /** @typedef {import('../types').ProtocolFile} ProtocolFile */
@@ -31,6 +32,7 @@ export class ArcEnvironment {
     this.withDevTools = params.withDevtools || false;
 
     this.initializeConfiguration(prefMgr);
+    this.initializeAppState();
     this.initializeWindowsManager(params);
     this.initializeUpdater();
     this.initializeOAuth2();
@@ -58,6 +60,11 @@ export class ArcEnvironment {
       this.settingsChanged(name, value);
     });
     manager.observe();
+  }
+
+  initializeAppState() {
+    this.state = new AppStateManager(process.env.ARC_STATE_FILE);
+    this.state.observe();
   }
 
   /**

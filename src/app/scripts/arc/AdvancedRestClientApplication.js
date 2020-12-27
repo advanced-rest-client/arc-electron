@@ -48,7 +48,7 @@ import { getTabClickIndex } from './Utils.js';
 // @ts-ignore
 document.adoptedStyleSheets = document.adoptedStyleSheets.concat(ContextMenuStyles.styleSheet);
 
-/* global PreferencesProxy, OAuth2Handler, WindowManagerProxy, ThemeManager, logger, EncryptionService, WorkspaceManager, ipc, CookieBridge, ImportFilePreProcessor, FilesystemProxy, ApplicationSearchProxy */
+/* global PreferencesProxy, OAuth2Handler, WindowManagerProxy, ThemeManager, logger, EncryptionService, WorkspaceManager, ipc, CookieBridge, ImportFilePreProcessor, FilesystemProxy, ApplicationSearchProxy, AppStateProxy */
 
 /** @typedef {import('../../../preload/PreferencesProxy').PreferencesProxy} PreferencesProxy */
 /** @typedef {import('../../../preload/WindowProxy').WindowProxy} WindowManagerProxy */
@@ -62,6 +62,7 @@ document.adoptedStyleSheets = document.adoptedStyleSheets.concat(ContextMenuStyl
 /** @typedef {import('lit-html').TemplateResult} TemplateResult */
 /** @typedef {import('@advanced-rest-client/electron-oauth2/renderer/OAuth2Handler').OAuth2Handler} OAuth2Handler */
 /** @typedef {import('@advanced-rest-client/arc-types').Config.ARCConfig} ARCConfig */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcState.ARCState} ARCState */
 /** @typedef {import('@advanced-rest-client/arc-events').ARCRequestNavigationEvent} ARCRequestNavigationEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ARCProjectNavigationEvent} ARCProjectNavigationEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ARCMenuPopupEvent} ARCMenuPopupEvent */
@@ -128,6 +129,7 @@ const requestMetaCloseHandler = Symbol('requestMetaCloseHandler');
 const externalNavigationHandler = Symbol('externalNavigationHandler');
 const contextCommandHandler = Symbol('contextCommandHandler');
 const hostRulesTemplate = Symbol('hostRulesTemplate');
+const processApplicationState = Symbol('processApplicationState');
 
 /**
  * A routes that does not go through the router and should not be remembered in the history.
@@ -205,6 +207,28 @@ export class AdvancedRestClientApplication extends ApplicationPage {
 
   #contextMenu = new ContextMenu(document.body);
 
+  stateProxy = new AppStateProxy();
+
+  settings = new PreferencesProxy();
+
+  oauth2Proxy = new OAuth2Handler();
+
+  windowProxy = new WindowManagerProxy();
+
+  themeProxy = new ThemeManager();
+
+  encryption = new EncryptionService();
+
+  workspace = new WorkspaceManager();
+
+  cookieBridge = new CookieBridge();
+
+  fs = new FilesystemProxy();
+
+  search = new ApplicationSearchProxy();
+
+  requestFactory = new Request();
+
   /**
    * @returns {ArcRequestWorkspaceElement}
    */
@@ -276,37 +300,8 @@ export class AdvancedRestClientApplication extends ApplicationPage {
      * @type {string} A loading state information.
      */
     this.loadingStatus = 'Initializing application...';
-
-    /**
-     * @type {PreferencesProxy}
-     */
-    this.settings = new PreferencesProxy();
-    /**
-     * @type {OAuth2Handler}
-     */
-    this.oauth2Proxy = new OAuth2Handler();
-    /**
-     * @type {WindowManagerProxy}
-     */
-    this.windowProxy = new WindowManagerProxy();
-    /**
-     * @type {ThemeManager}
-     */
-    this.themeProxy = new ThemeManager();
-    /**
-     * @type {EncryptionService}
-     */
-    this.encryption = new EncryptionService();
-    /**
-     * @type {WorkspaceManager}
-     */
-    this.workspace = new WorkspaceManager();
     this.logger = logger;
 
-    this.cookieBridge = new CookieBridge();
-    this.fs = new FilesystemProxy();
-    this.search = new ApplicationSearchProxy();
-    this.requestFactory = new Request();
 
     window.onunhandledrejection = this[unhandledRejectionHandler].bind(this);
     
@@ -407,6 +402,16 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     
     await this.loadTheme();
     this.workspace.id = init.workspaceId;
+    let state = /** @type ARCState */(null);
+    try {
+      state = await this.stateProxy.read();
+    } catch (e) {
+      state = {
+        kind: 'ARC#AppState',
+      };
+    }
+    this[processApplicationState](state);
+
     await this.afterInitialization();
     await this.loadMonaco();
     this.initializing = false;
@@ -485,6 +490,18 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       }
       if (typeof cnf.requestEditor.autoEncode === 'boolean') {
         this.workspaceAutoEncode = cnf.requestEditor.autoEncode;
+      }
+    }
+  }
+
+  /**
+   * @param {ARCState} state
+   */
+  [processApplicationState](state) {
+    if (state.environment) {
+      if (state.environment.variablesEnvironment) {
+        // this.currentEnvironment = state.environment.variablesEnvironment;
+        ArcModelEvents.Environment.select(document.body, state.environment.variablesEnvironment);
       }
     }
   }
@@ -1108,8 +1125,10 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     const { environment } = e.detail;
     if (environment) {
       this.currentEnvironment = environment.name;
+      this.stateProxy.update('environment.variablesEnvironment', environment._id);
     } else {
       this.currentEnvironment = null;
+      this.stateProxy.update('environment.variablesEnvironment', null);
     }
   }
 

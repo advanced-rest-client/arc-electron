@@ -19,7 +19,9 @@
         "--with-devtools",
         "--workspace-path=\"~/arc-dev/workspace\"", 
         "--settings-file=\"~/arc-dev/dev-settings.json\"", 
-        "--themes-path=\"~/arc-dev/themes-esm\""],
+        "--state-file=\"~/arc-dev/dev-state.json\"",
+        "--themes-path=\"~/arc-dev/themes-esm\""
+      ],
       "outputCapture": "std"
     }
   ]

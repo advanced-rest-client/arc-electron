@@ -21,6 +21,7 @@ export declare interface ProcessedApplicationOption extends ApplicationOption {
  */
 export declare interface ApplicationOptionsConfig {
   settingsFile?: string;
+  stateFile?: string;
   themesPath?: string;
   workspacePath?: string;
   dev?: boolean;

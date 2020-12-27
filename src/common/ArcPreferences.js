@@ -104,4 +104,23 @@ export class ArcPreferences extends EventEmitter {
   async store() {
     await this.storeFile(this.settingsFile, this.#settings);
   }
+
+  /**
+   * Updates the value by path in the settings object
+   * @param {any} settings
+   * @param {string} path The path to the data
+   * @param {any} value The value to set.
+   */
+  updateValue(settings, path, value) {
+    const parts = path.split('.');
+    const last = parts.pop();
+    let current = settings;
+    parts.forEach((part) => {
+      if (!current[part]) {
+        current[part] = {};
+      }
+      current = current[part];
+    });
+    current[last] = value;
+  }
 }

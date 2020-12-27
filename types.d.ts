@@ -10,6 +10,7 @@ import { PreferencesProxy as PreferencesProxyBase } from "./src/preload/Preferen
 import { ImportFilePreProcessor as ImportFilePreProcessorBase } from "./src/preload/ImportFilePreProcessor";
 import { FilesystemProxy as FilesystemProxyBase } from "./src/preload/FilesystemProxy";
 import { ApplicationSearchProxy as ApplicationSearchProxyBase } from "./src/preload/ApplicationSearchProxy";
+import { AppStateProxy as AppStateProxyBase } from "./src/preload/AppStateProxy";
 import logger from "electron-log";
 
 // declare global {
@@ -25,6 +26,7 @@ declare global {
   var ipc: IpcRenderer;
   var clipboard: Clipboard;
   var logger: logger.ElectronLog;
+  class AppStateProxy extends AppStateProxyBase {}
   class WorkspaceManager extends WorkspaceManagerBase {}
   class EncryptionService extends EncryptionServiceBase {}
   class ThemeManager extends ThemeManagerBase {}

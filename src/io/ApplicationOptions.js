@@ -20,12 +20,20 @@ export class ApplicationOptions {
    * @return {ApplicationOption[]} List of app config options
    */
   get availableOptions() {
-    return [{
+    return [
+    {
       // Path to the settings file. Overrides default location.
       name: '--settings-file',
       shortcut: '-s',
       type: String
-    }, {
+    }, 
+    {
+      // Path to the state file. Overrides default location.
+      name: '--state-file',
+      shortcut: '-S',
+      type: String
+    }, 
+    {
       // Path to the workspace state files path. Overrides default location.
       name: '--workspace-path',
       shortcut: '-w',

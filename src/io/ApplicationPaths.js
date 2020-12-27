@@ -28,6 +28,12 @@ export class ApplicationPaths {
    */
   #workspacePath = undefined;
 
+  /** 
+   * The path to the application state file where other than "settings" preferences are stored.
+   * @type {string}
+   */
+  #stateFile = undefined;
+
   get settingsFile() {
     return this.#settingsFile;
   }
@@ -38,6 +44,10 @@ export class ApplicationPaths {
 
   get themesSettings() {
     return this.#themesSettings;
+  }
+
+  get stateFile() {
+    return this.#stateFile;
   }
 
   /**
@@ -86,7 +96,7 @@ export class ApplicationPaths {
 
   /**
    * Initializes settings file location in the application.
-   * @param {string} file Settings file location.
+   * @param {string=} file Settings file location.
    */
   setSettingsFile(file) {
     let loc = file;
@@ -127,7 +137,7 @@ export class ApplicationPaths {
 
   /**
    * Sets locations related to themes
-   * @param {string} themesPath A path to the themes directory
+   * @param {string=} themesPath A path to the themes directory
    * @param {string=} [themesSettingsFile='themes-info.json'] A path to the themes settings file.
    */
   setThemesPath(themesPath, themesSettingsFile='themes-info.json') {
@@ -170,5 +180,28 @@ export class ApplicationPaths {
     }
     process.env.ARC_WORKSPACE_PATH = this.#workspacePath;
     logger.debug(`ARC_WORKSPACE_PATH is set to: ${process.env.ARC_WORKSPACE_PATH}`);
+  }
+
+  /**
+   * Initializes state file location in the application.
+   * @param {string=} file State file location.
+   */
+  setStateFile(file) {
+    let loc = file;
+    if (loc) {
+      loc = this.resolvePath(loc);
+      const dir = path.dirname(loc);
+      try {
+        fs.ensureDirSync(dir);
+        this.#stateFile = loc;
+      } catch (_) {
+        logger.error(`Insufficient permission to state file folder "${dir}".`);
+      }
+    }
+    if (!this.#stateFile) {
+      this.#stateFile = path.join(process.env.ARC_HOME, 'state.json');
+    }
+    process.env.ARC_STATE_FILE = this.#stateFile;
+    logger.debug(`ARC_STATE_FILE is set to: ${process.env.ARC_STATE_FILE}`);
   }
 }
