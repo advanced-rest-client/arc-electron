@@ -38,6 +38,7 @@ import '../../../../web_modules/@advanced-rest-client/arc-request-ui/request-met
 import '../../../../web_modules/@advanced-rest-client/bottom-sheet/bottom-sheet.js';
 import '../../../../web_modules/@advanced-rest-client/arc-icons/arc-icon.js';
 import '../../../../web_modules/@anypoint-web-components/anypoint-input/anypoint-masked-input.js';
+import '../../../../web_modules/@advanced-rest-client/host-rules-editor/host-rules-editor.js';
 import { Request } from './Request.js';
 import { ContextMenu } from '../context-menu/ContextMenu.js';
 import { ContextMenuStyles } from '../context-menu/ContextMenu.styles.js';
@@ -126,6 +127,7 @@ const metaRequestHandler = Symbol('metaRequestHandler');
 const requestMetaCloseHandler = Symbol('requestMetaCloseHandler');
 const externalNavigationHandler = Symbol('externalNavigationHandler');
 const contextCommandHandler = Symbol('contextCommandHandler');
+const hostRulesTemplate = Symbol('hostRulesTemplate');
 
 /**
  * A routes that does not go through the router and should not be remembered in the history.
@@ -174,6 +176,10 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     {
       name: 'settings',
       pattern: 'settings'
+    },
+    {
+      name: 'hosts',
+      pattern: 'hosts'
     },
     {
       name: 'project',
@@ -759,7 +765,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       case 'open-history': navigate('history'); break;
       case 'open-drive': navigate('google-drive'); break;
       case 'open-cookie-manager': navigate('cookie-manager'); break;
-      case 'open-hosts-editor': navigate('hosts-editor'); break;
+      case 'open-hosts-editor': navigate('hosts'); break;
       case 'open-themes': navigate('themes'); break;
       case 'open-client-certificates': navigate('client-certificates'); break;
       case 'open-requests-workspace': navigate('workspace'); break;
@@ -1317,6 +1323,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       ${this[cookieManagerScreenTemplate](route)}
       ${this[settingsScreenTemplate](route)}
       ${this[importInspectorTemplate](route)}
+      ${this[hostRulesTemplate](route)}
       ${this[requestDetailTemplate]()}
       ${this[requestMetaTemplate]()}
     </main>
@@ -1537,5 +1544,22 @@ export class AdvancedRestClientApplication extends ApplicationPage {
         @close="${this[requestMetaCloseHandler]}"
       ></request-meta-editor>
     </bottom-sheet>`;
+  }
+
+  /**
+   * @param {string} route The current route
+   * @returns {TemplateResult|string} The template for the host rules mapping element
+   */
+  [hostRulesTemplate](route) {
+    if (route !== 'hosts') {
+      return '';
+    }
+    const { compatibility } = this;
+    return html`
+    <host-rules-editor
+      ?compatibility="${compatibility}"
+      class="screen scroll"
+    ></host-rules-editor>
+    `;
   }
 }
