@@ -20,6 +20,10 @@ export class ThemeManager {
     return '@advanced-rest-client/arc-electron-anypoint-theme';
   }
 
+  static get darkTheme() {
+    return '@advanced-rest-client/arc-electron-dark-theme';
+  }
+
   constructor() {
     this[themeActivatedHandler] = this[themeActivatedHandler].bind(this);
   }
@@ -148,5 +152,12 @@ export class ThemeManager {
     link.setAttribute('type', 'text/css');
     link.setAttribute('href', `themes://${themeId}`);
     document.head.appendChild(link);
+  }
+
+  /**
+   * @param {boolean} ignore Whether to ignore the system preferences for dark / light theme.
+   */
+  async setIgnoreSystemPreferences(ignore) {
+    return ipc.invoke('theme-manager-update-property', 'ignoreSystemPreference', ignore);
   }
 }

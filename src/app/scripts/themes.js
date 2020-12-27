@@ -6,6 +6,7 @@ import '../../../web_modules/@anypoint-web-components/anypoint-listbox/anypoint-
 import '../../../web_modules/@anypoint-web-components/anypoint-item/anypoint-item.js';
 import '../../../web_modules/@anypoint-web-components/anypoint-item/anypoint-icon-item.js';
 import '../../../web_modules/@anypoint-web-components/anypoint-input/anypoint-input.js';
+import '../../../web_modules/@anypoint-web-components/anypoint-switch/anypoint-switch.js';
 import '../../../web_modules/@advanced-rest-client/arc-icons/arc-icon.js';
 
 /** @typedef {import('@advanced-rest-client/arc-types').Themes.InstalledTheme} InstalledTheme */
@@ -39,10 +40,12 @@ export class ThemesScreen extends ApplicationPage {
     super();
 
     this.initObservableProperties(
-      'themes', 'activeTheme', 'installPending', 'compatibility'
+      'themes', 'activeTheme', 'installPending', 'compatibility',
+      'ignoreSystemPreference',
     );
     this.compatibility = false;
     this.installPending = false;
+    this.ignoreSystemPreference = false;
     /**
      * @type {string}
      */
@@ -69,7 +72,7 @@ export class ThemesScreen extends ApplicationPage {
       this.reportCriticalError('Unable to read application themes list.');
       return;
     }
-    const { kind, themes, active } = info;
+    const { kind, themes, active, ignoreSystemPreference } = info;
     if (kind !== 'ARC#ThemeInfo') {
       this.reportCriticalError('Unknown themes settings format.');
       return;
@@ -77,14 +80,22 @@ export class ThemesScreen extends ApplicationPage {
     this.themes = themes;
     this.activeTheme = active || defaultTheme;
     this.compatibility = this.activeTheme === '@advanced-rest-client/arc-electron-anypoint-theme';
+    this.ignoreSystemPreference = ignoreSystemPreference || false;
   }
 
   /**
    * Loads the current theme.
    */
   async loadTheme() {
+    const search = new URLSearchParams(window.location.search);
+    const dt = search.get('darkMode');
+    const hasSystemDarkMode = dt === 'true';
+    let theme = this.activeTheme;
+    if (hasSystemDarkMode && !this.ignoreSystemPreference) {
+      theme = ThemeManager.darkTheme;
+    }
     try {
-      await this.manager.loadTheme(this.activeTheme);
+      await this.manager.loadTheme(theme);
     } catch (e) {
       this.logger.error(e);
     }
@@ -147,11 +158,26 @@ export class ThemesScreen extends ApplicationPage {
     this.installPending = false;
   }
 
+  async _ignoreSysPrefChange(e) {
+    const {checked} = e.target;
+    if (checked === this.ignoreSystemPreference) {
+      return;
+    }
+    this.ignoreSystemPreference = checked;
+    try {
+      await this.manager.setIgnoreSystemPreferences(checked);
+    } catch (error) {
+      this.reportCriticalError(error.message);
+      this.ignoreSystemPreference = !checked;
+    }
+  }
+
   appTemplate() {
     return html`
     ${this.headerTemplate()}
     <section class="themes-content">
       ${this.selectorTemplate()}
+      ${this.ignoreSystemPrefsTemplate()}
       ${this.addTemplate()}
     </section>
     `;
@@ -237,6 +263,17 @@ export class ThemesScreen extends ApplicationPage {
     >
       <arc-icon icon="deleteIcon"></arc-icon>
     </anypoint-icon-button>`;
+  }
+
+  ignoreSystemPrefsTemplate() { 
+    const { ignoreSystemPreference } = this;
+    return html`
+    <div class="ignore-system-prefs">
+      <anypoint-switch .checked="${ignoreSystemPreference}" @change="${this._ignoreSysPrefChange}">
+        Ignore system preferences
+      </anypoint-switch>
+    </div>
+    `;
   }
 
   /**

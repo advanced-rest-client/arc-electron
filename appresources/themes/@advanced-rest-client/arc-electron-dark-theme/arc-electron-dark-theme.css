@@ -56,6 +56,7 @@ body {
   --anypoint-item-focused-background-color: #212121;
   --anypoint-autocomplete-background-color: #494949;
   --anypoint-icon-button-emphasis-low-color: #c5c5c5;
+  --anypoint-item-before-background: transparent;
 
   --anypoint-button-emphasis-low-hover-background-color: #616161;
   --anypoint-button-emphasis-low-focus-background-color: var(--anypoint-button-emphasis-low-hover-background-color);

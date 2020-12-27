@@ -29,6 +29,7 @@ export class ThemeManager {
     this.activateTheme = this.activateTheme.bind(this);
     this.installTheme = this.installTheme.bind(this);
     this.uninstallTheme = this.uninstallTheme.bind(this);
+    this.updatePropertyHandler = this.updatePropertyHandler.bind(this);
 
     this.manager = new ThemePluginsManager();
     if (!skipUpdateCheck) {
@@ -53,6 +54,7 @@ export class ThemeManager {
     ipcMain.handle('theme-manager-activate-theme', this.activateTheme);
     ipcMain.handle('theme-manager-install-theme', this.installTheme);
     ipcMain.handle('theme-manager-uninstall-theme', this.uninstallTheme);
+    ipcMain.handle('theme-manager-update-property', this.updatePropertyHandler);
   }
 
   /**
@@ -64,6 +66,7 @@ export class ThemeManager {
     ipcMain.removeHandler('theme-manager-activate-theme');
     ipcMain.removeHandler('theme-manager-install-theme');
     ipcMain.removeHandler('theme-manager-uninstall-theme');
+    ipcMain.removeHandler('theme-manager-update-property');
   }
 
   /**
@@ -169,5 +172,15 @@ export class ThemeManager {
     } catch (e) {
       logger.error(e);
     }
+  }
+
+  /**
+   * @param {any} e 
+   * @param {string} path The path to the value
+   * @param {any} value The value to set.
+   * @returns {Promise<void>} 
+   */
+  async updatePropertyHandler(e, path, value) {
+    await this.themeInfo.setProperty(path, value);
   }
 }

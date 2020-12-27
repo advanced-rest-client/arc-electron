@@ -400,7 +400,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     this.config = cnf;
     this.setConfigVariables(cnf);
     
-    await this.loadTheme();
+    await this.loadTheme(init.darkMode);
     this.workspace.id = init.workspaceId;
     let state = /** @type ARCState */(null);
     try {
@@ -588,11 +588,17 @@ export class AdvancedRestClientApplication extends ApplicationPage {
   /**
    * Loads the current theme.
    */
-  async loadTheme() {
-    const info = await this.themeProxy.readActiveThemeInfo();
+  async loadTheme(isDarkMode) {
+    const settings = await this.themeProxy.readState();
+    let theme;
+    if (isDarkMode && !settings.ignoreSystemPreference) {
+      theme = ThemeManager.darkTheme;
+    } else {
+      const info = await this.themeProxy.readActiveThemeInfo();
+      theme = info && info.name;
+    }
     try {
-      const id = info && info.name;
-      await this.themeProxy.loadTheme(id);
+      await this.themeProxy.loadTheme(theme);
     } catch (e) {
       this.logger.error(e);
     }

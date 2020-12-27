@@ -119,4 +119,15 @@ export class ThemeInfo extends ArcPreferences {
       themes: [],
     });
   }
+
+  /**
+   * Updates a property on the model without any side effects
+   * @param {string} path The path to the value
+   * @param {any} value The value to set
+   */
+  async setProperty(path, value) {
+    const data = await this.load();
+    this.updateValue(data, path, value);
+    await this.store();
+  }
 }
