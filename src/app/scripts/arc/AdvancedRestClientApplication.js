@@ -39,6 +39,7 @@ import '../../../../web_modules/@advanced-rest-client/bottom-sheet/bottom-sheet.
 import '../../../../web_modules/@advanced-rest-client/arc-icons/arc-icon.js';
 import '../../../../web_modules/@anypoint-web-components/anypoint-input/anypoint-masked-input.js';
 import '../../../../web_modules/@advanced-rest-client/host-rules-editor/host-rules-editor.js';
+import '../../../../web_modules/@advanced-rest-client/google-drive-browser/google-drive-browser.js';
 import { Request } from './Request.js';
 import { ContextMenu } from '../context-menu/ContextMenu.js';
 import { ContextMenuStyles } from '../context-menu/ContextMenu.styles.js';
@@ -48,7 +49,7 @@ import { getTabClickIndex } from './Utils.js';
 // @ts-ignore
 document.adoptedStyleSheets = document.adoptedStyleSheets.concat(ContextMenuStyles.styleSheet);
 
-/* global PreferencesProxy, OAuth2Handler, WindowManagerProxy, ThemeManager, logger, EncryptionService, WorkspaceManager, ipc, CookieBridge, ImportFilePreProcessor, FilesystemProxy, ApplicationSearchProxy, AppStateProxy */
+/* global PreferencesProxy, OAuth2Handler, WindowManagerProxy, ThemeManager, logger, EncryptionService, WorkspaceManager, ipc, CookieBridge, ImportFilePreProcessor, FilesystemProxy, ApplicationSearchProxy, AppStateProxy, GoogleDriveProxy */
 
 /** @typedef {import('../../../preload/PreferencesProxy').PreferencesProxy} PreferencesProxy */
 /** @typedef {import('../../../preload/WindowProxy').WindowProxy} WindowManagerProxy */
@@ -77,6 +78,7 @@ document.adoptedStyleSheets = document.adoptedStyleSheets.concat(ContextMenuStyl
 /** @typedef {import('../../../../web_modules/@advanced-rest-client/arc-request-ui').ArcRequestWorkspaceElement} ArcRequestWorkspaceElement */
 /** @typedef {import('../../../../web_modules/@advanced-rest-client/arc-menu').ArcMenuElement} ArcMenuElement */
 /** @typedef {import('../context-menu/interfaces').ExecuteOptions} ExecuteOptions */
+/** @typedef {import('@advanced-rest-client/arc-types').Authorization.OAuth2Authorization} OAuth2Authorization */
 
 const unhandledRejectionHandler = Symbol('unhandledRejectionHandler');
 const headerTemplate = Symbol('headerTemplate');
@@ -130,6 +132,8 @@ const externalNavigationHandler = Symbol('externalNavigationHandler');
 const contextCommandHandler = Symbol('contextCommandHandler');
 const hostRulesTemplate = Symbol('hostRulesTemplate');
 const processApplicationState = Symbol('processApplicationState');
+const googleDriveTemplate = Symbol('googleDriveTemplate');
+const drivePickHandler = Symbol('googleDriveTemplate');
 
 /**
  * A routes that does not go through the router and should not be remembered in the history.
@@ -137,6 +141,21 @@ const processApplicationState = Symbol('processApplicationState');
 const HiddenRoutes = ['data-inspect'];
 
 export class AdvancedRestClientApplication extends ApplicationPage {
+  /**
+   * @returns {OAuth2Authorization}
+   */
+  get oauthConfig() {
+    return {
+      clientId: '1076318174169-u4a5d3j2v0tbie1jnjgsluqk1ti7ged3.apps.googleusercontent.com',
+      authorizationUri: 'https://accounts.google.com/o/oauth2/v2/auth',
+      redirectUri: 'https://auth.advancedrestclient.com/oauth2',
+      scopes: [
+        'https://www.googleapis.com/auth/drive.file',
+        'https://www.googleapis.com/auth/drive.install',
+      ],
+    }
+  }
+
   static get routes() {
     return [
     {
@@ -184,6 +203,10 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       pattern: 'hosts'
     },
     {
+      name: 'google-drive',
+      pattern: 'google-drive'
+    },
+    {
       name: 'project',
       pattern: 'project/(?<pid>[^/]*)/(?<action>.*)'
     },
@@ -228,6 +251,8 @@ export class AdvancedRestClientApplication extends ApplicationPage {
   search = new ApplicationSearchProxy();
 
   requestFactory = new Request();
+
+  gDrive = new GoogleDriveProxy();
 
   /**
    * @returns {ArcRequestWorkspaceElement}
@@ -283,7 +308,8 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       'listType', 'detailedSearch', 'currentEnvironment',
       'workspaceSendButton', 'workspaceProgressInfo', 'workspaceBodyEditor', 'workspaceAutoEncode',
       'navigationWidth',
-      'requestDetailsOpened', 'requestMetaOpened', 'metaRequestId', 'metaRequestType'
+      'requestDetailsOpened', 'requestMetaOpened', 'metaRequestId', 'metaRequestType',
+      'driveToken',
     );
 
     /** 
@@ -382,6 +408,8 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     this.requestMetaOpened = false;
     this.metaRequestId = undefined;
     this.metaRequestType = undefined;
+
+    this.driveToken = undefined;
   }
 
   async initialize() {
@@ -516,6 +544,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     this.fs.listen();
     this.search.listen();
     this.requestFactory.listen();
+    this.gDrive.listen();
     this.#contextMenu.connect();
     this.#contextMenu.registerCommands(ContextMenuCommands);
     this.#contextMenu.registerCallback(this[contextCommandHandler].bind(this));
@@ -644,6 +673,19 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     }
     const { name } = result.route;
     this.route = name;
+    if (name === 'google-drive') {
+      this.requestGoogleDriveToken();
+    }
+  }
+
+  async requestGoogleDriveToken() {
+    const cnf = this.oauthConfig;
+    cnf.interactive = true;
+    const auth = await this.oauth2Proxy.requestToken(cnf);
+    if (!auth) {
+      return;
+    }
+    this.driveToken = auth.accessToken;
   }
 
   /**
@@ -938,29 +980,39 @@ export class AdvancedRestClientApplication extends ApplicationPage {
         throw new Error(`Implement API processing`);
       }
       const contents = factory.readContents();
-      const decrypted = await this.decryptIfNeeded(contents);
-      const data = JSON.parse(decrypted);
-      if (data.swagger) {
-        throw new Error(`Implement API processing`);
-      }
-      const processor = new ImportNormalize();
-      const normalized = await processor.normalize(data);
-
-      if (isSingleRequest(data)) {
-        WorkspaceEvents.appendRequest(document.body, data);
-        return;
-      }
-      if (data.loadToWorkspace) {
-        WorkspaceEvents.appendExport(document.body, data);
-        return;
-      }
-      this.route = 'data-inspect';
-      this[inspectDataValue] = data;
-      this.render();
+      await this.processExternalData(contents);
     } catch (cause) {
       this.logger.error(cause);
       this.reportCriticalError(cause);
     }
+  }
+
+  /**
+   * Process file contents after importing it to the application.
+   * @param {string} contents
+   */
+  async processExternalData(contents) {
+    const decrypted = await this.decryptIfNeeded(contents);
+    const data = JSON.parse(decrypted);
+    if (data.swagger) {
+      throw new Error(`Implement API processing`);
+    }
+    const processor = new ImportNormalize();
+    const normalized = await processor.normalize(data);
+
+    if (isSingleRequest(normalized)) {
+      const insert = Array.isArray(normalized.requests) ? normalized.requests[0] : data;
+      WorkspaceEvents.appendRequest(document.body, insert);
+      return;
+    }
+    
+    if (normalized.loadToWorkspace) {
+      WorkspaceEvents.appendExport(document.body, normalized);
+      return;
+    }
+    this.route = 'data-inspect';
+    this[inspectDataValue] = normalized;
+    this.render();
   }
 
   /**
@@ -1016,8 +1068,11 @@ export class AdvancedRestClientApplication extends ApplicationPage {
    */
   [mainNavigateHandler](e, type, args) {
     switch (type) {
+      // @ts-ignore
       case 'request': ArcNavigationEvents.navigateRequest(document.body, ...args); break;
+      // @ts-ignore
       case 'project': ArcNavigationEvents.navigateProject(document.body, ...args); break;
+      // @ts-ignore
       case 'navigate': ArcNavigationEvents.navigate(document.body, ...args); break;
       default:
     }
@@ -1200,6 +1255,20 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     this[prop] = e.detail.value;
   }
 
+  /**
+   * @param {CustomEvent} e
+   */
+  async [drivePickHandler](e) {
+    const id = e.detail;
+    try {
+      const result = await this.gDrive.getFile(id);
+      await this.processExternalData(result);
+    } catch (cause) {
+      this.logger.error(cause);
+      this.reportCriticalError(cause);
+    }
+  }
+
   appTemplate() {
     const { initializing } = this;
     if (initializing) {
@@ -1349,6 +1418,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       ${this[settingsScreenTemplate](route)}
       ${this[importInspectorTemplate](route)}
       ${this[hostRulesTemplate](route)}
+      ${this[googleDriveTemplate](route)}
       ${this[requestDetailTemplate]()}
       ${this[requestMetaTemplate]()}
     </main>
@@ -1585,6 +1655,26 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       ?compatibility="${compatibility}"
       class="screen scroll"
     ></host-rules-editor>
+    `;
+  }
+
+  /**
+   * @param {string} route The current route
+   * @returns {TemplateResult|string} The template for the host rules mapping element
+   */
+  [googleDriveTemplate](route) {
+    if (route !== 'google-drive') {
+      return '';
+    }
+    const { compatibility } = this;
+    // mimeType="application/restclient+data"
+    return html`
+    <google-drive-browser
+      ?compatibility="${compatibility}"
+      .accessToken="${this.driveToken}"
+      @pick="${this[drivePickHandler]}"
+      class="screen scroll"
+    ></google-drive-browser>
     `;
   }
 }

@@ -66,6 +66,7 @@ export default async function start(startTime) {
   // @ts-ignore
   global.shellStartTime = startTime;
   app.commandLine.appendSwitch('enable-experimental-web-platform-features');
+  app.commandLine.appendSwitch('disable-features', 'OutOfBlinkCors');
 
   process.on('uncaughtException', (error) => {
     if (error.message) {

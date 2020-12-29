@@ -12,6 +12,7 @@ import { ImportFilePreProcessor } from './ImportFilePreProcessor.js';
 import { FilesystemProxy } from './FilesystemProxy.js';
 import { ApplicationSearchProxy } from './ApplicationSearchProxy.js';
 import { AppStateProxy } from './AppStateProxy.js';
+import { GoogleDriveProxy } from './GoogleDriveProxy.js';
 
 const env = {};
 const APP_VERSION = process.env.npm_package_version;
@@ -53,6 +54,8 @@ process.once('loaded', () => {
   global.FilesystemProxy = FilesystemProxy;
   // @ts-ignore
   global.ApplicationSearchProxy = ApplicationSearchProxy;
+  // @ts-ignore
+  global.GoogleDriveProxy = GoogleDriveProxy;
   global.ipc = ipcRenderer;
   global.clipboard = clipboard;
 

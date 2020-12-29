@@ -1,4 +1,5 @@
 import { Cookie } from 'electron';
+import { OAuth2Authorization } from '@advanced-rest-client/electron-oauth2';
 
 /**
  * Configuration for an application config option.
@@ -170,4 +171,74 @@ export interface ElectronCookieChangeRecord {
    * `true` if the cookie was removed, `false` otherwise.
    */
   removed: boolean;
+}
+
+
+export interface DriveExportInit {
+  /**
+   * Default mime type for a file if not defined when updating.
+   */
+  mime?: string;
+  fileDescription?: string;
+  fileType?: string;
+}
+
+export interface SaveDriveFileOptions {
+  /**
+   * Optional name of the parent folder
+   */
+  parent?: string;
+  /**
+   * Google Drive file id to update. Used when updating a file.
+   */
+  id?: string;
+  /**
+   * Google Drive file resource values. See Google Drive API documentation for details.
+   */
+  meta?: FileResource;
+  /**
+   * Authorization configuration to use when authorizing the request.
+   * If the `accessToken` property is set it skips authorization and uses this token instead.
+   * By default it expects `oauth2` configuration in the `package.json` file.
+   */
+  auth?: OAuth2Authorization;
+}
+
+export declare interface FileMedia {
+  mimeType: string;
+  body: string;
+}
+
+export declare interface FileResource {
+  description?: string;
+  parents?: string[];
+  /**
+   * The name of the file
+   */
+  name: string;
+  /**
+   * File content type. Defaults to `application/json`
+   */
+  mimeType?: string;
+}
+
+export declare interface AppFolderListResponse {
+  kind: 'drive#fileList';
+  incompleteSearch: boolean;
+  files: FolderListItem[];
+}
+
+export declare interface FolderListItem {
+  kind: 'drive#file';
+  id: string;
+  name: string;
+  mimeType: string;
+}
+
+export declare interface FileCreateItem {
+  kind: 'drive#file',
+  id: string;
+  name: string;
+  mimeType: string;
+  parents?: FolderListItem[];
 }

@@ -12,6 +12,7 @@ import { SessionManager } from './SessionManager.js';
 import { ContentSearchService } from './ContentSearchService.js';
 import { AppPrompts } from './AppPrompts.js';
 import { AppStateManager } from './AppStateManager.js';
+import { GoogleDrive } from './GoogleDrive.js';
 
 /** @typedef {import('../types').ApplicationOptionsConfig} ApplicationOptionsConfig */
 /** @typedef {import('../types').ProtocolFile} ProtocolFile */
@@ -42,6 +43,7 @@ export class ArcEnvironment {
     this.initializeSessionManager();
     this.initializeSearchService();
     this.initializePrompts();
+    this.initializeGoogleDrive();
 
     app.on('activate', () => this.activateHandler.bind(this));
     app.on('window-all-closed', this.allClosedHandler.bind(this));
@@ -140,6 +142,11 @@ export class ArcEnvironment {
   initializePrompts() {
     this.prompts = new AppPrompts();
     this.prompts.listen();
+  }
+
+  initializeGoogleDrive() {
+    this.gDrive = new GoogleDrive();
+    this.gDrive.listen();
   }
 
   /**

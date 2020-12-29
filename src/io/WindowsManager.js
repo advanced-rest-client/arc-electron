@@ -249,7 +249,7 @@ export class WindowsManager {
    * Opens ARC application window with path set to file action.
    *
    * @param {ProtocolFile} options Action configuration.
-   * @return {Promise<void>}
+   * @return {Promise<Electron.BrowserWindow|undefined>}
    */
   async openWithAction(options) {
     if (!options) {
@@ -277,6 +277,7 @@ export class WindowsManager {
         nativeWindowOpen: true,
         nodeIntegration: false,
         contextIsolation: false,
+        webSecurity: false,
       },
     });
     if (preload) {

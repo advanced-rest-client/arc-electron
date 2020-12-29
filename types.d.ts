@@ -11,6 +11,7 @@ import { ImportFilePreProcessor as ImportFilePreProcessorBase } from "./src/prel
 import { FilesystemProxy as FilesystemProxyBase } from "./src/preload/FilesystemProxy";
 import { ApplicationSearchProxy as ApplicationSearchProxyBase } from "./src/preload/ApplicationSearchProxy";
 import { AppStateProxy as AppStateProxyBase } from "./src/preload/AppStateProxy";
+import { GoogleDriveProxy as GoogleDriveProxyBase } from "./src/preload/GoogleDriveProxy";
 import logger from "electron-log";
 
 // declare global {
@@ -39,4 +40,5 @@ declare global {
   class ImportFilePreProcessor extends ImportFilePreProcessorBase {}
   class FilesystemProxy extends FilesystemProxyBase {}
   class ApplicationSearchProxy extends ApplicationSearchProxyBase {}
+  class GoogleDriveProxy extends GoogleDriveProxyBase {}
 }
