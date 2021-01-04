@@ -3,7 +3,7 @@ import { BrowserWindow, ipcMain, shell, nativeTheme } from 'electron';
 import path from 'path';
 import url from 'url';
 import { v4 } from 'uuid';
-import { MainWindowPersist } from './Constants.js';
+import { MainWindowPersist, AppHostname } from './Constants.js';
 import { logger } from './Logger.js';
 import { ArcSessionRecorder } from './ArcSessionRecorder.js';
 import { WindowsPersistance } from './WindowsPersistance.js';
@@ -311,7 +311,7 @@ export class WindowsManager {
       params.darkMode = String(nativeTheme.shouldUseDarkColors);
     }
     const full = url.format({
-      hostname: 'advanced-rest-client',
+      hostname: AppHostname,
       pathname: `/src/app/${page}`,
       // loads the entire page on the esm protocol so all assets are served through it
       // TODO: ARC <16 uses the `file:` protocol and does not use host name. An adapter is needed to be shipped

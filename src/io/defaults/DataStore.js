@@ -2,7 +2,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import url from 'url';
 import { BrowserWindow, ipcMain, app } from 'electron';
-import { MainWindowPersist } from '../Constants.js';
+import { AppHostname, MainWindowPersist } from '../Constants.js';
 import { logger } from '../Logger.js';
 
 /** @typedef {import('../WindowsManager').WindowsManager} WindowsManager */
@@ -98,7 +98,7 @@ export class DataStore {
    */
   openReceiverWindow(bw) {
     const full = url.format({
-      hostname: 'advanced-rest-client',
+      hostname: AppHostname,
       pathname: `/io/defaults/db-receiver.html`,
       protocol: 'web-module:',
       slashes: true,
