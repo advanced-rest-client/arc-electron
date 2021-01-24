@@ -87,23 +87,6 @@ class ArcInit {
     }
   }
 
-  
-  /**
-   * Handles action performed in main thread (menu action) related to
-   * a request.
-   *
-   * @param {EventEmitter} e
-   * @param {String} action Action name to perform.
-   */
-  execRequestAction(e, action, ...args) {
-    switch (action) {
-      case 'save-as':
-        // app.saveOpened();
-        break;
-      default:
-    }
-  }
-
   async processInitialPath() {
     const {startPath} = this.initConfig;
     if (!startPath) {

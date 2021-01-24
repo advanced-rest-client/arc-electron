@@ -1,5 +1,6 @@
 import { ElectronRequest as ElectronRequestBase, SocketRequest as SocketRequestBase } from "@advanced-rest-client/electron-request";
 import { OAuth2Handler as OAuth2HandlerBase } from "@advanced-rest-client/electron-oauth2/renderer/OAuth2Handler";
+import { ElectronAmfService as ElectronAmfServiceBase } from "@advanced-rest-client/electron-amf-service";
 import { Clipboard, IpcRenderer } from "electron";
 import { CookieBridge as CookieBridgeBase } from "./src/preload/CookieBridge";
 import { EncryptionService as EncryptionServiceBase } from "./src/preload/EncryptionService";
@@ -41,4 +42,5 @@ declare global {
   class FilesystemProxy extends FilesystemProxyBase {}
   class ApplicationSearchProxy extends ApplicationSearchProxyBase {}
   class GoogleDriveProxy extends GoogleDriveProxyBase {}
+  class ElectronAmfService extends ElectronAmfServiceBase {}
 }

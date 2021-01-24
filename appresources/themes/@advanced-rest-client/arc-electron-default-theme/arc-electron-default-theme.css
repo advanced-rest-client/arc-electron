@@ -46,6 +46,9 @@ body {
   /* shadows */
   --box-shadow-6dp: 0 19px 38px rgba(0,0,0,0.30), 0 15px 12px rgba(0,0,0,0.22);
 
+  /* Code editors */
+  --code-background-color: #f5f2f0;
+
   /* HTTP method colors */
   --http-get-color: rgba(0, 128, 0, 0.74);
   --http-post-color: rgba(33, 150, 243, 0.74);

@@ -277,7 +277,7 @@ export class WindowsManager {
         nativeWindowOpen: true,
         nodeIntegration: false,
         contextIsolation: false,
-        webSecurity: false,
+        // webSecurity: false,
       },
     });
     if (preload) {

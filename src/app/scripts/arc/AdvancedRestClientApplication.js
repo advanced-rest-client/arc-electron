@@ -1,9 +1,9 @@
 /* eslint-disable no-unused-vars */
 import { ApplicationPage } from '../../ApplicationPage.js';
-import { findRoute, navigate } from '../lib/route.js';
+import { findRoute, navigate, navigatePage } from '../lib/route.js';
 import { html } from '../../../../web_modules/lit-html/lit-html.js';
 import { MonacoLoader } from '../../../../web_modules/@advanced-rest-client/monaco-support/index.js';
-import { ArcNavigationEventTypes, ProjectActions, ConfigEventTypes, DataImportEventTypes, WorkspaceEvents, ImportEvents, WorkspaceEventTypes, ArcNavigationEvents } from '../../../../web_modules/@advanced-rest-client/arc-events/index.js';
+import { ArcNavigationEventTypes, ProjectActions, ConfigEventTypes, DataImportEventTypes, WorkspaceEvents, ImportEvents, WorkspaceEventTypes, ArcNavigationEvents, RestApiEventTypes } from '../../../../web_modules/@advanced-rest-client/arc-events/index.js';
 import { ArcModelEvents, ArcModelEventTypes, ImportFactory, ImportNormalize, isSingleRequest } from '../../../../web_modules/@advanced-rest-client/arc-models/index.js';
 import { ModulesRegistry, RequestCookies } from '../../../../web_modules/@advanced-rest-client/request-engine/index.js';
 import { classMap } from '../../../../web_modules/lit-html/directives/class-map.js';
@@ -40,6 +40,9 @@ import '../../../../web_modules/@advanced-rest-client/arc-icons/arc-icon.js';
 import '../../../../web_modules/@anypoint-web-components/anypoint-input/anypoint-masked-input.js';
 import '../../../../web_modules/@advanced-rest-client/host-rules-editor/host-rules-editor.js';
 import '../../../../web_modules/@advanced-rest-client/google-drive-browser/google-drive-browser.js';
+import '../../../../web_modules/@api-components/api-navigation/api-navigation.js';
+// import '../../../../web_modules/@api-components/api-request-panel/api-request-panel.js';
+// import '../../../../web_modules/@api-components/api-documentation/api-documentation.js';
 import { Request } from './Request.js';
 import { ContextMenu } from '../context-menu/ContextMenu.js';
 import { ContextMenuStyles } from '../context-menu/ContextMenu.styles.js';
@@ -49,7 +52,7 @@ import { getTabClickIndex } from './Utils.js';
 // @ts-ignore
 document.adoptedStyleSheets = document.adoptedStyleSheets.concat(ContextMenuStyles.styleSheet);
 
-/* global PreferencesProxy, OAuth2Handler, WindowManagerProxy, ThemeManager, logger, EncryptionService, WorkspaceManager, ipc, CookieBridge, ImportFilePreProcessor, FilesystemProxy, ApplicationSearchProxy, AppStateProxy, GoogleDriveProxy */
+/* global PreferencesProxy, OAuth2Handler, WindowManagerProxy, ThemeManager, logger, EncryptionService, WorkspaceManager, ipc, CookieBridge, ImportFilePreProcessor, FilesystemProxy, ApplicationSearchProxy, AppStateProxy, GoogleDriveProxy, ElectronAmfService */
 
 /** @typedef {import('../../../preload/PreferencesProxy').PreferencesProxy} PreferencesProxy */
 /** @typedef {import('../../../preload/WindowProxy').WindowProxy} WindowManagerProxy */
@@ -66,6 +69,7 @@ document.adoptedStyleSheets = document.adoptedStyleSheets.concat(ContextMenuStyl
 /** @typedef {import('@advanced-rest-client/arc-types').ArcState.ARCState} ARCState */
 /** @typedef {import('@advanced-rest-client/arc-events').ARCRequestNavigationEvent} ARCRequestNavigationEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ARCProjectNavigationEvent} ARCProjectNavigationEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCRestApiNavigationEvent} ARCRestApiNavigationEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ARCMenuPopupEvent} ARCMenuPopupEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ARCNavigationEvent} ARCNavigationEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ARCExternalNavigationEvent} ARCExternalNavigationEvent */
@@ -73,12 +77,14 @@ document.adoptedStyleSheets = document.adoptedStyleSheets.concat(ContextMenuStyl
 /** @typedef {import('@advanced-rest-client/arc-events').ArcImportInspectEvent} ArcImportInspectEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').WorkspaceAppendRequestEvent} WorkspaceAppendRequestEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').WorkspaceAppendExportEvent} WorkspaceAppendExportEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').RestApiProcessFileEvent} RestApiProcessFileEvent */
 /** @typedef {import('@advanced-rest-client/arc-models').IndexableRequest} IndexableRequest */
 /** @typedef {import('@advanced-rest-client/arc-models').ARCEnvironmentStateSelectEvent} ARCEnvironmentStateSelectEvent */
 /** @typedef {import('../../../../web_modules/@advanced-rest-client/arc-request-ui').ArcRequestWorkspaceElement} ArcRequestWorkspaceElement */
 /** @typedef {import('../../../../web_modules/@advanced-rest-client/arc-menu').ArcMenuElement} ArcMenuElement */
 /** @typedef {import('../context-menu/interfaces').ExecuteOptions} ExecuteOptions */
 /** @typedef {import('@advanced-rest-client/arc-types').Authorization.OAuth2Authorization} OAuth2Authorization */
+/** @typedef {import('@advanced-rest-client/electron-amf-service/types').ApiParseResult} ApiParseResult */
 
 const unhandledRejectionHandler = Symbol('unhandledRejectionHandler');
 const headerTemplate = Symbol('headerTemplate');
@@ -88,6 +94,7 @@ const navigationTemplate = Symbol('navigationTemplate');
 const navigateRequestHandler = Symbol('navigateRequestHandler');
 const navigateHandler = Symbol('navigateHandler');
 const navigateProjectHandler = Symbol('navigateProjectHandler');
+const navigateRestApiHandler = Symbol('navigateRestApiHandler');
 const popupMenuHandler = Symbol('popupMenuHandler');
 const mainBackHandler = Symbol('mainBackHandler');
 const historyPanelTemplate = Symbol('historyPanelTemplate');
@@ -134,6 +141,8 @@ const hostRulesTemplate = Symbol('hostRulesTemplate');
 const processApplicationState = Symbol('processApplicationState');
 const googleDriveTemplate = Symbol('googleDriveTemplate');
 const drivePickHandler = Symbol('googleDriveTemplate');
+const processApiFileHandler = Symbol('googleDriveTemplate');
+const arcNavigationTemplate = Symbol('arcNavigationTemplate');
 
 /**
  * A routes that does not go through the router and should not be remembered in the history.
@@ -253,6 +262,11 @@ export class AdvancedRestClientApplication extends ApplicationPage {
   requestFactory = new Request();
 
   gDrive = new GoogleDriveProxy();
+
+  /**
+   * Responsible for processing API data and producing AMF model consumed by the API Console.
+   */
+  apiParser = new ElectronAmfService();
 
   /**
    * @returns {ArcRequestWorkspaceElement}
@@ -552,6 +566,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     window.addEventListener(ArcNavigationEventTypes.navigateRequest, this[navigateRequestHandler].bind(this));
     window.addEventListener(ArcNavigationEventTypes.navigate, this[navigateHandler].bind(this));
     window.addEventListener(ArcNavigationEventTypes.navigateProject, this[navigateProjectHandler].bind(this));
+    window.addEventListener(ArcNavigationEventTypes.navigateRestApi, this[navigateRestApiHandler].bind(this));
     window.addEventListener(ArcNavigationEventTypes.popupMenu, this[popupMenuHandler].bind(this));
     window.addEventListener(ArcNavigationEventTypes.navigateExternal, this[externalNavigationHandler].bind(this));
     window.addEventListener(WorkspaceEventTypes.appendRequest, this[workspaceAppendRequestHandler].bind(this));
@@ -559,6 +574,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     window.addEventListener(ConfigEventTypes.State.update, this[configStateChangeHandler].bind(this));
     window.addEventListener(DataImportEventTypes.inspect, this[dataInspectHandler].bind(this));
     window.addEventListener(ArcModelEventTypes.Environment.State.select, this[environmentSelectedHandler].bind(this));
+    window.addEventListener(RestApiEventTypes.processFile, this[processApiFileHandler].bind(this));
     window.addEventListener('mousemove', this[resizeMouseMove].bind(this));
     window.addEventListener('mouseup', this[resizeMouseUp].bind(this));
     window.addEventListener('themeactivated', (e) => {
@@ -764,6 +780,14 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       // eslint-disable-next-line no-console
       console.warn('Unhandled project event', id, action, route);
     }
+  }
+
+  /**
+   * @param {ARCRestApiNavigationEvent} e
+   */
+  [navigateRestApiHandler](e) {
+    const { api, version } = e;
+    navigatePage('api-console.html', 'open', 'db', api, version);
   }
 
   /**
@@ -977,7 +1001,9 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       await factory.prepare();
       const isApiFile = await factory.isApiFile();
       if (isApiFile) {
-        throw new Error(`Implement API processing`);
+        const result = await this.apiParser.processBuffer(factory.buffer);
+        this.apiConsoleFromParser(result);
+        return;
       }
       const contents = factory.readContents();
       await this.processExternalData(contents);
@@ -995,7 +1021,9 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     const decrypted = await this.decryptIfNeeded(contents);
     const data = JSON.parse(decrypted);
     if (data.swagger) {
-      throw new Error(`Implement API processing`);
+      const result = await this.apiParser.processBuffer(Buffer.from(contents));
+      this.apiConsoleFromParser(result);
+      return;
     }
     const processor = new ImportNormalize();
     const normalized = await processor.normalize(data);
@@ -1013,6 +1041,14 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     this.route = 'data-inspect';
     this[inspectDataValue] = normalized;
     this.render();
+  }
+
+  /**
+   * @param {ApiParseResult} result
+   */
+  async apiConsoleFromParser(result) {
+    const id = await this.fs.storeApicModelTmp(result);
+    navigatePage('api-console.html', 'open', 'file', id);
   }
 
   /**
@@ -1269,6 +1305,15 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     }
   }
 
+  /**
+   * @param {RestApiProcessFileEvent} e
+   */
+  async [processApiFileHandler](e) {
+    const { file } = e;
+    const result = await this.apiParser.processApiFile(file);
+    this.apiConsoleFromParser(result);
+  }
+
   appTemplate() {
     const { initializing } = this;
     if (initializing) {
@@ -1356,17 +1401,12 @@ export class AdvancedRestClientApplication extends ApplicationPage {
   }
 
   /**
-   * @returns {TemplateResult|string} The template for the application main navigation
+   * @returns {TemplateResult|string} The template for the application main navigation area
    */
   [navigationTemplate]() {
     if (this.navigationDetached) {
       return '';
     }
-    const { compatibility, config, menuPopup } = this;
-    const hideHistory = menuPopup.includes('history-menu');
-    const hideSaved = menuPopup.includes('saved-menu');
-    const hideProjects = menuPopup.includes('projects-menu');
-    const hideApis = menuPopup.includes('rest-api-menu');
     const { navigationWidth } = this;
     const hasWidth = typeof navigationWidth === 'number';
     const classes = {
@@ -1383,20 +1423,34 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       class="${classMap(classes)}"
       style="${styleMap(styles)}"
     >
-      <arc-menu
-        ?compatibility="${compatibility}"
-        .listType="${this.listType}"
-        ?history="${this.historyEnabled}"
-        ?hideHistory="${hideHistory}"
-        ?hideSaved="${hideSaved}"
-        ?hideProjects="${hideProjects}"
-        ?hideApis="${hideApis}"
-        ?popup="${this.popupMenuEnabled}"
-        ?dataTransfer="${this.draggableEnabled}"
-        @minimized="${this[navMinimizedHandler]}"
-      ></arc-menu>
+      ${this[arcNavigationTemplate]()}
       <div class="nav-resize-rail" @mousedown="${this[navResizeMousedown]}"></div>
     </nav>
+    `;
+  }
+
+  /**
+   * @returns {TemplateResult} The template for the ARC navigation
+   */
+  [arcNavigationTemplate]() {
+    const { compatibility, menuPopup, listType, historyEnabled, popupMenuEnabled, draggableEnabled } = this;
+    const hideHistory = menuPopup.includes('history-menu');
+    const hideSaved = menuPopup.includes('saved-menu');
+    const hideProjects = menuPopup.includes('projects-menu');
+    const hideApis = menuPopup.includes('rest-api-menu');
+    return html`
+    <arc-menu
+      ?compatibility="${compatibility}"
+      .listType="${listType}"
+      ?history="${historyEnabled}"
+      ?hideHistory="${hideHistory}"
+      ?hideSaved="${hideSaved}"
+      ?hideProjects="${hideProjects}"
+      ?hideApis="${hideApis}"
+      ?popup="${popupMenuEnabled}"
+      ?dataTransfer="${draggableEnabled}"
+      @minimized="${this[navMinimizedHandler]}"
+    ></arc-menu>
     `;
   }
 

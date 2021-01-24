@@ -116,8 +116,9 @@ export class Request {
    * @param {RequestConfig=} config
    */
   async run(request, id, config={ enabled: false }) {
-    const rConf = request.config || {};
-    const finalConfig = this.prepareRequestOptions(config, rConf.enabled ? rConf : {});
+    const rConf = /** @type RequestConfig */ (request.config || {});
+    const configInit = rConf.enabled ? rConf : /** @type RequestConfig */ ({});
+    const finalConfig = this.prepareRequestOptions(config, configInit);
     if (request.clientCertificate) {
       finalConfig.clientCertificate = request.clientCertificate;
     }
