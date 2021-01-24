@@ -41,6 +41,7 @@ import '../../../../web_modules/@anypoint-web-components/anypoint-input/anypoint
 import '../../../../web_modules/@advanced-rest-client/host-rules-editor/host-rules-editor.js';
 import '../../../../web_modules/@advanced-rest-client/google-drive-browser/google-drive-browser.js';
 import '../../../../web_modules/@api-components/api-navigation/api-navigation.js';
+import '../../../../web_modules/@advanced-rest-client/exchange-search-panel/exchange-search-panel.js';
 // import '../../../../web_modules/@api-components/api-request-panel/api-request-panel.js';
 // import '../../../../web_modules/@api-components/api-documentation/api-documentation.js';
 import { Request } from './Request.js';
@@ -85,6 +86,7 @@ document.adoptedStyleSheets = document.adoptedStyleSheets.concat(ContextMenuStyl
 /** @typedef {import('../context-menu/interfaces').ExecuteOptions} ExecuteOptions */
 /** @typedef {import('@advanced-rest-client/arc-types').Authorization.OAuth2Authorization} OAuth2Authorization */
 /** @typedef {import('@advanced-rest-client/electron-amf-service/types').ApiParseResult} ApiParseResult */
+/** @typedef {import('@advanced-rest-client/exchange-search-panel/src/types').ExchangeAsset} ExchangeAsset */
 
 const unhandledRejectionHandler = Symbol('unhandledRejectionHandler');
 const headerTemplate = Symbol('headerTemplate');
@@ -140,9 +142,11 @@ const contextCommandHandler = Symbol('contextCommandHandler');
 const hostRulesTemplate = Symbol('hostRulesTemplate');
 const processApplicationState = Symbol('processApplicationState');
 const googleDriveTemplate = Symbol('googleDriveTemplate');
-const drivePickHandler = Symbol('googleDriveTemplate');
-const processApiFileHandler = Symbol('googleDriveTemplate');
+const drivePickHandler = Symbol('drivePickHandler');
+const processApiFileHandler = Symbol('processApiFileHandler');
 const arcNavigationTemplate = Symbol('arcNavigationTemplate');
+const exchangeSearchTemplate = Symbol('exchangeSearchTemplate');
+const exchangeSelectionHandler = Symbol('exchangeSelectionHandler');
 
 /**
  * A routes that does not go through the router and should not be remembered in the history.
@@ -1314,6 +1318,32 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     this.apiConsoleFromParser(result);
   }
 
+  /** 
+   * @param {CustomEvent} e
+   */
+  async [exchangeSelectionHandler](e) {
+    const asset = /** @type ExchangeAsset */ (e.detail);
+    let file;
+    const types = ['fat-raml', 'raml', 'oas'];
+    for (let i = 0, len = asset.files.length; i < len; i++) {
+      if (types.indexOf(asset.files[i].classifier) !== -1) {
+        file = asset.files[i];
+        break;
+      }
+    }
+    if (!file || !file.externalLink) {
+      this.reportCriticalError('RAML data not found in the asset.');
+      return;
+    }
+    const { externalLink, mainFile, md5, packaging } = file;
+    try {
+      const result = await this.apiParser.processApiLink(externalLink, mainFile, md5, packaging);
+      this.apiConsoleFromParser(result);
+    } catch (cause) {
+      this.reportCriticalError(cause.message);
+    }
+  }
+
   appTemplate() {
     const { initializing } = this;
     if (initializing) {
@@ -1460,7 +1490,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
    */
   [pageTemplate](route) {
     return html`
-    <main>
+    <main id="main">
       ${this[headerTemplate]()}
       ${this[workspaceTemplate](route === 'workspace')}
       ${this[historyPanelTemplate](route)}
@@ -1473,6 +1503,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       ${this[importInspectorTemplate](route)}
       ${this[hostRulesTemplate](route)}
       ${this[googleDriveTemplate](route)}
+      ${this[exchangeSearchTemplate](route)}
       ${this[requestDetailTemplate]()}
       ${this[requestMetaTemplate]()}
     </main>
@@ -1729,6 +1760,29 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       @pick="${this[drivePickHandler]}"
       class="screen scroll"
     ></google-drive-browser>
+    `;  
+  }
+
+  /**
+   * @param {string} route The current route
+   * @returns {TemplateResult|string} The template for the host rules mapping element
+   */
+  [exchangeSearchTemplate](route) {
+    if (route !== 'exchange-search') {
+      return '';
+    }
+    const { compatibility } = this;
+    return html`
+    <exchange-search-panel
+      ?compatibility="${compatibility}"
+      anypointAuth
+      columns="auto"
+      exchangeRedirectUri="https://auth.advancedrestclient.com/"
+      exchangeClientId="2dc40927457042b5862864c3c97737d7"
+      forceOauthEvents
+      @selected="${this[exchangeSelectionHandler]}"
+      class="screen scroll"
+    ></exchange-search-panel>
     `;
   }
 }

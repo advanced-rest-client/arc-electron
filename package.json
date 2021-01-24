@@ -47,6 +47,7 @@
     "@advanced-rest-client/arc-settings": "^0.1.2",
     "@advanced-rest-client/bottom-sheet": "^3.2.2",
     "@advanced-rest-client/client-certificates": "^0.1.0",
+    "@advanced-rest-client/exchange-search-panel": "^4.0.0",
     "@advanced-rest-client/monaco-support": "^1.0.1",
     "@advanced-rest-client/pouchdb-quick-search": "^2.0.3",
     "@advanced-rest-client/request-engine": "^0.1.10",
@@ -413,7 +414,11 @@
       "@api-components/amf-helper-mixin/*.js",
       "@api-components/amf-helper-mixin/*.d.ts",
       "@api-components/amf-helper-mixin/src/*.js",
-      "@api-components/amf-helper-mixin/src/*.d.ts"
+      "@api-components/amf-helper-mixin/src/*.d.ts",
+      "@advanced-rest-client/exchange-search-panel/*.js",
+      "@advanced-rest-client/exchange-search-panel/*.d.ts",
+      "@advanced-rest-client/exchange-search-panel/src/*.js",
+      "@advanced-rest-client/exchange-search-panel/src/*.d.ts"
     ]
   }
 }
