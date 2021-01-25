@@ -39,7 +39,6 @@ import '../../../../web_modules/@advanced-rest-client/bottom-sheet/bottom-sheet.
 import '../../../../web_modules/@advanced-rest-client/arc-icons/arc-icon.js';
 import '../../../../web_modules/@anypoint-web-components/anypoint-input/anypoint-masked-input.js';
 import '../../../../web_modules/@advanced-rest-client/host-rules-editor/host-rules-editor.js';
-import '../../../../web_modules/@advanced-rest-client/google-drive-browser/google-drive-browser.js';
 import '../../../../web_modules/@api-components/api-navigation/api-navigation.js';
 import '../../../../web_modules/@advanced-rest-client/exchange-search-panel/exchange-search-panel.js';
 // import '../../../../web_modules/@api-components/api-request-panel/api-request-panel.js';
@@ -141,7 +140,6 @@ const externalNavigationHandler = Symbol('externalNavigationHandler');
 const contextCommandHandler = Symbol('contextCommandHandler');
 const hostRulesTemplate = Symbol('hostRulesTemplate');
 const processApplicationState = Symbol('processApplicationState');
-const googleDriveTemplate = Symbol('googleDriveTemplate');
 const drivePickHandler = Symbol('drivePickHandler');
 const processApiFileHandler = Symbol('processApiFileHandler');
 const arcNavigationTemplate = Symbol('arcNavigationTemplate');
@@ -327,7 +325,6 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       'workspaceSendButton', 'workspaceProgressInfo', 'workspaceBodyEditor', 'workspaceAutoEncode',
       'navigationWidth',
       'requestDetailsOpened', 'requestMetaOpened', 'metaRequestId', 'metaRequestType',
-      'driveToken',
     );
 
     /** 
@@ -426,8 +423,6 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     this.requestMetaOpened = false;
     this.metaRequestId = undefined;
     this.metaRequestType = undefined;
-
-    this.driveToken = undefined;
   }
 
   async initialize() {
@@ -593,6 +588,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     ipc.on('popup-app-menu-opened', this[popupMenuOpenedHandler].bind(this));
     ipc.on('popup-app-menu-closed', this[popupMenuClosedHandler].bind(this));
     ipc.on('app-navigate', this[mainNavigateHandler].bind(this));
+    ipc.on('google-drive-file-pick', this[drivePickHandler].bind(this));
 
     ipc.on('checking-for-update', () => {
       this.updateState = 'checking-for-update';
@@ -693,19 +689,6 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     }
     const { name } = result.route;
     this.route = name;
-    if (name === 'google-drive') {
-      this.requestGoogleDriveToken();
-    }
-  }
-
-  async requestGoogleDriveToken() {
-    const cnf = this.oauthConfig;
-    cnf.interactive = true;
-    const auth = await this.oauth2Proxy.requestToken(cnf);
-    if (!auth) {
-      return;
-    }
-    this.driveToken = auth.accessToken;
   }
 
   /**
@@ -856,7 +839,6 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     switch (action) {
       case 'open-saved': navigate('saved'); break;
       case 'open-history': navigate('history'); break;
-      case 'open-drive': navigate('google-drive'); break;
       case 'open-cookie-manager': navigate('cookie-manager'); break;
       case 'open-hosts-editor': navigate('hosts'); break;
       case 'open-themes': navigate('themes'); break;
@@ -1296,12 +1278,12 @@ export class AdvancedRestClientApplication extends ApplicationPage {
   }
 
   /**
-   * @param {CustomEvent} e
+   * @param {Electron.IpcRendererEvent} e
+   * @param {string} fileId
    */
-  async [drivePickHandler](e) {
-    const id = e.detail;
+  async [drivePickHandler](e, fileId) {
     try {
-      const result = await this.gDrive.getFile(id);
+      const result = await this.gDrive.getFile(fileId);
       await this.processExternalData(result);
     } catch (cause) {
       this.logger.error(cause);
@@ -1502,7 +1484,6 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       ${this[settingsScreenTemplate](route)}
       ${this[importInspectorTemplate](route)}
       ${this[hostRulesTemplate](route)}
-      ${this[googleDriveTemplate](route)}
       ${this[exchangeSearchTemplate](route)}
       ${this[requestDetailTemplate]()}
       ${this[requestMetaTemplate]()}
@@ -1741,26 +1722,6 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       class="screen scroll"
     ></host-rules-editor>
     `;
-  }
-
-  /**
-   * @param {string} route The current route
-   * @returns {TemplateResult|string} The template for the host rules mapping element
-   */
-  [googleDriveTemplate](route) {
-    if (route !== 'google-drive') {
-      return '';
-    }
-    const { compatibility } = this;
-    // mimeType="application/restclient+data"
-    return html`
-    <google-drive-browser
-      ?compatibility="${compatibility}"
-      .accessToken="${this.driveToken}"
-      @pick="${this[drivePickHandler]}"
-      class="screen scroll"
-    ></google-drive-browser>
-    `;  
   }
 
   /**

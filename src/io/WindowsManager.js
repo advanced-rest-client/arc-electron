@@ -230,7 +230,7 @@ export class WindowsManager {
     } else {
       info = options.ignoreWindowSessionSettings ? {} : await this.workspace.restoreWindowState(id);
     }
-    const win = this.createWindow(info, preload);
+    const win = this.createWindow(info, preload, options);
     if (options.noMenu) {
       win.removeMenu();
     }
@@ -277,6 +277,7 @@ export class WindowsManager {
         nativeWindowOpen: true,
         nodeIntegration: false,
         contextIsolation: false,
+        // DO NOT ENABLE THIS FOR ALL WINDOWS.
         // webSecurity: false,
       },
     });
@@ -290,12 +291,18 @@ export class WindowsManager {
    * Creates a configured browser window.
    * @param {WindowSession} info
    * @param {string=} preload The preload script to load from the `src/preload/` folder.
+   * @param {OpenPageOptions=} init
    * @returns {BrowserWindow}
    */
-  createWindow(info, preload) {
+  createWindow(info, preload, init={}) {
     const options = { ...this.createBaseWindowOptions(preload), ...info };
-    const mainWindow = new BrowserWindow(options);
-    return mainWindow;
+    if (init.noWebSecurity) {
+      options.webPreferences.webSecurity = false;
+    }
+    if (init.parent) {
+      options.parent = init.parent;
+    }
+    return new BrowserWindow(options);
   }
 
   /**

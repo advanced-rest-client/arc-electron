@@ -1,4 +1,4 @@
-import { app, nativeTheme } from 'electron';
+import { app, BrowserWindow, ipcMain, nativeTheme } from 'electron';
 import { Oauth2Identity } from '@advanced-rest-client/electron-oauth2';
 import { ApplicationUpdater } from './ApplicationUpdater.js';
 import { logger } from './Logger.js';
@@ -147,6 +147,22 @@ export class ArcEnvironment {
   initializeGoogleDrive() {
     this.gDrive = new GoogleDrive();
     this.gDrive.listen();
+    // this is dispatched by the `GoogleDriveProxy.js` preload class.
+    ipcMain.on('google-drive-proxy-file-pick', this.proxyGoogleDriveFilePick.bind(this));
+  }
+
+  /**
+   * @param {Electron.IpcMainEvent} event
+   * @param {string} fileId
+   */
+  proxyGoogleDriveFilePick(event, fileId) {
+    const child = BrowserWindow.fromWebContents(event.sender);
+    const parent = child.getParentWindow();
+    child.close();
+    if (!parent) {
+      return;
+    }
+    parent.webContents.send('google-drive-file-pick', fileId);
   }
 
   /**
@@ -279,6 +295,16 @@ export class ArcEnvironment {
         break;
       case 'open-file':
         AppPrompts.openAssetDialog(win);
+        break;
+      case 'open-drive':
+        this.wm.open({
+          page: 'drive-picker.html',
+          preload: 'arc-preload.js',
+          ignoreWindowSessionSettings: true,
+          noMenu: true,
+          noWebSecurity: true,
+          parent: win,
+        });
         break;
       case 'import-workspace':
         this[importWorkspaceHandler](win);

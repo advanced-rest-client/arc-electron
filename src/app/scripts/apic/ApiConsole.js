@@ -125,8 +125,6 @@ export class ApiConsoleApplication extends AmfHelperMixin(ApplicationPage) {
     }
     this.config = cnf;
     this.setConfigVariables(cnf);
-
-    this.config = cnf;
     await this.loadTheme();
     await this.afterInitialization();
     this.initializing = false;

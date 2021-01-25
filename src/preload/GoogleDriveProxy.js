@@ -111,4 +111,15 @@ export class GoogleDriveProxy {
       e.detail.result = this.getFile(e.id);
     }
   }
+
+  /**
+   * Notifies the parent window about a file pick action.
+   * If the current window does not have a parent then it does nothing.
+   * 
+   * @param {string} fileId The picked file id
+   */
+  notifyParentFilePicked(fileId) {
+    // this does not need a confirmation so simple send will do.
+    ipcRenderer.send('google-drive-proxy-file-pick', fileId);
+  }
 }

@@ -131,6 +131,16 @@ export declare interface OpenPageOptions {
    * Optional size and position to set on the window.
    */
   sizing?: WindowSession;
+  /**
+   * This is intended to be used with the Google Drive window only. Google does not allow other than http: https: origins
+   * and therefore the app is unable to make a request from the application.
+   * When a Drive picker window is opened it instructs Electron to disable web security to work around this problem.
+   */
+  noWebSecurity?: boolean;
+  /**
+   * Makes the new window a child of the `parent`.
+   */
+  parent?: Electron.BrowserWindow;
 }
 
 export declare interface ArcAppInitOptions {
