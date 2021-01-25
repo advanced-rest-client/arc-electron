@@ -204,6 +204,7 @@
       ]
     },
     "linux": {
+      "publish": ["github"],
       "category": "Development",
       "target": [
         {
