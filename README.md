@@ -1,30 +1,31 @@
----
-description: Installation process for the Advanced REST Client application.
----
+# Advanced REST Client application
 
-# Installing Advanced REST Client
+This is the main repository for the ARC Electron application
 
-## Installing Advanced REST Client
+Tis is work in progress.
 
-In most cases you can download the app from [https://github.com/advanced-rest-client/arc-electron/releases](https://github.com/advanced-rest-client/arc-electron/releases)
+To try this version of the application:
 
-Find an installer for your platform under "Assets" section.
+Cone the repository:
 
-![Assets section for a release](.gitbook/assets/image%20%2843%29.png)
+```sh
+git clone https://github.com/advanced-rest-client/arc-electron.git
+```
 
-For example, for Windows you would download [`arc-setup.exe`](https://github.com/advanced-rest-client/arc-electron/releases/latest/download/arc-setup.exe). For MacOS download `arc-13.0.7.dmg`.
+Checkout this branch
 
-{% hint style="info" %}
-Version number may be different to the one in the screen shoot. For normal use, please, download latest stable version.
-{% endhint %}
+```sh
+git checkout redesign2020
+```
 
-When downloaded, run the file. The installer will walk you through the installation process.
+Next, install dependencies (it may take a moment)
 
-## Linux installation
+```sh
+npm install
+```
 
-ARC's build process generates several builds for Linux. Find your platform and then architecture. Wrong architecture \(x86 instead of x64\) will result with error when installing or running the application.
+And run the application
 
-Please note that ARC won't update automatically on Linux platform as this is not yet supported by the build library. This may be possible in the future.
-
-ARC uses for testing
-
+```sh
+npm start
+```
