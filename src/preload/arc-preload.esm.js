@@ -14,6 +14,7 @@ import { FilesystemProxy } from './FilesystemProxy.js';
 import { ApplicationSearchProxy } from './ApplicationSearchProxy.js';
 import { AppStateProxy } from './AppStateProxy.js';
 import { GoogleDriveProxy } from './GoogleDriveProxy.js';
+import { GoogleAnalytics } from './GoogleAnalytics.js';
 
 const env = {};
 const APP_VERSION = process.env.npm_package_version;
@@ -59,6 +60,8 @@ process.once('loaded', () => {
   global.GoogleDriveProxy = GoogleDriveProxy;
   // @ts-ignore
   global.ElectronAmfService = ElectronAmfService;
+  // @ts-ignore
+  global.GoogleAnalytics = GoogleAnalytics;
   global.ipc = ipcRenderer;
   global.clipboard = clipboard;
 

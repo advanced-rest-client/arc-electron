@@ -88,7 +88,7 @@
   },
   "dependencies": {
     "@advanced-rest-client/arc-events": "^0.2.13",
-    "@advanced-rest-client/arc-types": "^0.2.47",
+    "@advanced-rest-client/arc-types": "^0.2.49",
     "@advanced-rest-client/electron-amf-service": "^5.0.0",
     "@advanced-rest-client/electron-oauth2": "^5.0.1",
     "@advanced-rest-client/electron-request": "^3.1.1",
@@ -204,7 +204,9 @@
       ]
     },
     "linux": {
-      "publish": ["github"],
+      "publish": [
+        "github"
+      ],
       "category": "Development",
       "target": [
         {

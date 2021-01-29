@@ -52,7 +52,7 @@ import { getTabClickIndex } from './Utils.js';
 // @ts-ignore
 document.adoptedStyleSheets = document.adoptedStyleSheets.concat(ContextMenuStyles.styleSheet);
 
-/* global PreferencesProxy, OAuth2Handler, WindowManagerProxy, ThemeManager, logger, EncryptionService, WorkspaceManager, ipc, CookieBridge, ImportFilePreProcessor, FilesystemProxy, ApplicationSearchProxy, AppStateProxy, GoogleDriveProxy, ElectronAmfService */
+/* global PreferencesProxy, OAuth2Handler, WindowManagerProxy, ThemeManager, logger, EncryptionService, WorkspaceManager, ipc, CookieBridge, ImportFilePreProcessor, FilesystemProxy, ApplicationSearchProxy, AppStateProxy, GoogleDriveProxy, ElectronAmfService, GoogleAnalytics */
 
 /** @typedef {import('../../../preload/PreferencesProxy').PreferencesProxy} PreferencesProxy */
 /** @typedef {import('../../../preload/WindowProxy').WindowProxy} WindowManagerProxy */
@@ -214,10 +214,6 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       pattern: 'hosts'
     },
     {
-      name: 'google-drive',
-      pattern: 'google-drive'
-    },
-    {
       name: 'project',
       pattern: 'project/(?<pid>[^/]*)/(?<action>.*)'
     },
@@ -269,6 +265,8 @@ export class AdvancedRestClientApplication extends ApplicationPage {
    * Responsible for processing API data and producing AMF model consumed by the API Console.
    */
   apiParser = new ElectronAmfService();
+
+  ga = new GoogleAnalytics();
 
   /**
    * @returns {ArcRequestWorkspaceElement}
@@ -426,6 +424,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
   }
 
   async initialize() {
+    await this.ga.initialize();
     this.listen();
     this.windowProxy.initContextMenu();
     const init = this.collectInitOptions();
@@ -690,6 +689,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     }
     const { name } = result.route;
     this.route = name;
+    this.ga.screenView(name);
   }
 
   /**
