@@ -5,6 +5,7 @@ import { ApplicationOptions } from './ApplicationOptions.js';
 import { ArcEnvironment } from './ArcEnvironment.js';
 import { PreferencesManager } from './PreferencesManager.js';
 import { ApplicationDefaults } from './ApplicationDefaults.js';
+import { TelemetryConsent } from './TelemetryConsent.js';
 
 app.allowRendererProcessReuse = true;
 let initOptions;
@@ -50,6 +51,11 @@ async function readyHandler(prefManager, init) {
 
   // this has to be done after the protocols are registered.
   await defaults.prepareDatabaseUpgrade(env.wm);
+
+  // telemetry consent screen
+  const telemetry = new TelemetryConsent(env.wm);
+  await telemetry.run();
+
   await env.loadEnvironment();
   // @ts-ignore
   global.appLoadingTime = Date.now();

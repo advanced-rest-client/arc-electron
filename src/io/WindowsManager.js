@@ -233,8 +233,9 @@ export class WindowsManager {
     const win = this.createWindow(info, preload, options);
     if (options.noMenu) {
       win.removeMenu();
+      win.setMenu(null);
     }
-    this.addWidowListeners(win);
+    this.addWidowListeners(win, options.ignoreWindowSessionSettings);
     this.windows.push(win);
     this.loadPage(win, page, route, params);
     if (this.startupOptions.withDevtools) {
@@ -336,11 +337,14 @@ export class WindowsManager {
    * Adds browser window event listeners
    * 
    * @param {BrowserWindow} win Window to attach listeners to.
+   * @param {boolean=} ignoreWindowSessionSettings
    */
-  addWidowListeners(win) {
+  addWidowListeners(win, ignoreWindowSessionSettings=false) {
     win.addListener('closed', this[closedHandler]);
-    win.addListener('move', this[movedHandler]);
-    win.addListener('resize', this[resizedHandler]);
+    if (!ignoreWindowSessionSettings) {
+      win.addListener('move', this[movedHandler]);
+      win.addListener('resize', this[resizedHandler]);
+    }
     win.addListener('focus', this[focusedHandler]);
     win.once('ready-to-show', this[windowReadyHandler].bind(this, win));
     win.webContents.on('new-window', this[windowOpenHandler]);
