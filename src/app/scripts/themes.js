@@ -41,11 +41,11 @@ export class ThemesScreen extends ApplicationPage {
 
     this.initObservableProperties(
       'themes', 'activeTheme', 'installPending', 'compatibility',
-      'ignoreSystemPreference',
+      'systemPreferred',
     );
     this.compatibility = false;
     this.installPending = false;
-    this.ignoreSystemPreference = false;
+    this.systemPreferred = false;
     /**
      * @type {string}
      */
@@ -72,7 +72,7 @@ export class ThemesScreen extends ApplicationPage {
       this.reportCriticalError('Unable to read application themes list.');
       return;
     }
-    const { kind, themes, active, ignoreSystemPreference } = info;
+    const { kind, themes, active, systemPreferred } = info;
     if (kind !== 'ARC#ThemeInfo') {
       this.reportCriticalError('Unknown themes settings format.');
       return;
@@ -80,7 +80,7 @@ export class ThemesScreen extends ApplicationPage {
     this.themes = themes;
     this.activeTheme = active || defaultTheme;
     this.compatibility = this.activeTheme === '@advanced-rest-client/arc-electron-anypoint-theme';
-    this.ignoreSystemPreference = ignoreSystemPreference || false;
+    this.systemPreferred = systemPreferred || false;
   }
 
   /**
@@ -91,7 +91,7 @@ export class ThemesScreen extends ApplicationPage {
     const dt = search.get('darkMode');
     const hasSystemDarkMode = dt === 'true';
     let theme = this.activeTheme;
-    if (hasSystemDarkMode && !this.ignoreSystemPreference) {
+    if (hasSystemDarkMode && !this.systemPreferred) {
       theme = ThemeManager.darkTheme;
     }
     try {
@@ -160,15 +160,15 @@ export class ThemesScreen extends ApplicationPage {
 
   async _ignoreSysPrefChange(e) {
     const {checked} = e.target;
-    if (checked === this.ignoreSystemPreference) {
+    if (checked === this.systemPreferred) {
       return;
     }
-    this.ignoreSystemPreference = checked;
+    this.systemPreferred = checked;
     try {
-      await this.manager.setIgnoreSystemPreferences(checked);
+      await this.manager.setSystemPreferred(checked);
     } catch (error) {
       this.reportCriticalError(error.message);
-      this.ignoreSystemPreference = !checked;
+      this.systemPreferred = !checked;
     }
   }
 
@@ -177,7 +177,7 @@ export class ThemesScreen extends ApplicationPage {
     ${this.headerTemplate()}
     <section class="themes-content">
       ${this.selectorTemplate()}
-      ${this.ignoreSystemPrefsTemplate()}
+      ${this.systemPrefsTemplate()}
       ${this.addTemplate()}
     </section>
     `;
@@ -265,12 +265,12 @@ export class ThemesScreen extends ApplicationPage {
     </anypoint-icon-button>`;
   }
 
-  ignoreSystemPrefsTemplate() { 
-    const { ignoreSystemPreference } = this;
+  systemPrefsTemplate() { 
+    const { systemPreferred } = this;
     return html`
     <div class="ignore-system-prefs">
-      <anypoint-switch .checked="${ignoreSystemPreference}" @change="${this._ignoreSysPrefChange}">
-        Ignore system preferences
+      <anypoint-switch .checked="${systemPreferred}" @change="${this._ignoreSysPrefChange}">
+        System preferred theme
       </anypoint-switch>
     </div>
     `;

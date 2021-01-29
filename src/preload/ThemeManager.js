@@ -136,6 +136,10 @@ export class ThemeManager {
     }
   }
 
+  /**
+   * @param {string} themeId
+   * @returns {Promise<void>}
+   */
   async _loadTheme(themeId) {
     const nodes = document.head.querySelectorAll('link[rel="stylesheet"]');
     for (let i = nodes.length - 1; i >= 0; i--) {
@@ -155,9 +159,9 @@ export class ThemeManager {
   }
 
   /**
-   * @param {boolean} ignore Whether to ignore the system preferences for dark / light theme.
+   * @param {boolean} status Whether to ignore the system preferences for dark / light theme.
    */
-  async setIgnoreSystemPreferences(ignore) {
-    return ipc.invoke('theme-manager-update-property', 'ignoreSystemPreference', ignore);
+  async setSystemPreferred(status) {
+    return ipc.invoke('theme-manager-update-property', 'systemPreferred', status);
   }
 }

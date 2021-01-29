@@ -632,11 +632,12 @@ export class AdvancedRestClientApplication extends ApplicationPage {
 
   /**
    * Loads the current theme.
+   * @param {boolean} isDarkMode
    */
   async loadTheme(isDarkMode) {
     const settings = await this.themeProxy.readState();
     let theme;
-    if (isDarkMode && !settings.ignoreSystemPreference) {
+    if (isDarkMode && settings.systemPreferred) {
       theme = ThemeManager.darkTheme;
     } else {
       const info = await this.themeProxy.readActiveThemeInfo();
