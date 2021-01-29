@@ -1,13 +1,14 @@
+/* eslint-disable no-await-in-loop */
 /* eslint-disable import/no-commonjs */
 const { assert } = require('chai');
-const { SessionManager, PERSISTNAME } = require('../main');
 const { session } = require('electron');
+const { SessionManager, WebSessionPersist } = require('../module-import.js');
 
 describe('SessionManager - main process', () => {
   const url = 'https://domain.com/cookies';
 
   async function cleanCookies() {
-    const sis = session.fromPartition(PERSISTNAME);
+    const sis = session.fromPartition(WebSessionPersist);
     const Cookies = sis.cookies;
     const cookies = await Cookies.get({});
     if (!cookies || !cookies.length) {
@@ -25,7 +26,7 @@ describe('SessionManager - main process', () => {
   }
 
   async function createTestCookies() {
-    const sis = session.fromPartition(PERSISTNAME);
+    const sis = session.fromPartition(WebSessionPersist);
     const Cookies = sis.cookies;
     await Cookies.set({
       url: 'https://domain.com/path',
@@ -40,7 +41,7 @@ describe('SessionManager - main process', () => {
   }
 
   async function removeCookies(cookies) {
-    const sis = session.fromPartition(PERSISTNAME);
+    const sis = session.fromPartition(WebSessionPersist);
     const Cookies = sis.cookies;
     for (let i = 0, len = cookies.length; i < len; i++) {
       const [curl, name] = cookies[i];
@@ -123,6 +124,7 @@ describe('SessionManager - main process', () => {
         value,
         domain: 'domain.com',
         secure: true,
+        url: 'https://domain.com/',
       });
       assert.equal(created.url, 'https://domain.com/');
     });
@@ -133,12 +135,13 @@ describe('SessionManager - main process', () => {
         domain: 'qax.anypoint.mulesoft.com',
         expirationDate: 8640000000000,
         hostOnly: true,
-        httponly: null,
+        // httponly: null,
         lastAccess: 1580162723841,
         name: '_csrf',
         path: '/',
         persistent: false,
         value: 'GwjXpexHYiv22J9Bd7NUF-4c',
+        url: 'http://qax.anypoint.mulesoft.com',
       };
       await instance.setCookie(cookie);
 
@@ -154,6 +157,7 @@ describe('SessionManager - main process', () => {
         httpOnly: false,
         session: false,
         expirationDate: 8640000000000,
+        sameSite: 'unspecified',
       }, 'stores the cookie in the store');
     });
   });
@@ -192,12 +196,13 @@ describe('SessionManager - main process', () => {
         domain: 'qax.anypoint.mulesoft.com',
         expirationDate: 8640000000000,
         hostOnly: true,
-        httponly: null,
+        // httponly: null,
         lastAccess: 1580162723841,
         name: '_csrf',
         path: '/',
         persistent: false,
         value: 'GwjXpexHYiv22J9Bd7NUF-4c',
+        url: 'http://qax.anypoint.mulesoft.com',
       };
       await instance.setCookie(cookie);
       await instance.removeCookie({
@@ -337,15 +342,16 @@ describe('SessionManager - main process', () => {
 
     it('removes a cookie', async () => {
       await createTestCookies();
-      const cookiespre = await instance.getAllCookies();
-      assert.lengthOf(cookiespre, 2);
+      const cookiesPre = await instance.getAllCookies();
+      assert.lengthOf(cookiesPre, 2);
       await instance.removeCookieMakeUrl({
         domain: 'domain.com',
         name: 't1',
         value: 'v1',
+        sameSite: 'unspecified',
       }, 't1');
       const cookies = await instance.getAllCookies();
-      assert.notEqual(cookies.length, cookiespre.length);
+      assert.notEqual(cookies.length, cookiesPre.length);
     });
   });
 
