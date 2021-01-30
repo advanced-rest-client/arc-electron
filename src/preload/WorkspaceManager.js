@@ -191,4 +191,23 @@ export class WorkspaceManager {
     }
     return info;
   }
+
+  /**
+   * Triggers the save file dialog and when a file is picker then is changes the workspace file location.
+   * @returns {Promise<string|undefined>} 
+   */
+  async changeStoreLocation() {
+    const opts = {
+      file: 'arc-workspace.json',
+    };
+    const dialogResult = await ipcRenderer.invoke('save-dialog', opts);
+    const { canceled, filePath } = dialogResult;
+    if (canceled) {
+      return undefined;
+    }
+    const id = await ipcRenderer.invoke('workspace-change-location', filePath);
+    this.#file = undefined;
+    this.id = id;
+    return id;
+  }
 }

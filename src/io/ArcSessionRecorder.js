@@ -2,12 +2,11 @@ import fetch from 'node-fetch';
 import { ArcMeta } from './ArcMeta.js';
 import { logger } from './Logger.js';
 /**
- * Session recorder.
- *
- * @deprecated
- * This class is useless. No one reads the data. There's no enough
- * will to do something useful for the app or users with it.
- * The ARC analytics service will be closed eventually.
+ * This is first part analytics. This records the app start ONLY.
+ * The generated client id is random string generated per app instance and stored locally.
+ * There's no possibility to connect the id with a particular instance.
+ * 
+ * The reason to have this is to keep project alive by proving that someone is using it..
  */
 export class ArcSessionRecorder {
   /**
@@ -17,9 +16,10 @@ export class ArcSessionRecorder {
     this.meta = new ArcMeta();
     this.endpoint = 'https://api.advancedrestclient.com/v1/analytics/record';
   }
+
   /**
    * Pings the server to record the session.
-   * @return {Promise}
+   * @return {Promise<void>}
    */
   async record() {
     try {
@@ -29,11 +29,12 @@ export class ArcSessionRecorder {
       logger.error('Unable to record the session', cause.message);
     }
   }
+
   /**
    * Posts session data to the analytics server.
    *
-   * @param {String} aid Anonymous app id.
-   * @return {Promise}
+   * @param {string} aid Anonymous app id.
+   * @return {Promise<void>}
    */
   async _postSession(aid) {
     const d = new Date();
@@ -41,9 +42,9 @@ export class ArcSessionRecorder {
       aid,
       tz: d.getTimezoneOffset()
     };
-    return await fetch(this.endpoint, {
+    await fetch(this.endpoint, {
       method: 'POST',
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
     });
   }
 }

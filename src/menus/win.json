@@ -325,14 +325,6 @@
           "command": "application:open-faq"
         },
         {
-          "label": "What's new",
-          "command": "application:open-messages"
-        },
-        {
-          "label": "Show tutorial",
-          "command": "application:open-onboarding"
-        },
-        {
           "type": "separator"
         },
         {

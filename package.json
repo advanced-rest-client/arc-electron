@@ -42,7 +42,7 @@
     "@advanced-rest-client/arc-ie": "^1.0.3",
     "@advanced-rest-client/arc-menu": "^4.0.3",
     "@advanced-rest-client/arc-models": "^4.2.8",
-    "@advanced-rest-client/arc-request-ui": "^0.1.7",
+    "@advanced-rest-client/arc-request-ui": "^0.1.8",
     "@advanced-rest-client/arc-settings": "^0.1.2",
     "@advanced-rest-client/bottom-sheet": "^3.2.2",
     "@advanced-rest-client/client-certificates": "^0.1.0",

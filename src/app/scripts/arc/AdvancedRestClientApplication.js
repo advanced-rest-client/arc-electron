@@ -857,6 +857,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       case 'popup-menu': this.navigationDetached = !this.navigationDetached; break;
       case 'export-workspace': this.exportWorkspace(); break;
       case 'login-external-webservice': this.workspaceElement.openWebUrlInput(); break;
+      case 'open-workspace-details': this.workspaceElement.openWorkspaceDetails(); break;
       default:
         this.logger.warn(`Unhandled IO command ${action}`);
     }
@@ -1110,9 +1111,13 @@ export class AdvancedRestClientApplication extends ApplicationPage {
    * @return {Promise}
    */
   async exportWorkspace() {
-    // @TODO: add workspace serialize function.
-    // const workspace = this.workspaceElement.serializeWorkspace();
-    // return this.fs.exportFileData(workspace, 'application/json', 'arc-workspace.arc');
+    const id = await this.workspace.changeStoreLocation();
+    if (!id) {
+      return;
+    }
+    this.initOptions.workspaceId = id;
+    this.render();
+    this.workspaceElement.store();
   }
 
   /**

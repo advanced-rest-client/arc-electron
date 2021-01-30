@@ -9,6 +9,7 @@ import { WorkspaceHistory } from './models/WorkspaceHistory.js';
 
 /** @typedef {import('../menus/types').MenuDefinition} MenuDefinition */
 /** @typedef {import('../menus/types').MenuItemDefinition} MenuItemDefinition */
+/** @typedef {import('./models/Models').WorkspaceHistoryEntry} WorkspaceHistoryEntry */
 /** @typedef {import('./ApplicationUpdater').ApplicationUpdater} ApplicationUpdater */
 /** @typedef {import('electron').BrowserWindow} BrowserWindow */
 
@@ -195,7 +196,7 @@ export class ApplicationMenu extends EventEmitter {
    */
   [appendHistoryEntry](filePath) {
     const menu = this.getWorkspaceHistoryMenu();
-    const items = menu.items;
+    const { items } = menu;
     if (items[2].visible) {
       items[2].visible = false;
     }
@@ -224,22 +225,21 @@ export class ApplicationMenu extends EventEmitter {
   [clearWorkspaceHistory]() {
     const menu = this.getWorkspaceHistoryMenu();
     const items = Array.from(menu.items);
-    menu.items = [];
-    if (!items[2].visible) {
-      items[2].visible = true;
-    }
-    for (let i = 0; i < 3; i++) {
-      menu.append(items[i]);
-    }
+    items.splice(3);
+    items[2].visible = true;
+    // @ts-ignore
+    menu.clear();
+    items.forEach((item) => menu.append(item));
+    Menu.setApplicationMenu(this.topMenu);
   }
 
   /**
    * Iterates over the argument and creates menu entries from it.
-   * @param {any[]} entries List of history entries.
+   * @param {WorkspaceHistoryEntry[]} entries List of history entries.
    */
   [createWorkspaceHistory](entries) {
     entries.forEach((item) => {
-      const filePath = entries[i].file;
+      const filePath = item.file;
       // Un-trusted source
       if (typeof filePath !== 'string') {
         return;

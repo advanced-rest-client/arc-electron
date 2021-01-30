@@ -27,6 +27,7 @@ export const toggleDevToolsHandler = Symbol('toggleDevToolsHandler');
 export const windowReadyHandler = Symbol('windowReadyHandler');
 export const winContextInitHandler = Symbol('winContextInitHandler');
 export const workspaceLocationHandler = Symbol('workspaceLocationHandler');
+export const workspaceChangeLocationHandler = Symbol('workspaceChangeLocationHandler');
 
 export class WindowsManager {
   /**
@@ -60,6 +61,7 @@ export class WindowsManager {
     this[toggleDevToolsHandler] = this[toggleDevToolsHandler].bind(this);
     this[winContextInitHandler] = this[winContextInitHandler].bind(this);
     this[workspaceLocationHandler] = this[workspaceLocationHandler].bind(this);
+    this[workspaceChangeLocationHandler] = this[workspaceChangeLocationHandler].bind(this);
     
     this.workspace = new WindowsPersistance();
     this.recorder = new ArcSessionRecorder();
@@ -145,6 +147,7 @@ export class WindowsManager {
     ipcMain.on('settings-changed', this[settingHandler]);
     ipcMain.on('window-context-menu-init', this[winContextInitHandler]);
     ipcMain.handle('workspace-get-location', this[workspaceLocationHandler]);
+    ipcMain.handle('workspace-change-location', this[workspaceChangeLocationHandler]);
   }
 
   /**
@@ -523,6 +526,17 @@ export class WindowsManager {
     }
     file += '.json';
     return path.join(process.env.ARC_WORKSPACE_PATH, file);
+  }
+
+  /**
+   * The handler to the request to change the current workspace location.
+   * @param {any} event
+   * @param {string} fileLocation
+   */
+  async [workspaceChangeLocationHandler](event, fileLocation) {
+    const id = v4();
+    this.workspacesMap.set(id, fileLocation);
+    return id;
   }
 
   /**

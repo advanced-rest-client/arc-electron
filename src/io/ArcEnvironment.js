@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain, nativeTheme } from 'electron';
 import { Oauth2Identity } from '@advanced-rest-client/electron-oauth2';
+import fs from 'fs-extra';
 import { ApplicationUpdater } from './ApplicationUpdater.js';
 import { logger } from './Logger.js';
 import { ThemesProtocol } from './ThemesProtocol.js';
@@ -107,6 +108,8 @@ export class ArcEnvironment {
     this.menu.on('menu-action', (action, win) => {
       this.menuActionHandler(action, win);
     });
+    this.menu.loadWorkspaceHistory();
+    this.menu.on('open-workspace', (filePath) => this.openWorkspace(filePath));
   }
 
   initializePopupMenu() {
@@ -376,5 +379,22 @@ export class ArcEnvironment {
       });
       await this.menu.appendWorkspaceHistory(path);
     }
+  }
+
+  /**
+   * Opens workspace from file
+   * @param {string} filePath Workspace file location.
+   * @returns {Promise<void>}
+   */
+  async openWorkspace(filePath) {
+    const exists = await fs.pathExists(filePath);
+    if (!exists) {
+      AppPrompts.workspaceMissing(filePath);
+    } else {
+      logger.info('Opening workspace file in a new window.');
+      await this.wm.open({
+        workspaceFile: filePath,
+      });
+    };
   }
 }

@@ -1,5 +1,9 @@
 import path from 'path';
 import { ArcPreferences } from '../../common/ArcPreferences.js';
+
+/** @typedef {import('./Models').WorkspaceHistoryModel} WorkspaceHistoryModel */
+/** @typedef {import('./Models').WorkspaceHistoryEntry} WorkspaceHistoryEntry */
+
 /**
  * A preferences class to store and read theme info file.
  */
@@ -12,17 +16,28 @@ export class WorkspaceHistory extends ArcPreferences {
     this.limit = limit;
   }
 
+  /**
+   * @returns {Promise<WorkspaceHistoryModel>} 
+   */
+  async load() {
+    return super.load();
+  }
+
+  /**
+   * @returns {Promise<WorkspaceHistoryModel>} 
+   */
   async defaultSettings() {
     return {
       kind: 'ARC#WorkspaceHistory',
       entries: []
     };
   }
+
   /**
    * Sort function to sort history entries by time.
-   * @param {Object} a
-   * @param {Object} b
-   * @return {Number}
+   * @param {WorkspaceHistoryEntry} a
+   * @param {WorkspaceHistoryEntry} b
+   * @returns {number}
    */
   sortEntries(a, b) {
     if (a.used > b.used) {
@@ -33,9 +48,10 @@ export class WorkspaceHistory extends ArcPreferences {
     }
     return 0;
   }
+
   /**
    * Loads list of history entires from the configuration file.
-   * @return {Promise<Array|undefined>} List of entries or undefined if none found.
+   * @return {Promise<WorkspaceHistoryEntry[]|undefined>} List of entries or undefined if none found.
    */
   async loadEntries() {
     const data = await this.load();
@@ -80,6 +96,7 @@ export class WorkspaceHistory extends ArcPreferences {
     }
     await this.store();
   }
+
   /**
    * Clears entries history.
    * @return {Promise}
