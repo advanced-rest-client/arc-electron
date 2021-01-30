@@ -27,6 +27,16 @@ export class PreferencesManager extends ArcPreferences {
     ipcMain.handle('preferences-update', this[changeHandler]);
   }
 
+  /**
+   * Loads current settings from settings file.
+   * This is just to provide typings.
+   *
+   * @returns {Promise<ARCConfig>} Promise resolved to a settings file.
+   */
+  async load() {
+    return super.load();
+  }
+
   async [readHandler]() {
     let data;
     try {
@@ -87,7 +97,8 @@ export class PreferencesManager extends ArcPreferences {
         fastSearch: true,
       },
       privacy: {
-        telemetry: true,
+        telemetry: false,
+        exceptionsOnly: true,
       },
       request: {
         followRedirects: true,
@@ -102,6 +113,9 @@ export class PreferencesManager extends ArcPreferences {
       response: {
         warningResponseMaxSize: 2048,
         forceRawSize: 4096,
+      },
+      updater: {
+        auto: true,
       },
     });
   }

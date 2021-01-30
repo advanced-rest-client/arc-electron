@@ -25,10 +25,16 @@ interface Window {
   ipc: IpcRenderer;
 }
 
+declare interface AppVersionInfo {
+  chrome: string;
+  appVersion: string;
+}
+
 declare global {
   var ipc: IpcRenderer;
   var clipboard: Clipboard;
   var logger: logger.ElectronLog;
+  var versionInfo: AppVersionInfo;
   class AppStateProxy extends AppStateProxyBase {}
   class WorkspaceManager extends WorkspaceManagerBase {}
   class EncryptionService extends EncryptionServiceBase {}

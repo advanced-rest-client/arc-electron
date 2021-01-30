@@ -13,6 +13,7 @@ import { ContentSearchService } from './ContentSearchService.js';
 import { AppPrompts } from './AppPrompts.js';
 import { AppStateManager } from './AppStateManager.js';
 import { GoogleDrive } from './GoogleDrive.js';
+import { ExternalResourcesManager } from './ExternalResourcesManager.js';
 
 /** @typedef {import('../types').ApplicationOptionsConfig} ApplicationOptionsConfig */
 /** @typedef {import('../types').ProtocolFile} ProtocolFile */
@@ -44,6 +45,7 @@ export class ArcEnvironment {
     this.initializeSearchService();
     this.initializePrompts();
     this.initializeGoogleDrive();
+    this.initializeExternalResources();
 
     app.on('activate', () => this.activateHandler.bind(this));
     app.on('window-all-closed', this.allClosedHandler.bind(this));
@@ -149,6 +151,11 @@ export class ArcEnvironment {
     this.gDrive.listen();
     // this is dispatched by the `GoogleDriveProxy.js` preload class.
     ipcMain.on('google-drive-proxy-file-pick', this.proxyGoogleDriveFilePick.bind(this));
+  }
+
+  initializeExternalResources() {
+    this.externalResources = new ExternalResourcesManager();
+    this.externalResources.listen();
   }
 
   /**
@@ -319,6 +326,31 @@ export class ArcEnvironment {
           ignoreWindowSessionSettings: true,
           noMenu: true,
         });
+        break;
+      case 'open-license':
+        this.wm.open({
+          page: 'license.html',
+          ignoreWindowSessionSettings: true,
+          noMenu: true,
+        });
+        break;
+      case 'about':
+        this.wm.open({
+          page: 'about.html',
+          preload: 'arc-preload.js',
+          ignoreWindowSessionSettings: true,
+          noMenu: true,
+          parent: win,
+        });
+        break;
+      case 'open-privacy-policy':
+      case 'open-documentation':
+      case 'open-faq':
+      case 'open-discussions':
+      case 'report-issue':
+      case 'search-issues':
+      case 'web-session-help':
+        this.externalResources.openHelpTopic(action);
         break;
       default:
         logger.debug(`Sending "${action}" action to the UI thread.`);

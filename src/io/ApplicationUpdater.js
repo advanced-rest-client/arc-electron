@@ -4,8 +4,10 @@ import { dialog, nativeImage, ipcMain, BrowserWindow } from 'electron';
 import path from 'path';
 import { logger } from './Logger.js';
 
-/** @typedef {import('../types').ApplicationConfig} ApplicationConfig */
+autoUpdater.logger = logger;
+
 /** @typedef {import('electron-updater').UpdateInfo} UpdateInfo */
+/** @typedef {import('@advanced-rest-client/arc-types').Config.ARCConfig} ARCConfig */
 
 export const checkingHandler = Symbol('checkingHandler');
 export const updateAvailableHandler = Symbol('updateAvailableHandler');
@@ -53,7 +55,7 @@ export class ApplicationUpdater extends EventEmitter {
     autoUpdater.on('download-progress', this[downloadProgressHandler]);
     autoUpdater.on('update-downloaded', this[downloadReadyHandler]);
 
-    ipcMain.on('check-for-update', this[checkUpdateHandler].bind(this));
+    ipcMain.handle('check-for-update', this[checkUpdateHandler].bind(this));
     ipcMain.on('install-update', this.installUpdate);
   }
 
@@ -68,7 +70,7 @@ export class ApplicationUpdater extends EventEmitter {
     autoUpdater.off('download-progress', this[downloadProgressHandler]);
     autoUpdater.off('update-downloaded', this[downloadReadyHandler]);
 
-    ipcMain.off('check-for-update', this[checkUpdateHandler].bind(this));
+    ipcMain.removeHandler('check-for-update');
     ipcMain.off('install-update', this.installUpdate);
   }
 
@@ -109,18 +111,20 @@ export class ApplicationUpdater extends EventEmitter {
    * Checks for app update.
    * This function **must** be called after the app ready event.
    *
-   * @param {ApplicationConfig} settings Current application configuration.
-   * @param {Boolean} skipAppUpdate When set it skips application update check
+   * @param {ARCConfig=} settings Current application configuration.
+   * @param {boolean=} skipAppUpdate When set it skips application update check
    */
-  start(settings, skipAppUpdate) {
+  start(settings={}, skipAppUpdate=false) {
     logger.info('ApplicationUpdater::Initializing auto updater.');
-    if (settings.releaseChannel) {
-      if (this.isValidChannel(settings.releaseChannel)) {
-        logger.info(`ApplicationUpdater::Setting auto updater channel to ${settings.releaseChannel}`);
-        autoUpdater.channel = settings.releaseChannel;
+    const { updater={} } = settings;
+    const { auto, channel } = updater;
+    if (channel) {
+      if (this.isValidChannel(channel)) {
+        logger.info(`ApplicationUpdater::Setting auto updater channel to ${channel}`);
+        autoUpdater.channel = channel;
       }
     }
-    if (skipAppUpdate || settings.autoUpdate === false) {
+    if (skipAppUpdate || auto === false) {
       logger.debug('Auto Updater is disabled. Manual requests will still download the update.');
       autoUpdater.autoDownload = false;
       autoUpdater.autoInstallOnAppQuit = false;
@@ -142,11 +146,14 @@ export class ApplicationUpdater extends EventEmitter {
   /**
    * Handler for the `check-for-update` event dispatched by the renderer process.
    * Calls `check()` with option to not notify the user about the update
+   * @returns {Promise<UpdateInfo>}
    */
-  [checkUpdateHandler]() {
-    this.check({
-      notify: false
-    });
+  async [checkUpdateHandler]() {
+    const result = await autoUpdater.checkForUpdates();
+    if (!result || !result.updateInfo) {
+      return undefined;
+    }
+    return result.updateInfo;
   }
 
   /**
@@ -171,7 +178,7 @@ export class ApplicationUpdater extends EventEmitter {
     this.lastInfoObject = info;
     this.emit('notify-windows', 'update-available', info);
     this.emit('status-changed', 'download-progress');
-    if (!this.lastOptions.notify) {
+    if (!this.lastOptions || !this.lastOptions.notify) {
       return;
     }
     this.updateAvailableDialog();
@@ -243,7 +250,7 @@ export class ApplicationUpdater extends EventEmitter {
     this.lastInfoObject = info;
     this.emit('notify-windows', 'update-downloaded', info);
     this.emit('status-changed', 'update-downloaded');
-    if (this.lastOptions.notify) {
+    if (this.lastOptions && this.lastOptions.notify) {
       setImmediate(() => autoUpdater.quitAndInstall());
     }
   }
@@ -257,7 +264,7 @@ export class ApplicationUpdater extends EventEmitter {
    */
   notifyUser(message, detail, isError) {
     this.lastOptions = this.lastOptions || {};
-    if (!this.lastOptions.notify) {
+    if (!this.lastOptions || !this.lastOptions.notify) {
       return;
     }
     const dialogOpts = {

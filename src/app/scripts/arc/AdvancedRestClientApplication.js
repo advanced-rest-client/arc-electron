@@ -590,23 +590,27 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     ipc.on('google-drive-file-pick', this[drivePickHandler].bind(this));
 
     ipc.on('checking-for-update', () => {
+      this.logger.info('Checking for application update');
       this.updateState = 'checking-for-update';
     });
-    ipc.on('update-available', (info) => {
+    ipc.on('update-available', () => {
+      this.logger.info('Application update available.');
       this.updateState = 'update-available';
     });
     ipc.on('update-not-available', () => {
+      this.logger.info('Application update not available.');
       this.updateState = 'update-not-available';
     });
-    ipc.on('autoupdate-error', (error) => {
+    ipc.on('autoupdate-error', (e, error) => {
       this.updateState = 'autoupdate-error';
       this.logger.error(error);
     });
-    ipc.on('download-progress', (progressObj) => {
+    ipc.on('download-progress', (e, progressObj) => {
       this.updateState = 'download-progress';
       this.logger.info(progressObj);
     });
-    ipc.on('update-downloaded', (info) => {
+    ipc.on('update-downloaded', () => {
+      this.logger.info('Application update downloaded and ready to install.');
       this.updateState = 'update-downloaded';
       this.hasAppUpdate = true;
     });
