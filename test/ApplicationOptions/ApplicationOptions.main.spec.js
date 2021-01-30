@@ -1,18 +1,23 @@
-const { AppOptions } = require('../../scripts/main/app-options');
 const { assert } = require('chai');
-describe('AppOptions', () => {
+const _require = require('esm')(module);
+
+/** @typedef {import('../../src/io/ApplicationOptions').ApplicationOptions} ApplicationOptions */
+
+const { ApplicationOptions } = _require('../../src/io/ApplicationOptions.js');
+
+describe('ApplicationOptions', () => {
   describe('#availableOptions', () => {
-    let instance;
+    let instance = /** @type ApplicationOptions */ (null);
     before(() => {
-      instance = new AppOptions();
+      instance = new ApplicationOptions();
     });
 
     [
       '--settings-file',
+      '--state-file',
       '--workspace-path',
       '--themes-path',
-      '--components-path',
-      '--debug',
+      '--dev',
       '--debug-level',
       '--with-devtools',
       '.',
@@ -20,6 +25,10 @@ describe('AppOptions', () => {
       '--open',
       '--skip-app-update',
       '--skip-themes-update',
+      '--user-data-dir',
+      '--release-channel',
+      '--skip-cookie-consent',
+      '--skip-database-upgrade',
     ].forEach((option) => {
       it(`supports ${option} option`, () => {
         const opts = instance.availableOptions;
@@ -30,9 +39,9 @@ describe('AppOptions', () => {
 
     [
       '-s',
+      '-S',
       '-w',
       '-t',
-      '-c',
       '-d',
       '-l',
       '-w',
@@ -41,6 +50,8 @@ describe('AppOptions', () => {
       '-o',
       '-u',
       '-x',
+      '-D',
+      '-r',
     ].forEach((option) => {
       it(`supports ${option} shortcut`, () => {
         const opts = instance.availableOptions;
@@ -51,10 +62,10 @@ describe('AppOptions', () => {
 
     [
       ['--settings-file', String],
+      ['--state-file', String],
       ['--workspace-path', String],
       ['--themes-path', String],
-      ['--components-path', String],
-      ['--debug', Boolean],
+      ['--dev', Boolean],
       ['--debug-level', String],
       ['--with-devtools', Boolean],
       ['.', String],
@@ -62,6 +73,10 @@ describe('AppOptions', () => {
       ['--open', String],
       ['--skip-themes-update', Boolean],
       ['--skip-app-update', Boolean],
+      ['--user-data-dir', String],
+      ['--release-channel', String],
+      ['--skip-cookie-consent', Boolean],
+      ['--skip-database-upgrade', Boolean],
     ].forEach(([option, type]) => {
       it(`has type for ${option} option`, () => {
         const opts = instance.availableOptions;
@@ -72,23 +87,27 @@ describe('AppOptions', () => {
   });
 
   describe('parse()', () => {
-    let instance;
+    let instance = /** @type ApplicationOptions */ (null);
     beforeEach(() => {
-      instance = new AppOptions();
+      instance = new ApplicationOptions();
     });
 
     [
       ['--settings-file', 'test-settings-file', 'test-settings-file', 'settingsFile'],
+      ['--state-file', 'test-state-file', 'test-state-file', 'stateFile'],
       ['--workspace-path', 'test-workspace-path', 'test-workspace-path', 'workspacePath'],
       ['--themes-path', 'test-themes-path', 'test-themes-path', 'themesPath'],
-      ['--components-path', 'test-components-path', 'test-components-path', 'componentsPath'],
+      ['--dev', undefined, true, 'dev'],
       ['--debug-level', 'silly', 'silly', 'debugLevel'],
-      ['--open', 'test-file', 'test-file', 'open'],
-      ['--debug', undefined, true, 'debug'],
       ['--with-devtools', undefined, true, 'withDevtools'],
       ['--port', '8080', 8080, 'port'],
+      ['--open', 'test-file', 'test-file', 'open'],
       ['--skip-app-update', undefined, true, 'skipAppUpdate'],
       ['--skip-themes-update', undefined, true, 'skipThemesUpdate'],
+      ['--user-data-dir', 'data-path', 'data-path', 'userDataDir'],
+      ['--release-channel', 'latest', 'latest', 'releaseChannel'],
+      ['--skip-cookie-consent', undefined, true, 'skipCookieConsent'],
+      ['--skip-database-upgrade', undefined, true, 'skipDatabaseUpgrade'],
     ].forEach(([option, value, parsedValue, property]) => {
       it(`sets ${option} property to ${value}`, () => {
         const orig = process.argv;
@@ -96,18 +115,20 @@ describe('AppOptions', () => {
         if (value) {
           newArgs[newArgs.length] = value;
         }
+        // @ts-ignore
         process.argv = newArgs;
         instance.parse();
         process.argv = orig;
+        // @ts-ignore
         assert.equal(instance[property], parsedValue);
       });
     });
   });
 
   describe('openProtocolFile()', () => {
-    let instance;
+    let instance = /** @type ApplicationOptions */ (null);
     beforeEach(() => {
-      instance = new AppOptions();
+      instance = new ApplicationOptions();
     });
 
     it('sets Drive protocol info', () => {

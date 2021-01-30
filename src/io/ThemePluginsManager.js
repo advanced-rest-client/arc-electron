@@ -44,9 +44,8 @@ export class ThemePluginsManager {
   
   /**
    * Installs a theme package to the themes directory.
-   * @param {String} name NPM name or Github repo. Local paths are symlink
-   * to target location.
-   * @param {String} version Theme version to install.
+   * @param {string} name NPM name or Github repo. Local paths are symlink to target location.
+   * @param {String=} version Theme version to install.
    * @returns {Promise<InstalledTheme>}
    */
   async install(name, version) {
@@ -316,6 +315,7 @@ export class ThemePluginsManager {
    * @returns {boolean}
    */
   _compareEngines(remoteInfo) {
+    // @ts-ignore
     const { engines } = remoteInfo;
     if (!engines || !engines.arc) {
       return true;

@@ -6,7 +6,7 @@ import { OAuth2Authorization } from '@advanced-rest-client/electron-oauth2';
  */
 export declare interface ApplicationOption {
   name: string;
-  shortcut: string;
+  shortcut?: string;
   type: any;
   isArray?: boolean;
 }
@@ -43,6 +43,14 @@ export declare interface ApplicationOptionsConfig {
    */
   releaseChannel?: string;
   openProtocolFile?: string;
+  /**
+   * When set it does not render the cookie consent dialog
+   */
+  skipCookieConsent?: boolean;
+  /**
+   * When set it does not render the cookie consent dialog
+   */
+  skipDatabaseUpgrade?: boolean;
 }
 
 /**

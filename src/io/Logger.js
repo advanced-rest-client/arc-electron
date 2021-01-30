@@ -6,9 +6,7 @@ import { createLogger, format, transports } from 'winston';
 
 const { combine, timestamp, printf } = format;
 
-const myFormat = printf((info) => {
-  return `[${new Date(info.timestamp).toLocaleString()}]: ${info.level} ${info.message}`;
-});
+const myFormat = printf((info) => `[${new Date(info.timestamp).toLocaleString()}]: ${info.level} ${info.message}`);
 let logRoot;
 try {
   logRoot = app.getPath('logs');

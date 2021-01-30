@@ -82,12 +82,18 @@ export class ApplicationOptions {
       type: Boolean,
     }, {
       name: '--user-data-dir',
-      shortcut: '-d',
+      shortcut: '-D',
       type: String,
     }, {
       name: '--release-channel',
       shortcut: '-r',
       type: String,
+    }, {
+      name: '--skip-cookie-consent',
+      type: Boolean,
+    }, {
+      name: '--skip-database-upgrade',
+      type: Boolean,
     }];
   }
 

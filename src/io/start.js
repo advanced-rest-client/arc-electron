@@ -49,12 +49,16 @@ async function readyHandler(prefManager, init) {
   global.Arc = env;
   env.registerHandlers();
 
-  // this has to be done after the protocols are registered.
-  await defaults.prepareDatabaseUpgrade(env.wm);
+  if (!init.skipDatabaseUpgrade) {
+    // this has to be done after the protocols are registered.
+    await defaults.prepareDatabaseUpgrade(env.wm);
+  }
 
-  // telemetry consent screen
-  const telemetry = new TelemetryConsent(env.wm);
-  await telemetry.run();
+  if (!init.skipCookieConsent) {
+    // telemetry consent screen
+    const telemetry = new TelemetryConsent(env.wm);
+    await telemetry.run();
+  }
 
   await env.loadEnvironment();
   // @ts-ignore

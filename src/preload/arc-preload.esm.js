@@ -28,6 +28,8 @@ Object.keys(process.env).forEach((key) => {
 const { versions } = process;
 const nodeBuffer = Buffer;
 
+const origRequire = require;
+
 process.once('loaded', () => {
   // @ts-ignore
   global.OAuth2Handler = OAuth2Handler;
@@ -79,4 +81,9 @@ process.once('loaded', () => {
 
   // this is important for the response view which uses Buffer class when the response has been recorded by Electron app.
   global.Buffer = nodeBuffer;
+
+  if (process.env.NODE_ENV === 'test') {
+    // @ts-ignore
+    window.electronRequire = origRequire
+  }
 });

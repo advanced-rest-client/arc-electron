@@ -1,8 +1,10 @@
 /* eslint-disable global-require */
-try {
-	require('electron-reloader')(module);
-} catch (_) {
-  // ...
+if (process.env.NODE_ENV !== 'test') {
+  try {
+    require('electron-reloader')(module);
+  } catch (_) {
+    // ...
+  }
 }
 
 const _require = require("esm")(module);

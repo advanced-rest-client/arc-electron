@@ -159,7 +159,7 @@ export class ApplicationMenu extends EventEmitter {
   /**
    * Clears list of workspace history.
    * Persists the state in the settings file.
-   * @return {Promise}
+   * @returns {Promise<void>}
    */
   async clearWorkspaceHistory() {
     await this.history.clearHistory();
@@ -168,7 +168,7 @@ export class ApplicationMenu extends EventEmitter {
 
   /**
    * Loads workspace history list and creates menu entries.
-   * @return {Promise}
+   * @returns {Promise<void>}
    */
   async loadWorkspaceHistory() {
     const entries = await this.history.loadEntries();
