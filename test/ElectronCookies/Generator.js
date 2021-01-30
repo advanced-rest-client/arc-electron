@@ -1,7 +1,9 @@
 /* eslint-disable import/no-commonjs */
 
 const Chance = require('chance');
-const { Cookie } = require('@advanced-rest-client/cookie-parser/cookie-parser');
+const _require = require('esm')(module);
+
+const { Cookie } = _require('@advanced-rest-client/arc-cookies/src/Cookie.js');
 
 const chance = new Chance();
 

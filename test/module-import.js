@@ -1,3 +1,4 @@
 const _require = require("esm")(module);
 
-_require('./module-import-esm.js');
+module.exports.WebSessionPersist = _require('../src/io/Constants.js');
+module.exports.SessionManager = _require('../src/io/SessionManager.js');

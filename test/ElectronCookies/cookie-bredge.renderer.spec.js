@@ -1,7 +1,9 @@
 /* eslint-disable import/no-commonjs */
 
 const { assert } = require('chai');
-const { CookieBridge } = require('../../src/preload/CookieBridge');
+const _require = require('esm')(module);
+
+const { CookieBridge } = _require('../../src/preload/CookieBridge');
 const { DataGenerator } = require('./Generator.js');
 
 describe('Cookie bridge - renderer process', () => {

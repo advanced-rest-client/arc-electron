@@ -2,7 +2,12 @@
 /* eslint-disable import/no-commonjs */
 const { assert } = require('chai');
 const { session } = require('electron');
-const { SessionManager, WebSessionPersist } = require('../module-import.js');
+const _require = require('esm')(module);
+
+/** @typedef {import('../../src/io/SessionManager').SessionManager} SessionManager */
+
+const { SessionManager } = _require('../../src/io/SessionManager.js');
+const { WebSessionPersist } = _require('../../src/io/Constants.js');
 
 describe('SessionManager - main process', () => {
   const url = 'https://domain.com/cookies';
@@ -157,7 +162,7 @@ describe('SessionManager - main process', () => {
         httpOnly: false,
         session: false,
         expirationDate: 8640000000000,
-        sameSite: 'unspecified',
+        sameSite: 'no_restriction',
       }, 'stores the cookie in the store');
     });
   });
