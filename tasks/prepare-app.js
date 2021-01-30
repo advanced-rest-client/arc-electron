@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 const fs = require('fs-extra');
 const path = require('path');
 /* eslint-disable no-console */
@@ -13,6 +14,7 @@ class PrepareApp {
       process.exit(-1);
     }
   }
+  
   /**
    * A function that checks whether any of `@advanced-rest-client` or `@api-components`
    * module located in node_modules has inner `node_modules` component.
@@ -28,9 +30,13 @@ class PrepareApp {
 
   async _analyzeNmPath(dir) {
     const loc = path.join(__dirname, '..', 'node_modules', dir);
+    const exists = await fs.pathExists(loc);
+    if (!exists) {
+      return;
+    }
     const items = await fs.readdir(loc);
     for (let i = 0, len = items.length; i < len; i++) {
-      if (items[i] === 'pouchdb-mapreduce-no-ddocs') {
+      if (['pouchdb-mapreduce-no-ddocs', 'electron-request'].includes(items[i])) {
         continue;
       }
       const candidate = path.join(loc, items[i], 'node_modules');

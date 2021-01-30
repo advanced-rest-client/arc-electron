@@ -1,77 +1,38 @@
 body {
-  background-color: #424242;
-  height: 100vh;
+  background-color: #212121;
   color: #fff;
-
-  --arc-font-family: 'Roboto', 'Noto', sans-serif;
-  --arc-font-font-smoothing: antialiased;
-  --arc-font-code-family: 'Roboto Mono', 'Consolas', 'Menlo', monospace;
-  --arc-font-nowrap-white-space: nowrap;
-  --arc-font-nowrap-overflow: hidden;
-  --arc-font-nowrap-text-overflow: ellipsis;
-  --arc-font-expensive-kerning: optimizeLegibility;
-
-  --arc-font-display1-font-size: 34px;
-  --arc-font-display1-font-weight: 400;
-  --arc-font-display1-letter-spacing: -.01em;
-  --arc-font-display1-line-height: 40px;
-
-  --arc-font-title-font-size: 20px;
-  --arc-font-title-font-weight: 500;
-  --arc-font-title-line-height: 28px;
-
-  --arc-font-headline-font-size: 24px;
-  --arc-font-headline-font-weight: 400;
-  --arc-font-headline-letter-spacing: -.012em;
-  --arc-font-headline-line-height: 32px;
-
-  --arc-font-subhead-font-size: 16px;
-  --arc-font-subhead-font-weight: 400;
-  --arc-font-subhead-line-height: 24px;
-
-  --arc-font-body1-font-size: 14px;
-  --arc-font-body1-font-weight: 400;
-  --arc-font-body1-line-height: 20px;
-
-  --arc-font-body2-font-size: 14px;
-  --arc-font-body2-font-weight: 500;
-  --arc-font-body2-line-height: 24px;
-
-  --arc-font-caption-font-size: 12px;
-  --arc-font-caption-font-weight: 400;
-  --arc-font-caption-letter-spacing: 0.011em;
-  --arc-font-caption-line-height: 20px;
-
-  --select-text-user-select: text;
-  --select-text-cursor: text;
-
-  --primary-color: #BBDEFB;
+  --primary-color: #ffcc80;
   --primary-text-color: #fff;
-  --error-color: #FF5722;
-  --accent-color: #4CAF50;
-  --primary-background-color: #424242;
-  --action-button-background-color: #fff;
-  --action-button-color: var(--primary-color);
+  --accent-color: #E040FB;
+  --secondary-text-color: rgba(255, 255, 255, 0.84);
+  --primary-background-color: #212121;
+  
   --secondary-action-button-color: #fff;
-  --anypoint-color-primary: var(--primary-color);
-  --paper-toggle-button-label-color: #fff;
-  --paper-listbox-background-color: #424242;
-  --paper-listbox-color: #fff;
-  --google-drive-list-view-file-icon-color: rgba(255, 255, 255, 0.54);
-  --google-drive-list-view-search-icon-color: rgba(255, 255, 255, 0.54);
-  --paper-item-body-secondary-color: rgba(255, 255, 255, 0.64);
   --action-button-background-color: #212121;
   --action-button-color: #fff;
   --action-button-hover-background-color: #212121;
   --action-button-hover-color: #04b3f5;
-  --google-drive-list-view-selected-background-color: #757575;
-  --paper-input-container-color: rgba(255, 255, 255, 0.64);
-  --paper-toggle-button-label-color: #fff;
+
   --error-message-icon-color: rgba(255, 255, 255, 0.64);
   --error-message-color: #fff;
-  --secondary-text-color: #EEEEEE;
-  --anypoint-input-legacy-label-color: #F5F5F5;
+  --error-message-code-color: #9e9e9e;
+
+  --saved-request-detail-background-color: #212121;
+  --saved-request-detail-color: #fff;
+  --saved-request-detail-padding: 20px;
+  --saved-request-detail-data-list-color: #fff;
+  --saved-request-detail-action-button-color: #fff;
+  --saved-request-detail-action-icon-color: #fff;
+
+  --anypoint-chip-label-color: #fff;
+  --anypoint-chip-icon-color: #fff;
+  --anypoint-chip-label-focused-color: #fff;
+  --anypoint-chip-label-active-color: #fff;
+  --anypoint-chip-focused-background-color: #34434b;
+  --anypoint-chip-background-color: #424242;
+
   --arc-interactive-demo-options-color: #F5F5F5;
+
   --anypoint-checkbox-label-color:  #F5F5F5;
   --anypoint-input-background-color: #494949;
   --anypoint-input-label-color: #fff;
@@ -82,7 +43,9 @@ body {
   --anypoint-input-legacy-focus-background-color: #3a3b3c;
   --anypoint-input-legacy-focus-border-color: #178bea;
   --anypoint-input-info-message-color: #fff;
-  --inline-documentation-background-color: #3a3a3a;
+
+  --anypoint-menu-button-border-radius: 12px;
+  
   --anypoint-dropdown-menu-background-color: #494949;
   --anypoint-dropdown-menu-label-background-color: var(--primary-background-color);
   --anypoint-listbox-background-color: #494949;
@@ -90,178 +53,145 @@ body {
   --anypoint-dropdown-menu-label-color: #fff;
   --anypoint-dropdown-menu-info-message-color: #fff;
   --anypoint-item-hover-background-color: #616161;
-  --anypoiont-autocomplete-background-color: #494949;
-  --anypoint-icon-button-emphasis-low-color: #fff;
-  --api-form-action-icon-color: #fff;
-  --api-form-action-button-color: #fff;
-  --anypoint-icon-button-emphasis-low-color: #fff;
-  --anypoiont-autocomplete-background-color: #494949;
-  --auth-method-oauth2-redirect-info-color: #fff;
-  --inline-documentation-color: #fff;
-  --code-mirror-background-color: #37474F;
+  --anypoint-item-focused-background-color: #212121;
+  --anypoint-autocomplete-background-color: #494949;
+  --anypoint-icon-button-emphasis-low-color: #c5c5c5;
+  --anypoint-item-before-background: transparent;
+
+  --anypoint-button-emphasis-low-hover-background-color: #616161;
+  --anypoint-button-emphasis-low-focus-background-color: var(--anypoint-button-emphasis-low-hover-background-color);
+  --anypoint-button-emphasis-low-focus-color: var(--primary-color);
+
+  --code-mirror-background-color: #1e1e1e;
+  --code-mirror-gutters-background-color: #1e1e1e;
   --code-mirror-string-color: #C3E88D;
   --code-mirror-punctuation-color: #EEFFFF;
   --code-mirror-atom-color: #F07178;
   --code-mirror-number-color: #F78C6A;
   --code-mirror-cursor-color: #009688;
-  --code-mirror-gutters-background-color:#212121;
-  --code-mirror-variable-color: #fff;
-  --code-mirror-selected-background-color: #7c7c7c;
-  --code-mirror-focused-selected-background-color: #2196f3;
-  --code-mirror-meta-color: #EEEEEE;
-  --code-mirror-attribute-color: #84c9ff;
-  --code-mirror-tag-color: #ff7c7c;
-  --code-mirror-qualifier-color: #BDBDBD;
-  --code-mirror-variable2-color: #fff;
-  --code-mirror-property-color: #FFCB6B;
-  --code-mirror-keyword-color: #C792EA;
-  --request-editor-panel-background-color: #424242;
-  --request-editor-panel-border: 1px #757575 solid;
-  --request-actions-panel-empty-screen-color: #fff;
-  --request-action-iterator-editor-background-color: #212121;
-  --request-action-iterator-editor-info-color: #fff;
-  --request-condition-editor-background-color: #212121;
+  --code-mirror-tag-color: #ffffff;
+  --code-mirror-tag-color: #b4b4b4;
+  --code-mirror-gutters-border-right-color: #757575;
 
-  --code-color: #fff;
-  --code-background-color: #263238;
-  --code-type-boolean-value-color: #F07178;
   --code-operator-value-background-color: transparent;
+  --code-background-color: #212121;
+  --code-color: #fff;
   --code-type-number-value-color: #eb67b0;
-  --code-token-comment-value-color: #C792EA;
-  --code-property-value-color: #F07178
-  --code-keyword-value-color: #C3E88D;
-  --code-type-text-value-color: #FFCB6B;
-  --code-punctuation-value-color: rgba(255, 255, 255, 0.82);
+  --code-property-value-color: #b0e6ff;
+  --code-type-text-value-color: #ffb89b;
+  --code-type-boolean-value-color: #72baff;
+  --code-type-number-value-color: #b5cea8;
+  --code-token-comment-value-color: #91afcd;
+  --code-keyword-value-color: #63d0ff;
 
   --http-code-snippet-code-text-shadow: #fff;
   --http-code-snippet-container-background-color: var(--code-background-color);
   --http-code-snippet-code-function-color: #82AAFF;
   --http-code-snippet-code-keyword-color: #C792EA;
   --http-code-snippet-code-cdata-color: #adb9c5;
-  --response-status-view-loading-time-color: #fff;
-  --anypoint-button-emphasis-high-background-color: #fff;
-  --anypoint-button-emphasis-high-focus-background-color: #E3F2FD;
-  --anypoint-button-emphasis-low-focus-color: var(--accent-color);
-  --anypoint-button-emphasis-high-hover-background-color: var(--primary-color);
-  --anypoint-button-hover-background-color: var(--primary-color);
-  --anypoint-button-emphasis-high-color: #2196f3;
-  --anypoint-button-color: #2196f3;
-  --anypoint-input-compatibility-label-color: #fff;
-  --anypoint-dropdown-menu-compatibility-label-color: #fff;
-  --url-input-editor-query-title-color: #fff;
-  --anypoint-button-color: #FF9800;
-  --anypoint-checkbox-checked-color: #FF9800;
-  --anypoint-checkbox-checked-color: #FF9800;
-  --anypoint-switch-active-color: #FF9800;
+
+  --authorization-method-oauth2-redirect-info-color: var(--secondary-text-color);
+  --auth-method-certificate-second-line-color: var(--secondary-text-color);
+  
+  --request-editor-url-area-background-color: #424242;
+  --request-editor-url-input-background-color: #212121;
+  --progress-info-background-color: #404040;
+  --progress-info-color: #fff;
+
+  --arc-request-workspace-tabs-close-color: #9e9e9e;
+  --workspace-tabs-add-color: #fff;
+
+  --arc-actions-tutorial-content-color: var(--secondary-text-color);
+  --action-editor-opened-border-color: #616161;
+  --action-editor-opened-title-background-color: transparent;
+  --action-editor-opened-title-color: #fff;
+  --action-condition-closed-background-color: transparent;
+  --action-editor-opened-title-border-bottom-color: #616161;
+  --action-condition-wrapper-border-bottom-color: #616161;
+  --action-condition-closed-border-bottom-color: #616161;
+
+  --requests-list-history-group-header-background-color: #424242;
+  --requests-list-item-history-group-header-color: #fff;
+
+  --request-panel-resizer-active-background-color: #424242;
+
+  /* Response view styles */
+  --response-empty-panel-background-color: #212121;
+  --error-message-icon-color: rgba(255, 255, 255, 0.64);
+  --error-message-color: #fff;
+  --error-message-code-color: #9e9e9e;
+  --response-status-view-request-url-background-color: #424242;
+  --response-tabs-border-color: #757575;
+  --response-tab-close-hover-background-color: #424242;
+  --response-code-line-numbers-border-color: #757575;
+  --response-code-line-numbers-color: #999;
+  --response-code-toggle-line-border-color: #757575;
+
+  /* Timings view styles */
+  --request-timings-total-border-color: #757575;
+  --request-timings-progress-background: #424242;
+  --request-timings-progress-color: #c6f68d;
+
+  /* App toolbar */
+  --arc-toolbar-background: #424242;
+
+  /* ARC menu */
+  --arc-rail-menu-icon-color: #757575;
+  --arc-rail-menu-icon-selected-color: #fff;
+  --arc-menu-title-background-color: #424242;
+  --arc-menu-title-color: #fff;
+  --requests-list-history-group-header-background-color: #424242;
+  --requests-list-item-history-group-header-color: rgba(255, 255, 255, 0.74);
+
+  /* HTTP method colors */
+  --http-get-color: #c6f68d;
+  --http-post-color: #b39afd;
+  --http-put-color: #ffc77d;
+  --http-patch-color: #f186c0;
+  --http-delete-color: #FF5252;
+  --http-options-color: rgba(128, 128, 128, 0.74);
+  --http-head-color: rgba(128, 128, 128, 0.74);
+  --http-connect-color: rgba(128, 128, 128, 0.74);
+  --http-trace-color: rgba(128, 128, 128, 0.74);
+  --http-method-label-get-background-color: var(--http-get-color);
+  --http-method-label-get-color: #000;
+  --http-method-label-post-background-color: var(--http-post-color);
+  --http-method-label-post-color: #000;
+  --http-method-label-put-background-color: var(--http-put-color);
+  --http-method-label-put-color: #000;
+  --http-method-label-delete-background-color: var(--http-delete-color);
+  --http-method-label-delete-color: #000;
+  --http-method-label-options-background-color: var(--http-options-color);
+  --http-method-label-options-background-color: #fff;
+  --http-method-label-head-background-color: var(--http-head-color);
+  --http-method-label-head-color: #fff;
+  --http-method-label-patch-background-color: var(--http-patch-color);
+  --http-method-label-patch-color: #000;
+
+  /* Status code colors */
+  --arc-status-code-color-200: #c6f68d;
+  --arc-status-code-color-300: #b39afd;
+  --arc-status-code-color-400: #ffc77d;
+  --arc-status-code-color-500: #FF5252;
+  --response-status-code-color: #000;
+
+  /* Web session URL */
+  --web-url-input-background-color: #212121;
+
+  /* shadows */
+  --box-shadow-6dp: 0 19px 38px rgba(0,0,0,0.30), 0 15px 12px rgba(0,0,0,0.22);
+
+  /* Dialogs */
   --anypoint-dialog-title-color: #fff;
-  --anypoint-dialog-content-color: rgba(255, 255, 255, 0.74);
+  --anypoint-dialog-content-color: #fff;
 
-  --http-method-label-get-background-color: rgb(0, 128, 0);
-  --http-method-label-get-color: #fff;
-  --http-method-label-post-background-color: rgb(33, 150, 243);
-  --http-method-label-post-color: #fff;
-  --http-method-label-put-background-color: rgb(255, 165, 0);
-  --http-method-label-put-color: fff;
-  --http-method-label-delete-background-color: rgb(244, 67, 54);
-  --http-method-label-delete-color: fff;
-  --iron-icon-fill-color: #fff;
-
-  --api-type-document-type-attribute-color: #fff;
-  --api-annotation-document-color: #fff;
-  --api-body-document-description-color: #fff;
-  --api-method-documentation-description-color: #fff;
-  --api-method-documentation-bottom-navigation-color: #fff;
-
-  --api-method-documentation-url-background-color: var(--code-background-color);
-  --markdown-styles-code-text-shadow: none;
-
-  --api-type-document-property-parent-color: #fff;
-
-  --from-row-action-icon-color: #fff;
-  --icon-button-color: #fff;
-
-  --api-console-menu-background-color: #424242;
-  --api-console-menu-color: #fff;
-
-  --api-endpoint-documentation-bottom-navigation-color: #fff;
-  --api-navigation-section-title-focus-background-color: #616161;
-  --api-endpoint-documentation-tryit-background-color: #424242;
-  --api-endpoint-documentation-tryit-panels-background-color: #424242;
-  --api-type-document-property-color: #fff;
-  --api-endpoint-documentation-description-color: #fff;
-  --api-body-document-code-color: #fff;
-
-
-  --arc-menu-color: #fff;
-  --request-list-item-history-group-header-color: #fff;
-  --request-list-item-selected-background-color: #212121;
-  --arc-menu-background-color: var(--primary-background-color);
-  --arc-request-workspace-tabs-close-color: #fff;
-
-  --request-timings-progress-background: #9E9E9E;
-  --request-timings-progress-background: #616161;
-  --request-timings-progress-color: #4CAF50;
-
-  --exchange-search-list-item-author-color: rgba(255, 255, 255, 0.74);
-
-  --anypoiont-dropdown-shaddow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
-  --anypoiont-autocomplete-dropdown-shaddow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
-
-  --box-shadow-transition: box-shadow 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-  --box-shadow-2dp: 0 2px 2px 0 rgba(0, 0, 0, 0.14),
-                  0 1px 5px 0 rgba(0, 0, 0, 0.12),
-                  0 3px 1px -2px rgba(0, 0, 0, 0.2);
-  --box-shadow-3dp: 0 3px 4px 0 rgba(0, 0, 0, 0.14),
-                0 1px 8px 0 rgba(0, 0, 0, 0.12),
-                0 3px 3px -2px rgba(0, 0, 0, 0.4);
-  --box-shadow-4dp: 0 4px 5px 0 rgba(0, 0, 0, 0.14),
-                0 1px 10px 0 rgba(0, 0, 0, 0.12),
-                0 2px 4px -1px rgba(0, 0, 0, 0.4);
-  --box-shadow-6dp: 0 6px 10px 0 rgba(0, 0, 0, 0.14),
-                0 1px 18px 0 rgba(0, 0, 0, 0.12),
-                0 3px 5px -1px rgba(0, 0, 0, 0.4);
-  --box-shadow-8dp: 0 8px 10px 1px rgba(0, 0, 0, 0.14),
-                0 3px 14px 2px rgba(0, 0, 0, 0.12),
-                0 5px 5px -3px rgba(0, 0, 0, 0.4);
-  --box-shadow-12dp: 0 12px 16px 1px rgba(0, 0, 0, 0.14),
-                0 4px 22px 3px rgba(0, 0, 0, 0.12),
-                0 6px 7px -4px rgba(0, 0, 0, 0.4);
-  --box-shadow-16dp: 0 16px 24px 2px rgba(0, 0, 0, 0.14),
-                0  6px 30px 5px rgba(0, 0, 0, 0.12),
-                0  8px 10px -5px rgba(0, 0, 0, 0.4);
-  --box-shadow-24dp: 0 24px 38px 3px rgba(0, 0, 0, 0.14),
-                0 9px 46px 8px rgba(0, 0, 0, 0.12),
-                0 11px 15px -7px rgba(0, 0, 0, 0.4);
-
-  --bottom-sheet-box-shadow: var(--box-shadow-6dp);
-  --bottom-sheet-background-color: var(--primary-background-color);
+  /* Bottom sheets */
+  --bottom-sheet-background-color: #424242;
   --bottom-sheet-color: #fff;
-  --saved-request-detail-data-list-color: #fff;
-  --saved-request-detail-action-icon-color: #fff;
-  --saved-request-editor-options-color: #fff;
 
-  --arc-toolbar-variables-panel-color: #fff;
-  --variables-preview-overlay-background-color: var(--primary-background-color);
-  --variables-preview-overlay-var-name-color: rgba(255, 255, 255, 0.54);
-  --variables-preview-overlay-var-value-color: rgba(255, 255, 255, 0.87);
-  --variables-drawer-editor-background-color: var(--primary-background-color);
+  /* Cookies manager */
+  --cookie-details-meta-color: #fff;
 
-  --import-table-title-request-project-background-color: #616161;
-
-  --project-details-description-color: #fff;
-
-  --web-url-input-background-color: #616161;
-
-  --arc-env-container-color: #fff;
-  --arc-toolbar-variables-toggle-icon-color: #fff;
-  --arc-toolbar-back-icon-color: #fff;
-  --arc-toolbar-icon-color: #fff;
-  --arc-toolbar-button-background-color: #212121;
-
-  --about-arc-version-label-color: #fff;
-  --about-arc-updates-section-background-color: #424242;
-}
-
-body[narrow] {
-
+  /* Client certificates */
+  --certificate-details-data-list-color: #fff;
 }

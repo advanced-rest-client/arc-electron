@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta http-equiv="Content-Security-Policy" content="default-src file: 'self' 'unsafe-inline'; script-src blob: web-module: 'self' 'unsafe-inline' https://apis.google.com; style-src 'self' themes: 'unsafe-inline' https://fonts.googleapis.com; font-src web-module: 'self' https://fonts.gstatic.com; connect-src 'self' https: ws: wss: https://www.google-analytics.com https://app.advancedrestclient.com https://anypoint.mulesoft.com; img-src 'self' blob: data: https://exchange2-asset-manager-kprod.s3.amazonaws.com">
+  <title>Advanced REST Client by MuleSoft</title>
+  <link href="styles/common.css" rel="stylesheet" type="text/css" />
+  <link href="styles/api-console.css" rel="stylesheet" type="text/css" />
+
+  <script src="web-module://web_modules/codemirror/lib/codemirror.js"></script>
+  <script src="web-module://web_modules/codemirror/addon/mode/loadmode.js"></script>
+  <script src="web-module://web_modules/codemirror/mode/meta.js"></script>
+  <script src="web-module://web_modules/codemirror/mode/javascript/javascript.js"></script>
+  <script src="web-module://web_modules/codemirror/mode/xml/xml.js"></script>
+  <script src="web-module://web_modules/codemirror/mode/htmlmixed/htmlmixed.js"></script>
+  <script src="web-module://web_modules/jsonlint/web/jsonlint.js"></script>
+  <script src="web-module://web_modules/codemirror/addon/lint/lint.js"></script>
+  <script src="web-module://web_modules/codemirror/addon/lint/json-lint.js"></script>
+  <script>
+  window.CodeMirror.modeURL = 'web-module://web_modules/codemirror/mode/%N/%N.js';
+  </script>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module" src="scripts/apic/ApiConsole.js"></script>
+  <history-data-model></history-data-model>
+  <auth-data-model></auth-data-model>
+  <host-rules-model></host-rules-model>
+  <rest-api-model></rest-api-model>
+  <url-indexer></url-indexer>
+</body>
+</html>

@@ -1,0 +1,28 @@
+.themes-content {
+  max-width: 900px;
+  margin: 0 24px;
+}
+
+.add-form {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.add-form anypoint-input {
+  flex: 1;
+}
+
+.selection-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.remove-theme {
+  margin-left: 8px;
+}
+
+anypoint-dropdown-menu {
+  width: 600px;
+}
