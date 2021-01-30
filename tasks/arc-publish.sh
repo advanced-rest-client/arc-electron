@@ -3,7 +3,7 @@ if [ $TRAVIS_BRANCH != 'alpha' ] && [ $TRAVIS_BRANCH != 'master' ] && [ $TRAVIS_
   exit 0
 fi
 
-if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then 
+if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then 
   echo "Skipping ARC build. This is a PR request."
   exit 0
 fi
