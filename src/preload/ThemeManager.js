@@ -1,10 +1,15 @@
 import { ipcRenderer as ipc } from 'electron';
 import logger from 'electron-log';
+import { AppHostname } from '../common/Constants.js';
 
 /** @typedef {import('@advanced-rest-client/arc-types').Themes.ArcThemeStore} ArcThemeStore */
 /** @typedef {import('@advanced-rest-client/arc-types').Themes.InstalledTheme} InstalledTheme */
+/** @typedef {import('../types').SystemThemeInfo} SystemThemeInfo */
 
 const themeActivatedHandler = Symbol('themeActivatedHandler');
+const systemThemeChangeHandler = Symbol('systemThemeChangeHandler');
+const notifyThemeChange = Symbol('notifyThemeChange');
+const themePropertyChangeHandler = Symbol('themePropertyChangeHandler');
 
 /**
  * Theme manager class for renderer process.
@@ -26,6 +31,8 @@ export class ThemeManager {
 
   constructor() {
     this[themeActivatedHandler] = this[themeActivatedHandler].bind(this);
+    this[systemThemeChangeHandler] = this[systemThemeChangeHandler].bind(this);
+    this[themePropertyChangeHandler] = this[themePropertyChangeHandler].bind(this);
   }
   
   /**
@@ -33,6 +40,8 @@ export class ThemeManager {
    */
   listen() {
     ipc.on('theme-manager-theme-activated', this[themeActivatedHandler]);
+    ipc.on('system-theme-changed', this[systemThemeChangeHandler]);
+    ipc.on('theme-property-changed', this[themePropertyChangeHandler]);
   }
 
   /**
@@ -40,6 +49,8 @@ export class ThemeManager {
    */
   unlisten() {
     ipc.off('theme-manager-theme-activated', this[themeActivatedHandler]);
+    ipc.off('system-theme-changed', this[systemThemeChangeHandler]);
+    ipc.off('theme-property-changed', this[themePropertyChangeHandler]);
   }
 
   /**
@@ -48,7 +59,20 @@ export class ThemeManager {
    * @param {string} id
    */
   async [themeActivatedHandler](e, id) {
+    const settings = await this.readState();
+    if (settings.systemPreferred) {
+      await this.loadSystemPreferred();
+      return;
+    }
     await this.loadTheme(id);
+    this[notifyThemeChange](id);
+  }
+
+  /**
+   * Dispatches `themeactivated` event.
+   * @param {string} id
+   */
+  [notifyThemeChange](id) {
     document.body.dispatchEvent(new CustomEvent('themeactivated', {
       detail: id,
       bubbles: true,
@@ -154,7 +178,7 @@ export class ThemeManager {
     const link = document.createElement('link');
     link.setAttribute('rel', 'stylesheet');
     link.setAttribute('type', 'text/css');
-    link.setAttribute('href', `themes://${themeId}`);
+    link.setAttribute('href', `themes://${AppHostname}/${themeId}`);
     document.head.appendChild(link);
   }
 
@@ -163,5 +187,93 @@ export class ThemeManager {
    */
   async setSystemPreferred(status) {
     return ipc.invoke('theme-manager-update-property', 'systemPreferred', status);
+  }
+
+  /**
+   * @returns {Promise<SystemThemeInfo>} 
+   */
+  async readSystemThemeInfo() {
+    return ipc.invoke('theme-manager-system-theme');
+  }
+
+  /**
+   * Loads application theme applying user and system configuration.
+   * This function should be used on each application page to load the theme.
+   * @returns {Promise<string>} The id of the loaded theme.
+   */
+  async loadApplicationTheme() {
+    const settings = await this.readState();
+    if (settings.systemPreferred) {
+      return this.loadSystemPreferred();
+    }
+    return this.loadUserPreferred();
+  }
+
+  /**
+   * Loads the theme for the current system preferences.
+   * @returns {Promise<string>}
+   */
+  async loadSystemPreferred() {
+    logger.info('Loading system preferred theme.');
+    const systemInfo = await this.readSystemThemeInfo();
+    const id = systemInfo.shouldUseDarkColors ? ThemeManager.darkTheme : ThemeManager.defaultTheme;
+    try {
+      await this.loadTheme(id);
+      this[notifyThemeChange](id);
+    } catch (e) {
+      logger.error(e);
+    }
+    this[notifyThemeChange](id);
+    return id;
+  }
+
+  /**
+   * Loads the theme configured by the user
+   * @returns {Promise<string>}
+   */
+  async loadUserPreferred() {
+    logger.info('Loading user activated theme.');
+    const info = await this.readActiveThemeInfo();
+    const id = info && info.name || ThemeManager.defaultTheme;
+    try {
+      await this.loadTheme(id);
+      this[notifyThemeChange](id);
+    } catch (e) {
+      logger.error(e);
+    }
+    return id;
+  }
+
+  /**
+   * Handler for system theme change event dispatched by the IO thread.
+   * Updates theme depending on current setting.
+   *
+   * @param {any} e
+   * @param {SystemThemeInfo} info true when Electron detected dark mode
+   * @returns {Promise<void>}
+   */
+  async [systemThemeChangeHandler](e, info) {
+    const settings = await this.readState();
+    if (!settings.systemPreferred) {
+      return;
+    }
+    this.compatibility = false;
+    const id = info.shouldUseDarkColors ? ThemeManager.darkTheme : ThemeManager.defaultTheme;
+    try {
+      await this.loadTheme(id);
+      this[notifyThemeChange](id);
+    } catch (err) {
+      logger.error(err);
+    }
+  }
+
+  async [themePropertyChangeHandler](e, prop, value) {
+    if (prop === 'systemPreferred') {
+      if (value) {
+        await this.loadSystemPreferred();
+      } else {
+        await this.loadUserPreferred();
+      }
+    }
   }
 }

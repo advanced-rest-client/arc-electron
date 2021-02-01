@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, nativeTheme } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import { Oauth2Identity } from '@advanced-rest-client/electron-oauth2';
 import fs from 'fs-extra';
 import { ApplicationUpdater } from './ApplicationUpdater.js';
@@ -20,7 +20,6 @@ import { ExternalResourcesManager } from './ExternalResourcesManager.js';
 /** @typedef {import('../types').ProtocolFile} ProtocolFile */
 /** @typedef {import('./PreferencesManager').PreferencesManager} PreferencesManager */
 
-export const osThemeUpdateHandler = Symbol('osThemeUpdateHandler');
 export const importWorkspaceHandler = Symbol('importWorkspaceHandler');
 
 export class ArcEnvironment {
@@ -123,7 +122,6 @@ export class ArcEnvironment {
     logger.debug('Initializing theme manager.');
     this.themes = new ThemeManager(this, this.initParams.skipThemesUpdate);
     this.themes.listen();
-    nativeTheme.on('updated', this[osThemeUpdateHandler].bind(this));
   }
 
   initializeSessionManager() {
@@ -359,10 +357,6 @@ export class ArcEnvironment {
         logger.debug(`Sending "${action}" action to the UI thread.`);
         win.webContents.send('command', action);
     }
-  }
-
-  [osThemeUpdateHandler]() {
-    this.wm.notifyAll('system-theme-changed', nativeTheme.shouldUseDarkColors);
   }
 
   /**

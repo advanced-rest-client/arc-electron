@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow, nativeTheme } from 'electron';
+import { ipcMain, BrowserWindow } from 'electron';
 
 const findHandler = Symbol('findHandler');
 const clearHandler = Symbol('clearHandler');
@@ -108,9 +108,7 @@ export class ContentSearchService {
       targetWindow,
     });
     this[positionWindow](barWindow, targetWindow);
-    this.windowsManager.loadPage(barWindow, 'search-bar.html', '', {
-      darkMode: String(nativeTheme.shouldUseDarkColors),
-    });
+    this.windowsManager.loadPage(barWindow, 'search-bar.html');
     this[listenTargetEvents](targetWindow);
     this[listenBarEvents](barWindow);
     barWindow.webContents.once('did-finish-load', () => this[focusBarInput](barWindow));

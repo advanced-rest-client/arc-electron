@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs-extra';
 import mime from 'mime-types';
 import { logger } from './Logger.js';
-import { MainWindowPersist, TaskManagerWindowPersist } from './Constants.js';
+import { MainWindowPersist, TaskManagerWindowPersist } from '../common/Constants.js';
 
 export const requestHandler = Symbol('requestHandler');
 

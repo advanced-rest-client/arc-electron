@@ -1,5 +1,5 @@
 /* eslint-disable no-param-reassign */
-import { ipcMain } from 'electron';
+import { ipcMain, nativeTheme } from 'electron';
 import { ThemeInfo } from './models/ThemeInfo.js';
 import { ThemePluginsManager } from './ThemePluginsManager.js';
 import { logger } from './Logger.js';
@@ -7,9 +7,12 @@ import { logger } from './Logger.js';
 /** @typedef {import('./ArcEnvironment').ArcEnvironment} ArcEnvironment */
 /** @typedef {import('@advanced-rest-client/arc-types').Themes.ArcThemeStore} ArcThemeStore */
 /** @typedef {import('@advanced-rest-client/arc-types').Themes.InstalledTheme} InstalledTheme */
+/** @typedef {import('../types').SystemThemeInfo} SystemThemeInfo */
 
 export const checkUpdateDebounce = Symbol('checkUpdateDebounce');
 export const checkUpdate = Symbol('checkUpdate');
+export const osThemeUpdateHandler = Symbol('osThemeUpdateHandler');
+export const readSystemThemeHandler = Symbol('readSystemThemeHandler');
 
 export class ThemeManager {
   /**
@@ -30,6 +33,8 @@ export class ThemeManager {
     this.installTheme = this.installTheme.bind(this);
     this.uninstallTheme = this.uninstallTheme.bind(this);
     this.updatePropertyHandler = this.updatePropertyHandler.bind(this);
+    this[readSystemThemeHandler] = this[readSystemThemeHandler].bind(this);
+    this[osThemeUpdateHandler] = this[osThemeUpdateHandler].bind(this);
 
     this.manager = new ThemePluginsManager();
     if (!skipUpdateCheck) {
@@ -55,18 +60,8 @@ export class ThemeManager {
     ipcMain.handle('theme-manager-install-theme', this.installTheme);
     ipcMain.handle('theme-manager-uninstall-theme', this.uninstallTheme);
     ipcMain.handle('theme-manager-update-property', this.updatePropertyHandler);
-  }
-
-  /**
-   * Removes event listeners
-   */
-  unlisten() {
-    ipcMain.removeHandler('theme-manager-read-themes');
-    ipcMain.removeHandler('theme-manager-active-theme-info');
-    ipcMain.removeHandler('theme-manager-activate-theme');
-    ipcMain.removeHandler('theme-manager-install-theme');
-    ipcMain.removeHandler('theme-manager-uninstall-theme');
-    ipcMain.removeHandler('theme-manager-update-property');
+    ipcMain.handle('theme-manager-system-theme', this[readSystemThemeHandler]);
+    nativeTheme.on('updated', this[osThemeUpdateHandler]);
   }
 
   /**
@@ -182,5 +177,32 @@ export class ThemeManager {
    */
   async updatePropertyHandler(e, path, value) {
     await this.themeInfo.setProperty(path, value);
+    this.arcApp.wm.notifyAll('theme-property-changed', [path, value]);
+  }
+
+  /**
+   * @returns {SystemThemeInfo} 
+   */
+  generateSystemThemeInfo() {
+    return {
+      shouldUseDarkColors: nativeTheme.shouldUseDarkColors,
+      shouldUseHighContrastColors: nativeTheme.shouldUseHighContrastColors,
+      shouldUseInvertedColorScheme: nativeTheme.shouldUseInvertedColorScheme,
+    };
+  }
+
+  /**
+   * @returns {Promise<SystemThemeInfo>} 
+   */
+  async [readSystemThemeHandler]() {
+    return this.generateSystemThemeInfo();
+  }
+
+  /**
+   * Handler for the native theme update event.
+   */
+  [osThemeUpdateHandler]() {
+    const info = this.generateSystemThemeInfo();
+    this.arcApp.wm.notifyAll('system-theme-changed', info);
   }
 }

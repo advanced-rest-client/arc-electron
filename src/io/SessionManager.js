@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import { session, BrowserWindow, ipcMain, app } from 'electron';
 import { EventEmitter } from 'events';
-import { WebSessionPersist } from './Constants.js';
+import { WebSessionPersist } from '../common/Constants.js';
 import { logger } from './Logger.js';
 
 /** @typedef {import('../types').SessionManagerConfig} SessionManagerConfig */

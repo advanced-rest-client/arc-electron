@@ -2,7 +2,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import url from 'url';
 import { BrowserWindow, ipcMain, app } from 'electron';
-import { AppHostname, MainWindowPersist } from '../Constants.js';
+import { AppHostname, MainWindowPersist } from '../../common/Constants.js';
 import { logger } from '../Logger.js';
 
 /** @typedef {import('../WindowsManager').WindowsManager} WindowsManager */

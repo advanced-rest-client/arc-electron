@@ -83,10 +83,8 @@ class ArcMenuScreen extends ApplicationPage {
    * Loads the current theme.
    */
   async loadTheme() {
-    const info = await this.themeProxy.readActiveThemeInfo();
     try {
-      const id = info && info.name;
-      await this.themeProxy.loadTheme(id);
+      const id = await this.themeProxy.loadApplicationTheme();
       this.compatibility = id === ThemeManager.anypointTheme;
     } catch (e) {
       this.logger.error(e);
@@ -99,10 +97,6 @@ class ArcMenuScreen extends ApplicationPage {
   collectInitOptions() {
     const search = new URLSearchParams(window.location.search);
     const result = {};
-    const dt = search.get('darkMode');
-    if (dt) {
-      result.darkMode = dt === 'true';
-    }
     const type = search.get('type');
     if (type) {
       result.type = type;

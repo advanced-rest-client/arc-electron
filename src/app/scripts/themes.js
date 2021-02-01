@@ -45,7 +45,7 @@ export class ThemesScreen extends ApplicationPage {
     );
     this.compatibility = false;
     this.installPending = false;
-    this.systemPreferred = false;
+    this.systemPreferred = true;
     /**
      * @type {string}
      */
@@ -79,7 +79,7 @@ export class ThemesScreen extends ApplicationPage {
     }
     this.themes = themes;
     this.activeTheme = active || defaultTheme;
-    this.compatibility = this.activeTheme === '@advanced-rest-client/arc-electron-anypoint-theme';
+    this.compatibility = this.activeTheme === ThemeManager.anypointTheme;
     this.systemPreferred = systemPreferred || false;
   }
 
@@ -87,15 +87,8 @@ export class ThemesScreen extends ApplicationPage {
    * Loads the current theme.
    */
   async loadTheme() {
-    const search = new URLSearchParams(window.location.search);
-    const dt = search.get('darkMode');
-    const hasSystemDarkMode = dt === 'true';
-    let theme = this.activeTheme;
-    if (hasSystemDarkMode && !this.systemPreferred) {
-      theme = ThemeManager.darkTheme;
-    }
     try {
-      await this.manager.loadTheme(theme);
+      await this.manager.loadApplicationTheme();
     } catch (e) {
       this.logger.error(e);
     }
@@ -166,6 +159,7 @@ export class ThemesScreen extends ApplicationPage {
     this.systemPreferred = checked;
     try {
       await this.manager.setSystemPreferred(checked);
+      await this.loadTheme();
     } catch (error) {
       this.reportCriticalError(error.message);
       this.systemPreferred = !checked;
@@ -239,7 +233,7 @@ export class ThemesScreen extends ApplicationPage {
       >
         <anypoint-item-body ?twoLine="${!!item.description}">
           <div>${title}</div>
-          ${item.description ? html`<div secondary>${item.description}</div>` : ''}
+          ${item.description ? html`<div data-secondary>${item.description}</div>` : ''}
         </anypoint-item-body>
       </anypoint-item>
     `;

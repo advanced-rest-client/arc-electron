@@ -32,10 +32,8 @@ class AnalyticsConsent extends ApplicationPage {
    * Loads the current theme.
    */
   async loadTheme() {
-    const info = await this.themeProxy.readActiveThemeInfo();
-    const theme = info && info.name;
     try {
-      await this.themeProxy.loadTheme(theme);
+      await this.themeProxy.loadApplicationTheme();
     } catch (e) {
       logger.error(e);
     }

@@ -177,10 +177,9 @@ export class ApiConsoleApplication extends AmfHelperMixin(ApplicationPage) {
    * Loads the current theme.
    */
   async loadTheme() {
-    const info = await this.themeProxy.readActiveThemeInfo();
-    const theme = info && info.name;
     try {
-      await this.themeProxy.loadTheme(theme);
+      const id = await this.themeProxy.loadApplicationTheme();
+      this.compatibility = id === ThemeManager.anypointTheme;
     } catch (e) {
       this.logger.error(e);
     }

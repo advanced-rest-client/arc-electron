@@ -1,7 +1,7 @@
 {
   "name": "advanced-rest-client",
   "description": "The Advanced REST Client desktop application.",
-  "version": "16.0.0-alpha.6",
+  "version": "0.0.0-no-version",
   "homepage": "https://advancedrestclient.com",
   "license": "Apache-2.0",
   "author": {
@@ -62,6 +62,7 @@
     "@types/chai": "^4.2.14",
     "@types/esm": "^3.2.0",
     "@types/fs-extra": "^9.0.6",
+    "@types/mime-types": "^2.1.0",
     "@types/mocha": "^8.2.0",
     "@types/pouchdb": "^6.4.0",
     "api-console": "^6.4.0",
@@ -105,7 +106,7 @@
     "jexl": "^2.3.0",
     "jsonlint": "^1.6.3",
     "live-plugin-manager": "^0.15.1",
-    "mime-types": "^2.1.27",
+    "mime-types": "^2.1.28",
     "node-fetch": "^2.6.1",
     "uuid": "^8.3.2",
     "winston": "^3.3.3"
