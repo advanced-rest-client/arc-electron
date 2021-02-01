@@ -177,6 +177,7 @@ export class ThemeManager {
    */
   async updatePropertyHandler(e, path, value) {
     await this.themeInfo.setProperty(path, value);
+    this.arcApp.wm.notifyAll('theme-property-changed', [path, value]);
   }
 
   /**

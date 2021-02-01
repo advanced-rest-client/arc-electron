@@ -159,6 +159,7 @@ export class ThemesScreen extends ApplicationPage {
     this.systemPreferred = checked;
     try {
       await this.manager.setSystemPreferred(checked);
+      await this.loadTheme();
     } catch (error) {
       this.reportCriticalError(error.message);
       this.systemPreferred = !checked;

@@ -9,6 +9,7 @@ import { AppHostname } from '../common/Constants.js';
 const themeActivatedHandler = Symbol('themeActivatedHandler');
 const systemThemeChangeHandler = Symbol('systemThemeChangeHandler');
 const notifyThemeChange = Symbol('notifyThemeChange');
+const themePropertyChangeHandler = Symbol('themePropertyChangeHandler');
 
 /**
  * Theme manager class for renderer process.
@@ -31,7 +32,7 @@ export class ThemeManager {
   constructor() {
     this[themeActivatedHandler] = this[themeActivatedHandler].bind(this);
     this[systemThemeChangeHandler] = this[systemThemeChangeHandler].bind(this);
-    
+    this[themePropertyChangeHandler] = this[themePropertyChangeHandler].bind(this);
   }
   
   /**
@@ -40,6 +41,7 @@ export class ThemeManager {
   listen() {
     ipc.on('theme-manager-theme-activated', this[themeActivatedHandler]);
     ipc.on('system-theme-changed', this[systemThemeChangeHandler]);
+    ipc.on('theme-property-changed', this[themePropertyChangeHandler]);
   }
 
   /**
@@ -48,6 +50,7 @@ export class ThemeManager {
   unlisten() {
     ipc.off('theme-manager-theme-activated', this[themeActivatedHandler]);
     ipc.off('system-theme-changed', this[systemThemeChangeHandler]);
+    ipc.off('theme-property-changed', this[themePropertyChangeHandler]);
   }
 
   /**
@@ -56,6 +59,11 @@ export class ThemeManager {
    * @param {string} id
    */
   async [themeActivatedHandler](e, id) {
+    const settings = await this.readState();
+    if (settings.systemPreferred) {
+      await this.loadSystemPreferred();
+      return;
+    }
     await this.loadTheme(id);
     this[notifyThemeChange](id);
   }
@@ -198,20 +206,11 @@ export class ThemeManager {
     if (settings.systemPreferred) {
       return this.loadSystemPreferred();
     }
-    logger.info('Loading user activated theme.');
-    const info = await this.readActiveThemeInfo();
-    const id = info && info.name || ThemeManager.defaultTheme;
-    try {
-      await this.loadTheme(id);
-      this[notifyThemeChange](id);
-    } catch (e) {
-      logger.error(e);
-    }
-    return id;
+    return this.loadUserPreferred();
   }
 
   /**
-   * Loads the theme giving the system settings.
+   * Loads the theme for the current system preferences.
    * @returns {Promise<string>}
    */
   async loadSystemPreferred() {
@@ -225,6 +224,23 @@ export class ThemeManager {
       logger.error(e);
     }
     this[notifyThemeChange](id);
+    return id;
+  }
+
+  /**
+   * Loads the theme configured by the user
+   * @returns {Promise<string>}
+   */
+  async loadUserPreferred() {
+    logger.info('Loading user activated theme.');
+    const info = await this.readActiveThemeInfo();
+    const id = info && info.name || ThemeManager.defaultTheme;
+    try {
+      await this.loadTheme(id);
+      this[notifyThemeChange](id);
+    } catch (e) {
+      logger.error(e);
+    }
     return id;
   }
 
@@ -248,6 +264,16 @@ export class ThemeManager {
       this[notifyThemeChange](id);
     } catch (err) {
       logger.error(err);
+    }
+  }
+
+  async [themePropertyChangeHandler](e, prop, value) {
+    if (prop === 'systemPreferred') {
+      if (value) {
+        await this.loadSystemPreferred();
+      } else {
+        await this.loadUserPreferred();
+      }
     }
   }
 }
