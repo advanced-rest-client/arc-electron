@@ -6,7 +6,6 @@ import '../../../web_modules/@anypoint-web-components/anypoint-input/anypoint-in
 import '../../../web_modules/@anypoint-web-components/anypoint-button/anypoint-icon-button.js';
 import '../../../web_modules/@advanced-rest-client/arc-icons/arc-icon.js';
 
-/** @typedef {import('../../types').ArcAppInitOptions} ArcAppInitOptions */
 /** @typedef {import('lit-html').TemplateResult} TemplateResult */
 /* global ipc, ThemeManager */
 
@@ -40,8 +39,6 @@ export class SearchBar extends ApplicationPage {
 
   async initialize() {
     ipc.on('search-bar-found-in-page', this[searchResultHandler]);
-    const init = this.collectInitOptions();
-    this.initOptions = init;
     await this.loadTheme();
     this.render();
   }
@@ -51,26 +48,11 @@ export class SearchBar extends ApplicationPage {
    */
   async loadTheme() {
     const themeProxy = new ThemeManager();
-    const info = await themeProxy.readActiveThemeInfo();
     try {
-      const id = info && info.name;
-      await themeProxy.loadTheme(id);
+      await themeProxy.loadApplicationTheme();
     } catch (e) {
       // this.logger.error(e);
     }
-  }
-
-  /**
-   * @returns {ArcAppInitOptions} The init options of this browser process.
-   */
-  collectInitOptions() {
-    const search = new URLSearchParams(window.location.search);
-    const result = /** @type ArcAppInitOptions */ ({});
-    const dt = search.get('darkMode');
-    if (dt) {
-      result.darkMode = dt === 'true';
-    }
-    return result;
   }
 
   [searchResultHandler](e, matches, activeMatchOrdinal) {

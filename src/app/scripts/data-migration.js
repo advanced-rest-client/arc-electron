@@ -21,7 +21,6 @@ export class DataMigrationDialog extends ApplicationPage {
      */
     window.onmessage = (e) => {
       const { data } = e;
-      console.log('DATA', data);
       if (data.loadingStatus) {
         this.loadingStatus = data.loadingStatus;
       } else if (data.error) {

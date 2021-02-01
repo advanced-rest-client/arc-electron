@@ -7,7 +7,7 @@ const _require = require('esm')(module);
 /** @typedef {import('../../src/io/SessionManager').SessionManager} SessionManager */
 
 const { SessionManager } = _require('../../src/io/SessionManager.js');
-const { WebSessionPersist } = _require('../../src/io/Constants.js');
+const { WebSessionPersist } = _require('../../src/common/Constants.js');
 
 describe('SessionManager - main process', () => {
   const url = 'https://domain.com/cookies';

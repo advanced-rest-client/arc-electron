@@ -49,6 +49,24 @@ describe('ThemeDefaults', () => {
     it('copies anypoint theme files', async () => {
       await instance.prepareEnvironment();
       await testContents(anypointFile, anypointPackage);
+      const fontsLocations = path.join(basePath, 'arc-electron-anypoint-theme', 'fonts');
+      const fontsExists = await fs.pathExists(fontsLocations);
+      assert.isTrue(fontsExists, 'fonts folder is copied');
+      
+      const fonts = [
+        'DINPro-Light.ttf', 'DINPro-Light.woff', 'DINPro-Light.woff2',
+        'OpenSans-Bold.ttf', 'OpenSans-Bold.woff', 'OpenSans-Bold.woff2',
+        'OpenSans-Light.ttf', 'OpenSans-Light.woff', 'OpenSans-Light.woff2',
+        'OpenSans-LightItalic.ttf', 'OpenSans-LightItalic.woff', 'OpenSans-LightItalic.woff2',
+        'OpenSans-Regular.ttf', 'OpenSans-Regular.woff', 'OpenSans-Regular.woff2',
+        'OpenSans-Semibold.ttf', 'OpenSans-Semibold.woff', 'OpenSans-Semibold.woff2',
+        'SourceCodePro-Regular.ttf', 'SourceCodePro-Regular.woff', 'SourceCodePro-Regular.woff2',
+      ];
+      for await (const font of fonts) {
+        const fontFile = path.join(basePath, 'arc-electron-anypoint-theme', 'fonts', font);
+        const fontExists = await fs.pathExists(fontFile);
+        assert.isTrue(fontExists, `${font} font is copied`);
+      }
     });
 
     it('copies dark theme files', async () => {

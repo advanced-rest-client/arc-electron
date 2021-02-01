@@ -1,9 +1,9 @@
 /* eslint-disable no-param-reassign */
-import { BrowserWindow, ipcMain, shell, nativeTheme } from 'electron';
+import { BrowserWindow, ipcMain, shell } from 'electron';
 import path from 'path';
 import url from 'url';
 import { v4 } from 'uuid';
-import { MainWindowPersist, AppHostname } from './Constants.js';
+import { MainWindowPersist, AppHostname } from '../common/Constants.js';
 import { logger } from './Logger.js';
 import { ArcSessionRecorder } from './ArcSessionRecorder.js';
 import { WindowsPersistance } from './WindowsPersistance.js';
@@ -318,9 +318,6 @@ export class WindowsManager {
    * @param {{[key: string]: string}=} [params={}] A list of parameters to pass to the page with query parameters
    */
   loadPage(win, page='app.html', appPath='', params={}) {
-    if (typeof params.darkMode === 'undefined') {
-      params.darkMode = String(nativeTheme.shouldUseDarkColors);
-    }
     const full = url.format({
       hostname: AppHostname,
       pathname: `/src/app/${page}`,

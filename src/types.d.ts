@@ -153,10 +153,6 @@ export declare interface OpenPageOptions {
 
 export declare interface ArcAppInitOptions {
   /**
-   * Tells whether dark mode should be enabled, due to system settings.
-   */
-  darkMode?: boolean;
-  /**
    * The backend id of the workspace file.
    */
   workspaceId?: string;
@@ -259,4 +255,10 @@ export declare interface FileCreateItem {
   name: string;
   mimeType: string;
   parents?: FolderListItem[];
+}
+
+export declare interface SystemThemeInfo {
+  shouldUseDarkColors: boolean;
+  shouldUseHighContrastColors: boolean;
+  shouldUseInvertedColorScheme: boolean;
 }

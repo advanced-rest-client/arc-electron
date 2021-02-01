@@ -1,9 +1,8 @@
 /**
-Advanced REST Client deskto app dark theme stylesheet.
+Advanced REST Client desktop app dark theme style sheet.
 */
 
 html {
-
   @font-face {
     font-family: "DIN Pro";
     src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/DINPro-Light.eot');
@@ -152,7 +151,7 @@ body {
   --arc-font-headline-font-size: 24px;
   --arc-font-headline-font-weight: 100;
   --arc-font-headline-letter-spacing: -.03em;
-  --arc-font-headline-line-height: 32px
+  --arc-font-headline-line-height: 32px;
 
   --arc-font-subhead-font-size: 16px;
   --arc-font-subhead-font-weight: 400;
@@ -266,7 +265,7 @@ body {
   --http-method-label-head-background-color: var(--method-display-head-color);
   --http-method-label-head-color: #fff;
   --http-method-label-padding: 4px 5px;
-  --method-display-font-weigth: 100;
+  --method-display-font-weight: 100;
 
   --api-navigation-list-item-selected-background-color: #e8e9ea;
   --api-navigation-list-item-selected-color: #000;
@@ -292,8 +291,8 @@ body {
   --arc-env-selector-color: #fff;
   --arc-env-selector-background-color: #424242;
 
-  --anypoiont-dropdown-shaddow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
-  --anypoiont-autocomplete-dropdown-shaddow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
+  --anypoint-dropdown-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
+  --anypoint-autocomplete-dropdown-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
 
   --anypoint-listbox-background-color: #fff;
   /* --anypoint-dropdown-menu-compatibility-focus-background-color: #424242; */

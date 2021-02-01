@@ -104,7 +104,6 @@ const clientCertScreenTemplate = Symbol('clientCertScreenTemplate');
 const commandHandler = Symbol('commandHandler');
 const requestActionHandler = Symbol('requestActionHandler');
 const configStateChangeHandler = Symbol('configStateChangeHandler');
-const systemThemeChangeHandler = Symbol('systemThemeChangeHandler');
 const popupMenuOpenedHandler = Symbol('popupMenuOpenedHandler');
 const popupMenuClosedHandler = Symbol('popupMenuClosedHandler');
 const environmentTemplate = Symbol('environmentTemplate');
@@ -145,6 +144,7 @@ const processApiFileHandler = Symbol('processApiFileHandler');
 const arcNavigationTemplate = Symbol('arcNavigationTemplate');
 const exchangeSearchTemplate = Symbol('exchangeSearchTemplate');
 const exchangeSelectionHandler = Symbol('exchangeSelectionHandler');
+const themeActivateHandler = Symbol('themeActivateHandler');
 
 /**
  * A routes that does not go through the router and should not be remembered in the history.
@@ -440,7 +440,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     this.config = cnf;
     this.setConfigVariables(cnf);
     
-    await this.loadTheme(init.darkMode);
+    await this.loadTheme();
     this.workspace.id = init.workspaceId;
     let state = /** @type ARCState */(null);
     try {
@@ -575,14 +575,10 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     window.addEventListener(RestApiEventTypes.processFile, this[processApiFileHandler].bind(this));
     window.addEventListener('mousemove', this[resizeMouseMove].bind(this));
     window.addEventListener('mouseup', this[resizeMouseUp].bind(this));
-    window.addEventListener('themeactivated', (e) => {
-      // @ts-ignore
-      this.compatibility = e.detail === ThemeManager.anypointTheme;
-    });
+    window.addEventListener('themeactivated', this[themeActivateHandler].bind(this));
 
     ipc.on('command', this[commandHandler].bind(this));
     ipc.on('request-action', this[requestActionHandler].bind(this));
-    ipc.on('system-theme-changed', this[systemThemeChangeHandler].bind(this));
 
     ipc.on('popup-app-menu-opened', this[popupMenuOpenedHandler].bind(this));
     ipc.on('popup-app-menu-closed', this[popupMenuClosedHandler].bind(this));
@@ -622,10 +618,6 @@ export class AdvancedRestClientApplication extends ApplicationPage {
   collectInitOptions() {
     const search = new URLSearchParams(window.location.search);
     const result = /** @type ArcAppInitOptions */ ({});
-    const dt = search.get('darkMode');
-    if (dt) {
-      result.darkMode = dt === 'true';
-    }
     const wId = search.get('workspaceId');
     if (wId) {
       result.workspaceId = wId;
@@ -635,19 +627,10 @@ export class AdvancedRestClientApplication extends ApplicationPage {
 
   /**
    * Loads the current theme.
-   * @param {boolean} isDarkMode
    */
-  async loadTheme(isDarkMode) {
-    const settings = await this.themeProxy.readState();
-    let theme;
-    if (isDarkMode && settings.systemPreferred) {
-      theme = ThemeManager.darkTheme;
-    } else {
-      const info = await this.themeProxy.readActiveThemeInfo();
-      theme = info && info.name;
-    }
+  async loadTheme() {
     try {
-      await this.themeProxy.loadTheme(theme);
+      await this.themeProxy.loadApplicationTheme();
     } catch (e) {
       this.logger.error(e);
     }
@@ -961,26 +944,6 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       this.workspaceAutoEncode = value;
     } else if (key === 'view.fontSize') {
       document.body.style.fontSize = `${value}px`;
-    }
-  }
-
-  /**
-   * Handler for system theme change event dispatched by the IO thread.
-   * Updates theme depending on current setting.
-   *
-   * @param {any} e
-   * @param {Boolean} isDarkMode true when Electron detected dark mode
-   * @returns {Promise<void>}
-   */
-  async [systemThemeChangeHandler](e, isDarkMode) {
-    const theme = isDarkMode ?
-      '@advanced-rest-client/arc-electron-dark-theme' :
-      '@advanced-rest-client/arc-electron-default-theme';
-    this.compatibility = false;
-    try {
-      await this.themeProxy.loadTheme(theme);
-    } catch (err) {
-      this.logger.error(err);
     }
   }
 
@@ -1334,6 +1297,13 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     } catch (cause) {
       this.reportCriticalError(cause.message);
     }
+  }
+
+  /**
+   * @param {CustomEvent} e
+   */
+  [themeActivateHandler](e) {
+    this.compatibility = e.detail === ThemeManager.anypointTheme;
   }
 
   appTemplate() {
