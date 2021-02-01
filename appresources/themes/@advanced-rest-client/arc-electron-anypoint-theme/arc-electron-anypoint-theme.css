@@ -1,91 +1,67 @@
 /**
 Advanced REST Client desktop app dark theme style sheet.
 */
+@font-face {
+  font-family: "DIN Pro";
+  src: url('./arc-electron-anypoint-theme/fonts/DINPro-Light.woff2') format('woff2'),
+      url('./arc-electron-anypoint-theme/fonts/DINPro-Light.woff') format('woff'),
+      url('./arc-electron-anypoint-theme/fonts/DINPro-Light.ttf') format("truetype");
+  font-weight: 300;
+  font-style: normal;
+}
 
-html {
-  @font-face {
-    font-family: "DIN Pro";
-    src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/DINPro-Light.eot');
-    src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/DINPro-Light.eot?#iefix') format('embedded-opentype'),
-      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/DINPro-Light.woff2') format('woff2'),
-      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/DINPro-Light.woff') format('woff'),
-      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/DINPro-Light.ttf') format('truetype'),
-      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/DINPro-Light.svg') format('svg');
-    font-weight: 300;
-    font-style: normal;
-  }
+@font-face {
+  font-family: "Open Sans";
+  src: url('./arc-electron-anypoint-theme/fonts/OpenSans-Regular.woff2') format('woff2'),
+    url('./arc-electron-anypoint-theme/fonts/OpenSans-Regular.woff') format('woff'),
+    url('./arc-electron-anypoint-theme/fonts/OpenSans-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
 
-  @font-face {
-    font-family: "Open Sans";
-    src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Regular.eot');
-    src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Regular.eot?#iefix') format('embedded-opentype'),
-      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Regular.woff2') format('woff2'),
-      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Regular.woff') format('woff'),
-      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Regular.ttf') format('truetype'),
-      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Regular.svg') format('svg');
-    font-weight: 400;
-    font-style: normal;
-  }
+@font-face {
+  font-family: "Open Sans";
+  src: url('./arc-electron-anypoint-theme/fonts/OpenSans-Semibold.woff2') format('woff2'),
+    url('./arc-electron-anypoint-theme/fonts/OpenSans-Semibold.woff') format('woff'),
+    url('./arc-electron-anypoint-theme/fonts/OpenSans-Semibold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+}
 
-  @font-face {
-    font-family: "Open Sans";
-    src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Semibold.eot');
-    src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Semibold.eot?#iefix') format('embedded-opentype'),
-      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Semibold.woff2') format('woff2'),
-      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Semibold.woff') format('woff'),
-      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Semibold.ttf') format('truetype'),
-      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Semibold.svg') format('svg');
-    font-weight: 600;
-    font-style: normal;
-  }
+@font-face {
+  font-family: "Open Sans";
+  src: url('./arc-electron-anypoint-theme/fonts/OpenSans-Bold.woff2') format('woff2'),
+    url('./arc-electron-anypoint-theme/fonts/OpenSans-Bold.woff') format('woff'),
+    url('./arc-electron-anypoint-theme/fonts/OpenSans-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
 
-  @font-face {
-    font-family: "Open Sans";
-    src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Bold.eot');
-    src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Bold.eot?#iefix') format('embedded-opentype'),
-      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Bold.woff2') format('woff2'),
-      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Bold.woff') format('woff'),
-      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Bold.ttf') format('truetype'),
-      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Bold.svg') format('svg');
-    font-weight: 700;
-    font-style: normal;
-  }
+@font-face {
+  font-family: "Open Sans";
+  src: url('./arc-electron-anypoint-theme/fonts/OpenSans-Light.woff2') format('woff2'),
+    url('./arc-electron-anypoint-theme/fonts/OpenSans-Light.woff') format('woff'),
+    url('./arc-electron-anypoint-theme/fonts/OpenSans-Light.ttf') format('truetype');
+  font-weight: 200;
+  font-style: normal;
+}
 
-  @font-face {
-    font-family: "Open Sans";
-    src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Light.eot');
-    src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Light.eot?#iefix') format('embedded-opentype'),
-      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Light.woff2') format('woff2'),
-      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Light.woff') format('woff'),
-      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Light.ttf') format('truetype'),
-      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-Light.svg') format('svg');
-    font-weight: 200;
-    font-style: normal;
-  }
+@font-face {
+  font-family: "Open Sans";
+  src: url('./arc-electron-anypoint-theme/fonts/OpenSans-LightItalic.woff2') format('woff2'),
+    url('./arc-electron-anypoint-theme/fonts/OpenSans-LightItalic.woff') format('woff'),
+    url('./arc-electron-anypoint-theme/fonts/OpenSans-LightItalic.ttf') format('truetype');
+  font-weight: 200;
+  font-style: italic;
+}
 
-  @font-face {
-    font-family: "Open Sans";
-    src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-LightItalic.eot');
-    src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-LightItalic.eot?#iefix') format('embedded-opentype'),
-      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-LightItalic.woff2') format('woff2'),
-      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-LightItalic.woff') format('woff'),
-      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-LightItalic.ttf') format('truetype'),
-      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/OpenSans-LightItalic.svg') format('svg');
-    font-weight: 200;
-    font-style: italic;
-  }
-
-  @font-face {
-    font-family: "Source Code Pro";
-    src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/SourceCodePro-Regular.eot');
-    src: url('https://d2mrfksxwk2en8.cloudfront.net/fonts/SourceCodePro-Regular.eot?#iefix') format('embedded-opentype'),
-      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/SourceCodePro-Regular.woff2') format('woff2'),
-      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/SourceCodePro-Regular.woff') format('woff'),
-      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/SourceCodePro-Regular.ttf') format('truetype'),
-      url('https://d2mrfksxwk2en8.cloudfront.net/fonts/SourceCodePro-Regular.svg') format('svg');
-    font-weight: 400;
-    font-style: normal;
-  }
+@font-face {
+  font-family: "Source Code Pro";
+  src: url('./arc-electron-anypoint-theme/fonts/SourceCodePro-Regular.woff2') format('woff2'),
+    url('./arc-electron-anypoint-theme/fonts/SourceCodePro-Regular.woff') format('woff'),
+    url('./arc-electron-anypoint-theme/fonts/SourceCodePro-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
 }
 
 body {
@@ -175,11 +151,17 @@ body {
   --select-text-cursor: text;
 
   --primary-color: var(--anypoint-color-primary);
+  --primary-text-color: #000;
   --secondary-color: var(--anypoint-color-secondary);
   --secondary-text-color: var(--anypoint-color-robustBlue2);
   --primary-background-color: var(--anypoint-color-tertiary);
+  --secondary-background-color: #fff;
   --accent-color: var(--anypoint-color-primary);
   --error-color: var(--anypoint-color-danger);
+
+  background-color: var(--primary-background-color);
+  color: var(--primary-text-color);
+  font-family: "DIN Pro";
 
   --hover-button-accent-color: #ffffff;
   --warning-primary-color: #FF7043;
@@ -190,7 +172,6 @@ body {
   --arc-toolbar-background-color: var(--anypoint-color-steel5);
   --arc-toolbar-environment-selector-input-color: var(--anypoint-color-tertiary);
   --arc-toolbar-paper-icon-button-active-color: var(--anypoint-color-tertiary);
-  --arc-menu-paper-item-body-secondary-color: var(--anypoint-color-aluminum4);
   --arc-toolbar-api-version-selector-color: var(--anypoint-color-tertiary);
   --arc-toolbar-api-version-selector-label-color: var(--anypoint-color-aluminum3);
   --arc-toolbar-button-background-color: var(--anypoint-color-primary);
@@ -201,9 +182,9 @@ body {
   --arc-onboarding-legal-info-color: rgba(255, 255, 255, 0.57);
   --paper-radio-button-unchecked-color: rgba(255, 255, 255, 0.87);
 
-  --arc-menu-background-color: var(--anypoint-color-robustBlue4);
-  --arc-menu-item-background-color: var(--anypoint-color-robustBlue4);
-  --history-menu-background-color: var(--anypoint-color-robustBlue4);
+  --arc-menu-background-color: var(--anypoint-color-aluminum2);
+  --arc-menu-item-background-color: var(--anypoint-color-aluminum2);
+  --history-menu-background-color: var(--anypoint-color-aluminum2);
   --arc-menu-selected-color: var(--anypoint-color-steel2);
 
   --api-navigation-header-color: var(--anypoint-color-tertiary);
@@ -341,4 +322,11 @@ body {
   --arc-toolbar-icon-color: #000;
 
   --anypoint-item-hover-background-color: #EEEEEE;
+
+
+  /* Toolbars */
+  --arc-menu-title-background-color: var(--anypoint-color-steel4);
+  --arc-menu-title-color: #fff;
+  --arc-toolbar-background: var(--anypoint-color-steel4);
+  --arc-toolbar-color: #fff;
 }
