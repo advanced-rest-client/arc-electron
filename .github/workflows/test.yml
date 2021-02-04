@@ -1,4 +1,4 @@
-name: Test application
+name: Test and build application
 
 on: push
 
@@ -15,9 +15,14 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: 14
-      - name: Test electron
-        uses: run-with-xvfb
+      - name: Install dependencies
+        run: npm ci
+      - name: Test electron application
+        uses: GabrielBB/xvfb-action@v1
         with:
           run: npm test
         env:
           CI: true
+      - name: Build and publish
+        if: github.event == 'push' && github.ref == 'refs/heads/alpha' || github.ref == 'refs/heads/beta' || github.ref == 'refs/heads/master'
+        run: "echo 'This is a placeholder for the build.'"
