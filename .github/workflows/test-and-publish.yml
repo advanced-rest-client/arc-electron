@@ -24,7 +24,7 @@ jobs:
   #       env:
   #         CI: true
   build:
-    if: github.ref == 'refs/heads/alpha' || github.ref == 'refs/heads/beta' || github.ref == 'refs/heads/master'], github.ref
+    if: github.ref == 'refs/heads/alpha' || github.ref == 'refs/heads/beta' || github.ref == 'refs/heads/master'
     # needs: test
     runs-on: ${{ matrix.os }}
     strategy:
