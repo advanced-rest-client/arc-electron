@@ -72,6 +72,7 @@
     "dotenv": "^8.2.0",
     "electron": "^11.2.2",
     "electron-builder": "^22.9.1",
+    "electron-builder-notarize": "^1.2.0",
     "electron-mocha": "^10.0.0",
     "electron-notarize": "^1.0.0",
     "electron-reloader": "^1.2.0",
@@ -155,7 +156,7 @@
     "detectUpdateChannel": true,
     "npmRebuild": true,
     "buildDependenciesFromSource": false,
-    "afterSign": "tasks/notarize.js",
+    "afterSign": "electron-builder-notarize",
     "files": [
       "app.html",
       "app.js",
