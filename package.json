@@ -17,7 +17,7 @@
     "postinstall": "electron-builder install-app-deps",
     "prepare": "node tasks/prepare-app.js && pika-web",
     "test": "npm run test:main && npm run test:renderer",
-    "test:main": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron electron-mocha --timeout 10000 test/**/*.main.spec.js",
+    "test:main": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron electron-mocha --config test/main.mocharc.js test/**/*.main.spec.js",
     "test:renderer": "NODE_ENV=test ELECTRON_PATH='node_modules/.bin/electron' electron-mocha --renderer --require-main 'test/renderer-setup-environment.js' test/**/*.renderer.spec.js",
     "test:renderer:watch": "NODE_ENV=test ELECTRON_PATH='node_modules/.bin/electron' electron-mocha --watch --renderer --require-main 'test/renderer-setup-paths.js' scripts/packages/**/*.renderer.spec.js",
     "test:app": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron mocha test/**/*.app.spec.js --timeout 10000",
