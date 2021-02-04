@@ -3,29 +3,29 @@ name: Test and build application
 on: push
 
 jobs:
-  test:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [macos-latest, ubuntu-latest]
-    steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v1
-      - name: Install Node.js, NPM and Yarn
-        uses: actions/setup-node@v1
-        with:
-          node-version: 14
-      - name: Install dependencies
-        run: npm install
-      - name: Test electron application
-        uses: GabrielBB/xvfb-action@v1
-        with:
-          run: npm test
-        env:
-          CI: true
+  # test:
+  #   runs-on: ${{ matrix.os }}
+  #   strategy:
+  #     matrix:
+  #       os: [macos-latest, ubuntu-latest]
+  #   steps:
+  #     - name: Check out Git repository
+  #       uses: actions/checkout@v1
+  #     - name: Install Node.js, NPM and Yarn
+  #       uses: actions/setup-node@v1
+  #       with:
+  #         node-version: 14
+  #     - name: Install dependencies
+  #       run: npm install
+  #     - name: Test electron application
+  #       uses: GabrielBB/xvfb-action@v1
+  #       with:
+  #         run: npm test
+  #       env:
+  #         CI: true
   build:
     if: github.event == 'push' && github.ref == 'refs/heads/alpha' || github.ref == 'refs/heads/beta' || github.ref == 'refs/heads/master'
-    needs: test
+    # needs: test
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
