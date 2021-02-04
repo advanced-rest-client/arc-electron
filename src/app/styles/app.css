@@ -21,10 +21,6 @@ main > .screen.scroll {
   margin-left: 8px;
 }
 
-variables-overlay {
-  color: initial;
-}
-
 #passwordPrompt {
   min-width: 460px;
 }
