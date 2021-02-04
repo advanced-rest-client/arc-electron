@@ -130,23 +130,23 @@ describe('ThemePluginsManager - main process', () => {
     afterEach(() => fs.remove(basePath));
 
     const pkgName = 'advanced-rest-client/arc-electron-default-theme';
-    const pkgVersion = '2.0.0-preview';
+    const pkgVersion = '3.0.4';
 
     it('installs GitHub package', async () => {
       const instance = new ThemePluginsManager();
-      await instance._installRemotePackage(pkgName, pkgVersion);
+      await instance._installRemotePackage(`@${pkgName}`, pkgVersion);
       const exists = await fs.pathExists(path.join(process.env.ARC_THEMES, '@advanced-rest-client', 'arc-electron-default-theme'));
       assert.isTrue(exists);
     });
 
-    it('Returns info object', async () => {
+    it('returns info object', async () => {
       const instance = new ThemePluginsManager();
-      const result = await instance._installRemotePackage(pkgName, pkgVersion);
+      const result = await instance._installRemotePackage(`@${pkgName}`, pkgVersion);
       assert.typeOf(result, 'object');
       assert.equal(result.name, '@advanced-rest-client/arc-electron-default-theme');
       assert.equal(result.version, pkgVersion);
       assert.equal(result.location, path.join(process.env.ARC_THEMES, `@${pkgName}`));
-      assert.equal(result.mainFile,path.join(process.env.ARC_THEMES, `@${pkgName}`, 'arc-electron-default-theme.html'));
+      assert.equal(result.mainFile,path.join(process.env.ARC_THEMES, `@${pkgName}`, 'arc-electron-default-theme.css'));
     });
   });
 
@@ -184,13 +184,13 @@ describe('ThemePluginsManager - main process', () => {
       let instance = /** @type ThemePluginsManager */ (null);
       const pkgName = 'advanced-rest-client/arc-electron-default-theme';
       const installedName = `@${pkgName}`;
-      const pkgVersion = '2.0.0-preview';
+      const pkgVersion = '3.0.4';
       let installedLocation;
 
-      before(() => {
+      before(async () => {
         installedLocation = path.join(process.env.ARC_THEMES, '@advanced-rest-client', 'arc-electron-default-theme');
         instance = new ThemePluginsManager();
-        return instance.install(pkgName, pkgVersion);
+        await instance.install(installedName, pkgVersion);
       });
 
       after(() => fs.remove(basePath));

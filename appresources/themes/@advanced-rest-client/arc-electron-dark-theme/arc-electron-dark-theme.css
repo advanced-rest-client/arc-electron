@@ -1,17 +1,14 @@
-body {
+html {
   --primary-color: #ffcc80;
   --primary-text-color: #fff;
   --accent-color: #E040FB;
   --secondary-text-color: rgba(255, 255, 255, 0.84);
   --primary-background-color: #212121;
-  --secondary-background-color: #424242;
+  --secondary-background-color: #313131;
   --error-color: #ff9090;
   --link-color: #8bc34a;
-  --input-background-color: #494949;
+  --input-background-color: var(--primary-background-color);
   --active-background-color: #616161;
-
-  background-color: var(--primary-background-color);
-  color: var(--primary-text-color);
 
   --anypoint-dropdown-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
   --anypoint-autocomplete-dropdown-shadow: var(--anypoint-dropdown-shadow);
@@ -68,6 +65,7 @@ body {
   --anypoint-button-emphasis-low-hover-background-color: var(--active-background-color);
   --anypoint-button-emphasis-low-focus-background-color: var(--anypoint-button-emphasis-low-hover-background-color);
   --anypoint-button-emphasis-low-focus-color: var(--primary-color);
+  --anypoint-button-emphasis-high-color: #000;
   /* --anypoint-button-emphasis-high-hover-background-color: var(--primary-color); */
 
   --code-mirror-background-color: #1e1e1e;
@@ -122,10 +120,13 @@ body {
   --authorization-method-oauth2-redirect-info-color: var(--secondary-text-color);
   --auth-method-certificate-second-line-color: var(--secondary-text-color);
   
-  --request-editor-url-area-background-color: var(--secondary-background-color);
+  --request-editor-url-area-background-color: var(--primary-background-color);
   --request-editor-url-input-background-color: var(--primary-background-color);
+  --workspace-tab-decorator-background-color: var(--secondary-background-color);
   --progress-info-background-color: #404040;
   --progress-info-color: var(--primary-text-color);
+  --request-editor-pill-background-color: var(--secondary-background-color);
+  --request-editor-pill-color: var(--primary-text-color);
 
   --arc-request-workspace-tabs-close-color: #9e9e9e;
   --workspace-tabs-add-color: var(--primary-text-color);
@@ -159,15 +160,18 @@ body {
   --request-timings-progress-color: #c6f68d;
 
   /* App toolbar */
-  --arc-toolbar-background: var(--secondary-background-color);
+  --arc-toolbar-background: var(--primary-background-color);
 
   /* ARC menu */
   --arc-rail-menu-icon-color: #757575;
   --arc-rail-menu-icon-selected-color: var(--primary-text-color);
-  --arc-menu-title-background-color: var(--secondary-background-color);
+  --arc-menu-title-background-color: var(--primary-background-color);
   --arc-menu-title-color: var(--primary-text-color);
-  --requests-list-history-group-header-background-color: var(--secondary-background-color);
+
+  --requests-list-history-group-header-background-color: var(--primary-background-color);
   --requests-list-item-history-group-header-color: rgba(255, 255, 255, 0.74);
+  --requests-list-content-actions-background-color: var(--secondary-background-color);
+  --requests-list-content-actions-icon-color: var(--secondary-text-color);
 
   /* HTTP method colors */
   --http-get-color: #c6f68d;
@@ -212,8 +216,10 @@ body {
   --anypoint-dialog-content-color: var(--primary-text-color);
 
   /* Bottom sheets */
-  --bottom-sheet-background-color: var(--secondary-background-color);
+  --bottom-sheet-background-color: var(--primary-background-color);
   --bottom-sheet-color: var(--primary-text-color);
+  --arc-workspace-detail-data-list-color: var(--secondary-text-color);
+  --saved-request-editor-options-color: var(--secondary-text-color);
 
   /* Cookies manager */
   --cookie-details-meta-color: var(--primary-text-color);
@@ -224,4 +230,31 @@ body {
   /* API Console's try it */
   --api-endpoint-documentation-tryit-background-color: var(--secondary-background-color);
   --api-endpoint-documentation-tryit-panels-background-color: var(--primary-background-color);
+
+  /* Exchange browser */
+  --exchange-search-list-item-author-color: var(--secondary-text-color);
+
+  /* variables overlay */
+  --variables-overlay-background-color: var(--primary-background-color);
+  --variables-overlay-color: var(--primary-text-color);
+  --variables-overlay-intro-color: var(--secondary-text-color);
+  --variables-overlay-var-name-color: var(--secondary-text-color);
+  --variables-overlay-var-value-color: var(--secondary-text-color);
+
+   /* requests lists */
+   --requests-list-history-group-header-background-color: var(--secondary-background-color);
+   --requests-list-item-history-group-header-color: var(--secondary-text-color);
+   --requests-list-content-actions-background-color: var(--secondary-background-color);
+   --requests-list-content-actions-icon-color: var(--secondary-text-color);
+   --requests-list-list-background-color: var(--primary-background-color);
+
+   /* Import / Export */
+   --import-data-inspector-meta-color: var(--secondary-text-color);
+   --import-table-auth-no-info-color: var(--secondary-text-color);
+}
+
+body {
+  background-color: var(--secondary-background-color);
+  color: var(--primary-text-color);
+  --arc-font-code-family: Noto, monospace;
 }

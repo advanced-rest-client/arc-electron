@@ -65,9 +65,9 @@ export class ThemePluginsManager {
    * If the `name` argument represents a path to a directory then
    * local installation is performed. PluginManager is used otherwise.
    * 
-   * @param {String} name NPM name or Github repo. Local paths are symlink
+   * @param {string} name NPM name or Github repo. Local paths are symlink
    * to target location.
-   * @param {String} version Theme version to install.
+   * @param {string} version Theme version to install.
    * @return {Promise<InstalledTheme>} Promise resolved to theme info object
    */
   _installPackage(name, version) {
@@ -75,8 +75,9 @@ export class ThemePluginsManager {
       fs.accessSync(name, fs.constants.R_OK | fs.constants.X_OK);
       return this._installLocalPackage(name);
     } catch (_) {
-      return this._installRemotePackage(name, version);
+      // ...
     }
+    return this._installRemotePackage(name, version);
   }
 
   /**
@@ -143,19 +144,24 @@ export class ThemePluginsManager {
   async _installRemotePackage(name, version) {
     logger.info('Installing theme from remote sources...');
     const [n, v] = this._prepareSourceAndVersion(name, version);
-    const result = await this.#pluginManager.install(n, v);
-    const info = /** @type InstalledTheme */ ({
-      isSymlink: false,
-      _id: result.name,
-      name: result.name,
-      version: result.version,
-      location: result.location,
-      mainFile: result.mainFile,
-      title: '',
-      description: '',
-      isDefault: false,
-    });
-    return info;
+    try {
+      const result = await this.#pluginManager.install(n, v);
+      const info = /** @type InstalledTheme */ ({
+        isSymlink: false,
+        _id: result.name,
+        name: result.name,
+        version: result.version,
+        location: result.location,
+        mainFile: result.mainFile,
+        title: '',
+        description: '',
+        isDefault: false,
+      });
+      return info;
+    } catch (e) {
+      logger.error(e);
+      throw e;
+    }
   }
 
   /**
