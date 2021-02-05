@@ -60,6 +60,20 @@ const commands = /** @type ContextMenuCommand[] */ ([
       const itemTarget = /** @type HTMLElement */ (target.closest('.request-list-item'));
       ArcModelEvents.Request.delete(root, type, itemTarget.dataset.id);
     },
+  },
+
+  // response view manipulation
+  {
+    selector: 'response-highlighter',
+    group: "main",
+    label: "Format",
+    title: 'Format the response',
+    icon: 'code',
+    execute: (args) => {
+      const { target } = args;
+      // @ts-ignore
+      target.format();
+    }
   }
 ]);
 

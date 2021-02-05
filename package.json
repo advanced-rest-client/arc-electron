@@ -67,7 +67,7 @@
     "@types/pouchdb": "^6.4.0",
     "api-console": "^6.4.0",
     "babel-eslint": "^10.1.0",
-    "chai": "^4.2.0",
+    "chai": "^4.3.0",
     "chance": "^1.1.7",
     "dotenv": "^8.2.0",
     "electron": "^11.2.2",
@@ -91,7 +91,7 @@
     "typescript-lit-html-plugin": "^0.9.0"
   },
   "dependencies": {
-    "@advanced-rest-client/arc-events": "^0.2.13",
+    "@advanced-rest-client/arc-events": "^0.2.14",
     "@advanced-rest-client/arc-types": "^0.2.49",
     "@advanced-rest-client/electron-amf-service": "^5.0.0",
     "@advanced-rest-client/electron-oauth2": "^5.0.1",

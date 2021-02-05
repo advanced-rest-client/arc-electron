@@ -3,6 +3,7 @@
     "Renderable",
     "advancedrestclient",
     "appresources",
+    "arccontextmenu",
     "autoupdate",
     "camelcase",
     "codemirror",

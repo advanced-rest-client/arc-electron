@@ -18,6 +18,7 @@ export declare interface EnabledOptions {
    * The element with which this context menu was initialized with.
    */
   root: HTMLElement;
+  customArgs?: any;
 }
 
 export declare interface ExecuteOptions {
@@ -41,6 +42,7 @@ export declare interface ExecuteOptions {
    * The value of the `command` set on the command.
    */
   command?: string;
+  customArgs?: any;
 }
 
 export declare interface ContextMenuCommand {

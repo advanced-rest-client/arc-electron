@@ -1,6 +1,7 @@
 import '../../../../web_modules/@anypoint-web-components/anypoint-listbox/anypoint-listbox.js';
 import '../../../../web_modules/@anypoint-web-components/anypoint-item/anypoint-icon-item.js';
 import '../../../../web_modules/@advanced-rest-client/arc-icons/arc-icon.js';
+import { UiEventTypes } from '../../../../web_modules/@advanced-rest-client/arc-events/index.js';
 import { ContextMenuStore } from './ContextMenuStore.js';
 
 /** @typedef {import('./interfaces').RegisteredCommand} RegisteredCommand */
@@ -66,6 +67,11 @@ export class ContextMenu {
   currentMenu = undefined;
 
   /**
+   * @type {any}
+   */
+  customArgs = undefined;
+
+  /**
    * @type {ClickVector}
    */
   targetVector = undefined;
@@ -85,6 +91,7 @@ export class ContextMenu {
     this.menuClickHandler = this.menuClickHandler.bind(this);
     this.clickHandler = this.clickHandler.bind(this);
     this.keydownHandler = this.keydownHandler.bind(this);
+    this.customHandler = this.customHandler.bind(this);
   }
 
   /**
@@ -104,6 +111,7 @@ export class ContextMenu {
     this.workspace.addEventListener('contextmenu', this.contextHandler);
     window.addEventListener('click', this.clickHandler);
     window.addEventListener('keydown', this.keydownHandler);
+    window.addEventListener(UiEventTypes.contextMenu, this.customHandler);
     this.connectedValue = true;
   }
 
@@ -115,6 +123,7 @@ export class ContextMenu {
     this.workspace.removeEventListener('contextmenu', this.contextHandler);
     window.removeEventListener('click', this.clickHandler);
     window.removeEventListener('keydown', this.keydownHandler);
+    window.removeEventListener(UiEventTypes.contextMenu, this.customHandler);
     this.connectedValue = false;
   }
 
@@ -139,6 +148,34 @@ export class ContextMenu {
     }
     const targetVector = this.readClickPosition(e);
     this.build(e, target, clickVector, targetVector);
+  }
+
+  /**
+   * A handler for the `arccontextmenu` event that triggers the menu for given target passed in the 
+   * event's detail object.
+   * @param {CustomEvent} e
+   */
+  customHandler(e) {
+    const { target, mouseEvent, selector, args } = e.detail;
+    const commands = this.listCustomCommands(selector);
+    if (!commands.length) {
+      return;
+    }
+    mouseEvent.preventDefault();
+    mouseEvent.stopPropagation();
+    const clickVector = {
+      x: mouseEvent.clientX, 
+      y: mouseEvent.clientY,
+    }
+    const targetVector = this.readClickPosition(mouseEvent);
+
+    this.targetVector = targetVector;
+    this.customArgs = args;
+    const groups = this.groupCommands(commands);
+    this.currentCommands = commands;
+    this.currentTarget = target;
+    this.render(target, clickVector, groups);
+    target.setAttribute('active', '');
   }
 
   /**
@@ -293,6 +330,23 @@ export class ContextMenu {
   }
 
   /**
+   * Lists all custom commands where the command's selector matches passed `selector`.
+   *
+   * @param {string} selector The build target
+   * @returns {RegisteredCommand[]}
+   */
+  listCustomCommands(selector) {
+    const { commands } = this;
+    const result =/** @type RegisteredCommand[] */ ([]);
+    commands.forEach((cmd) => {
+      if (cmd.selector === '*' || cmd.selector === selector) {
+        result.push(cmd);
+      }
+    });
+    return result;
+  }
+
+  /**
    * Creates an ordered grouped list of commands
    *
    * @param {RegisteredCommand[]} commands The commands to group
@@ -422,6 +476,9 @@ export class ContextMenu {
       vector: targetVector,
       command: command.command,
     };
+    if (this.customArgs) {
+      opts.customArgs = this.customArgs;
+    }
     if (this.#callback && command.command) {
       this.#callback(opts);
     } else {
