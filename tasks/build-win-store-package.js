@@ -5,7 +5,7 @@ const fs = require('fs-extra');
 
 /**
  * A script that performs Windows build and signing then it converts
- * the build into APPX package that can be ditributed in Windows store.
+ * the build into APPX package that can be distributed in Windows store.
  *
  * The build script assumes the following variables are set:
  * - CSC_NAME
@@ -46,12 +46,12 @@ class WindowsStoreBuild {
 
   async buildWindows() {
     const config = await this.getWinConfig();
-    const Platform = ebuilder.Platform;
+    const { Platform } = ebuilder;
     const opts = {
       targets: Platform.WINDOWS.createTarget('nsis'),
       config,
     };
-    return await ebuilder.build(opts);
+    return ebuilder.build(opts);
   }
 
   async convert() {
