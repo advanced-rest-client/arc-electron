@@ -169,6 +169,9 @@ export class DataStore {
     ipcMain.removeAllListeners('data-transport-ready');
     ipcMain.removeAllListeners('data-receiver-ready');
     ipcMain.removeAllListeners('db-error');
+    if (this.loader && !this.loader.isDestroyed()) {
+      this.loader.close();
+    }
 
     await fs.writeFile(this.lockFile, 'Do not remove this file. Removing it may cause inconsistency in the data store.');
     const tmpExists = await fs.pathExists(this.migrationExport);

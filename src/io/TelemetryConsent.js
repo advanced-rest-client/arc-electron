@@ -62,5 +62,8 @@ export class TelemetryConsent {
   async pageHandler() {
     await fs.writeFile(this.lockFile, 'Do not remove this file. It prohibits showing the analytics dialog.');
     this.resolve();
+    if (this.loader && !this.loader.isDestroyed()) {
+      this.loader.close();
+    }
   }
 }
