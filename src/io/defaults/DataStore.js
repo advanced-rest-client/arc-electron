@@ -26,7 +26,7 @@ export class DataStore {
     this._reportedReady = this._reportedReady.bind(this);
     this._receiverReady = this._receiverReady.bind(this);
     this._errorHandler = this._errorHandler.bind(this);
-    this.lockFile = path.join(process.env.ARC_HOME, '.db-moved-hostname');
+    this.lockFile = path.join(process.env.ARC_HOME, '.db-moved-hostname.lock');
     this.migrationExport = path.join(app.getPath('temp'), '.migrate-data');
     ipcMain.on('server-db-no-data', this._noDataHandler);
     ipcMain.on('server-db-finished', this._serverDataHandler);
@@ -170,12 +170,11 @@ export class DataStore {
     ipcMain.removeAllListeners('data-receiver-ready');
     ipcMain.removeAllListeners('db-error');
 
-    await fs.ensureFile(this.lockFile);
+    await fs.writeFile(this.lockFile, 'Do not remove this file. Removing it may cause inconsistency in the data store.');
     const tmpExists = await fs.pathExists(this.migrationExport);
     if (tmpExists) {
       await fs.remove(this.migrationExport);
     }
-    app.relaunch();
-    app.quit();
+    this.resolve();
   }
 }

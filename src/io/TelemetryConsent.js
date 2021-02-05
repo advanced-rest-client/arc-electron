@@ -1,7 +1,7 @@
 /* eslint-disable no-param-reassign */
 import fs from 'fs-extra';
 import path from 'path';
-import { ipcMain, app, shell } from 'electron';
+import { ipcMain, shell } from 'electron';
 
 /** @typedef {import('./WindowsManager').WindowsManager} WindowsManager */
 
@@ -60,8 +60,7 @@ export class TelemetryConsent {
   }
 
   async pageHandler() {
-    await fs.ensureFile(this.lockFile);
-    app.relaunch();
-    app.quit();
+    await fs.writeFile(this.lockFile, 'Do not remove this file. It prohibits showing the analytics dialog.');
+    this.resolve();
   }
 }
