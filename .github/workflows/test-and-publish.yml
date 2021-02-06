@@ -64,4 +64,5 @@ jobs:
       
       - name: Send Windows store verification
         if: startsWith(matrix.os, 'windows')
-        run: ./tasks/win-store-build.cmd
+        run: "echo 'This is currently disabled. Help needed!'"
+        # run: ./tasks/win-store-build.cmd
