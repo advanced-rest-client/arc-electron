@@ -66,6 +66,14 @@ header {
   box-sizing: border-box;
 }
 
+.header-action-button {
+  margin-right: 8px;
+}
+
+.header-action-button arc-icon {
+  color: var(--arc-toolbar-color);
+}
+
 main {
   flex: 1;
   display: flex;

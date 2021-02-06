@@ -5,6 +5,7 @@ import { html } from '../../../../web_modules/lit-html/lit-html.js';
 import { MonacoLoader } from '../../../../web_modules/@advanced-rest-client/monaco-support/index.js';
 import { ArcNavigationEventTypes, ProjectActions, ConfigEventTypes, DataImportEventTypes, WorkspaceEvents, ImportEvents, WorkspaceEventTypes, ArcNavigationEvents, RestApiEventTypes } from '../../../../web_modules/@advanced-rest-client/arc-events/index.js';
 import { ArcModelEvents, ArcModelEventTypes, ImportFactory, ImportNormalize, isSingleRequest } from '../../../../web_modules/@advanced-rest-client/arc-models/index.js';
+import { ArcMessagingService } from '../../../../web_modules/@advanced-rest-client/arc-messages/index.js';
 import { ModulesRegistry, RequestCookies } from '../../../../web_modules/@advanced-rest-client/request-engine/index.js';
 import { classMap } from '../../../../web_modules/lit-html/directives/class-map.js';
 import { styleMap } from '../../../../web_modules/lit-html/directives/style-map.js';
@@ -43,6 +44,7 @@ import '../../../../web_modules/@api-components/api-navigation/api-navigation.js
 import '../../../../web_modules/@advanced-rest-client/exchange-search-panel/exchange-search-panel.js';
 // import '../../../../web_modules/@api-components/api-request-panel/api-request-panel.js';
 // import '../../../../web_modules/@api-components/api-documentation/api-documentation.js';
+import '../../../../web_modules/@advanced-rest-client/arc-messages/arc-messages-dialog.js';
 import { Request } from './Request.js';
 import { ContextMenu } from '../context-menu/ContextMenu.js';
 import { ContextMenuStyles } from '../context-menu/ContextMenu.styles.js';
@@ -145,6 +147,9 @@ const arcNavigationTemplate = Symbol('arcNavigationTemplate');
 const exchangeSearchTemplate = Symbol('exchangeSearchTemplate');
 const exchangeSelectionHandler = Symbol('exchangeSelectionHandler');
 const themeActivateHandler = Symbol('themeActivateHandler');
+const unreadMessagesTemplate = Symbol('unreadMessagesTemplate');
+const appMessagesDialogTemplate = Symbol('appMessagesDialogTemplate');
+const openMessagesHandler = Symbol('openMessagesHandler');
 
 /**
  * A routes that does not go through the router and should not be remembered in the history.
@@ -269,6 +274,11 @@ export class AdvancedRestClientApplication extends ApplicationPage {
   ga = new GoogleAnalytics();
 
   /**
+   * A service that requests fro the data from the ARC server fore new messages.
+   */
+  appMessages = new ArcMessagingService('electron');
+
+  /**
    * @returns {ArcRequestWorkspaceElement}
    */
   get workspaceElement() {
@@ -323,6 +333,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       'workspaceSendButton', 'workspaceProgressInfo', 'workspaceBodyEditor', 'workspaceAutoEncode',
       'navigationWidth',
       'requestDetailsOpened', 'requestMetaOpened', 'metaRequestId', 'metaRequestType',
+      'unreadAppMessages', 'applicationMessages',
     );
 
     /** 
@@ -421,6 +432,11 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     this.requestMetaOpened = false;
     this.metaRequestId = undefined;
     this.metaRequestType = undefined;
+    
+    /** 
+     * @type {number} The number of unread messages in the application.
+     */
+    this.unreadAppMessages = 0;
   }
 
   async initialize() {
@@ -455,6 +471,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     await this.afterInitialization();
     await this.loadMonaco();
     this.initializing = false;
+    this.unreadAppMessages = await this.appMessages.run();
   }
 
   /**
@@ -518,6 +535,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
         this.listType = cnf.view.listType;
       }
     }
+
     if (cnf.requestEditor) {
       if (typeof cnf.requestEditor.sendButton === 'boolean') {
         this.workspaceSendButton = cnf.requestEditor.sendButton;
@@ -530,6 +548,13 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       }
       if (typeof cnf.requestEditor.autoEncode === 'boolean') {
         this.workspaceAutoEncode = cnf.requestEditor.autoEncode;
+      }
+    }
+
+    if (cnf.updater) {
+      const { channel } = cnf.updater;
+      if (typeof channel === 'string') {
+        this.appMessages.channel = channel;
       }
     }
   }
@@ -841,6 +866,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       case 'export-workspace': this.exportWorkspace(); break;
       case 'login-external-webservice': this.workspaceElement.openWebUrlInput(); break;
       case 'open-workspace-details': this.workspaceElement.openWorkspaceDetails(); break;
+      case 'open-messages': this.openAppMessages(); break;
       default:
         this.logger.warn(`Unhandled IO command ${action}`);
     }
@@ -1306,6 +1332,20 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     this.compatibility = e.detail === ThemeManager.anypointTheme;
   }
 
+  [openMessagesHandler]() {
+    this.openAppMessages();
+  }
+
+  async openAppMessages() {
+    if (!this.applicationMessages) {
+      this.applicationMessages = await this.appMessages.readMessages();
+    }
+    const dialog = document.querySelector('arc-messages-dialog');
+    dialog.opened = true;
+    await this.appMessages.markAllRead();
+    this.unreadAppMessages = 0;
+  }
+
   appTemplate() {
     const { initializing } = this;
     if (initializing) {
@@ -1320,6 +1360,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       ${this[navigationTemplate]()}
       ${this[pageTemplate](this.route)}
     </div>
+    ${this[appMessagesDialogTemplate]()}
     `;
   }
 
@@ -1345,13 +1386,28 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     <header>
       ${isWorkspace ? '' : 
       html`
-      <anypoint-icon-button title="Back to the request workspace" @click="${this[mainBackHandler]}">
+      <anypoint-icon-button title="Back to the request workspace" @click="${this[mainBackHandler]}"  class="header-action-button">
         <arc-icon icon="arrowBack"></arc-icon>
       </anypoint-icon-button>`}
       API Client
       <span class="spacer"></span>
+      ${this[unreadMessagesTemplate]()}
       ${this[environmentTemplate]()}
     </header>`;
+  }
+
+  /**
+   * @returns {TemplateResult|string} The template for the unread notifications icon button
+   */
+  [unreadMessagesTemplate]() {
+    const { unreadAppMessages } = this;
+    if (!unreadAppMessages) {
+      return '';
+    }
+    return html`
+    <anypoint-icon-button title="You have unread messages" class="header-action-button" @click="${this[openMessagesHandler]}">
+      <arc-icon icon="notificationsActive"></arc-icon>
+    </anypoint-icon-button>`;
   }
 
   /**
@@ -1725,5 +1781,17 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       class="screen scroll"
     ></exchange-search-panel>
     `;
+  }
+
+  /**
+   * @returns {TemplateResult} The template for the dialog with application messages
+   */
+  [appMessagesDialogTemplate]() {
+    return html`
+    <arc-messages-dialog
+      .messages="${this.applicationMessages}"
+      ?compatibility="${this.compatibility}"
+      modal
+    ></arc-messages-dialog>`;
   }
 }
