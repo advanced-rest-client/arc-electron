@@ -1156,7 +1156,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     
     const { savedIndexes, historyIndexes } = store;
     this[notifyIndexer](savedIndexes, historyIndexes);
-    ImportEvents.dataImported(this);
+    ImportEvents.dataImported(document.body);
     this[mainBackHandler]();
   }
 
@@ -1177,7 +1177,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     if (!indexes.length) {
       return;
     }
-    ArcModelEvents.UrlIndexer.update(this, indexes);
+    ArcModelEvents.UrlIndexer.update(document.body, indexes);
   }
 
   /**
