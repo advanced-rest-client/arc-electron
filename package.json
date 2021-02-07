@@ -84,7 +84,6 @@
     "lint-staged": "^10.5.1",
     "lit-element": "^2.4.0",
     "mocha": "^8.2.1",
-    "monaco-editor": "^0.21.3",
     "pouchdb": "^7.2.2",
     "sinon": "^9.2.4",
     "spectron": "^13.0.0",
@@ -109,6 +108,7 @@
     "jsonlint": "^1.6.3",
     "live-plugin-manager": "^0.15.1",
     "mime-types": "^2.1.28",
+    "monaco-editor": "^0.21.3",
     "node-fetch": "^2.6.1",
     "uuid": "^8.3.2",
     "winston": "^3.3.3"
@@ -159,15 +159,10 @@
     "buildDependenciesFromSource": false,
     "afterSign": "electron-builder-notarize",
     "files": [
-      "app.html",
-      "app.js",
-      "main.js",
       "package.json",
       "assets/",
       "web_modules/",
       "node_modules/",
-      "menus/",
-      "scripts/",
       "src/",
       "appresources/"
     ],
