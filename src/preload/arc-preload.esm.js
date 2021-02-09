@@ -17,7 +17,7 @@ import { GoogleDriveProxy } from './GoogleDriveProxy.js';
 import { GoogleAnalytics } from './GoogleAnalytics.js';
 
 const env = {};
-const APP_VERSION = process.env.npm_package_version;
+const APP_VERSION = process.env.ARC_VERSION;
 Object.keys(process.env).forEach((key) => {
   if (key.indexOf('npm_') === 0 || key.indexOf('ARC_') === 0) {
     return;
