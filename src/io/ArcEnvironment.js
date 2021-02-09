@@ -342,6 +342,10 @@ export class ArcEnvironment {
           ignoreWindowSessionSettings: true,
           noMenu: true,
           parent: win,
+          sizing: {
+            height: 800,
+            width: 800,
+          },
         });
         break;
       case 'open-privacy-policy':
