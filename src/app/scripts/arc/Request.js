@@ -9,6 +9,7 @@ ModulesRegistry.register(ModulesRegistry.request, '@advanced-rest-client/request
 ModulesRegistry.register(ModulesRegistry.response, '@advanced-rest-client/request-engine/response/request-authorization', ResponseAuthorization, ['store', 'events']);
 
 /** @typedef {import('@advanced-rest-client/arc-events').ApiTransportEvent} ApiTransportEvent */
+/** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ArcEditorRequest} ArcEditorRequest */
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.ArcBaseRequest} ArcBaseRequest */
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.TransportRequest} TransportRequest */
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.RequestConfig} RequestConfig */
@@ -92,13 +93,23 @@ export class Request {
   }
 
   async [makeRequestHandler](e) {
-    const transportRequest = e.detail;
-    const request = await this.factory.processRequest(transportRequest, {
-      evaluateVariables: this.evaluateVariables,
-      evaluateSystemVariables: this.evaluateSystemVariables,
-    });
-    // this event is significant, even though it is handled by the same class.
-    TransportEvents.transport(document.body, request.id, request.request);
+    const transportRequest = /** @type ArcEditorRequest */ (e.detail);
+    try {
+      const request = await this.factory.processRequest(transportRequest, {
+        evaluateVariables: this.evaluateVariables,
+        evaluateSystemVariables: this.evaluateSystemVariables,
+      });
+      // this event is significant, even though it is handled by the same class.
+      TransportEvents.transport(document.body, request.id, request.request);
+    } catch (err) {
+      logger.error(err);
+      const { id, request } = transportRequest;
+      TransportEvents.response(document.body, id, request, undefined, {
+        error: err,
+        loadingTime: 0,
+        status: 0,
+      });
+    }
   }
 
   /**
