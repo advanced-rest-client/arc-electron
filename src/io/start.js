@@ -78,6 +78,10 @@ export default async function start(startTime) {
   app.commandLine.appendSwitch('enable-experimental-web-platform-features');
   app.commandLine.appendSwitch('disable-features', 'OutOfBlinkCors');
 
+  // Sets the application version in a global variable so the renderer process 
+  // has this information without querying for it.
+  process.env.ARC_VERSION = app.getVersion();
+
   process.on('uncaughtException', (error) => {
     if (error.message) {
       logger.error(error.message);

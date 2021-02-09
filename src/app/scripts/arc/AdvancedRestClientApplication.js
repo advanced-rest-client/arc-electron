@@ -479,7 +479,8 @@ export class AdvancedRestClientApplication extends ApplicationPage {
    * @param {ARCConfig} cnf
    */
   setConfigVariables(cnf) {
-    if (!!cnf.request || (cnf.request && typeof cnf.request.ignoreSessionCookies === 'boolean' && cnf.request.ignoreSessionCookies)) {
+    const ignoreCookies = !!cnf.request && cnf.request.ignoreSessionCookies === false;
+    if (!ignoreCookies) {
       ModulesRegistry.register(ModulesRegistry.request, 'arc/request/cookies', RequestCookies.processRequestCookies, ['events']);
       ModulesRegistry.register(ModulesRegistry.response, 'arc/response/cookies', RequestCookies.processResponseCookies, ['events']);
     }

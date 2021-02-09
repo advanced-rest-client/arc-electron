@@ -582,7 +582,7 @@ export class ApiConsoleApplication extends AmfHelperMixin(ApplicationPage) {
   headerTemplate() {
     return html`
     <header>
-      <anypoint-icon-button title="Back to the request workspace" @click="${this[mainBackHandler]}">
+      <anypoint-icon-button title="Back to the request workspace" @click="${this[mainBackHandler]}" class="header-action-button">
         <arc-icon icon="arrowBack"></arc-icon>
       </anypoint-icon-button>
       API Console by MuleSoft.
@@ -644,6 +644,7 @@ export class ApiConsoleApplication extends AmfHelperMixin(ApplicationPage) {
       verticalAlign="top"
       horizontalAlign="auto"
       closeOnActivate
+      class="header-action-button"
     >
       <anypoint-icon-button slot="dropdown-trigger" ?compatibility="${this.compatibility}">
         <arc-icon icon="moreVert"></arc-icon>
