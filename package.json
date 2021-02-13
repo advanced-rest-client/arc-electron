@@ -14,7 +14,7 @@
   "scripts": {
     "start": "electron . --dev  --debug-level=\"silly\" --skip-app-update --skip-themes-update --with-devtools --workspace-path=\"~/arc-dev/workspace\" --settings-file=\"~/arc-dev/dev-settings.json\" --state-file=\"~/arc-dev/dev-state.json\" --themes-path=\"~/arc-dev/themes-esm\"",
     "start:api": "node dev-api/api.js",
-    "postinstall": "electron-builder install-app-deps",
+    "postinstall": "node tasks/jsv-fix.js && electron-builder install-app-deps",
     "prepare": "node tasks/prepare-app.js && pika-web",
     "test": "npm run test:main && npm run test:renderer",
     "test:main": "NODE_ENV=test ELECTRON_PATH=node_modules/.bin/electron electron-mocha --config test/main.mocharc.js test/**/*.main.spec.js",

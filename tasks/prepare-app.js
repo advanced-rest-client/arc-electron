@@ -14,7 +14,7 @@ class PrepareApp {
       process.exit(-1);
     }
   }
-  
+
   /**
    * A function that checks whether any of `@advanced-rest-client` or `@api-components`
    * module located in node_modules has inner `node_modules` component.
