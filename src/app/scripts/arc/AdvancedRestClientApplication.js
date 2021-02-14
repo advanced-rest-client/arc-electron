@@ -1487,6 +1487,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     const hideSaved = menuPopup.includes('saved-menu');
     const hideProjects = menuPopup.includes('projects-menu');
     const hideApis = menuPopup.includes('rest-api-menu');
+    const hideSearch = menuPopup.includes('search-menu');
     return html`
     <arc-menu
       ?compatibility="${compatibility}"
@@ -1496,6 +1497,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       ?hideSaved="${hideSaved}"
       ?hideProjects="${hideProjects}"
       ?hideApis="${hideApis}"
+      ?hideSearch="${hideSearch}"
       ?popup="${popupMenuEnabled}"
       ?dataTransfer="${draggableEnabled}"
       @minimized="${this[navMinimizedHandler]}"

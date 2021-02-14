@@ -148,6 +148,7 @@ html {
   --arc-rail-menu-icon-selected-color: var(--primary-text-color);
   --arc-menu-title-background-color: var(--primary-background-color);
   --arc-menu-title-color: var(--primary-text-color);
+  --search-menu-input-background-color: var(--primary-background-color);
 
   --requests-list-history-group-header-background-color: var(--primary-background-color);
   --requests-list-item-history-group-header-color: rgba(255, 255, 255, 0.74);
