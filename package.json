@@ -43,6 +43,7 @@
     "@advanced-rest-client/arc-menu": "^4.1.1",
     "@advanced-rest-client/arc-messages": "^0.1.0",
     "@advanced-rest-client/arc-models": "^4.2.10",
+    "@advanced-rest-client/arc-project": "^0.1.0",
     "@advanced-rest-client/arc-request-ui": "^0.1.11",
     "@advanced-rest-client/arc-settings": "^0.1.2",
     "@advanced-rest-client/bottom-sheet": "^3.2.2",
@@ -51,7 +52,7 @@
     "@advanced-rest-client/monaco-support": "^1.0.1",
     "@advanced-rest-client/pouchdb-quick-search": "^2.0.3",
     "@advanced-rest-client/request-engine": "^0.1.11",
-    "@advanced-rest-client/requests-list": "^0.1.11",
+    "@advanced-rest-client/requests-list": "^0.1.13",
     "@anypoint-web-components/anypoint-button": "^1.2.0",
     "@anypoint-web-components/anypoint-dialog": "^0.1.7",
     "@anypoint-web-components/anypoint-item": "^1.1.0",
@@ -425,7 +426,11 @@
       "@advanced-rest-client/arc-messages/*.js",
       "@advanced-rest-client/arc-messages/*.d.ts",
       "@advanced-rest-client/arc-messages/src/*.js",
-      "@advanced-rest-client/arc-messages/src/*.d.ts"
+      "@advanced-rest-client/arc-messages/src/*.d.ts",
+      "@advanced-rest-client/arc-project/*.js",
+      "@advanced-rest-client/arc-project/*.d.ts",
+      "@advanced-rest-client/arc-project/src/*.js",
+      "@advanced-rest-client/arc-project/src/*.d.ts"
     ]
   }
 }
