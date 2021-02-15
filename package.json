@@ -111,6 +111,7 @@
     "mime-types": "^2.1.28",
     "monaco-editor": "^0.21.3",
     "node-fetch": "^2.6.1",
+    "semver": "^5.7.1",
     "uuid": "^8.3.2",
     "winston": "^3.3.3"
   },
