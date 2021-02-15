@@ -76,6 +76,7 @@ document.adoptedStyleSheets = document.adoptedStyleSheets.concat(ContextMenuStyl
 /** @typedef {import('@advanced-rest-client/arc-events').ARCMenuPopupEvent} ARCMenuPopupEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ARCNavigationEvent} ARCNavigationEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ARCExternalNavigationEvent} ARCExternalNavigationEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCHelpTopicEvent} ARCHelpTopicEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ConfigStateUpdateEvent} ConfigStateUpdateEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').ArcImportInspectEvent} ArcImportInspectEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').WorkspaceAppendRequestEvent} WorkspaceAppendRequestEvent */
@@ -139,6 +140,7 @@ const sheetClosedHandler = Symbol('sheetClosedHandler');
 const metaRequestHandler = Symbol('metaRequestHandler');
 const requestMetaCloseHandler = Symbol('requestMetaCloseHandler');
 const externalNavigationHandler = Symbol('externalNavigationHandler');
+const helpNavigationHandler = Symbol('helpNavigationHandler');
 const contextCommandHandler = Symbol('contextCommandHandler');
 const hostRulesTemplate = Symbol('hostRulesTemplate');
 const processApplicationState = Symbol('processApplicationState');
@@ -595,6 +597,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     window.addEventListener(ArcNavigationEventTypes.navigateRestApi, this[navigateRestApiHandler].bind(this));
     window.addEventListener(ArcNavigationEventTypes.popupMenu, this[popupMenuHandler].bind(this));
     window.addEventListener(ArcNavigationEventTypes.navigateExternal, this[externalNavigationHandler].bind(this));
+    window.addEventListener(ArcNavigationEventTypes.helpTopic, this[helpNavigationHandler].bind(this));
     window.addEventListener(WorkspaceEventTypes.appendRequest, this[workspaceAppendRequestHandler].bind(this));
     window.addEventListener(WorkspaceEventTypes.appendExport, this[workspaceAppendExportHandler].bind(this));
     window.addEventListener(ConfigEventTypes.State.update, this[configStateChangeHandler].bind(this));
@@ -835,6 +838,14 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     const { url, detail } = e;
     const { purpose } = detail;
     ipc.send('open-web-url', url, purpose);
+  }
+
+  /**
+   * @param {ARCHelpTopicEvent} e
+   */
+  [helpNavigationHandler](e) {
+    const { topic } = e;
+    ipc.send('help-topic', topic);
   }
 
   /**

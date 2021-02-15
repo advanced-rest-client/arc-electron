@@ -5,10 +5,12 @@ const ARC_REPO_URI = 'https://github.com/advanced-rest-client/arc-electron/';
 const ARC_DOCS_URI = 'https://docs.advancedrestclient.com/';
 
 const openExternalHandler = Symbol('openExternalHandler');
+const openHelpTopicHandler = Symbol('openHelpTopicHandler');
 
 export class ExternalResourcesManager {
   listen() {
     ipcMain.on('open-external-url', this[openExternalHandler].bind(this));
+    ipcMain.on('help-topic', this[openHelpTopicHandler].bind(this));
   }
 
   [openExternalHandler](e, url) {
@@ -123,6 +125,36 @@ export class ExternalResourcesManager {
   openWebSessionDocs() {
     logger.debug('Opening Web Session docs in default browser.');
     const url = `${ARC_DOCS_URI}using-arc/cookies-and-session-management`;
+    shell.openExternal(url);
+  }
+
+  /**
+   * @param {Electron.IpcMainEvent} e
+   * @param {string} topic
+   */
+  [openHelpTopicHandler](e, topic) {
+    let url;
+    switch (topic) {
+      case 'history':
+        url = `${ARC_DOCS_URI}using-arc/history`;
+        break;
+      case 'saved':
+        url = `${ARC_DOCS_URI}using-arc/saved`;
+        break;
+      case 'projects':
+        url = `${ARC_DOCS_URI}using-arc/legacy-projects`;
+        break;
+      case 'rest-api-docs':
+        url = `${ARC_DOCS_URI}using-arc/api-console`;
+        break;
+      case 'search-docs':
+        url = `${ARC_DOCS_URI}using-arc/search`;
+        break;
+      default:
+        logger.error(`Unknown help topic to open: ${topic}`);
+        return;
+    }
+    logger.debug(`Opening help topic at ${url}.`);
     shell.openExternal(url);
   }
 }
