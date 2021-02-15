@@ -13,6 +13,7 @@ import '../../../web_modules/@advanced-rest-client/arc-menu/history-menu.js';
 import '../../../web_modules/@advanced-rest-client/arc-menu/projects-menu.js';
 import '../../../web_modules/@advanced-rest-client/arc-menu/rest-api-menu.js';
 import '../../../web_modules/@advanced-rest-client/arc-menu/saved-menu.js';
+import '../../../web_modules/@advanced-rest-client/arc-menu/search-menu.js';
 import '../../../web_modules/@advanced-rest-client/arc-menu/arc-menu.js';
 import '../../../web_modules/@advanced-rest-client/arc-models/project-model.js';
 import '../../../web_modules/@advanced-rest-client/arc-models/request-model.js';
@@ -155,6 +156,7 @@ class ArcMenuScreen extends ApplicationPage {
       case 'saved-menu': return this.savedTemplate();
       case 'projects-menu': return this.projectsTemplate();
       case 'rest-api-menu': return this.apiDocsTemplate();
+      case 'search-menu': return this.searchTemplate();
       default: return this.allTemplate();
     }
   }
@@ -177,6 +179,11 @@ class ArcMenuScreen extends ApplicationPage {
   apiDocsTemplate() {
     const { listType } = this;
     return html`<rest-api-menu .listType="${listType}"></rest-api-menu>`;
+  }
+
+  searchTemplate() {
+    const { listType } = this;
+    return html`<search-menu .listType="${listType}"></search-menu>`;
   }
 
   allTemplate() {

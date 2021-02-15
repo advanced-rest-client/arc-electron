@@ -38,6 +38,7 @@ import '../../../../web_modules/@advanced-rest-client/arc-request-ui/request-met
 import '../../../../web_modules/@advanced-rest-client/arc-request-ui/request-meta-editor.js';
 import '../../../../web_modules/@advanced-rest-client/bottom-sheet/bottom-sheet.js';
 import '../../../../web_modules/@advanced-rest-client/arc-icons/arc-icon.js';
+import '../../../../web_modules/@advanced-rest-client/arc-project/project-screen.js';
 import '../../../../web_modules/@anypoint-web-components/anypoint-input/anypoint-masked-input.js';
 import '../../../../web_modules/@advanced-rest-client/host-rules-editor/host-rules-editor.js';
 import '../../../../web_modules/@api-components/api-navigation/api-navigation.js';
@@ -150,6 +151,7 @@ const themeActivateHandler = Symbol('themeActivateHandler');
 const unreadMessagesTemplate = Symbol('unreadMessagesTemplate');
 const appMessagesDialogTemplate = Symbol('appMessagesDialogTemplate');
 const openMessagesHandler = Symbol('openMessagesHandler');
+const arcLegacyProjectTemplate = Symbol('arcLegacyProjectTemplate');
 
 /**
  * A routes that does not go through the router and should not be remembered in the history.
@@ -325,7 +327,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     super();
 
     this.initObservableProperties(
-      'route', 'initializing', 'loadingStatus',
+      'route', 'routeParams', 'initializing', 'loadingStatus',
       'compatibility', 'oauth2RedirectUri',
       'navigationDetached', 'updateState', 'hasAppUpdate',
       'popupMenuEnabled', 'draggableEnabled', 'historyEnabled',
@@ -702,6 +704,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     }
     const { name } = result.route;
     this.route = name;
+    this.routeParams = result.params;
     this.ga.screenView(name);
   }
 
@@ -1487,6 +1490,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     const hideSaved = menuPopup.includes('saved-menu');
     const hideProjects = menuPopup.includes('projects-menu');
     const hideApis = menuPopup.includes('rest-api-menu');
+    const hideSearch = menuPopup.includes('search-menu');
     return html`
     <arc-menu
       ?compatibility="${compatibility}"
@@ -1496,6 +1500,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       ?hideSaved="${hideSaved}"
       ?hideProjects="${hideProjects}"
       ?hideApis="${hideApis}"
+      ?hideSearch="${hideSearch}"
       ?popup="${popupMenuEnabled}"
       ?dataTransfer="${draggableEnabled}"
       @minimized="${this[navMinimizedHandler]}"
@@ -1522,6 +1527,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       ${this[importInspectorTemplate](route)}
       ${this[hostRulesTemplate](route)}
       ${this[exchangeSearchTemplate](route)}
+      ${this[arcLegacyProjectTemplate](route)}
       ${this[requestDetailTemplate]()}
       ${this[requestMetaTemplate]()}
     </main>
@@ -1794,5 +1800,23 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       ?compatibility="${this.compatibility}"
       modal
     ></arc-messages-dialog>`;
+  }
+
+  /**
+   * @param {string} route The current route
+   * @returns {TemplateResult|string} The template for the ARC legacy projects.
+   */
+  [arcLegacyProjectTemplate](route) {
+    if (route !== 'project') {
+      return '';
+    }
+    const { routeParams={}, compatibility } = this;
+    return html`
+    <project-screen 
+      .projectId="${routeParams.pid}"
+      ?compatibility="${compatibility}"
+      class="screen scroll"
+    ></project-screen>
+    `;
   }
 }
