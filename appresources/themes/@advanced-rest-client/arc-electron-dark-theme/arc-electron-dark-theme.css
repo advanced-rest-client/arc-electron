@@ -12,7 +12,7 @@ html {
 
   --anypoint-dropdown-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
   --anypoint-autocomplete-dropdown-shadow: var(--anypoint-dropdown-shadow);
-  
+
   --secondary-action-button-color: var(--primary-text-color);
   --action-button-background-color: var(--primary-background-color);
   --action-button-color: var(--primary-text-color);
@@ -44,12 +44,10 @@ html {
   --anypoint-input-legacy-focus-border-color: #178bea;
   --anypoint-input-info-message-color: var(--primary-text-color);
 
-  --inline-documentation-background-color: #3a3a3a;
-
   --no-info-message-color: var(--secondary-text-color);
 
   --anypoint-menu-button-border-radius: 12px;
-  
+
   --anypoint-dropdown-menu-background-color: var(--input-background-color);
   --anypoint-dropdown-menu-label-background-color: var(--primary-background-color);
   --anypoint-listbox-background-color: var(--input-background-color);
@@ -90,11 +88,6 @@ html {
   --code-token-comment-value-color: #91afcd;
   --code-keyword-value-color: #63d0ff;
 
-  --api-type-document-type-attribute-color: var(--primary-text-color);
-  --api-annotation-document-color: var(--primary-text-color);
-  --api-body-document-description-color: var(--primary-text-color);
-  --api-method-documentation-description-color: var(--primary-text-color);
-  --api-method-documentation-url-background-color: var(--code-background-color);
   --markdown-styles-code-text-shadow: none;
 
   --http-code-snippet-code-text-shadow: var(--primary-text-color);
@@ -103,23 +96,11 @@ html {
   --http-code-snippet-code-keyword-color: #C792EA;
   --http-code-snippet-code-cdata-color: #adb9c5;
 
-  --api-type-document-property-parent-color: var(--primary-text-color);
-
-  --from-row-action-icon-color: var(--primary-text-color);
-  --icon-button-color: var(--primary-text-color);
-  --api-form-action-icon-color: var(--primary-text-color);
-  --api-form-action-button-color: var(--primary-text-color);
-
   --auth-method-oauth2-redirect-info-color: var(--primary-text-color);
-  --inline-documentation-color: var(--primary-text-color);
-
-  --api-endpoint-documentation-bottom-navigation-color: var(--link-color);
-  --api-endpoint-documentation-description-color: var(--primary-text-color);
-  --api-method-documentation-bottom-navigation-color: var(--link-color);
 
   --authorization-method-oauth2-redirect-info-color: var(--secondary-text-color);
   --auth-method-certificate-second-line-color: var(--secondary-text-color);
-  
+
   --request-editor-url-area-background-color: var(--primary-background-color);
   --request-editor-url-input-background-color: var(--primary-background-color);
   --workspace-tab-decorator-background-color: var(--secondary-background-color);
@@ -167,6 +148,7 @@ html {
   --arc-rail-menu-icon-selected-color: var(--primary-text-color);
   --arc-menu-title-background-color: var(--primary-background-color);
   --arc-menu-title-color: var(--primary-text-color);
+  --search-menu-input-background-color: var(--primary-background-color);
 
   --requests-list-history-group-header-background-color: var(--primary-background-color);
   --requests-list-item-history-group-header-color: rgba(255, 255, 255, 0.74);
@@ -221,12 +203,9 @@ html {
   --arc-workspace-detail-data-list-color: var(--secondary-text-color);
   --saved-request-editor-options-color: var(--secondary-text-color);
 
-  /* Cookies manager */
-  --cookie-details-meta-color: var(--primary-text-color);
-
   /* Client certificates */
   --certificate-details-data-list-color: var(--primary-text-color);
-  
+
   /* API Console's try it */
   --api-endpoint-documentation-tryit-background-color: var(--secondary-background-color);
   --api-endpoint-documentation-tryit-panels-background-color: var(--primary-background-color);
@@ -241,20 +220,54 @@ html {
   --variables-overlay-var-name-color: var(--secondary-text-color);
   --variables-overlay-var-value-color: var(--secondary-text-color);
 
-   /* requests lists */
-   --requests-list-history-group-header-background-color: var(--secondary-background-color);
-   --requests-list-item-history-group-header-color: var(--secondary-text-color);
-   --requests-list-content-actions-background-color: var(--secondary-background-color);
-   --requests-list-content-actions-icon-color: var(--secondary-text-color);
-   --requests-list-list-background-color: var(--primary-background-color);
+  /* requests lists */
+  --requests-list-history-group-header-background-color: var(--secondary-background-color);
+  --requests-list-item-history-group-header-color: var(--secondary-text-color);
+  --requests-list-content-actions-background-color: var(--secondary-background-color);
+  --requests-list-content-actions-icon-color: var(--secondary-text-color);
+  --requests-list-list-background-color: var(--primary-background-color);
 
-   /* Import / Export */
-   --import-data-inspector-meta-color: var(--secondary-text-color);
-   --import-table-auth-no-info-color: var(--secondary-text-color);
+  /* Import / Export */
+  --import-data-inspector-meta-color: var(--secondary-text-color);
+  --import-table-auth-no-info-color: var(--secondary-text-color);
+
+  /* API Console */
+  --api-type-document-property-color: : var(--primary-text-color);
+  --api-type-document-property-title-secondary-color: var(--secondary-text-color);
+  --json-table-list-property-name-color: var(--primary-text-color);
+  --json-table-complex-name-label-color: var(--secondary-text-color);
+  --json-table-array-body-color: var(--primary-text-color);
+  --json-table-array-header-color: var(--secondary-text-color);
+  --json-table-item-border-bottom-color: #9E9E9E;
+  --api-type-document-union-button-color: var(--primary-text-color);
+  --api-annotation-background-color: var(--primary-background-color);
+  --api-type-document-type-attribute-color: var(--primary-text-color);
+  --api-annotation-document-color: var(--primary-text-color);
+  --api-body-document-description-color: var(--primary-text-color);
+  --api-method-documentation-description-color: var(--primary-text-color);
+  --api-method-documentation-url-background-color: var(--code-background-color);
+  --api-type-document-property-parent-color: var(--primary-text-color);
+  --from-row-action-icon-color: var(--primary-text-color);
+  --icon-button-color: var(--primary-text-color);
+  --api-form-action-icon-color: var(--primary-text-color);
+  --api-form-action-button-color: var(--primary-text-color);
+  --inline-documentation-color: var(--primary-text-color);
+  --api-endpoint-documentation-bottom-navigation-color: var(--link-color);
+  --api-endpoint-documentation-description-color: var(--primary-text-color);
+  --api-method-documentation-bottom-navigation-color: var(--link-color);
+  --api-body-document-toggle-view-color: var(--primary-text-color);
+  --api-body-document-code-color: var(--primary-text-color);
+  --inline-documentation-background-color: #3a3a3a;
+  --markdown-styles-table-row-background-color: var(--primary-background-color);
+  --markdown-styles-table-even-row-background-color: var(--secondary-background-color);
+
+  /* cookie manager */
+  --cookie-details-meta-color: var(--primary-text-color);
+  --cookie-manager-search-input-background-color: var(--primary-background-color);
 }
 
 body {
-  background-color: var(--secondary-background-color);
+  background-color: var(--secondary-background-color); 
   color: var(--primary-text-color);
   --arc-font-code-family: Noto, monospace;
 }

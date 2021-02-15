@@ -100,10 +100,13 @@ export class FilesystemProxy {
    */
   [writeContent](filePath, content, mime) {
     let data = content;
-    if (typeof content !== 'string') {
+    if (typeof content !== 'string' && mime === 'application/json') {
       data = this[prepareData](content, mime);
     }
-    return fs.writeFile(filePath, data, 'utf8');
+    if (typeof data === 'string') {
+      return fs.writeFile(filePath, data, 'utf8');
+    }
+    return fs.writeFile(filePath, data);
   }
 
   /**
