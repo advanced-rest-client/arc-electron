@@ -90,6 +90,7 @@ document.adoptedStyleSheets = document.adoptedStyleSheets.concat(ContextMenuStyl
 /** @typedef {import('@advanced-rest-client/arc-types').Authorization.OAuth2Authorization} OAuth2Authorization */
 /** @typedef {import('@advanced-rest-client/electron-amf-service/types').ApiParseResult} ApiParseResult */
 /** @typedef {import('@advanced-rest-client/exchange-search-panel/src/types').ExchangeAsset} ExchangeAsset */
+/** @typedef {import('electron-updater').UpdateInfo} UpdateInfo */
 
 const unhandledRejectionHandler = Symbol('unhandledRejectionHandler');
 const headerTemplate = Symbol('headerTemplate');
@@ -154,6 +155,8 @@ const unreadMessagesTemplate = Symbol('unreadMessagesTemplate');
 const appMessagesDialogTemplate = Symbol('appMessagesDialogTemplate');
 const openMessagesHandler = Symbol('openMessagesHandler');
 const arcLegacyProjectTemplate = Symbol('arcLegacyProjectTemplate');
+const updateIndicatorTemplate = Symbol('updateIndicatorTemplate');
+const updateClickHandler = Symbol('updateClickHandler');
 
 /**
  * A routes that does not go through the router and should not be remembered in the history.
@@ -331,7 +334,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     this.initObservableProperties(
       'route', 'routeParams', 'initializing', 'loadingStatus',
       'compatibility', 'oauth2RedirectUri',
-      'navigationDetached', 'updateState', 'hasAppUpdate',
+      'navigationDetached', 'updateState', 'hasAppUpdate', 'manualUpdateAvailable', 'updateVersion',
       'popupMenuEnabled', 'draggableEnabled', 'historyEnabled',
       'listType', 'detailedSearch', 'currentEnvironment',
       'workspaceSendButton', 'workspaceProgressInfo', 'workspaceBodyEditor', 'workspaceAutoEncode',
@@ -382,6 +385,10 @@ export class AdvancedRestClientApplication extends ApplicationPage {
      * Whether application update is available.
      */
     this.hasAppUpdate = false;
+    /** 
+     * Set whe an update is available but it has to be triggered manually.
+     */
+    this.manualUpdateAvailable = false;
     /** 
      * The current state of checking for update.
      * @type {string}
@@ -620,9 +627,18 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       this.logger.info('Checking for application update');
       this.updateState = 'checking-for-update';
     });
-    ipc.on('update-available', () => {
+    ipc.on('update-available', 
+      /** 
+       * @param {Electron.IpcRendererEvent} e
+       * @param {UpdateInfo} info
+       */
+      (e, info) => {
+      this.updateVersion = info.version;
       this.logger.info('Application update available.');
       this.updateState = 'update-available';
+      if (process.platform === 'linux' || this.config.updater && this.config.updater.auto === false) {
+        this.manualUpdateAvailable = true;
+      }
     });
     ipc.on('update-not-available', () => {
       this.logger.info('Application update not available.');
@@ -1361,6 +1377,23 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     this.unreadAppMessages = 0;
   }
 
+  /**
+   * A handler for the application update notification click.
+   * It installs the update when manual installation is not requested.
+   * If manual installation is requested then it opens the release page.
+   */
+  [updateClickHandler]() {
+    const { manualUpdateAvailable, hasAppUpdate } = this;
+    if (manualUpdateAvailable) {
+      const { updateVersion } = this;
+      const base = 'https://github.com/advanced-rest-client/arc-electron/releases/tag';
+      const url = `${base}/v${updateVersion}`;
+      ipc.send('open-external-url', url);
+    } else if (hasAppUpdate) {
+      ipc.send('install-update');
+    }
+  }
+
   appTemplate() {
     const { initializing } = this;
     if (initializing) {
@@ -1406,9 +1439,24 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       </anypoint-icon-button>`}
       API Client
       <span class="spacer"></span>
+      ${this[updateIndicatorTemplate]()}
       ${this[unreadMessagesTemplate]()}
       ${this[environmentTemplate]()}
     </header>`;
+  }
+
+  /**
+   * @returns {TemplateResult|string} The template for the app update indicator
+   */
+  [updateIndicatorTemplate]() {
+    const { manualUpdateAvailable, hasAppUpdate } = this;
+    if (!manualUpdateAvailable && !hasAppUpdate) {
+      return '';
+    }
+    return html`
+    <anypoint-icon-button title="Application update available" class="header-action-button" @click="${this[updateClickHandler]}">
+      <arc-icon icon="cloudDownload"></arc-icon>
+    </anypoint-icon-button>`;
   }
 
   /**
