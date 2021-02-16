@@ -26,6 +26,7 @@
     "requestloadstart",
     "resetzoom",
     "restclient",
+    "robotomono",
     "screenview",
     "selectall",
     "settingschanged",

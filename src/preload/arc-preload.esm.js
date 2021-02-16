@@ -18,6 +18,7 @@ import { GoogleAnalytics } from './GoogleAnalytics.js';
 
 const env = {};
 const APP_VERSION = process.env.ARC_VERSION;
+const PLATFORM = process.platform;
 Object.keys(process.env).forEach((key) => {
   if (key.indexOf('npm_') === 0 || key.indexOf('ARC_') === 0) {
     return;
@@ -70,6 +71,7 @@ process.once('loaded', () => {
   global.process = {
     // @ts-ignore
     env,
+    platform: PLATFORM,
   };
 
   // @ts-ignore

@@ -269,5 +269,5 @@ html {
 body {
   background-color: var(--secondary-background-color); 
   color: var(--primary-text-color);
-  --arc-font-code-family: Noto, monospace;
+  --arc-font-code-family: Roboto Mono, Noto, monospace;
 }
