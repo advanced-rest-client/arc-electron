@@ -307,6 +307,7 @@
       "lit-element/lib/*",
       "@polymer/font-roboto-local/roboto.js",
       "@polymer/font-roboto-local/fonts/roboto/*",
+      "@polymer/font-roboto-local/fonts/robotomono/*",
       "marked/lib/marked.js",
       "@anypoint-web-components/anypoint-dialog/index.js",
       "@anypoint-web-components/anypoint-dialog/index.d.ts",
