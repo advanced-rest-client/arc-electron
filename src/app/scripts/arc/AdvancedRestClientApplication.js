@@ -853,7 +853,11 @@ export class AdvancedRestClientApplication extends ApplicationPage {
   [externalNavigationHandler](e) {
     const { url, detail } = e;
     const { purpose } = detail;
-    ipc.send('open-web-url', url, purpose);
+    if (!purpose) {
+      ipc.send('open-external-url', url);
+    } else {
+      ipc.send('open-web-url', url, purpose);
+    }
   }
 
   /**
