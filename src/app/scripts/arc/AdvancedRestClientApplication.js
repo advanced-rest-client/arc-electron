@@ -838,7 +838,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       'saved',
     ];
     if (e.route === 'client-certificate-import') {
-      this.importingCertificate = true;
+      navigate('client-certificates');
     } else if (allowed.includes(e.route)) {
       navigate(e.route);
     } else {
@@ -853,7 +853,11 @@ export class AdvancedRestClientApplication extends ApplicationPage {
   [externalNavigationHandler](e) {
     const { url, detail } = e;
     const { purpose } = detail;
-    ipc.send('open-web-url', url, purpose);
+    if (!purpose) {
+      ipc.send('open-external-url', url);
+    } else {
+      ipc.send('open-web-url', url, purpose);
+    }
   }
 
   /**
