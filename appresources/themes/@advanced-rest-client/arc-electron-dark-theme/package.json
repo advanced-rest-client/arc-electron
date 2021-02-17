@@ -1,18 +1,20 @@
 {
   "name": "@advanced-rest-client/arc-electron-dark-theme",
   "description": "Dark theme definition for Advanced REST Client",
-  "version": "3.0.2",
+  "version": "4.0.4",
   "license": "Apache-2.0",
   "main": "arc-electron-dark-theme.css",
-  "authors": [
-    "Pawel Psztyc",
-    "The Advanced REST client authors <arc@mulesoft.com>"
+  "keywords": [
+    "arc",
+    "theme",
+    "dark"
   ],
-  "private": false,
-  "scripts": {
-    "lint": "polymer lint arc-electron-dark-theme.html",
-    "test": "exit 0"
-  },
+  "authors": [
+    "Pawel Psztyc"
+  ],
+  "contributors": [
+    "Your name can be here!"
+  ],
   "repository": {
     "type": "git",
     "url": "git://github.com/advanced-rest-client/arc-electron-dark-theme.git"
@@ -20,5 +22,8 @@
   "bugs": {
     "url": "https://github.com/advanced-rest-client/arc-electron-dark-theme/issues",
     "email": "arc@mulesoft.com"
+  },
+  "scripts": {
+    "test": "exit 0"
   }
 }

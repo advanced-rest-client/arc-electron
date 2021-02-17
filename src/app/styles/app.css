@@ -1,0 +1,52 @@
+main > .screen {
+  flex: 1;
+  height: 100vh;
+  overflow: hidden;
+  margin: 12px 20px;
+}
+
+main > .screen.scroll {
+  overflow: auto;
+}
+
+.environment-selector {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+.env-dropdown {
+  transform: rotate(90deg);
+  margin-left: 8px;
+}
+
+#passwordPrompt {
+  min-width: 460px;
+}
+
+#passwordPrompt anypoint-masked-input {
+  width: auto;
+}
+
+.bottom-sheet-container  {
+  width: var(--bottom-sheet-width, 100%);
+  max-width: var(--bottom-sheet-max-width, 700px);
+  right: var(--bottom-sheet-right, 40px);
+  left: var(--bottom-sheet-left, auto);
+}
+
+.arc-context-menu {
+  position: absolute;
+  color: var(--anypoint-listbox-color);
+  background-color: var(--anypoint-listbox-background-color, #FAFAFA);
+  box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12), 0 3px 5px -1px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  padding: 8px 0;
+}
+
+.arc-context-menu .context-item,
+.arc-context-menu .context-item {
+  min-height: 40px;
+  padding-left: 32px;
+}
