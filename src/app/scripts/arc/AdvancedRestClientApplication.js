@@ -838,7 +838,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       'saved',
     ];
     if (e.route === 'client-certificate-import') {
-      this.importingCertificate = true;
+      navigate('client-certificates');
     } else if (allowed.includes(e.route)) {
       navigate(e.route);
     } else {
