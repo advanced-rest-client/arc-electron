@@ -128,6 +128,7 @@ const workspaceAppendRequestHandler = Symbol('workspaceAppendRequestHandler');
 const workspaceAppendExportHandler = Symbol('workspaceAppendExportHandler');
 const environmentSelectedHandler = Symbol('environmentSelectedHandler');
 const navMinimizedHandler = Symbol('navMinimizedHandler');
+const menuRailSelected = Symbol('menuRailSelected');
 const navResizeMousedown = Symbol('navResizeMousedown');
 const resizeMouseUp = Symbol('resizeMouseUp');
 const resizeMouseMove = Symbol('resizeMouseMove');
@@ -338,7 +339,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       'popupMenuEnabled', 'draggableEnabled', 'historyEnabled',
       'listType', 'detailedSearch', 'currentEnvironment',
       'workspaceSendButton', 'workspaceProgressInfo', 'workspaceBodyEditor', 'workspaceAutoEncode',
-      'navigationWidth',
+      'navigationWidth', 'navigationSelected',
       'requestDetailsOpened', 'requestMetaOpened', 'metaRequestId', 'metaRequestType',
       'unreadAppMessages', 'applicationMessages',
     );
@@ -432,6 +433,12 @@ export class AdvancedRestClientApplication extends ApplicationPage {
      * Enables variables processor.
      */
     this[variablesEnabledValue] = true;
+
+    /** 
+     * The currently selected navigation group.
+     * @type {number}
+     */
+    this.navigationSelected = undefined;
 
     this.workspaceSendButton = true;
     this.workspaceProgressInfo = true;
@@ -579,6 +586,11 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       if (state.environment.variablesEnvironment) {
         // this.currentEnvironment = state.environment.variablesEnvironment;
         ArcModelEvents.Environment.select(document.body, state.environment.variablesEnvironment);
+      }
+    }
+    if (state.navigation) {
+      if (typeof state.navigation.selected === 'number') {
+        this.navigationSelected = state.navigation.selected;
       }
     }
   }
@@ -1262,6 +1274,15 @@ export class AdvancedRestClientApplication extends ApplicationPage {
   }
 
   /**
+   * @param {Event} e
+   */
+  async [menuRailSelected](e) {
+    const menu = /** @type ArcMenuElement */ (e.target);
+    this.navigationSelected = menu.selected;
+    await this.stateProxy.update('navigation.selected', menu.selected);
+  }
+
+  /**
    * @param {MouseEvent} e
    */
   [navResizeMousedown](e) {
@@ -1550,7 +1571,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
    * @returns {TemplateResult} The template for the ARC navigation
    */
   [arcNavigationTemplate]() {
-    const { compatibility, menuPopup, listType, historyEnabled, popupMenuEnabled, draggableEnabled } = this;
+    const { compatibility, menuPopup, listType, historyEnabled, popupMenuEnabled, draggableEnabled, navigationSelected } = this;
     const hideHistory = menuPopup.includes('history-menu');
     const hideSaved = menuPopup.includes('saved-menu');
     const hideProjects = menuPopup.includes('projects-menu');
@@ -1558,6 +1579,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     const hideSearch = menuPopup.includes('search-menu');
     return html`
     <arc-menu
+      .selected="${navigationSelected}"
       ?compatibility="${compatibility}"
       .listType="${listType}"
       ?history="${historyEnabled}"
@@ -1569,6 +1591,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       ?popup="${popupMenuEnabled}"
       ?dataTransfer="${draggableEnabled}"
       @minimized="${this[navMinimizedHandler]}"
+      @selected="${this[menuRailSelected]}"
     ></arc-menu>
     `;
   }
