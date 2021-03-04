@@ -224,6 +224,7 @@ export class ConsoleRequest {
         evaluateVariables: false,
         evaluateSystemVariables: false,
       });
+      TransportEvents.response(document.body, id, info.request, transport, response);
     } catch (e) {
       // ...
     }
