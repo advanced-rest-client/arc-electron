@@ -1331,7 +1331,9 @@ export class AdvancedRestClientApplication extends ApplicationPage {
   async [processApiFileHandler](e) {
     const { file } = e;
     const result = await this.apiParser.processApiFile(file);
-    this.apiConsoleFromParser(result);
+    if (result) {
+      this.apiConsoleFromParser(result);
+    }
   }
 
   /** 
