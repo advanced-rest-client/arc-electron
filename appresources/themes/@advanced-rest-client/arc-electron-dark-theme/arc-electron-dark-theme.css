@@ -260,10 +260,15 @@ html {
   --inline-documentation-background-color: #3a3a3a;
   --markdown-styles-table-row-background-color: var(--primary-background-color);
   --markdown-styles-table-even-row-background-color: var(--secondary-background-color);
+  --api-method-documentation-operation-id-color: var(--secondary-text-color);
 
   /* cookie manager */
   --cookie-details-meta-color: var(--primary-text-color);
   --cookie-manager-search-input-background-color: var(--primary-background-color);
+
+  /* drag and drop */
+  --drop-file-importer-background-color: var(--secondary-background-color);
+  --drop-file-importer-header-background-color: var(--primary-color);
 }
 
 body {
