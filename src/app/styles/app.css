@@ -50,3 +50,32 @@ main > .screen.scroll {
   min-height: 40px;
   padding-left: 32px;
 }
+
+.dialog-title {
+  display: block;
+  margin: 0;
+  margin-top: 24px;
+  margin-bottom: 24px;
+  font-size: 1.25rem;
+  line-height: 2rem;
+  font-weight: 500;
+  color: var(--anypoint-dialog-title-color, rgba(0,0,0,1));
+}
+
+dialog {
+  background-color: var(--secondary-background-color);
+  color: var(--primary-text-color);
+}
+
+.dialog-actions {
+  position: relative;
+  padding: 8px;
+  margin: 24px 0 0 0;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+.api-entry-point-selector {
+  width: 100%;
+}

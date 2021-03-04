@@ -11,6 +11,7 @@ import { ConfigEventTypes } from '../../../../web_modules/@advanced-rest-client/
 import '../../../../web_modules/@polymer/font-roboto-local/roboto.js';
 import '../../../../web_modules/@advanced-rest-client/arc-models/history-data-model.js';
 import '../../../../web_modules/@advanced-rest-client/arc-models/auth-data-model.js';
+import '../../../../web_modules/@advanced-rest-client/arc-models/request-model.js';
 import '../../../../web_modules/@advanced-rest-client/arc-models/host-rules-model.js';
 import '../../../../web_modules/@advanced-rest-client/arc-models/rest-api-model.js';
 import '../../../../web_modules/@advanced-rest-client/arc-models/url-indexer.js';
