@@ -249,8 +249,7 @@
         {
           "target": "nsis",
           "arch": [
-            "x64",
-            "ia32"
+            "x64"
           ]
         }
       ]
@@ -264,7 +263,7 @@
     "nsis": {
       "installerIcon": "build/icon.ico",
       "uninstallerIcon": "build/icon.ico",
-      "artifactName": "arc-setup-${arch}.${ext}",
+      "artifactName": "arc-setup.${ext}",
       "shortcutName": "ARC"
     },
     "publish": [
