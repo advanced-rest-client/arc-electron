@@ -169,6 +169,7 @@
       "appresources/"
     ],
     "mac": {
+      "artifactName": "arc-macos.${ext}",
       "category": "public.app-category.developer-tools",
       "icon": "build/icon.icns",
       "hardenedRuntime": true,
