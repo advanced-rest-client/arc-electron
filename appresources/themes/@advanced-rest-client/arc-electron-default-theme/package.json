@@ -1,20 +1,19 @@
 {
   "name": "@advanced-rest-client/arc-electron-default-theme",
   "description": "Default theme definition for Advanced REST Client",
-  "version": "3.0.4",
+  "version": "4.0.2",
   "license": "Apache-2.0",
   "main": "arc-electron-default-theme.css",
   "keywords": [
     "arc",
-    "theme"
+    "theme",
+    "default"
   ],
   "authors": [
-    "Pawel Psztyc",
-    "The Advanced REST client authors <arc@mulesoft.com>"
+    "Pawel Psztyc"
   ],
   "contributors": [
-    "Pawel Psztyc",
-    "The Advanced REST client authors <arc@mulesoft.com>"
+    "Your name can be here!"
   ],
   "repository": {
     "type": "git",
@@ -24,7 +23,6 @@
     "url": "https://github.com/advanced-rest-client/arc-electron-default-theme/issues",
     "email": "arc@mulesoft.com"
   },
-  "private": false,
   "scripts": {
     "test": "exit 0"
   }

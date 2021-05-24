@@ -1,0 +1,9 @@
+summary {
+  padding: 1rem;
+  border-bottom: 1px #e5e5e5 solid;
+  margin-bottom: 12px;
+}
+
+.preformatted {
+  white-space: pre-line;
+}

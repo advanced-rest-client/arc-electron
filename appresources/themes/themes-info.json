@@ -1,6 +1,7 @@
 {
   "version": "1.0.0",
   "kind": "ARC#ThemeInfo",
+  "systemPreferred": true,
   "themes": [
     {
       "_id": "@advanced-rest-client/arc-electron-default-theme",

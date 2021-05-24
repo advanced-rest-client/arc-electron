@@ -1,0 +1,29 @@
+.menu-title {
+  background-color: var(--arc-menu-title-background-color);
+  color: var(--arc-menu-title-color);
+  height: 56px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #e5e5e5;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.api-pages {
+  margin-left: 24px;
+}
+
+nav {
+  display: flex;
+  flex-direction: column;
+}
+
+api-navigation {
+  flex: 1;
+  overflow: auto;
+}
+
+.api-version-selector {
+  --anypoint-dropdown-menu-background-color: var(--arc-toolbar-background);
+  --anypoint-dropdown-menu-label-color: var(--arc-toolbar-color);
+}

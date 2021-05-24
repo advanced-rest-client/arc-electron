@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug Main Process",
+      "name": "Main Process",
       "type": "node",
       "request": "launch",
       "cwd": "${workspaceRoot}",
@@ -10,7 +10,19 @@
       "windows": {
         "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron.cmd"
       },
-      "args" : [".", "--debug", "--debug-level=\"silly\"", "--workspace-path=\"~/arc-dev/workspace\"", "--settings-file=\"~/arc-dev/dev-settings.json\"", "--themes-path=\"~/arc-dev/themes-esm\""] 
+      "args": [
+        ".", 
+        "--skip-app-update", 
+        "--skip-themes-update",
+        "--dev", 
+        "--debug-level=\"silly\"", 
+        "--with-devtools",
+        "--workspace-path=\"~/arc-dev/workspace\"", 
+        "--settings-file=\"~/arc-dev/dev-settings.json\"", 
+        "--state-file=\"~/arc-dev/dev-state.json\"",
+        "--themes-path=\"~/arc-dev/themes-esm\""
+      ],
+      "outputCapture": "std"
     }
   ]
 }
