@@ -1,8 +1,7 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable no-console */
 import { RequestFactory, ModulesRegistry, RequestAuthorization, ResponseAuthorization } from '../../../../web_modules/@advanced-rest-client/request-engine/index.js';
-import { TransportEventTypes, TransportEvents } from '../../../../web_modules/@advanced-rest-client/arc-events/index.js';
-import { ArcModelEvents } from '../../../../web_modules/@advanced-rest-client/arc-models/index.js';
+import { TransportEventTypes, TransportEvents, ArcModelEvents } from '../../../../web_modules/@advanced-rest-client/arc-events/index.js';
 import jexl from '../../../../web_modules/jexl/dist/Jexl.js';
 
 ModulesRegistry.register(ModulesRegistry.request, '@advanced-rest-client/request-engine/request/request-authorization', RequestAuthorization, ['store']);

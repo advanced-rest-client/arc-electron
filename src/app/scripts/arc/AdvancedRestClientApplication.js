@@ -3,8 +3,8 @@ import { ApplicationPage } from '../../ApplicationPage.js';
 import { findRoute, navigate, navigatePage } from '../lib/route.js';
 import { html } from '../../../../web_modules/lit-html/lit-html.js';
 import { MonacoLoader } from '../../../../web_modules/@advanced-rest-client/monaco-support/index.js';
-import { ArcNavigationEventTypes, ProjectActions, ConfigEventTypes, DataImportEventTypes, WorkspaceEvents, ImportEvents, WorkspaceEventTypes, ArcNavigationEvents, RestApiEventTypes } from '../../../../web_modules/@advanced-rest-client/arc-events/index.js';
-import { ArcModelEvents, ArcModelEventTypes, ImportFactory, ImportNormalize, isSingleRequest } from '../../../../web_modules/@advanced-rest-client/arc-models/index.js';
+import { ArcModelEvents, ArcModelEventTypes, ArcNavigationEventTypes, ProjectActions, ConfigEventTypes, DataImportEventTypes, WorkspaceEvents, ImportEvents, WorkspaceEventTypes, ArcNavigationEvents, RestApiEventTypes } from '../../../../web_modules/@advanced-rest-client/arc-events/index.js';
+import { ImportFactory, ImportNormalize, isSingleRequest } from '../../../../web_modules/@advanced-rest-client/arc-models/index.js';
 import { ArcMessagingService } from '../../../../web_modules/@advanced-rest-client/arc-messages/index.js';
 import { ModulesRegistry, RequestCookies } from '../../../../web_modules/@advanced-rest-client/request-engine/index.js';
 import { classMap } from '../../../../web_modules/lit-html/directives/class-map.js';
@@ -27,10 +27,10 @@ import '../../../../web_modules/@advanced-rest-client/arc-menu/arc-menu.js';
 import '../../../../web_modules/@advanced-rest-client/requests-list/history-panel.js';
 import '../../../../web_modules/@advanced-rest-client/requests-list/saved-panel.js';
 import '../../../../web_modules/@advanced-rest-client/client-certificates/client-certificates-panel.js';
-import '../../../../web_modules/@advanced-rest-client/arc-ie/arc-data-export.js';
-import '../../../../web_modules/@advanced-rest-client/arc-ie/arc-export-form.js';
-import '../../../../web_modules/@advanced-rest-client/arc-ie/arc-data-import.js';
-import '../../../../web_modules/@advanced-rest-client/arc-ie/import-data-inspector.js';
+import '../../../../web_modules/@advanced-rest-client/arc-models/arc-data-export.js';
+import '../../../../web_modules/@advanced-rest-client/arc-models/arc-export-form.js';
+import '../../../../web_modules/@advanced-rest-client/arc-models/arc-data-import.js';
+import '../../../../web_modules/@advanced-rest-client/arc-models/import-data-inspector.js';
 import '../../../../web_modules/@advanced-rest-client/arc-environment/variables-overlay.js';
 import '../../../../web_modules/@advanced-rest-client/arc-cookies/cookie-manager.js';
 import '../../../../web_modules/@advanced-rest-client/arc-settings/arc-settings.js';
@@ -41,19 +41,16 @@ import '../../../../web_modules/@advanced-rest-client/arc-icons/arc-icon.js';
 import '../../../../web_modules/@advanced-rest-client/arc-project/project-screen.js';
 import '../../../../web_modules/@anypoint-web-components/anypoint-input/anypoint-masked-input.js';
 import '../../../../web_modules/@advanced-rest-client/host-rules-editor/host-rules-editor.js';
-import '../../../../web_modules/@api-components/api-navigation/api-navigation.js';
+// import '../../../../web_modules/@api-components/api-navigation/api-navigation.js';
 import '../../../../web_modules/@advanced-rest-client/exchange-search-panel/exchange-search-panel.js';
 // import '../../../../web_modules/@api-components/api-request-panel/api-request-panel.js';
 // import '../../../../web_modules/@api-components/api-documentation/api-documentation.js';
 import '../../../../web_modules/@advanced-rest-client/arc-messages/arc-messages-dialog.js';
 import { Request } from './Request.js';
-import { ContextMenu } from '../context-menu/ContextMenu.js';
-import { ContextMenuStyles } from '../context-menu/ContextMenu.styles.js';
-import ContextMenuCommands from './ArcContextMenuCommands.js';
+import { ArcContextMenu } from '../context-menu/ArcContextMenu.js';
+import ContextMenuCommands from '../context-menu/ArcContextMenuCommands.js';
 import { getTabClickIndex } from './Utils.js';
 
-// @ts-ignore
-document.adoptedStyleSheets = document.adoptedStyleSheets.concat(ContextMenuStyles.styleSheet);
 
 /* global PreferencesProxy, OAuth2Handler, WindowManagerProxy, ThemeManager, logger, EncryptionService, WorkspaceManager, ipc, CookieBridge, ImportFilePreProcessor, FilesystemProxy, ApplicationSearchProxy, AppStateProxy, GoogleDriveProxy, ElectronAmfService, GoogleAnalytics */
 
@@ -82,11 +79,10 @@ document.adoptedStyleSheets = document.adoptedStyleSheets.concat(ContextMenuStyl
 /** @typedef {import('@advanced-rest-client/arc-events').WorkspaceAppendRequestEvent} WorkspaceAppendRequestEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').WorkspaceAppendExportEvent} WorkspaceAppendExportEvent */
 /** @typedef {import('@advanced-rest-client/arc-events').RestApiProcessFileEvent} RestApiProcessFileEvent */
+/** @typedef {import('@advanced-rest-client/arc-events').ARCEnvironmentStateSelectEvent} ARCEnvironmentStateSelectEvent */
 /** @typedef {import('@advanced-rest-client/arc-models').IndexableRequest} IndexableRequest */
-/** @typedef {import('@advanced-rest-client/arc-models').ARCEnvironmentStateSelectEvent} ARCEnvironmentStateSelectEvent */
 /** @typedef {import('../../../../web_modules/@advanced-rest-client/arc-request-ui').ArcRequestWorkspaceElement} ArcRequestWorkspaceElement */
 /** @typedef {import('../../../../web_modules/@advanced-rest-client/arc-menu').ArcMenuElement} ArcMenuElement */
-/** @typedef {import('../context-menu/interfaces').ExecuteOptions} ExecuteOptions */
 /** @typedef {import('@advanced-rest-client/arc-types').Authorization.OAuth2Authorization} OAuth2Authorization */
 /** @typedef {import('@advanced-rest-client/electron-amf-service/types').ApiParseResult} ApiParseResult */
 /** @typedef {import('@advanced-rest-client/exchange-search-panel/src/types').ExchangeAsset} ExchangeAsset */
@@ -248,7 +244,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
    */
   #workspace = undefined;
 
-  #contextMenu = new ContextMenu(document.body);
+  #contextMenu = new ArcContextMenu(document.body);
 
   stateProxy = new AppStateProxy();
 
@@ -608,7 +604,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     this.gDrive.listen();
     this.#contextMenu.connect();
     this.#contextMenu.registerCommands(ContextMenuCommands);
-    this.#contextMenu.registerCallback(this[contextCommandHandler].bind(this));
+    this.#contextMenu.addEventListener('execute', this[contextCommandHandler].bind(this));
 
     window.addEventListener(ArcNavigationEventTypes.navigateRequest, this[navigateRequestHandler].bind(this));
     window.addEventListener(ArcNavigationEventTypes.navigate, this[navigateHandler].bind(this));
@@ -955,15 +951,16 @@ export class AdvancedRestClientApplication extends ApplicationPage {
   }
 
   /**
-   * @param {ExecuteOptions} args
+   * @param {CustomEvent} e
    */
-  [contextCommandHandler](args) {
-    const { command } = args;
-    switch (command) {
-      case 'close-tab': this.workspaceElement.removeRequest(getTabClickIndex(args.target)); break;
-      case 'close-other-tabs': this.workspaceElement.closeAllTabs(getTabClickIndex(args.target)); break;
+  [contextCommandHandler](e) {
+    const { detail } = e;
+    const { target, id } = detail;
+    switch (id) {
+      case 'close-tab': this.workspaceElement.removeRequest(getTabClickIndex(target)); break;
+      case 'close-other-tabs': this.workspaceElement.closeAllTabs(getTabClickIndex(target)); break;
       case 'close-all-tabs': this.workspaceElement.closeAllTabs(); break;
-      case 'duplicate-tab': this.workspaceElement.duplicateTab(getTabClickIndex(args.target)); break;
+      case 'duplicate-tab': this.workspaceElement.duplicateTab(getTabClickIndex(target)); break;
       default:
     }
   }
