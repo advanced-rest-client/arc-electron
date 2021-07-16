@@ -236,12 +236,14 @@ export class ArcEnvironment {
         return;
       }
       logger.debug('All windows are now closed.');
-      if (process.platform !== 'darwin') {
-        logger.debug('Quitting main thread.');
-        app.quit();
-      } else {
-        logger.debug('Keeping main thread running.');
-      }
+      // https://github.com/advanced-rest-client/arc-electron/issues/396
+      logger.debug('Quitting the IO thread.');
+      app.quit();
+      // if (process.platform !== 'darwin') {
+      //   logger.debug('Quitting main thread.');
+      // } else {
+      //   logger.debug('Keeping main thread running.');
+      // }
     }, 1000);
   }
 
