@@ -142,7 +142,7 @@ export class Request {
     } catch (e) {
       logger.error(e);
     }
-    logger.info(`The config passed to the request factory:`, finalConfig);
+    logger.info(`The config passed to the request factory:`, { ...finalConfig, logger: {}});
     try {
       const connection = await this[prepareRequest](id, request, finalConfig);
       await this[makeConnection](connection);
@@ -165,15 +165,16 @@ export class Request {
    * @returns {RequestOptions}
    */
   prepareRequestOptions(primary, secondary) {
-    const result = /** @type RequestOptions */ ({
+    const result = /** @type any */ ({
       ...secondary,
       ...primary,
       logger,
     });
     delete result.enabled;
     delete result.ignoreSessionCookies;
-    if (typeof result.timeout === 'undefined' && typeof this.requestTimeout === 'number') {
-      result.timeout = this.requestTimeout;
+    const timeout = Number(this.requestTimeout);
+    if (typeof result.timeout !== 'number' && !Number.isNaN(timeout)) {
+      result.timeout = timeout;
     }
     if (result.timeout) {
       result.timeout *= 1000;
@@ -190,8 +191,9 @@ export class Request {
     if (typeof result.defaultHeaders === 'undefined' && typeof this.defaultHeaders === 'boolean') {
       result.defaultHeaders = this.defaultHeaders;
     }
-    if (typeof this.sentMessageLimit === 'number') {
-      result.sentMessageLimit = this.sentMessageLimit;
+    const messageLimit = Number(this.sentMessageLimit);
+    if (typeof result.sentMessageLimit !== 'number' && !Number.isNaN(messageLimit)) {
+      result.sentMessageLimit = messageLimit;
     }
     return result;
   }
