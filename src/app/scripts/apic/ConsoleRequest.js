@@ -92,7 +92,7 @@ export class ConsoleRequest {
     } catch (e) {
       logger.error(e);
     }
-    logger.info(`The config passed to the request factory:`, config);
+    logger.info(`The config passed to the request factory:`, { ...config, logger: {}});
     try {
       const connection = await this[prepareRequest](id, baseRequest, config);
       await this[makeConnection](connection);

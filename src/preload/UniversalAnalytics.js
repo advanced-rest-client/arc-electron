@@ -893,7 +893,7 @@ export class UniversalAnalytics {
         if (!offline) {
           offlineQueue.push(body);
         } else {
-          throw new Error('Unable send data.');
+          throw new Error('Unable send analytics data.');
         }
       }
       if (this.debugEndpoint) {
@@ -906,7 +906,9 @@ export class UniversalAnalytics {
         offlineQueue.push(body);
         return;
       }
-      throw new Error('Unable to send data');
+      /* eslint-disable-next-line */
+      console.warn(e);
+      // throw new Error('Unable to send data');
     }
   }
 
