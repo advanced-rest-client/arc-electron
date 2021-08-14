@@ -198,6 +198,7 @@ export class Request {
   }
 
   /**
+   * @param {string} id
    * @param {ArcBaseRequest} request
    * @param {RequestOptions} opts
    * @returns {SocketRequest|ElectronRequest}
@@ -297,7 +298,7 @@ export class Request {
 
   /**
    * @param {string} id
-   * @param {any}
+   * @param {any} detail
    */
   [beforeRedirectHandler](id, detail) {
     const info = this.connections.get(id);

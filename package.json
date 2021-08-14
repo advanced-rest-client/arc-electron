@@ -36,7 +36,7 @@
   "devDependencies": {
     "@advanced-rest-client/arc-cookies": "^0.2.0",
     "@advanced-rest-client/arc-definitions": "^3.1.1",
-    "@advanced-rest-client/arc-environment": "^0.2.3",
+    "@advanced-rest-client/arc-environment": "^0.2.5",
     "@advanced-rest-client/arc-headers": "^0.1.10",
     "@advanced-rest-client/arc-icons": "^3.3.3",
     "@advanced-rest-client/arc-menu": "^5.0.0",
@@ -52,7 +52,7 @@
     "@advanced-rest-client/host-rules-editor": "^5.0.0",
     "@advanced-rest-client/monaco-support": "^1.0.1",
     "@advanced-rest-client/pouchdb-quick-search": "^2.0.3",
-    "@advanced-rest-client/request-engine": "^0.2.0",
+    "@advanced-rest-client/request-engine": "^0.2.1",
     "@advanced-rest-client/requests-list": "^0.2.0",
     "@anypoint-web-components/anypoint-button": "^1.2.1",
     "@anypoint-web-components/anypoint-dialog": "^0.1.9",
