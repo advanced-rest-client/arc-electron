@@ -32,6 +32,7 @@ import '../../../../web_modules/@advanced-rest-client/arc-models/arc-export-form
 import '../../../../web_modules/@advanced-rest-client/arc-models/arc-data-import.js';
 import '../../../../web_modules/@advanced-rest-client/arc-models/import-data-inspector.js';
 import '../../../../web_modules/@advanced-rest-client/arc-environment/variables-overlay.js';
+import '../../../../web_modules/@advanced-rest-client/arc-environment/variables-suggestions.js';
 import '../../../../web_modules/@advanced-rest-client/arc-cookies/cookie-manager.js';
 import '../../../../web_modules/@advanced-rest-client/arc-settings/arc-settings.js';
 import '../../../../web_modules/@advanced-rest-client/arc-request-ui/request-meta-details.js';
@@ -244,7 +245,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
    */
   #workspace = undefined;
 
-  #contextMenu = new ArcContextMenu(document.body);
+  #contextMenu = new ArcContextMenu(document.body, { cancelNativeWhenHandled: true });
 
   stateProxy = new AppStateProxy();
 
