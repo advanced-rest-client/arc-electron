@@ -40,7 +40,7 @@
     "@advanced-rest-client/arc-headers": "^0.1.10",
     "@advanced-rest-client/arc-icons": "^3.3.3",
     "@advanced-rest-client/arc-menu": "^5.0.0",
-    "@advanced-rest-client/arc-models": "^5.2.1",
+    "@advanced-rest-client/arc-models": "^5.2.2",
     "@advanced-rest-client/arc-project": "^0.2.0",
     "@advanced-rest-client/arc-request-ui": "^0.2.3",
     "@advanced-rest-client/arc-settings": "^0.2.0",
