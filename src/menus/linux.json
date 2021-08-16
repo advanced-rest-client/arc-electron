@@ -325,10 +325,6 @@
           "command": "application:open-faq"
         },
         {
-          "label": "What's new",
-          "command": "application:open-messages"
-        },
-        {
           "type": "separator"
         },
         {
