@@ -4,13 +4,11 @@ const _require = require('esm')(module);
 const testPaths = require('../setup-paths');
 
 const { WindowsManager } = _require('../../src/io/WindowsManager');
-const { ArcSessionRecorder } = _require('../../src/io/ArcSessionRecorder');
 const { ContextActions } = _require('../../src/io/ContextActions');
 const { WindowsPersistance } = _require('../../src/io/WindowsPersistance');
 const { setLevel } = _require('../../src/io/Logger');
 
 /** @typedef {import('../../src/io/WindowsManager').WindowsManager} WindowsManager */
-/** @typedef {import('../../src/io/ArcSessionRecorder').ArcSessionRecorder} ArcSessionRecorder */
 /** @typedef {import('../../src/io/ContextActions').ContextActions} ContextActions */
 /** @typedef {import('../../src/io/WindowsPersistance').WindowsPersistance} WindowsPersistance */
 
@@ -38,11 +36,6 @@ describe('WindowsManager', () => {
     it('sets the windows array property', () => {
       const instance = new WindowsManager();
       assert.lengthOf(instance.windows, 0);
-    });
-
-    it('Sets ArcSessionRecorder', () => {
-      const instance = new WindowsManager();
-      assert.isTrue(instance.recorder instanceof ArcSessionRecorder);
     });
 
     it('Sets ContextActions', () => {

@@ -5,7 +5,6 @@ import url from 'url';
 import { v4 } from 'uuid';
 import { MainWindowPersist, AppHostname } from '../common/Constants.js';
 import { logger } from './Logger.js';
-import { ArcSessionRecorder } from './ArcSessionRecorder.js';
 import { WindowsPersistance } from './WindowsPersistance.js';
 import { ContextActions } from './ContextActions.js';
 
@@ -64,7 +63,6 @@ export class WindowsManager {
     this[workspaceChangeLocationHandler] = this[workspaceChangeLocationHandler].bind(this);
     
     this.workspace = new WindowsPersistance();
-    this.recorder = new ArcSessionRecorder();
     this.contextActions = new ContextActions();
 
     /** 
@@ -244,7 +242,6 @@ export class WindowsManager {
     if (this.startupOptions.withDevtools) {
       win.webContents.openDevTools();
     }
-    this.recorder.record();
     // win.webContents.openDevTools();
     return win;
   }
