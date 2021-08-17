@@ -509,6 +509,9 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       if (typeof cnf.request.nativeTransport === 'boolean') {
         this.requestFactory.nativeTransport = cnf.request.nativeTransport;
       }
+      if (typeof cnf.request.readOsHosts === 'boolean') {
+        this.requestFactory.readOsHosts = cnf.request.readOsHosts;
+      }
       if (typeof cnf.request.useSystemVariables === 'boolean') {
         this.systemVariablesEnabled = cnf.request.useSystemVariables;
       }
@@ -968,6 +971,8 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       this.requestFactory.validateCertificates = value;
     } else if (key === 'request.nativeTransport') {
       this.requestFactory.nativeTransport = value;
+    } else if (key === 'request.readOsHosts') {
+      this.requestFactory.readOsHosts = value;
     } else if (key === 'request.oauth2redirectUri') {
       this.oauth2RedirectUri = value;
     } else if (key === 'view.listType') {

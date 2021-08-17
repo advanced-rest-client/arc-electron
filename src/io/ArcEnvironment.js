@@ -15,6 +15,7 @@ import { AppPrompts } from './AppPrompts.js';
 import { AppStateManager } from './AppStateManager.js';
 import { GoogleDrive } from './GoogleDrive.js';
 import { ExternalResourcesManager } from './ExternalResourcesManager.js';
+import { HostsManager } from './HostsManager.js';
 
 /** @typedef {import('../types').ApplicationOptionsConfig} ApplicationOptionsConfig */
 /** @typedef {import('../types').ProtocolFile} ProtocolFile */
@@ -46,6 +47,7 @@ export class ArcEnvironment {
     this.initializePrompts();
     this.initializeGoogleDrive();
     this.initializeExternalResources();
+    this.initializeOsHosts();
 
     app.on('activate', () => this.activateHandler.bind(this));
     app.on('window-all-closed', this.allClosedHandler.bind(this));
@@ -157,6 +159,11 @@ export class ArcEnvironment {
   initializeExternalResources() {
     this.externalResources = new ExternalResourcesManager();
     this.externalResources.listen();
+  }
+
+  initializeOsHosts() {
+    this.osHosts = new HostsManager();
+    this.osHosts.listen();
   }
 
   /**

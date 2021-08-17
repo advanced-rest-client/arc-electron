@@ -14,7 +14,8 @@ ModulesRegistry.register(ModulesRegistry.response, '@advanced-rest-client/reques
 /** @typedef {import('@advanced-rest-client/arc-types').ArcRequest.RequestConfig} RequestConfig */
 /** @typedef {import('@advanced-rest-client/arc-types').ArcResponse.Response} Response */
 /** @typedef {import('@advanced-rest-client/arc-types').ArcResponse.ErrorResponse} ErrorResponse */
-/** @typedef {import('@advanced-rest-client/electron-request').RequestOptions} RequestOptions */
+/** @typedef {import('@advanced-rest-client/arc-types').HostRule.HostRule} HostRule */
+/** @typedef {import('@advanced-rest-client/electron-request').Options} Options */
 
 /* global ElectronRequest, SocketRequest, logger */
 
@@ -70,6 +71,10 @@ export class Request {
      * @type {boolean}
      */
     this.evaluateSystemVariables = true;
+    /** 
+     * @type {boolean}
+     */
+    this.readOsHosts = false;
 
     /** 
      * @type {Map<string, {connection: ElectronRequest|SocketRequest, request: ArcBaseRequest ,aborted: boolean}>}
@@ -132,18 +137,13 @@ export class Request {
     if (request.clientCertificate) {
       finalConfig.clientCertificate = request.clientCertificate;
     }
-    // the request can proceed without hosts
-    try {
-      const hosts = await ArcModelEvents.HostRules.list(document.body);
-      if (hosts && hosts.items) {
-        finalConfig.hosts = hosts.items;
-      }
-    } catch (e) {
-      logger.error(e);
+    const hosts = await this.readHosts();
+    if (hosts.length) {
+      finalConfig.hosts = hosts;
     }
     logger.info(`The config passed to the request factory:`, { ...finalConfig, logger: {}});
     try {
-      const connection = await this[prepareRequest](id, request, finalConfig);
+      const connection = this[prepareRequest](id, request, finalConfig);
       await this[makeConnection](connection);
     } catch (e) {
       logger.error(e);
@@ -159,12 +159,12 @@ export class Request {
   }
 
   /**
-   * @param {RequestConfig} primary
-   * @param {RequestConfig} secondary
-   * @returns {RequestOptions}
+   * @param {Options} primary
+   * @param {Options} secondary
+   * @returns {Options}
    */
   prepareRequestOptions(primary, secondary) {
-    const result = /** @type any */ ({
+    const result = /** @type Options */ ({
       ...secondary,
       ...primary,
       logger,
@@ -200,7 +200,7 @@ export class Request {
   /**
    * @param {string} id
    * @param {ArcBaseRequest} request
-   * @param {RequestOptions} opts
+   * @param {Options} opts
    * @returns {SocketRequest|ElectronRequest}
    */
   [prepareRequest](id, request, opts) {
@@ -210,7 +210,7 @@ export class Request {
   /**
    * @param {string} id
    * @param {ArcBaseRequest} request
-   * @param {RequestOptions} opts
+   * @param {Options} opts
    * @returns {ElectronRequest}
    */
   [prepareNativeRequest](id, request, opts) {
@@ -233,7 +233,7 @@ export class Request {
   /**
    * @param {string} id
    * @param {ArcBaseRequest} request
-   * @param {RequestOptions} opts
+   * @param {Options} opts
    * @returns {SocketRequest}
    */
   [prepareArcRequest](id, request, opts) {
@@ -254,7 +254,7 @@ export class Request {
   }
 
   /**
-   * @param {RequestOptions} opts
+   * @param {Options} opts
    * @returns {boolean}
    */
   isNative(opts) {
@@ -262,6 +262,33 @@ export class Request {
       return opts.nativeTransport;
     }
     return !!this.nativeTransport;
+  }
+
+  /**
+   * Reads the hosts table definition.
+   */
+  async readHosts() {
+    /** @type HostRule[] */
+    let hosts = [];
+    // the request can proceed without hosts
+    try {
+      const result = await ArcModelEvents.HostRules.list(document.body);
+      if (result.items && result.items.length) {
+        hosts = result.items;
+      }
+    } catch (e) {
+      logger.error(e);
+    }
+    if (this.readOsHosts) {
+      /* global ipc */
+      try {
+        const os = await ipc.invoke('os-hosts', 'list');
+        hosts = hosts.concat(os);
+      } catch (e) {
+        logger.error(e);
+      }
+    }
+    return hosts;
   }
 
   /**
