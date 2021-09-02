@@ -1,7 +1,7 @@
 {
   "name": "@advanced-rest-client/arc-electron-dark-theme",
   "description": "Dark theme definition for Advanced REST Client",
-  "version": "4.0.5",
+  "version": "4.0.6",
   "license": "Apache-2.0",
   "main": "arc-electron-dark-theme.css",
   "keywords": [

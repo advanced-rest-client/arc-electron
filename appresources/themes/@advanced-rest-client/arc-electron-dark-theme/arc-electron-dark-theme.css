@@ -9,6 +9,7 @@ html {
   --link-color: #8bc34a;
   --input-background-color: var(--primary-background-color);
   --active-background-color: #616161;
+  --empty-info-color: var(--primary-text-color);
 
   --anypoint-dropdown-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
   --anypoint-autocomplete-dropdown-shadow: var(--anypoint-dropdown-shadow);
