@@ -51,7 +51,7 @@ import ContextMenuCommands from '../context-menu/ArcContextMenuCommands.js';
 import { getTabClickIndex } from './Utils.js';
 
 
-/* global PreferencesProxy, OAuth2Handler, WindowManagerProxy, ThemeManager, logger, EncryptionService, WorkspaceManager, ipc, CookieBridge, ImportFilePreProcessor, FilesystemProxy, ApplicationSearchProxy, AppStateProxy, GoogleDriveProxy, ElectronAmfService, GoogleAnalytics */
+/* global PreferencesProxy, OAuth2Handler, WindowManagerProxy, ThemeManager, logger, EncryptionService, WorkspaceManager, ipc, CookieBridge, ImportFilePreProcessor, FilesystemProxy, ApplicationSearchProxy, AppStateProxy, GoogleDriveProxy, ElectronAmfService, GoogleAnalytics, HttpProxy */
 
 /** @typedef {import('../../../preload/PreferencesProxy').PreferencesProxy} PreferencesProxy */
 /** @typedef {import('../../../preload/WindowProxy').WindowProxy} WindowManagerProxy */
@@ -272,6 +272,8 @@ export class AdvancedRestClientApplication extends ApplicationPage {
   apiParser = new ElectronAmfService();
 
   ga = new GoogleAnalytics();
+
+  httpProxy = new HttpProxy();
 
   /**
    * @returns {ArcRequestWorkspaceElement}
@@ -582,6 +584,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     this.search.listen();
     this.requestFactory.listen();
     this.gDrive.listen();
+    this.httpProxy.listen();
     this.#contextMenu.connect();
     this.#contextMenu.registerCommands(ContextMenuCommands);
     this.#contextMenu.addEventListener('execute', this[contextCommandHandler].bind(this));

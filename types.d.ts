@@ -14,6 +14,7 @@ import { ApplicationSearchProxy as ApplicationSearchProxyBase } from "./src/prel
 import { AppStateProxy as AppStateProxyBase } from "./src/preload/AppStateProxy";
 import { GoogleDriveProxy as GoogleDriveProxyBase } from "./src/preload/GoogleDriveProxy";
 import { GoogleAnalytics as GoogleAnalyticsBase } from "./src/preload/GoogleAnalytics";
+import { HttpProxy as HttpProxyBase } from "./src/preload/HttpProxy";
 import logger from "electron-log";
 
 // declare global {
@@ -51,4 +52,5 @@ declare global {
   class GoogleDriveProxy extends GoogleDriveProxyBase {}
   class ElectronAmfService extends ElectronAmfServiceBase {}
   class GoogleAnalytics extends GoogleAnalyticsBase {}
+  class HttpProxy extends HttpProxyBase {}
 }

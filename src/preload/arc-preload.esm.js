@@ -15,6 +15,7 @@ import { ApplicationSearchProxy } from './ApplicationSearchProxy.js';
 import { AppStateProxy } from './AppStateProxy.js';
 import { GoogleDriveProxy } from './GoogleDriveProxy.js';
 import { GoogleAnalytics } from './GoogleAnalytics.js';
+import { HttpProxy } from './HttpProxy.js';
 
 const env = {};
 const APP_VERSION = process.env.ARC_VERSION;
@@ -65,6 +66,8 @@ process.once('loaded', () => {
   global.ElectronAmfService = ElectronAmfService;
   // @ts-ignore
   global.GoogleAnalytics = GoogleAnalytics;
+  // @ts-ignore
+  global.HttpProxy = HttpProxy;
   global.ipc = ipcRenderer;
   global.clipboard = clipboard;
 
