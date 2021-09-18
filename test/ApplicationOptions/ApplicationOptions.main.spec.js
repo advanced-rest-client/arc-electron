@@ -29,6 +29,11 @@ describe('ApplicationOptions', () => {
       '--release-channel',
       '--skip-cookie-consent',
       '--skip-database-upgrade',
+      '--proxy',
+      '--proxy-username',
+      '--proxy-password',
+      '--proxy-system-settings',
+      '--proxy-all',
     ].forEach((option) => {
       it(`supports ${option} option`, () => {
         const opts = instance.availableOptions;
@@ -108,6 +113,11 @@ describe('ApplicationOptions', () => {
       ['--release-channel', 'latest', 'latest', 'releaseChannel'],
       ['--skip-cookie-consent', undefined, true, 'skipCookieConsent'],
       ['--skip-database-upgrade', undefined, true, 'skipDatabaseUpgrade'],
+      ['--proxy', '192.168.1.10', '192.168.1.10', 'proxy'],
+      ['--proxy-username', 'my-username', 'my-username', 'proxyUsername'],
+      ['--proxy-password', 'my-password', 'my-password', 'proxyPassword'],
+      ['--proxy-system-settings', undefined, true, 'proxySystemSettings'],
+      ['--proxy-all', undefined, true, 'proxyAll'],
     ].forEach(([option, value, parsedValue, property]) => {
       it(`sets ${option} property to ${value}`, () => {
         const orig = process.argv;

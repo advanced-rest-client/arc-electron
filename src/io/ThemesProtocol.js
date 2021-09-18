@@ -119,7 +119,7 @@ export class ThemesProtocol {
    * @param {(response: string | Electron.ProtocolResponse) => void} callback
    */
   async loadInstalledTheme(themeLocation, callback) {
-    logger.info(`[ThemesProtocol] loading theme ${themeLocation}`);
+    logger.silly(`[ThemesProtocol] loading theme ${themeLocation}`);
     const model = new ThemeInfo();
     try {
       let info = await model.readTheme(themeLocation);

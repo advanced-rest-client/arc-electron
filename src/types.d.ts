@@ -51,6 +51,33 @@ export declare interface ApplicationOptionsConfig {
    * When set it does not render the cookie consent dialog
    */
   skipDatabaseUpgrade?: boolean;
+  /**
+   * The proxy to apply to the application.
+   * By default the proxy is applied to the requests only. When the `proxyAll`
+   * property is set then it also applies the proxy settings to the UIs and the main process.
+   * 
+   * It is the URL of the proxy server, e.g.:
+   * 192.168.1.1:8118
+   */
+  proxy?: string;
+  /**
+   * Optional username for the proxy.
+   */
+  proxyUsername?: string;
+  /**
+   * Optional password for the proxy.
+   */
+  proxyPassword?: string;
+  /**
+   * Works as an additional option for `proxy`. When set is applies proxy to the 
+   * application main process and the UIs.
+   */
+  proxyAll?: boolean;
+  /**
+   * When set it detects OS' proxy settings and applies them to the 
+   * requests/application.
+   */
+  proxySystemSettings?: boolean;
 }
 
 /**
@@ -149,6 +176,10 @@ export declare interface OpenPageOptions {
    * Makes the new window a child of the `parent`.
    */
   parent?: Electron.BrowserWindow;
+
+  proxy?: string;
+  proxyUsername?: string;
+  proxyPassword?: string;
 }
 
 export declare interface ArcAppInitOptions {
@@ -156,6 +187,9 @@ export declare interface ArcAppInitOptions {
    * The backend id of the workspace file.
    */
   workspaceId?: string;
+  proxy?: string;
+  proxyUsername?: string;
+  proxyPassword?: string;
 }
 
 
@@ -261,4 +295,23 @@ export declare interface SystemThemeInfo {
   shouldUseDarkColors: boolean;
   shouldUseHighContrastColors: boolean;
   shouldUseInvertedColorScheme: boolean;
+}
+
+export interface ProxyCredentials {
+  username?: string;
+  password?: string;
+}
+
+export interface RegEntry {
+  type: string;
+  value: string;
+}
+
+export interface RegKeyValues {
+  [name: string]: RegEntry;
+}
+
+export interface ExecOutput {
+  stdout: string;
+  stderr: string;
 }

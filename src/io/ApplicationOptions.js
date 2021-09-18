@@ -21,80 +21,108 @@ export class ApplicationOptions {
    */
   get availableOptions() {
     return [
-    {
-      // Path to the settings file. Overrides default location.
-      name: '--settings-file',
-      shortcut: '-s',
-      type: String
-    }, 
-    {
-      // Path to the state file. Overrides default location.
-      name: '--state-file',
-      shortcut: '-S',
-      type: String
-    }, 
-    {
-      // Path to the workspace state files path. Overrides default location.
-      name: '--workspace-path',
-      shortcut: '-w',
-      type: String
-    }, {
-      // Path to the workspace state files path. Overrides default location.
-      name: '--themes-path',
-      shortcut: '-t',
-      type: String
-    }, {
-      // Opens ARC in dev mode (opened console, verbose log)
-      name: '--dev',
-      shortcut: '-d',
-      type: Boolean
-    }, {
-      // Debug log level. Default to "debug". Only valid when `--debug` is set
-      name: '--debug-level',
-      shortcut: '-l',
-      type: String
-    }, {
-      // Opens ARC in dev mode (opened console, verbose log)
-      name: '--with-devtools',
-      shortcut: '-w',
-      type: Boolean
-    }, {
-      name: '.', // from "npm start" to not print error
-      shortcut: '-dot',
-      type: String
-    }, {
-      name: '--port',
-      shortcut: '-p',
-      type: Number
-    }, {
-      name: '--open',
-      shortcut: '-o',
-      type: String,
-    }, {
-      // Skips application update check for this run
-      name: '--skip-app-update',
-      shortcut: '-u',
-      type: Boolean,
-    }, {
-      // Skips themes update check for this run.
-      name: '--skip-themes-update',
-      shortcut: '-x',
-      type: Boolean,
-    }, {
-      name: '--user-data-dir',
-      shortcut: '-D',
-      type: String,
-    }, {
-      name: '--release-channel',
-      shortcut: '-r',
-      type: String,
-    }, {
-      name: '--skip-cookie-consent',
-      type: Boolean,
-    }, {
-      name: '--skip-database-upgrade',
-      type: Boolean,
-    }];
+      {
+        // Path to the settings file. Overrides default location.
+        name: '--settings-file',
+        shortcut: '-s',
+        type: String
+      }, 
+      {
+        // Path to the state file. Overrides default location.
+        name: '--state-file',
+        shortcut: '-S',
+        type: String
+      }, 
+      {
+        // Path to the workspace state files path. Overrides default location.
+        name: '--workspace-path',
+        shortcut: '-w',
+        type: String
+      }, {
+        // Path to the workspace state files path. Overrides default location.
+        name: '--themes-path',
+        shortcut: '-t',
+        type: String
+      }, {
+        // Opens ARC in dev mode (opened console, verbose log)
+        name: '--dev',
+        shortcut: '-d',
+        type: Boolean
+      }, {
+        // Debug log level. Default to "debug". Only valid when `--debug` is set
+        name: '--debug-level',
+        shortcut: '-l',
+        type: String
+      }, {
+        // Opens ARC in dev mode (opened console, verbose log)
+        name: '--with-devtools',
+        shortcut: '-w',
+        type: Boolean
+      }, {
+        name: '.', // from "npm start" to not print error
+        shortcut: '-dot',
+        type: String
+      }, {
+        name: '--port',
+        shortcut: '-p',
+        type: Number
+      }, {
+        name: '--open',
+        shortcut: '-o',
+        type: String,
+      }, {
+        // Skips application update check for this run
+        name: '--skip-app-update',
+        shortcut: '-u',
+        type: Boolean,
+      }, {
+        // Skips themes update check for this run.
+        name: '--skip-themes-update',
+        shortcut: '-x',
+        type: Boolean,
+      }, {
+        name: '--user-data-dir',
+        shortcut: '-D',
+        type: String,
+      }, {
+        name: '--release-channel',
+        shortcut: '-r',
+        type: String,
+      }, {
+        name: '--skip-cookie-consent',
+        type: Boolean,
+      }, 
+      {
+        name: '--skip-database-upgrade',
+        type: Boolean,
+      }, 
+      {
+        // the proxy URL.
+        name: '--proxy',
+        type: String,
+      },
+      {
+        // optional proxy username
+        name: '--proxy-username',
+        type: String,
+      },
+      {
+        // proxy password
+        name: '--proxy-password',
+        type: String,
+      },
+      {
+        // when set it applies proxy system settings
+        name: '--proxy-system-settings',
+        type: Boolean,
+      },
+      {
+        // when set it applies proxy configuration to the entire application,
+        // not only to the HTTP requests. This influences telemetry and updates.
+        name: '--proxy-all',
+        type: Boolean,
+      },
+    ];
   }
 
   constructor() {

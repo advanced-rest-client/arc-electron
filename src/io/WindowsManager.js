@@ -207,6 +207,22 @@ export class WindowsManager {
   }
 
   /**
+   * @param {{[key: string]: string}} target
+   */
+  createArcWindowInitOptions(target) {
+    const { startupOptions } = this;
+    if (startupOptions.proxy) {
+      target.proxy = startupOptions.proxy;
+      if (startupOptions.proxyUsername) {
+        target.proxyUsername = startupOptions.proxyUsername;
+      }
+      if (startupOptions.proxyPassword) {
+        target.proxyPassword = startupOptions.proxyPassword;
+      }
+    }
+  }
+
+  /**
    * Opens a new application window.
    *
    * @param {OpenPageOptions=} [options={}] Page create options. Don't set for the default ARC window.
@@ -223,6 +239,7 @@ export class WindowsManager {
       this.workspacesMap.set(id, workspaceFile);
       params.workspaceId = id;
     }
+    this.createArcWindowInitOptions(params);
     logger.debug('[WM] Opening new window');
     const id = this.findIndex();
     let info;
