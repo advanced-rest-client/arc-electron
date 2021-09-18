@@ -16,10 +16,12 @@ import { AppStateManager } from './AppStateManager.js';
 import { GoogleDrive } from './GoogleDrive.js';
 import { ExternalResourcesManager } from './ExternalResourcesManager.js';
 import { HostsManager } from './HostsManager.js';
+import { ProxyManager } from './ProxyManager.js';
 
 /** @typedef {import('../types').ApplicationOptionsConfig} ApplicationOptionsConfig */
 /** @typedef {import('../types').ProtocolFile} ProtocolFile */
 /** @typedef {import('./PreferencesManager').PreferencesManager} PreferencesManager */
+/** @typedef {import('@advanced-rest-client/arc-types').Config.ARCConfig} ARCConfig */
 
 export const importWorkspaceHandler = Symbol('importWorkspaceHandler');
 
@@ -48,6 +50,7 @@ export class ArcEnvironment {
     this.initializeGoogleDrive();
     this.initializeExternalResources();
     this.initializeOsHosts();
+    this.initializeProxy();
 
     app.on('activate', () => this.activateHandler.bind(this));
     app.on('window-all-closed', this.allClosedHandler.bind(this));
@@ -155,7 +158,7 @@ export class ArcEnvironment {
     // this is dispatched by the `GoogleDriveProxy.js` preload class.
     ipcMain.on('google-drive-proxy-file-pick', this.proxyGoogleDriveFilePick.bind(this));
   }
-
+  
   initializeExternalResources() {
     this.externalResources = new ExternalResourcesManager();
     this.externalResources.listen();
@@ -164,6 +167,45 @@ export class ArcEnvironment {
   initializeOsHosts() {
     this.osHosts = new HostsManager();
     this.osHosts.listen();
+  }
+
+  initializeProxy() {
+    this.proxy = new ProxyManager();
+    this.proxy.listen();
+  }
+
+  /**
+   * @param {ARCConfig} initConfig
+   */
+  async applyProxy(initConfig) {
+    logger.silly('Preparing to apply proxy settings...');
+    const { initParams } = this;
+    if (initParams.proxy || initParams.proxySystemSettings) {
+      await this.proxy.applyInitOptionsProxy(initParams);
+    } else {
+      await this.proxy.applyConfigProxy(initConfig);
+    }
+  }
+
+  /**
+   * Updates the proxy configuration when one of the proxy settings change.
+   * @return {Promise<void>} 
+   */
+  async reconfigureProxy() {
+    const { initParams } = this;
+    if (initParams.proxy || initParams.proxySystemSettings) {
+      // ignore these changes. CLI takes precedence.
+      return;
+    }
+    const cnf = await this.config.load();
+    const { proxy={} } = cnf;
+    if (proxy.useSystemSettings) {
+      await this.proxy.applyProxySystemSettings();
+    } else if (proxy.url && proxy.applyToApp && proxy.enabled) {
+      await this.proxy.applyFromUrl(proxy.url, proxy.username, proxy.password);
+    } else if (this.proxy.isConfigured) {
+      await this.proxy.clearSettings();
+    }
   }
 
   /**
@@ -187,8 +229,16 @@ export class ArcEnvironment {
    */
   settingsChanged(name, value) {
     switch (name) {
-      case 'releaseChannel':
+      case 'updater.channel':
         this.updater.setReleaseChannel(value);
+        break;
+      case 'proxy.enabled':
+      case 'proxy.url':
+      case 'proxy.username':
+      case 'proxy.password':
+      case 'proxy.applyToApp':
+      case 'proxy.useSystemSettings':
+        this.reconfigureProxy();
         break;
       default: 
     }
@@ -213,6 +263,7 @@ export class ArcEnvironment {
     logger.debug('Loading user configuration...');
     const settings = await this.config.load();
     logger.debug('User configuration ready.');
+    await this.applyProxy(settings);
     if (!this.isDebug) {
       this.updater.start(settings, this.initParams.skipAppUpdate);
     }

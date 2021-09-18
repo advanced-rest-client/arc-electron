@@ -433,7 +433,6 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     this.workspaceBodyEditor = 'Monaco';
     this.workspaceAutoEncode = false;
 
-
     this.requestDetailsOpened = false;
     this.requestMetaOpened = false;
     this.metaRequestId = undefined;
@@ -446,6 +445,7 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     this.windowProxy.initContextMenu();
     const init = this.collectInitOptions();
     this.initOptions = init;
+    this.applyInitConfig(init);
     
     let cnf = {};
     try {
@@ -472,6 +472,21 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     await this.afterInitialization();
     await this.loadMonaco();
     this.initializing = false;
+  }
+
+  /**
+   * @param {ArcAppInitOptions} config
+   */
+  applyInitConfig(config) {
+    if (config.proxy) {
+      this.requestFactory.proxy = config.proxy;
+      if (config.proxyUsername) {
+        this.requestFactory.proxyUsername = config.proxyUsername;
+      }
+      if (config.proxyPassword) {
+        this.requestFactory.proxyPassword = config.proxyPassword;
+      }
+    }
   }
 
   /**
@@ -552,6 +567,21 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       }
       if (typeof cnf.requestEditor.autoEncode === 'boolean') {
         this.workspaceAutoEncode = cnf.requestEditor.autoEncode;
+      }
+    }
+
+    if (cnf.proxy && !this.initOptions.proxy) {
+      if (typeof cnf.proxy.url === 'string') {
+        this.requestFactory.proxy = cnf.proxy.url;
+      }
+      if (typeof cnf.proxy.enabled === 'boolean') {
+        this.requestFactory.proxyEnabled = cnf.proxy.enabled;
+      }
+      if (typeof cnf.proxy.username === 'string') {
+        this.requestFactory.proxyUsername = cnf.proxy.username;
+      }
+      if (typeof cnf.proxy.password === 'string') {
+        this.requestFactory.proxyPassword = cnf.proxy.password;
       }
     }
   }
@@ -659,6 +689,18 @@ export class AdvancedRestClientApplication extends ApplicationPage {
     const wId = search.get('workspaceId');
     if (wId) {
       result.workspaceId = wId;
+    }
+    const proxy = search.get('proxy');
+    if (proxy) {
+      result.proxy = proxy;
+    }
+    const proxyUsername = search.get('proxyUsername');
+    if (proxyUsername) {
+      result.proxyUsername = proxyUsername;
+    }
+    const proxyPassword = search.get('proxyPassword');
+    if (proxyPassword) {
+      result.proxyPassword = proxyPassword;
     }
     return result;
   }
@@ -998,6 +1040,14 @@ export class AdvancedRestClientApplication extends ApplicationPage {
       this.workspaceAutoEncode = value;
     } else if (key === 'view.fontSize') {
       document.body.style.fontSize = `${value}px`;
+    } else if (!this.initOptions.proxy && key === 'proxy.url') {
+      this.requestFactory.proxy = value;
+    } else if (!this.initOptions.proxy && key === 'proxy.username') {
+      this.requestFactory.proxyUsername = value;
+    } else if (!this.initOptions.proxy && key === 'proxy.password') {
+      this.requestFactory.proxyPassword = value;
+    } else if (!this.initOptions.proxy && key === 'proxy.enabled') {
+      this.requestFactory.proxyEnabled = value;
     }
   }
 

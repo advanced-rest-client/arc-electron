@@ -15,7 +15,7 @@ ModulesRegistry.register(ModulesRegistry.response, '@advanced-rest-client/reques
 /** @typedef {import('@advanced-rest-client/arc-types').ArcResponse.Response} Response */
 /** @typedef {import('@advanced-rest-client/arc-types').ArcResponse.ErrorResponse} ErrorResponse */
 /** @typedef {import('@advanced-rest-client/arc-types').HostRule.HostRule} HostRule */
-/** @typedef {import('@advanced-rest-client/electron-request').Options} Options */
+/** @typedef {import('@advanced-rest-client/electron-request').Options} RequestOptions */
 
 /* global ElectronRequest, SocketRequest, logger */
 
@@ -75,6 +75,22 @@ export class Request {
      * @type {boolean}
      */
     this.readOsHosts = false;
+    /** 
+     * @type {string}
+     */
+    this.proxy = undefined;
+    /** 
+     * @type {string}
+     */
+    this.proxyUsername = undefined;
+    /** 
+     * @type {string}
+     */
+    this.proxyPassword = undefined;
+    /** 
+     * @type {boolean}
+     */
+    this.proxyEnabled = false;
 
     /** 
      * @type {Map<string, {connection: ElectronRequest|SocketRequest, request: ArcBaseRequest ,aborted: boolean}>}
@@ -135,6 +151,7 @@ export class Request {
     const configInit = rConf.enabled ? rConf : /** @type RequestConfig */ ({});
     const finalConfig = this.prepareRequestOptions(config, configInit);
     if (request.clientCertificate) {
+      // @ts-ignore
       finalConfig.clientCertificate = request.clientCertificate;
     }
     const hosts = await this.readHosts();
@@ -159,17 +176,19 @@ export class Request {
   }
 
   /**
-   * @param {Options} primary
-   * @param {Options} secondary
-   * @returns {Options}
+   * @param {RequestConfig} primary
+   * @param {RequestConfig} secondary
+   * @returns {RequestOptions}
    */
   prepareRequestOptions(primary, secondary) {
-    const result = /** @type Options */ ({
+    const result = /** @type RequestOptions */ (/** @type unknown */ ({
       ...secondary,
       ...primary,
       logger,
-    });
+    }));
+    // @ts-ignore
     delete result.enabled;
+    // @ts-ignore
     delete result.ignoreSessionCookies;
     const timeout = Number(this.requestTimeout);
     if (typeof result.timeout !== 'number' && !Number.isNaN(timeout)) {
@@ -194,13 +213,24 @@ export class Request {
     if (typeof result.sentMessageLimit !== 'number' && !Number.isNaN(messageLimit)) {
       result.sentMessageLimit = messageLimit;
     }
+    if (this.proxyEnabled === true) {
+      if (typeof result.proxy === 'undefined' && typeof this.proxy === 'string') {
+        result.proxy = this.proxy;
+      }
+      if (typeof result.proxyUsername === 'undefined' && typeof this.proxyUsername === 'string') {
+        result.proxyUsername = this.proxyUsername;
+      }
+      if (typeof result.proxyPassword === 'undefined' && typeof this.proxyPassword === 'string') {
+        result.proxyPassword = this.proxyPassword;
+      }
+    }
     return result;
   }
 
   /**
    * @param {string} id
    * @param {ArcBaseRequest} request
-   * @param {Options} opts
+   * @param {RequestOptions} opts
    * @returns {SocketRequest|ElectronRequest}
    */
   [prepareRequest](id, request, opts) {
@@ -210,7 +240,7 @@ export class Request {
   /**
    * @param {string} id
    * @param {ArcBaseRequest} request
-   * @param {Options} opts
+   * @param {RequestOptions} opts
    * @returns {ElectronRequest}
    */
   [prepareNativeRequest](id, request, opts) {
@@ -233,7 +263,7 @@ export class Request {
   /**
    * @param {string} id
    * @param {ArcBaseRequest} request
-   * @param {Options} opts
+   * @param {RequestOptions} opts
    * @returns {SocketRequest}
    */
   [prepareArcRequest](id, request, opts) {
@@ -254,7 +284,7 @@ export class Request {
   }
 
   /**
-   * @param {Options} opts
+   * @param {RequestOptions} opts
    * @returns {boolean}
    */
   isNative(opts) {
@@ -373,7 +403,7 @@ export class Request {
 
   /**
    * @param {string} id
-   * @param {Response} response
+   * @param {Response | ErrorResponse} response
    * @param {TransportRequest} transport
    */
   async [loadHandler](id, response, transport) {

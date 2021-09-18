@@ -42,13 +42,13 @@ export class ApplicationMenu extends EventEmitter {
    * @return {Promise<void>} Resolved when the application menu is created.
    */
   async build() {
-    logger.info('Building application menu from a template...');
+    logger.debug('Building application menu from a template...');
     try {
       const template = await this.getTemplate();
       this.createFromTemplate(template);
       this.menuLoaded = true;
       Menu.setApplicationMenu(this.topMenu);
-      logger.info('Application menu is now set.');
+      logger.debug('Application menu is now set.');
     } catch (cause) {
       this.menuLoaded = false;
       const message = 'Menu template file was not found.';
@@ -66,7 +66,7 @@ export class ApplicationMenu extends EventEmitter {
     const osName = this.platformToName();
     const name = `${osName}.json`;
     const file = path.join(__dirname, '..', 'menus', name);
-    logger.info('Menu template location', file);
+    logger.debug(`Menu template location: ${file}`);
     return fs.readJson(file);
   }
 
@@ -87,7 +87,7 @@ export class ApplicationMenu extends EventEmitter {
    * @param {MenuDefinition} template [description]
    */
   createFromTemplate(template) {
-    logger.info('Creating application menu instance');
+    logger.debug('Creating application menu instance');
     this.createMainMenu(template.menu);
   }
 

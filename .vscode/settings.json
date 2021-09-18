@@ -1,6 +1,5 @@
 {
   "cSpell.words": [
-    "Renderable",
     "actionurl",
     "advancedrestclient",
     "appresources",
@@ -13,6 +12,7 @@
     "googleusercontent",
     "headersreceived",
     "hideothers",
+    "HKCU",
     "iconset",
     "jnjgsluqk",
     "maxsize",
@@ -21,6 +21,7 @@
     "pageview",
     "pasteandmatchstyle",
     "printf",
+    "Renderable",
     "requestfirstbytereceived",
     "requestloadend",
     "requestloadstart",
