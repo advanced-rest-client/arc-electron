@@ -115,13 +115,15 @@ export class ApplicationUpdater extends EventEmitter {
    * @param {boolean=} skipAppUpdate When set it skips application update check
    */
   start(settings={}, skipAppUpdate=false) {
-    logger.info('ApplicationUpdater::Initializing auto updater.');
+    logger.info('Initializing auto updater.');
     const { updater={} } = settings;
     const { auto, channel } = updater;
     if (channel) {
       if (this.isValidChannel(channel)) {
-        logger.info(`ApplicationUpdater::Setting auto updater channel to ${channel}`);
+        logger.info(`Setting auto updater channel to ${channel}`);
         autoUpdater.channel = channel;
+      } else {
+        logger.warn(`Invalid update updater channel: ${channel}`);
       }
     }
     if (skipAppUpdate || auto === false) {
@@ -131,7 +133,7 @@ export class ApplicationUpdater extends EventEmitter {
       return;
     }
     if (!skipAppUpdate) {
-      setTimeout(() => this.check());
+      setTimeout(() => this.check(), 5000);
     }
   }
 
@@ -205,7 +207,7 @@ export class ApplicationUpdater extends EventEmitter {
    */
   [updateErrorHandler](error) {
     const { message, code } = error;
-    logger.error('Update error');
+    logger.error(`Update error [${code}]: ${message}`);
     this.state = 4;
     this.lastInfoObject = error;
     this.emit('notify-windows', 'autoupdate-error', {

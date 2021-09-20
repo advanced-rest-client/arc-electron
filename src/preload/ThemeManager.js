@@ -84,7 +84,7 @@ export class ThemeManager {
    * @return {Promise<ArcThemeStore>} A promise resolved to the theme info array
    */
   readState() {
-    logger.silly('listing themes');
+    logger.silly('listing application themes');
     return ipc.invoke('theme-manager-read-themes');
   }
 
