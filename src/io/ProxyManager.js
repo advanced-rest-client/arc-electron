@@ -5,7 +5,7 @@ import { MainWindowPersist } from '../common/Constants.js';
 import { ProxySettings } from './lib/ProxySettings.js';
 import { ProxyDiscovery } from './lib/ProxyDiscovery.js';
 
-/** @typedef {import('@advanced-rest-client/arc-types').Config.ARCConfig} ARCConfig */
+/** @typedef {import('@advanced-rest-client/events').Config.ARCConfig} ARCConfig */
 /** @typedef {import('../types').ApplicationOptionsConfig} ApplicationOptionsConfig */
 
 /**

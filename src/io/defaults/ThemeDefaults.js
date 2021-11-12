@@ -5,7 +5,7 @@ import path from 'path';
 import semver from 'semver';
 import { logger } from '../Logger.js';
 
-/** @typedef {import('@advanced-rest-client/arc-types').Themes.ArcThemeStore} ArcThemeStore */
+/** @typedef {import('@advanced-rest-client/events').Theme.ArcThemeStore} ArcThemeStore */
 
 /** 
  * @typedef DefaultThemeInfo

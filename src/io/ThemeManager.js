@@ -5,8 +5,8 @@ import { ThemePluginsManager } from './ThemePluginsManager.js';
 import { logger } from './Logger.js';
 
 /** @typedef {import('./ArcEnvironment').ArcEnvironment} ArcEnvironment */
-/** @typedef {import('@advanced-rest-client/arc-types').Themes.ArcThemeStore} ArcThemeStore */
-/** @typedef {import('@advanced-rest-client/arc-types').Themes.InstalledTheme} InstalledTheme */
+/** @typedef {import('@advanced-rest-client/events').Theme.ArcThemeStore} ArcThemeStore */
+/** @typedef {import('@advanced-rest-client/events').Theme.InstalledTheme} InstalledTheme */
 /** @typedef {import('../types').SystemThemeInfo} SystemThemeInfo */
 
 export const checkUpdateDebounce = Symbol('checkUpdateDebounce');

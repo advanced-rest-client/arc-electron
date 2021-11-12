@@ -14,6 +14,10 @@ html {
   background-color: #fff;
 }
 
+*[hidden] {
+  display: none !important;
+}
+
 #app {
   display: flex;
   flex-direction: column;
@@ -56,14 +60,20 @@ h2.title {
 
 header {
   height: 56px;
-  background-color: var(--arc-toolbar-background);
-  color: var(--arc-toolbar-color);
+  /* height: 64px; */
   display: flex;
   flex-direction: row;
   align-items: center;
   border-bottom: 1px solid #e5e5e5;
   padding: 20px;
   box-sizing: border-box;
+  background-color: var(--arc-toolbar-background);
+  color: var(--arc-toolbar-color);
+}
+
+header anypoint-button[emphasis=high] {
+  color: var(--arc-toolbar-background);
+  background-color: var(--arc-toolbar-color);
 }
 
 .header-action-button {
@@ -97,16 +107,6 @@ nav {
 nav.minimized {
   width: 56px !important;
   border-right: 1px solid #e5e5e5;
-}
-
-.nav-resize-rail {
-  background-color: transparent;
-  width: 8px;
-  right: -4px;
-  top: 0;
-  bottom: 0;
-  position: absolute;
-  cursor: col-resize;
 }
 
 .page {

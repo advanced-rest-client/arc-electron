@@ -13,14 +13,14 @@ export class ProxySettings {
     this.protocol = 'http:';
     /** @type ProxyCredentials */
     this.credentials = undefined;
-    this.#parseUrl(url);
+    this.parseUrl(url);
   }
 
   /** 
    * Parses the passed URL into its components.
    * @param {string} value;
    */
-  #parseUrl(value) {
+  parseUrl(value) {
     let fullUrl = value;
     if (!fullUrl.startsWith('http')) {
       fullUrl = `http://${fullUrl}`;

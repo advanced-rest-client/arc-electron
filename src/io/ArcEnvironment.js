@@ -1,5 +1,5 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
-import { Oauth2Identity } from '@advanced-rest-client/electron-oauth2';
+import { Oauth2Identity } from '@advanced-rest-client/electron';
 import fs from 'fs-extra';
 import { ApplicationUpdater } from './ApplicationUpdater.js';
 import { logger } from './Logger.js';
@@ -17,11 +17,12 @@ import { GoogleDrive } from './GoogleDrive.js';
 import { ExternalResourcesManager } from './ExternalResourcesManager.js';
 import { HostsManager } from './HostsManager.js';
 import { ProxyManager } from './ProxyManager.js';
+import { AmfParserConnector } from './AmfParserConnector.js';
 
 /** @typedef {import('../types').ApplicationOptionsConfig} ApplicationOptionsConfig */
 /** @typedef {import('../types').ProtocolFile} ProtocolFile */
 /** @typedef {import('./PreferencesManager').PreferencesManager} PreferencesManager */
-/** @typedef {import('@advanced-rest-client/arc-types').Config.ARCConfig} ARCConfig */
+/** @typedef {import('@advanced-rest-client/events').Config.ARCConfig} ARCConfig */
 
 export const importWorkspaceHandler = Symbol('importWorkspaceHandler');
 
@@ -51,6 +52,7 @@ export class ArcEnvironment {
     this.initializeExternalResources();
     this.initializeOsHosts();
     this.initializeProxy();
+    this.initializeAmf();
 
     app.on('activate', () => this.activateHandler.bind(this));
     app.on('window-all-closed', this.allClosedHandler.bind(this));
@@ -172,6 +174,11 @@ export class ArcEnvironment {
   initializeProxy() {
     this.proxy = new ProxyManager();
     this.proxy.listen();
+  }
+
+  initializeAmf() {
+    this.amf = new AmfParserConnector();
+    this.amf.listen();
   }
 
   /**
@@ -383,7 +390,7 @@ export class ArcEnvironment {
       case 'open-themes':
         this.wm.open({
           page: 'themes.html',
-          preload: 'themes-preload.js',
+          preload: 'arc-preload.js',
           ignoreWindowSessionSettings: true,
           noMenu: true,
         });

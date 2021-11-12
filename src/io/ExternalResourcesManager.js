@@ -28,6 +28,7 @@ export class ExternalResourcesManager {
    * @param {string} topic
    */
   openHelpTopic(topic) {
+    logger.info(`Handling help topic: ${topic}`);
     switch (topic) {
       case 'open-faq':
         this.openFaq();
@@ -133,6 +134,13 @@ export class ExternalResourcesManager {
    * @param {string} topic
    */
   [openHelpTopicHandler](e, topic) {
+    this.openNavigationHelpTopic(topic);
+  }
+
+  /**
+   * @param {string} topic
+   */
+  openNavigationHelpTopic(topic) {
     let url;
     switch (topic) {
       case 'history':

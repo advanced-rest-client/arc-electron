@@ -40,17 +40,73 @@ export class AppPrompts {
    * Handles open file action. Opens file picker dialog and returns the result to the app.
    *
    * @param {Electron.IpcMainInvokeEvent} e
+   * @param {'arc'|'postman'|'api'} type The type of the import dialog to open.
    * @returns {Promise<Electron.OpenDialogReturnValue>}
    */
-  async [openDialogHandler](e) {
+  async [openDialogHandler](e, type) {
+    logger.debug(`Opening ${type} open dialog.`);
+    switch (type) {
+      case 'arc': return this.openArcFileDialog(e);
+      case 'postman': return this.openPostmanFileDialog(e);
+      case 'api': return this.openApiFileDialog(e);
+      default: throw new Error(`Unknown dialog type ${type}`);
+    }
+  }
+
+  /**
+   * Handles open file action. Opens file picker dialog and returns the result to the app.
+   *
+   * @param {Electron.IpcMainInvokeEvent} e
+   * @returns {Promise<Electron.OpenDialogReturnValue>}
+   */
+  async openArcFileDialog(e) {
     const win = BrowserWindow.fromWebContents(e.sender);
-    logger.debug('Opening file open dialog.');
+    logger.debug('Opening ARC file open dialog.');
     return dialog.showOpenDialog(win, {
-      title: 'Select file to open',
+      title: 'Select an ARC file',
       buttonLabel: 'Open',
       properties: ['openFile'],
       filters: [
-        { name: 'All supported files', extensions: ['arc', 'json', 'raml', 'yaml', 'zip'] }
+        { name: 'ARC files', extensions: ['arc', 'json'] }
+      ]
+    });
+  }
+
+  /**
+   * Handles open file action. Opens file picker dialog and returns the result to the app.
+   *
+   * @param {Electron.IpcMainInvokeEvent} e
+   * @returns {Promise<Electron.OpenDialogReturnValue>}
+   */
+  async openPostmanFileDialog(e) {
+    const win = BrowserWindow.fromWebContents(e.sender);
+    logger.debug('Opening Postman file open dialog.');
+    return dialog.showOpenDialog(win, {
+      title: 'Select a Postman file',
+      buttonLabel: 'Open',
+      properties: ['openFile'],
+      filters: [
+        { name: 'Postman files', extensions: ['json', 'postman', 'postman_dump'] }
+      ]
+    });
+  }
+
+  /**
+   * Handles open file action. Opens file picker dialog and returns the result to the app.
+   *
+   * @param {Electron.IpcMainInvokeEvent} e
+   * @returns {Promise<Electron.OpenDialogReturnValue>}
+   */
+  async openApiFileDialog(e) {
+    const win = BrowserWindow.fromWebContents(e.sender);
+    logger.debug('Opening Postman file open dialog.');
+    return dialog.showOpenDialog(win, {
+      title: 'Select an API project files (zip)',
+      message: 'The project has to be contained in a zip file.',
+      buttonLabel: 'Open',
+      properties: ['openFile'],
+      filters: [
+        { name: 'API project files', extensions: ['zip'] }
       ]
     });
   }

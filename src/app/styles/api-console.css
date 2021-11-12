@@ -14,13 +14,25 @@
 }
 
 nav {
+  background-color: var(--api-navigation-background-color, #fff);
+  color: var(--api-navigation-color, initial);
   display: flex;
   flex-direction: column;
+  border-right: 1px #e5e5e5 solid;
+}
+
+main {
+  background: var(--secondary-background-color, #ffffff);
 }
 
 api-navigation {
   flex: 1;
-  overflow: auto;
+}
+
+api-documentation {
+  max-width: 1900px;
+  padding: 00px 24px;
+  margin: 40px 0;
 }
 
 .api-version-selector {

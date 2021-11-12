@@ -7,7 +7,7 @@ import { PreferencesManager } from './PreferencesManager.js';
 import { ApplicationDefaults } from './ApplicationDefaults.js';
 import { TelemetryConsent } from './TelemetryConsent.js';
 
-app.allowRendererProcessReuse = true;
+// app.allowRendererProcessReuse = true;
 let initOptions;
 
 /** @typedef {import('../types').ApplicationOptionsConfig} ApplicationOptionsConfig */

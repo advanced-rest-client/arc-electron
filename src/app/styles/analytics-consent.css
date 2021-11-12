@@ -1,0 +1,28 @@
+body {
+  font-size: 16px;
+}
+
+.options {
+  width: 400px;
+}
+
+main {
+  width: 900px;
+  margin: 0 auto;
+  display: block;
+  flex: initial;
+}
+
+.secondary-info {
+  font-size: 0.9rem;
+  color: rgba(0, 0, 0, 0.74);
+}
+
+.action-button {
+  text-align: center;
+  margin-top: 40px;
+}
+
+.selector {
+  text-align: center;
+}

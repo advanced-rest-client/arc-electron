@@ -2,19 +2,15 @@ import { EventEmitter } from 'events';
 import fs from 'fs-extra';
 import log from 'electron-log';
 
-export class ArcPreferences extends EventEmitter {
-  /** 
-   * The current settings
-   * @type {any}
-   */
-  #settings = undefined;
+export const settingsSymbol = Symbol('settingsSymbol');
 
+export class ArcPreferences extends EventEmitter {
   /**
    * @returns {any=} Prefer to call `load()` to read the data.
    * This should be used when the data has been already read.
    */
   get data() {
-    return this.#settings;
+    return this[settingsSymbol];
   }
 
   /**
@@ -29,6 +25,11 @@ export class ArcPreferences extends EventEmitter {
      * @type {String}
      */
     this.settingsFile = file;
+    /** 
+     * The current settings
+     * @type {any}
+     */
+    this[settingsSymbol] = undefined;
   }
   
   /**
@@ -59,8 +60,8 @@ export class ArcPreferences extends EventEmitter {
    * @return {Promise} Promise resolved to a settings file.
    */
   async load() {
-    if (this.#settings) {
-      return this.#settings;
+    if (this[settingsSymbol]) {
+      return this[settingsSymbol];
     }
     try {
       const data = await this.restoreFile(this.settingsFile);
@@ -81,11 +82,11 @@ export class ArcPreferences extends EventEmitter {
   async processSettings(data) {
     if (!data || !Object.keys(data).length) {
       const settings = await this.defaultSettings();
-      this.#settings = settings;
+      this[settingsSymbol] = settings;
       await this.store();
       return settings;
     }
-    this.#settings = data;
+    this[settingsSymbol] = data;
     return data;
   }
 
@@ -102,7 +103,7 @@ export class ArcPreferences extends EventEmitter {
    * @return {Promise<void>} Promise resolved when the settings are stored.
    */
   async store() {
-    await this.storeFile(this.settingsFile, this.#settings);
+    await this.storeFile(this.settingsFile, this[settingsSymbol]);
   }
 
   /**

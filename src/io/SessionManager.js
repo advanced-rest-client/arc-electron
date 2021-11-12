@@ -202,7 +202,7 @@ export class SessionManager extends EventEmitter {
       await this.session.flushStore();
     } catch (e) {
       logger.error(e.message);
-      logger.error(e);
+      logger.error(e.stack);
     }
     return typedSet;
   }

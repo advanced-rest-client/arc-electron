@@ -1,7 +1,7 @@
 import { ArcPreferences } from '../../common/ArcPreferences.js';
 
-/** @typedef {import('@advanced-rest-client/arc-types').Themes.ArcThemeStore} ArcThemeStore */
-/** @typedef {import('@advanced-rest-client/arc-types').Themes.InstalledTheme} InstalledTheme */
+/** @typedef {import('@advanced-rest-client/events').Theme.ArcThemeStore} ArcThemeStore */
+/** @typedef {import('@advanced-rest-client/events').Theme.InstalledTheme} InstalledTheme */
 
 /**
  * A preferences class to store and read theme info file.

@@ -1,7 +1,7 @@
 import fs from 'fs-extra';
 import { logger } from '../Logger.js';
 
-/** @typedef {import('@advanced-rest-client/arc-types').HostRule.HostRule} HostRule */
+/** @typedef {import('@advanced-rest-client/events').HostRule.HostRule} HostRule */
 
 const WINDOWS = process.platform === 'win32';
 

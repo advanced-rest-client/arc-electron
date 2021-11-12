@@ -6,39 +6,10 @@
     <meta http-equiv="Content-Security-Policy" content="default-src file: 'self' 'unsafe-inline'; script-src blob: web-module: 'self' 'unsafe-inline' https://apis.google.com; style-src 'self' themes: 'unsafe-inline' https://fonts.googleapis.com; font-src web-module: themes: 'self' https://fonts.gstatic.com; connect-src 'self' https: ws: wss: https://www.google-analytics.com https://app.advancedrestclient.com https://anypoint.mulesoft.com; img-src 'self' blob: data: https://exchange2-asset-manager-kprod.s3.amazonaws.com">
     <title>Advanced REST Client by MuleSoft</title>
     <link href="styles/common.css" rel="stylesheet" type="text/css" />
-    <style>
-      body {
-        font-size: 16px;
-      }
-
-      .options {
-        width: 400px;
-      }
-
-      main {
-        width: 900px;
-        margin: 0 auto;
-        display: block;
-        flex: initial;
-      }
-
-      .secondary-info {
-        font-size: 0.9rem;
-        color: rgba(0, 0, 0, 0.74);
-      }
-
-      .action-button {
-        text-align: center;
-        margin-top: 40px;
-      }
-
-      .selector {
-        text-align: center;
-      }
-    </style>
+    <link href="styles/analytics-consent.css" rel="stylesheet" type="text/css" />
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="scripts/AnalyticsConsent.js"></script>
+    <script type="module" src="analytics-consent.js"></script>
   </body>
 </html>

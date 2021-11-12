@@ -3,51 +3,55 @@ import path from 'path';
 import fs from 'fs-extra';
 import { logger } from './Logger.js';
 
+export const settingsFileSymbol = Symbol('settingsFileSymbol');
+export const themesBasePathSymbol = Symbol('themesBasePathSymbol');
+export const themesSettingsSymbol = Symbol('themesSettingsSymbol');
+export const workspacePathSymbol = Symbol('workspacePathSymbol');
+export const stateFileSymbol = Symbol('stateFileSymbol');
+
 export class ApplicationPaths {
-  /** 
-   * The path to the application settings file
-   * @type {string}
-   */
-  #settingsFile = undefined;
-
-  /** 
-   * The path to the application themes folder
-   * @type {string}
-   */
-  #themesBasePath = undefined;
-  
-  /** 
-   * The path to the application themes settings file.
-   * @type {string}
-   */
-  #themesSettings = undefined;
-  
-  /** 
-   * The path to the application workspace directory
-   * @type {string}
-   */
-  #workspacePath = undefined;
-
-  /** 
-   * The path to the application state file where other than "settings" preferences are stored.
-   * @type {string}
-   */
-  #stateFile = undefined;
-
   get settingsFile() {
-    return this.#settingsFile;
+    return this[settingsFileSymbol];
   }
 
   get themesBasePath() {
-    return this.#themesBasePath;
+    return this[themesBasePathSymbol];
   }
 
   get themesSettings() {
-    return this.#themesSettings;
+    return this[themesSettingsSymbol];
   }
 
   get stateFile() {
-    return this.#stateFile;
+    return this[stateFileSymbol];
+  }
+
+  constructor() {
+    /** 
+     * The path to the application settings file
+     * @type {string}
+     */
+    this[settingsFileSymbol] = undefined;
+    /** 
+     * The path to the application themes folder
+     * @type {string}
+     */
+    this[themesBasePathSymbol] = undefined;
+    /** 
+     * The path to the application themes settings file.
+     * @type {string}
+     */
+    this[themesSettingsSymbol] = undefined;
+    /** 
+     * The path to the application workspace directory
+     * @type {string}
+     */
+    this[workspacePathSymbol] = undefined;
+    /** 
+     * The path to the application state file where other than "settings" preferences are stored.
+     * @type {string}
+     */
+    this[stateFileSymbol] = undefined;
   }
 
   /**
@@ -105,15 +109,15 @@ export class ApplicationPaths {
       const dir = path.dirname(loc);
       try {
         fs.ensureDirSync(dir);
-        this.#settingsFile = loc;
+        this[settingsFileSymbol] = loc;
       } catch (_) {
         logger.error(`Insufficient permission to settings file folder "${dir}".`);
       }
     }
-    if (!this.#settingsFile) {
-      this.#settingsFile = path.join(process.env.ARC_HOME, 'settings.json');
+    if (!this[settingsFileSymbol]) {
+      this[settingsFileSymbol] = path.join(process.env.ARC_HOME, 'settings.json');
     }
-    process.env.ARC_SETTINGS_FILE = this.#settingsFile;
+    process.env.ARC_SETTINGS_FILE = this[settingsFileSymbol];
     logger.debug(`ARC_SETTINGS_FILE is set to: ${process.env.ARC_SETTINGS_FILE}`);
   }
 
@@ -145,19 +149,19 @@ export class ApplicationPaths {
       const resolved = this.resolvePath(themesPath);
       try {
         fs.ensureDirSync(resolved);
-        this.#themesBasePath = resolved;
+        this[themesBasePathSymbol] = resolved;
       } catch (_) {
         logger.error(`Insufficient permission to themes installation location "${resolved}".`);
       }
     }
 
-    if (!this.#themesBasePath) {
-      this.#themesBasePath = path.join(process.env.ARC_HOME, 'themes-esm');
+    if (!this[themesBasePathSymbol]) {
+      this[themesBasePathSymbol] = path.join(process.env.ARC_HOME, 'themes-esm');
     }
     
-    this.#themesSettings = path.join(this.#themesBasePath, themesSettingsFile);
-    process.env.ARC_THEMES = this.#themesBasePath;
-    process.env.ARC_THEMES_SETTINGS = this.#themesSettings;
+    this[themesSettingsSymbol] = path.join(this[themesBasePathSymbol], themesSettingsFile);
+    process.env.ARC_THEMES = this[themesBasePathSymbol];
+    process.env.ARC_THEMES_SETTINGS = this[themesSettingsSymbol];
     logger.debug(`ARC_THEMES is set to: ${process.env.ARC_THEMES}`);
     logger.debug(`ARC_THEMES_SETTINGS is set to: ${process.env.ARC_THEMES_SETTINGS}`);
   }
@@ -170,15 +174,15 @@ export class ApplicationPaths {
     if (workspacePath) {
       const resolved = this.resolvePath(workspacePath);
       try {
-        this.#workspacePath = resolved;
+        this[workspacePathSymbol] = resolved;
       } catch (_) {
         logger.error(`Insufficient permission to themes installation location "${resolved}".`);
       }
     }
-    if (!this.#workspacePath) {
-      this.#workspacePath = path.join(process.env.ARC_HOME, 'workspace');
+    if (!this[workspacePathSymbol]) {
+      this[workspacePathSymbol] = path.join(process.env.ARC_HOME, 'workspace');
     }
-    process.env.ARC_WORKSPACE_PATH = this.#workspacePath;
+    process.env.ARC_WORKSPACE_PATH = this[workspacePathSymbol];
     logger.debug(`ARC_WORKSPACE_PATH is set to: ${process.env.ARC_WORKSPACE_PATH}`);
   }
 
@@ -193,15 +197,15 @@ export class ApplicationPaths {
       const dir = path.dirname(loc);
       try {
         fs.ensureDirSync(dir);
-        this.#stateFile = loc;
+        this[stateFileSymbol] = loc;
       } catch (_) {
         logger.error(`Insufficient permission to state file folder "${dir}".`);
       }
     }
-    if (!this.#stateFile) {
-      this.#stateFile = path.join(process.env.ARC_HOME, 'state.json');
+    if (!this[stateFileSymbol]) {
+      this[stateFileSymbol] = path.join(process.env.ARC_HOME, 'state.json');
     }
-    process.env.ARC_STATE_FILE = this.#stateFile;
+    process.env.ARC_STATE_FILE = this[stateFileSymbol];
     logger.debug(`ARC_STATE_FILE is set to: ${process.env.ARC_STATE_FILE}`);
   }
 }

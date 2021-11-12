@@ -2,7 +2,7 @@ import { ipcMain } from 'electron';
 import { logger } from './Logger.js';
 import { Hosts } from './lib/Hosts.js';
 
-/** @typedef {import('@advanced-rest-client/arc-types').HostRule.HostRule} HostRule */
+/** @typedef {import('@advanced-rest-client/events').HostRule.HostRule} HostRule */
 
 const requestHandler = Symbol('requestHandler');
 

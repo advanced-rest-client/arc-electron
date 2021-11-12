@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron';
 import { logger } from './Logger.js';
+import { ExternalResourcesManager } from './ExternalResourcesManager.js';
 
 /** @typedef {import('./WindowsManager').WindowsManager} WindowsManager */
 
@@ -75,7 +76,7 @@ export class PopupMenuService {
       },
       // noMenu: true,
       page: 'popup-menu.html',
-      preload: 'popup-menu.js',
+      preload: 'arc-preload.js',
     });
     this[addListeners](win);
     this.menuWindows.set(type, win);
@@ -125,10 +126,15 @@ export class PopupMenuService {
    * performed.
    * @param {Event} e
    * @param {string} type Navigation type
-   * @param {...string[]} detail Arguments
+   * @param {...string} detail Arguments
    */
   [popupNavHandler](e, type, ...detail) {
     logger.debug('Handling popup menu event from the menu.');
+    if (type === 'help') {
+      const manager = new ExternalResourcesManager();
+      manager.openNavigationHelpTopic(detail[0]);
+      return;
+    }
     if (!this.wm.hasWindow) {
       logger.warn('Popup menu event handled without menu window registered.');
       return;

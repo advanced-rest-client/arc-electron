@@ -1,8 +1,8 @@
 /* eslint-disable no-param-reassign */
-import { Oauth2Identity } from '@advanced-rest-client/electron-oauth2';
+import { Oauth2Identity } from '@advanced-rest-client/electron';
 import { ipcMain, net } from 'electron';
 
-/** @typedef {import('@advanced-rest-client/arc-types').Authorization.OAuth2Authorization} OAuth2Authorization */
+/** @typedef {import('@advanced-rest-client/events').Authorization.OAuth2Authorization} OAuth2Authorization */
 /** @typedef {import('../types').DriveExportInit} DriveExportInit */
 /** @typedef {import('../types').SaveDriveFileOptions} SaveDriveFileOptions */
 /** @typedef {import('../types').FileMedia} FileMedia */

@@ -1,3 +1,7 @@
+html {
+  --arc-menu-height: 100%;
+}
+
 main > .screen {
   flex: 1;
   height: 100vh;

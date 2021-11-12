@@ -4,7 +4,7 @@ const fs = require('fs-extra');
 const sinon = require('sinon');
 const { Menu } = require('electron');
 const _require = require('esm')(module);
-const testPaths = require('../setup-paths');
+const testPaths = require('../setup-paths.js');
 
 const { ApplicationMenu, clearWorkspaceHistory, appendHistoryEntry, createWorkspaceHistory, workspaceHistoryAction } = _require('../../src/io/ApplicationMenu');
 const { ApplicationUpdater } = _require('../../src/io/ApplicationUpdater');

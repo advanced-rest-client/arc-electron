@@ -7,12 +7,12 @@ export class ProxyDiscovery {
    * @returns {Promise<ProxySettings|null>}
    */
   async read() {
-    const envProxy = this.#envSettings();
+    const envProxy = this.envSettings();
     if (envProxy) {
       return envProxy;
     }
     if (process.platform === "win32") {
-      return this.#registrySettings();
+      return this.registrySettings();
     }
     return null;
   }
@@ -22,7 +22,7 @@ export class ProxyDiscovery {
    * This works with linux systems.
    * @returns {ProxySettings|null}
    */
-  #envSettings() {
+  envSettings() {
     const httpProxy = process.env.HTTP_PROXY || process.env.http_proxy;
     if (!httpProxy) {
       return null;
@@ -34,7 +34,7 @@ export class ProxyDiscovery {
    * Reads the system proxy settings form the Windows registry.
    * @returns {Promise<ProxySettings|null>}
    */
-  async #registrySettings() {
+  async registrySettings() {
     // https://docs.microsoft.com/en-us/troubleshoot/windows-client/networking/configure-client-proxy-server-settings-by-registry-file
     const reg = new WinReg();
     const values = await reg.readKey('HKCU', "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings");

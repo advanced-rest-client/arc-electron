@@ -9,24 +9,27 @@ import semver from 'semver';
 import { ThemeInfo } from './models/ThemeInfo.js';
 import { logger } from './Logger.js';
 
-/** @typedef {import('@advanced-rest-client/arc-types').Themes.ArcThemeStore} ArcThemeStore */
-/** @typedef {import('@advanced-rest-client/arc-types').Themes.InstalledTheme} InstalledTheme */
+/** @typedef {import('@advanced-rest-client/events').Theme.ArcThemeStore} ArcThemeStore */
+/** @typedef {import('@advanced-rest-client/events').Theme.InstalledTheme} InstalledTheme */
 /** @typedef {import('live-plugin-manager').IPluginInfo} IPluginInfo */
 /** @typedef {import('live-plugin-manager').PackageInfo} PackageInfo */
 
-export class ThemePluginsManager {
-  #pluginManager = new PluginManager({
-    cwd: process.env.ARC_THEMES,
-    pluginsPath: process.env.ARC_THEMES
-  });
+export const pluginManagerSymbol = Symbol('pluginManager');
 
- 
+export class ThemePluginsManager {
   /**
    * Creates a model for theme info file.
    * @return {ThemeInfo}
    */
   get themeInfo() {
     return new ThemeInfo();
+  }
+
+  constructor() {
+    this[pluginManagerSymbol] = new PluginManager({
+      cwd: process.env.ARC_THEMES,
+      pluginsPath: process.env.ARC_THEMES
+    });
   }
 
   /**
@@ -145,7 +148,7 @@ export class ThemePluginsManager {
     logger.info('Installing theme from remote sources...');
     const [n, v] = this._prepareSourceAndVersion(name, version);
     try {
-      const result = await this.#pluginManager.install(n, v);
+      const result = await this[pluginManagerSymbol].install(n, v);
       const info = /** @type InstalledTheme */ ({
         isSymlink: false,
         _id: result.name,
@@ -189,7 +192,7 @@ export class ThemePluginsManager {
     if (info.isSymlink) {
       await fs.remove(info.location);
     } else {
-      await this.#pluginManager.uninstall(info.name);
+      await this[pluginManagerSymbol].uninstall(info.name);
     }
     return info;
   }
@@ -295,7 +298,7 @@ export class ThemePluginsManager {
   async checkUpdateAvailable(name, version) {
     const names = this._prepareSourceAndVersion(name, version);
     const localInfo = await this.themeInfo.readTheme(name);
-    const remoteInfo = await this.#pluginManager.queryPackage(names[0]);
+    const remoteInfo = await this[pluginManagerSymbol].queryPackage(names[0]);
     if (!this._compareVersions(remoteInfo, localInfo)) {
       return undefined;
     }

@@ -2,7 +2,7 @@ import { ipcMain } from 'electron';
 import log from 'electron-log';
 import { ArcPreferences } from "../common/ArcPreferences.js";
 
-/** @typedef {import('@advanced-rest-client/arc-types').Config.ARCConfig} ARCConfig */
+/** @typedef {import('@advanced-rest-client/events').Config.ARCConfig} ARCConfig */
 
 export const readHandler = Symbol('readHandler');
 export const changeHandler = Symbol('changeHandler');

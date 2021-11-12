@@ -7,7 +7,7 @@ import { logger } from './Logger.js';
 autoUpdater.logger = logger;
 
 /** @typedef {import('electron-updater').UpdateInfo} UpdateInfo */
-/** @typedef {import('@advanced-rest-client/arc-types').Config.ARCConfig} ARCConfig */
+/** @typedef {import('@advanced-rest-client/events').Config.ARCConfig} ARCConfig */
 
 export const checkingHandler = Symbol('checkingHandler');
 export const updateAvailableHandler = Symbol('updateAvailableHandler');

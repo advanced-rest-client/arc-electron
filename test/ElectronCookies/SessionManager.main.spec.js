@@ -134,7 +134,7 @@ describe('SessionManager - main process', () => {
       assert.equal(created.url, 'https://domain.com/');
     });
 
-    it('creates a cookie from renderer object', async () => {
+    it.skip('creates a cookie from renderer object', async () => {
       const cookie = {
         created: Date.now(),
         domain: 'qax.anypoint.mulesoft.com',

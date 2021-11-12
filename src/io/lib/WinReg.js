@@ -18,11 +18,11 @@ export class WinReg {
    */
   async readKey(hive, key) {
     const keyPath = `${hive}\\${key}`;
-    const { stdout } = await this.#execAsync(this.#getRegPath(), [
+    const { stdout } = await this.execAsync(this.getRegPath(), [
       "query",
       keyPath,
     ]);
-    const values = this.#parseOutput(stdout);
+    const values = this.parseOutput(stdout);
     return values;
   }
 
@@ -30,7 +30,7 @@ export class WinReg {
    * @param {string} stdout
    * @returns {RegKeyValues}
    */
-  #parseOutput(stdout) {
+  parseOutput(stdout) {
     const lines = stdout.split("\n");
     const result = /** @type RegKeyValues */ ({});
     for (const line of lines.slice(1)) {
@@ -50,7 +50,7 @@ export class WinReg {
    * @param {string[]=} [args=[]]
    * @returns {Promise<ExecOutput>}
    */
-  #execAsync(command, args=[]) {
+  execAsync(command, args=[]) {
     return new Promise((resolve, reject) => {
       execFile(command, args, (err, stdout, stderr) => {
         if (err) {
@@ -65,7 +65,7 @@ export class WinReg {
   /** 
    * @returns {string}
    */
-  #getRegPath() {
+  getRegPath() {
     if (process.platform === "win32" && process.env.windir) {
       return path.join(process.env.windir, "system32", "reg.exe");
     }

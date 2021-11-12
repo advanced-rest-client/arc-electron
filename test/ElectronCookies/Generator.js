@@ -4,7 +4,7 @@ const Chance = require('chance');
 // @ts-ignore
 const _require = require('esm')(module);
 
-const { Cookie } = _require('@advanced-rest-client/arc-cookies/src/Cookie.js');
+const { Cookie } = _require('@advanced-rest-client/base/src/lib/Cookie.js');
 
 const chance = new Chance();
 

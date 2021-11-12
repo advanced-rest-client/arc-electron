@@ -93,7 +93,7 @@ export class ContentSearchService {
    */
   [initializeSearchBar](targetWindow) {
     const options = { 
-      ...this.windowsManager.createBaseWindowOptions('search-bar.js'),
+      ...this.windowsManager.createBaseWindowOptions('arc-preload.js'),
       frame: false,
       movable: false,
       parent: targetWindow,
