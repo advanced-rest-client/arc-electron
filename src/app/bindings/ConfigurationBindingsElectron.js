@@ -7,6 +7,7 @@ import { Events, ConfigurationBindings } from '../../../web_modules/index.js';
  */
 export class ConfigurationBindingsElectron extends ConfigurationBindings {
   async initialize() {
+    await super.initialize();
     ArcEnvironment.ipc.on('preferences-value-updated', this.ioChangeHandler.bind(this));
   }
 

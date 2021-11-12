@@ -42,7 +42,7 @@
   },
   "main": "src/io/main.js",
   "devDependencies": {
-    "@advanced-rest-client/app": "^0.2.1",
+    "@advanced-rest-client/app": "^1.0.0",
     "@advanced-rest-client/icons": "^4.0.0",
     "@advanced-rest-client/idb-store": "^1.0.0",
     "@advanced-rest-client/monaco-support": "^1.0.1",

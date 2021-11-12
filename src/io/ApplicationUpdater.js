@@ -75,15 +75,6 @@ export class ApplicationUpdater extends EventEmitter {
   }
 
   /**
-   * Checks if `channel` is a valid channel signature.
-   * @param {String} channel
-   * @return {Boolean}
-   */
-  isValidChannel(channel) {
-    return ['beta', 'alpha', 'latest'].indexOf(channel) !== -1;
-  }
-
-  /**
    * Checks for update.
    *
    * @param {object=} opts Options for checking for an update.
@@ -95,16 +86,11 @@ export class ApplicationUpdater extends EventEmitter {
   }
 
   /**
-   * Sets the channel value on auto updater
-   * @param {string} channel Channel name
+   * @param {boolean} enabled Whether the pre-release versions are allowed
    */
-  setReleaseChannel(channel) {
-    if (this.isValidChannel(channel)) {
-      logger.debug(`Setting the release channel to${  channel}`);
-      autoUpdater.channel = channel;
-    } else {
-      logger.warn(`Channel ${channel} is not a valid application release channel.`);
-    }
+  setAllowPreRelease(enabled) {
+    logger.info(`Allowing the auto updated to install pre-release versions.`);
+    autoUpdater.allowPrerelease = enabled;
   }
 
   /**
@@ -117,17 +103,12 @@ export class ApplicationUpdater extends EventEmitter {
   start(settings={}, skipAppUpdate=false) {
     logger.info('Initializing auto updater.');
     const { updater={} } = settings;
-    const { auto, channel } = updater;
-    if (channel) {
-      if (this.isValidChannel(channel)) {
-        logger.info(`Setting auto updater channel to ${channel}`);
-        autoUpdater.channel = channel;
-      } else {
-        logger.warn(`Invalid update updater channel: ${channel}`);
-      }
+    const { auto, allowPreRelease } = updater;
+    if (typeof allowPreRelease === 'boolean') {
+      this.setAllowPreRelease(allowPreRelease);
     }
     if (skipAppUpdate || auto === false) {
-      logger.debug('Auto Updater is disabled. Manual requests will still download the update.');
+      logger.debug('Auto Updater is disabled. Manual requests still downloads the update.');
       autoUpdater.autoDownload = false;
       autoUpdater.autoInstallOnAppQuit = false;
       return;

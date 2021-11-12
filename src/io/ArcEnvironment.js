@@ -236,8 +236,8 @@ export class ArcEnvironment {
    */
   settingsChanged(name, value) {
     switch (name) {
-      case 'updater.channel':
-        this.updater.setReleaseChannel(value);
+      case 'updater.allowPreRelease':
+        this.updater.setAllowPreRelease(value);
         break;
       case 'proxy.enabled':
       case 'proxy.url':

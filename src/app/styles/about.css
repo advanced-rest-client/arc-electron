@@ -107,11 +107,7 @@ a {
   user-select: text;
 }
 
-.release-channel {
-  margin-top: 40px;
-}
-
-.channel-selector {
-  width: 100%;
-  margin: 0;
+.context-info {
+  margin: 0 0 0 52px;
+  color: var(--secondary-text-color);
 }
