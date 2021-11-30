@@ -18,8 +18,11 @@ export class OAuth2BindingsElectron extends OAuth2Bindings {
    */
   // @ts-ignore
   async oauth2Authorize(config) {
-    // config.interactive = true;
-    return ArcEnvironment.ipc.invoke('oauth2', 'launchWebFlow', config);
+    const copy = { ...config };
+    if (typeof copy.interactive !== 'boolean') {
+      copy.interactive = true;
+    }
+    return ArcEnvironment.ipc.invoke('oauth2', 'launchWebFlow', copy);
   }
 
   /**
@@ -38,7 +41,11 @@ export class OAuth2BindingsElectron extends OAuth2Bindings {
    */
   // @ts-ignore
   async oidcAuthorize(config) {
-    return ArcEnvironment.ipc.invoke('oidc', 'getToken', config);
+    const copy = { ...config };
+    if (typeof copy.interactive !== 'boolean') {
+      copy.interactive = true;
+    }
+    return ArcEnvironment.ipc.invoke('oidc', 'getToken', copy);
   }
 
   /**

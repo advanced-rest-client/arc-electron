@@ -14,6 +14,14 @@ import { ApiParserBindings, IdbKeyVal, Route } from '../../../web_modules/index.
  * It has a library that spins off a server that parses an API project with AMF parser.
  */
 export class ElectronApiParserBindings extends ApiParserBindings {
+  constructor() {
+    super();
+    /** 
+     * @type {Notification}
+     */
+    this.notification = undefined;
+  }
+
   /**
    * Reads AMF service port number.
    * Starts the www server when needed.
@@ -34,6 +42,34 @@ export class ElectronApiParserBindings extends ApiParserBindings {
   }
 
   /**
+   * Creates a new notification that replaces the old one, if any.
+   * @param {string} body The message body.
+   */
+  spawnNotification(body) {
+    this.finalizeNotification();
+    try {
+      this.notification = new Notification('API processing', { 
+        body,
+        tag: 'api-parser',
+        requireInteraction: true,
+        silent: true,
+      });
+    } catch (e) {
+      // ...
+    }
+  }
+
+  /**
+   * Closes the currently rendered notification.
+   */
+  finalizeNotification() {
+    if (this.notification) {
+      this.notification.close();
+      this.notification = undefined;
+    }
+  }
+
+  /**
    * Downloads the file and processes it as a zipped API project.
    *
    * @param {string} url API remote location.
@@ -43,14 +79,17 @@ export class ElectronApiParserBindings extends ApiParserBindings {
    */
   // @ts-ignore
   async processApiLink(url, mainFile, hash) {
+    this.spawnNotification('Downloading the API data from Exchange.');
     try {
       const buffer = Buffer.from(await this.downloadApiProject(url));
       this.checkIntegrity(buffer, hash);
       const result = await this.processBuffer(buffer, { mainFile });
       this.loading = false;
+      this.finalizeNotification();
       return result;
     } catch (cause) {
       this.loading = false;
+      this.finalizeNotification();
       throw cause;
     }
   }
@@ -67,6 +106,7 @@ export class ElectronApiParserBindings extends ApiParserBindings {
     const port = await this.getWwwPort();
     const { mainFile='' } = opts;
     const url = this.getApiServiceUrl(port, '/file');
+    this.spawnNotification('Processing the API project.');
     const response = await fetch(url, {
       body: buffer,
       method: 'POST',
@@ -206,10 +246,12 @@ export class ElectronApiParserBindings extends ApiParserBindings {
     if (response.status === 300) {
       const location = response.headers.get('location');
       const body = await response.json();
+      this.finalizeNotification();
       const mainFile = await this.selectApiMainFile(body.files);
       if (!mainFile) {
         return undefined;
       }
+      this.spawnNotification('Processing the API project.');
       const newUrl = this.getApiServiceUrl(knownPort, location || headerLocation);
       const updateResponse = await fetch(newUrl, {
         method: 'PUT',
