@@ -1,4 +1,7 @@
-import { HttpRequestBindings, Jexl, Events } from '../../../web_modules/index.js';
+import { HttpRequestBindings, Jexl, Events, RequestAuthorization, ModulesRegistry, ResponseAuthorization } from '../../../web_modules/index.js';
+
+ModulesRegistry.register(ModulesRegistry.request, '@advanced-rest-client/base/request-authorization', RequestAuthorization, ['store', 'events']);
+ModulesRegistry.register(ModulesRegistry.response, '@advanced-rest-client/base/response-authorization', ResponseAuthorization, ['store', 'events']);
 
 /** @typedef {import('@advanced-rest-client/events').ArcRequest.ArcBaseRequest} ArcBaseRequest */
 /** @typedef {import('@advanced-rest-client/events').ArcRequest.RequestConfig} RequestConfig */
