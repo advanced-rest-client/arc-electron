@@ -209,11 +209,11 @@ export class ThemeDefaults {
       // version 0
       return this._upgradeInfoFile(file, data);
     }
-    if (!(data.themes instanceof Array)) {
+    if (!Array.isArray(data.themes)) {
       return this._copyInfoFile();
     }
     const item = data.themes[0];
-    if (!item.location) {
+    if (!item || !item.location) {
       return this._copyInfoFile();
     }
     if ((item.mainFile || '').indexOf('.js') !== -1) {
