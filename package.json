@@ -110,7 +110,7 @@
     "live-plugin-manager": "^0.15.1",
     "mime-types": "^2.1.30",
     "monaco-editor": "^0.21.3",
-    "node-fetch": "^2.6.1",
+    "node-fetch": "^3.1.1",
     "semver": "^7.3.5",
     "uuid": "^8.3.2",
     "winston": "^3.3.3"
