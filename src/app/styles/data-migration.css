@@ -1,0 +1,14 @@
+.app-loader.error {
+  background-color: #F44336;
+  color: #fff;
+}
+
+.error-stack {
+  white-space: pre;
+}
+
+.error-message,
+.error-stack,
+.selectable {
+  user-select: text;
+}

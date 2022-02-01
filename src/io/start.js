@@ -1,4 +1,5 @@
 import { app, protocol } from 'electron';
+import path from 'path';
 import { logger, setLevel } from './Logger.js';
 import { ApplicationPaths } from './ApplicationPaths.js';
 import { ApplicationOptions } from './ApplicationOptions.js';
@@ -110,17 +111,17 @@ export default async function start(startTime) {
   initOptions = startupOptions.getOptions();
   if (initOptions.dev) {
     setLevel(initOptions.debugLevel || 'silly');
-    // logger.level = initOptions.debugLevel || 'warn';
   } else if (initOptions.debugLevel) {
-    // logger.level = initOptions.debugLevel;
     setLevel(initOptions.debugLevel);
   } else {
-    // logger.level = 'error';
     setLevel('error');
   }
   
   if (initOptions.userDataDir) {
     app.setPath('userData', initOptions.userDataDir);
+  } else if (initOptions.dev) {
+    const appData = app.getPath('appData');
+    app.setPath('userData', path.join(appData, 'advanced-rest-client-dev'));
   }
 
   // Standard scheme must be registered before the app is ready

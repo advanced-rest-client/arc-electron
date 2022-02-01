@@ -22,6 +22,7 @@ export class TelemetryConsent {
   constructor(wm) {
     this.wm = wm;
     this.lockFile = path.join(process.env.ARC_HOME, '.telemetry-consent.lock');
+    this.pageHandler = this.pageHandler.bind(this);
   }
 
   /**
@@ -34,7 +35,7 @@ export class TelemetryConsent {
       return undefined;
     }
     await this.renderDialog();
-    ipcMain.on('telemetry-set', this.pageHandler.bind(this));
+    ipcMain.on('telemetry-set', this.pageHandler);
     return new Promise((resolve) => {
       this.resolve = resolve;
     });
@@ -62,6 +63,7 @@ export class TelemetryConsent {
   async pageHandler() {
     await fs.writeFile(this.lockFile, 'Do not remove this file. It prohibits showing the analytics dialog.');
     this.resolve();
+    ipcMain.removeListener('telemetry-set', this.pageHandler);
     if (this.loader && !this.loader.isDestroyed()) {
       this.loader.close();
     }

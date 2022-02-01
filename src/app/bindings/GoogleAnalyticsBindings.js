@@ -101,6 +101,7 @@ export class GoogleAnalyticsBindings extends PlatformBindings {
     window.addEventListener(EventTypes.Telemetry.exception, this.exceptionHandler.bind(this));
     window.addEventListener(EventTypes.Telemetry.view, this.viewHandler.bind(this));
     window.addEventListener(EventTypes.Telemetry.timing, this.timingHandler.bind(this));
+    window.addEventListener(EventTypes.Telemetry.State.set, this.stateSetHandler.bind(this));
     ArcEnvironment.ipc.on('preferences-value-updated', this.preferenceHandler.bind(this));
   }
 
@@ -270,5 +271,13 @@ export class GoogleAnalyticsBindings extends PlatformBindings {
       case 'updater.channel': this.channel = value; break;
       default:
     }
+  }
+
+  /**
+   * This is a handler for the event dispatched by the GA consent screen.
+   * It dispatches a message to the IO so it knows to continue with the application flow.
+   */
+  stateSetHandler() {
+    ArcEnvironment.ipc.send('telemetry-set');
   }
 }
