@@ -1,5 +1,4 @@
 import { ApplicationScreen, html } from '../../web_modules/index.js';
-import { ArcBindings } from './bindings/ArcBindings.js';
 
 export class DataMigrationScreen extends ApplicationScreen {
   constructor() {
@@ -62,9 +61,6 @@ export class DataMigrationScreen extends ApplicationScreen {
 }
 
 (async () => {
-  const bindings = new ArcBindings();
-  await bindings.initialize();
-  
   const page = new DataMigrationScreen();
   await page.initialize();
 })();

@@ -3,22 +3,7 @@
 <head>
 </head>
 <body>
-<project-model></project-model>
-<url-history-model></url-history-model>
-<websocket-url-history-model></websocket-url-history-model>
-<history-data-model></history-data-model>
-<client-certificate-model></client-certificate-model>
-<variables-model></variables-model>
-<auth-data-model></auth-data-model>
-<request-model></request-model>
-<host-rules-model></host-rules-model>
-<rest-api-model></rest-api-model>
-<url-indexer></url-indexer>
 <script type="module">
-/* eslint-disable import/no-extraneous-dependencies */
-/* eslint-disable no-await-in-loop */
-/* eslint-disable import/no-unresolved */
-
 /**
  * This import the entire data export logic for ARC and dumps all the user data
  * into a temporary folder (in the system's TMP path).
@@ -26,20 +11,7 @@
  * Then it reports the operation finished to the IO process so it can run the import window
  * and import the data into the application.
  */
-
-import PouchDB from 'web-module:../web_modules/pouchdb/dist/pouchdb.js';
-import 'web-module:../web_modules/@advanced-rest-client/arc-models/project-model.js';
-import 'web-module:../web_modules/@advanced-rest-client/arc-models/url-history-model.js';
-import 'web-module:../web_modules/@advanced-rest-client/arc-models/websocket-url-history-model.js';
-import 'web-module:../web_modules/@advanced-rest-client/arc-models/history-data-model.js';
-import 'web-module:../web_modules/@advanced-rest-client/arc-models/client-certificate-model.js';
-import 'web-module:../web_modules/@advanced-rest-client/arc-models/variables-model.js';
-import 'web-module:../web_modules/@advanced-rest-client/arc-models/auth-data-model.js';
-import 'web-module:../web_modules/@advanced-rest-client/arc-models/request-model.js';
-import 'web-module:../web_modules/@advanced-rest-client/arc-models/host-rules-model.js';
-import 'web-module:../web_modules/@advanced-rest-client/arc-models/rest-api-model.js';
-import 'web-module:../web_modules/@advanced-rest-client/arc-models/url-indexer.js';
-import { ExportProcessor, ExportFactory } from 'web-module:../web_modules/@advanced-rest-client/arc-models/index.js';
+ import { PouchDB, ExportProcessor, ExportFactory } from 'web-module:../web_modules/index.js';
 
 window.PouchDB = PouchDB;
 const { ipcRenderer } = require('electron');
@@ -53,6 +25,7 @@ ipcRenderer.send('data-transport-ready', 'server');
  * @return Promise<void>
  */
 async function start(e, storeLocation) {
+  console.info('Starting data migration');
   try {
     const factory = new ExportFactory();
     const data = /** @type any[] */ (await factory.getExportData({
@@ -85,10 +58,10 @@ async function start(e, storeLocation) {
     await fs.outputJson(storeLocation, exportObject);
     ipcRenderer.send('server-db-finished');
   } catch (e) {
+    console.error(e);
     ipcRenderer.send('db-error', e.message, e.stack);
   }
 }
-
 ipcRenderer.once('server-start', start);
 </script>
 </body>
