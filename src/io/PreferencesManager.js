@@ -27,6 +27,11 @@ export class PreferencesManager extends ArcPreferences {
     ipcMain.handle('preferences-update', this[changeHandler]);
   }
 
+  unlisten() {
+    ipcMain.removeHandler('preferences-read');
+    ipcMain.removeHandler('preferences-update');
+  }
+
   /**
    * Loads current settings from settings file.
    * This is just to provide typings.

@@ -27,24 +27,43 @@ export class ProxyManager {
     this.currentUsername = undefined;
     /** @type string */
     this.currentPassword = undefined;
+
+    this._appLoginHandler = this._appLoginHandler.bind(this);
+    this._updatedLoginHandler = this._updatedLoginHandler.bind(this);
   }
 
   listen() {
-    app.on('login', (event, webContents, request, authInfo, callback) => {
-      if (this.isConfigured && this.currentUsername && authInfo.isProxy) {
-        event.preventDefault();
-        callback(this.currentUsername, this.currentPassword);
-      } else {
-        callback();
-      }
-    });
-    autoUpdater.on('login', async (authInfo, callback) => {
-      if (this.isConfigured && this.currentUsername && authInfo.isProxy) {
-        callback(this.currentUsername, this.currentPassword);
-      } else {
-        callback();
-      }
-    });
+    app.on('login', this._appLoginHandler);
+    autoUpdater.on('login', this._updatedLoginHandler);
+  }
+
+  unlisten() {
+    app.off('login', this._appLoginHandler);
+    autoUpdater.off('login', this._updatedLoginHandler);
+  }
+
+  /**
+   * @param {Electron.Event} event 
+   * @param {Electron.WebContents} webContents 
+   * @param {Electron.AuthenticationResponseDetails} request 
+   * @param {Electron.AuthInfo} authInfo 
+   * @param {(username?: string, password?: string) => void} callback 
+   */
+  _appLoginHandler(event, webContents, request, authInfo, callback) {
+    if (this.isConfigured && this.currentUsername && authInfo.isProxy) {
+      event.preventDefault();
+      callback(this.currentUsername, this.currentPassword);
+    } else {
+      callback();
+    }
+  }
+
+  _updatedLoginHandler(authInfo, callback) {
+    if (this.isConfigured && this.currentUsername && authInfo.isProxy) {
+      callback(this.currentUsername, this.currentPassword);
+    } else {
+      callback();
+    }
   }
   
   /**

@@ -1,5 +1,5 @@
 /* eslint-disable no-param-reassign */
-import { BrowserWindow, ipcMain, shell } from 'electron';
+import { BrowserWindow, ipcMain, shell, app } from 'electron';
 import path from 'path';
 import url from 'url';
 import { v4 } from 'uuid';
@@ -147,6 +147,15 @@ export class WindowsManager {
     ipcMain.on('window-context-menu-init', this[winContextInitHandler]);
     ipcMain.handle('workspace-get-location', this[workspaceLocationHandler]);
     ipcMain.handle('workspace-change-location', this[workspaceChangeLocationHandler]);
+  }
+
+  unlisten() {
+    ipcMain.off('new-window', this[windowOpenHandler]);
+    ipcMain.off('toggle-devtools', this[toggleDevToolsHandler]);
+    ipcMain.off('settings-changed', this[settingHandler]);
+    ipcMain.off('window-context-menu-init', this[winContextInitHandler]);
+    ipcMain.removeHandler('workspace-get-location');
+    ipcMain.removeHandler('workspace-change-location');
   }
 
   /**
@@ -301,7 +310,8 @@ export class WindowsManager {
       },
     });
     if (preload) {
-      options.webPreferences.preload = path.join(__dirname, '..', 'preload', preload);
+      const base = path.dirname(url.fileURLToPath(import.meta.url));
+      options.webPreferences.preload = path.join(base, '..', '..', 'src', 'preload', preload);
     }
     return options;
   }

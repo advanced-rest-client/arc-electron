@@ -124,4 +124,41 @@ describe('ThemeDefaults', () => {
       });
     });
   });
+
+  describe('_readDefaultThemesPackages()', () => {
+    before(() => {
+      instance = new ThemeDefaults();
+    });
+
+    it('reads theme info', async () => {
+      const result = await instance._readDefaultThemesPackages();
+      assert.typeOf(result, 'array', 'returns the array');
+      assert.lengthOf(result, 3, 'has all default themes');
+    });
+
+    it('has the Anypoint theme info', async () => {
+      const result = await instance._readDefaultThemesPackages();
+      const info = result.find(i => i.name === '@advanced-rest-client/arc-electron-anypoint-theme');
+      assert.ok(info, 'has the theme');
+      assert.equal(info.main, 'arc-electron-anypoint-theme.css', 'sets the "main"');
+      assert.include(info.location, '/appresources/themes/@advanced-rest-client/arc-electron-anypoint-theme', 'sets the "location"');
+      assert.include(info.files, 'fonts', 'has the "fonts" dependency');
+    });
+
+    it('has the dark theme info', async () => {
+      const result = await instance._readDefaultThemesPackages();
+      const info = result.find(i => i.name === '@advanced-rest-client/arc-electron-dark-theme');
+      assert.ok(info, 'has the theme');
+      assert.equal(info.main, 'arc-electron-dark-theme.css', 'sets the "main"');
+      assert.include(info.location, '/appresources/themes/@advanced-rest-client/arc-electron-dark-theme', 'sets the "location"');
+    });
+
+    it('has the default theme info', async () => {
+      const result = await instance._readDefaultThemesPackages();
+      const info = result.find(i => i.name === '@advanced-rest-client/arc-electron-default-theme');
+      assert.ok(info, 'has the theme');
+      assert.equal(info.main, 'arc-electron-default-theme.css', 'sets the "main"');
+      assert.include(info.location, '/appresources/themes/@advanced-rest-client/arc-electron-default-theme', 'sets the "location"');
+    });
+  });
 });

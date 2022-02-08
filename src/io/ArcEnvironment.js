@@ -303,13 +303,29 @@ export class ArcEnvironment {
       logger.debug('All windows are now closed.');
       // https://github.com/advanced-rest-client/arc-electron/issues/396
       logger.debug('Quitting the IO thread.');
-      app.quit();
-      // if (process.platform !== 'darwin') {
-      //   logger.debug('Quitting main thread.');
-      // } else {
-      //   logger.debug('Keeping main thread running.');
-      // }
+      this.destruct();
+      // app.quit();
+      app.exit();
     }, 1000);
+  }
+
+  destruct() {
+    app.removeAllListeners('activate');
+    app.removeAllListeners('window-all-closed');
+    this.wm.unlisten();
+    this.themes.unlisten();
+    this.sm.unlisten();
+    this.proxy.unlisten();
+    this.config.unlisten();
+    this.appMenuService.unlisten();
+    this.osHosts.unlisten();
+    this.gDrive.unlisten();
+    this.externalResources.unlisten();
+    this.search.unlisten();
+    this.state.unlisten();
+    this.prompts.unlisten();
+    this.updater.unlisten();
+    this.amf.unlisten();
   }
 
   /**
