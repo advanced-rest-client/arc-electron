@@ -17,6 +17,11 @@ export class AppPrompts {
     ipcMain.handle('open-dialog', this[openDialogHandler].bind(this));
   }
 
+  unlisten() {
+    ipcMain.removeHandler('save-dialog');
+    ipcMain.removeHandler('open-dialog');
+  }
+
   /**
    * Handles save action dialog. Opens "save as..." dialog and returns the result to the app.
    *

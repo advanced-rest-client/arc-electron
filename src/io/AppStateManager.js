@@ -33,6 +33,11 @@ export class AppStateManager extends ArcPreferences {
     ipcMain.handle('app-state-update', this[changeHandler]);
   }
 
+  unlisten() {
+    ipcMain.removeHandler('app-state-read');
+    ipcMain.removeHandler('app-state-update');
+  }
+
   async [readHandler]() {
     let data;
     try {

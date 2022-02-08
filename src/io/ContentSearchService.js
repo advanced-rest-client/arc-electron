@@ -74,6 +74,10 @@ export class ContentSearchService {
     ipcMain.on('search-bar-command', this[searchBarCommandHandler].bind(this));
   }
 
+  unlisten() {
+    ipcMain.off('search-bar-command', this[searchBarCommandHandler].bind(this));
+  }
+
   /**
    * Starts a search for a content window or focuses on the search button if the search bar is already opened.
    * @param {Electron.BrowserWindow} win

@@ -8,9 +8,19 @@ const openExternalHandler = Symbol('openExternalHandler');
 const openHelpTopicHandler = Symbol('openHelpTopicHandler');
 
 export class ExternalResourcesManager {
+  constructor() {
+    this[openExternalHandler] = this[openExternalHandler].bind(this);
+    this[openHelpTopicHandler] = this[openHelpTopicHandler].bind(this);
+  }
+
   listen() {
-    ipcMain.on('open-external-url', this[openExternalHandler].bind(this));
-    ipcMain.on('help-topic', this[openHelpTopicHandler].bind(this));
+    ipcMain.on('open-external-url', this[openExternalHandler]);
+    ipcMain.on('help-topic', this[openHelpTopicHandler]);
+  }
+
+  unlisten() {
+    ipcMain.off('open-external-url', this[openExternalHandler]);
+    ipcMain.off('help-topic', this[openHelpTopicHandler]);
   }
 
   [openExternalHandler](e, url) {

@@ -65,7 +65,7 @@ export class ApplicationMenu extends EventEmitter {
   async getTemplate() {
     const osName = this.platformToName();
     const name = `${osName}.json`;
-    const file = path.join(__dirname, '..', 'menus', name);
+    const file = path.join(app.getAppPath(), 'src', 'menus', name);
     logger.debug(`Menu template location: ${file}`);
     return fs.readJson(file);
   }

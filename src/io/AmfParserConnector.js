@@ -27,6 +27,10 @@ export class AmfParserConnector {
     ipcMain.handle('amf-parser', this.ipcHandler.bind(this));
   }
 
+  unlisten() {
+    ipcMain.removeHandler('amf-parser');
+  }
+
   /**
    * @param {Electron.IpcMainEvent} e
    * @param {string} action The action to perform.

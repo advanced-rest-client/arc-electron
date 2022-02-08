@@ -1,5 +1,5 @@
 /* eslint-disable no-bitwise */
-import { session, protocol } from 'electron';
+import { session, protocol, app } from 'electron';
 import path from 'path';
 import fs from 'fs-extra';
 import mime from 'mime-types';
@@ -36,7 +36,7 @@ export class EsmProtocol {
      * Base path to the application folder.
      * @type {String}
      */
-    this.basePath = path.join(__dirname, '..', '..');
+    this.basePath = app.getAppPath();
   }
 
   /**
@@ -100,12 +100,12 @@ export class EsmProtocol {
   findFile(filepath, prefixes = locationPrefixes) {
     for (let i = 0, len = prefixes.length; i <len; i++) {
       const prefix = prefixes[i];
-      const loc = path.join(__dirname, '..', '..', prefix, filepath);
+      const loc = path.join(this.basePath, prefix, filepath);
       if (fs.existsSync(loc)) {
         return loc;
       }
     }
-    return path.join(__dirname, '..', '..', filepath);
+    return path.join(this.basePath, filepath);
   }
 
   /**
@@ -146,7 +146,7 @@ export class EsmProtocol {
     if (!absolutePath) {
       return null;
     }
-    const appRoot = path.join(__dirname, '..', '..');
+    const appRoot = this.basePath;
     if (ext) {
       if (!absolutePath.startsWith(appRoot)) {
         // only internal paths are allowed
