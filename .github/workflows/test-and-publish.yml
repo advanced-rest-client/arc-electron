@@ -41,6 +41,10 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+
+      - name: Installing maxOS related dependencies
+        if: startsWith(matrix.os, 'macos')
+        run: npm i dmg-license
       
       - name: Prepare for app notarization
         if: startsWith(matrix.os, 'macos')
