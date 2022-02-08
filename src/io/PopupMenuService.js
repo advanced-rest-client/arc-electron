@@ -36,6 +36,11 @@ export class PopupMenuService {
     ipcMain.on('popup-app-menu-nav', this[popupNavHandler]);
   }
 
+  unlisten() {
+    ipcMain.off('popup-app-menu', this[popupAppMenuHandler]);
+    ipcMain.off('popup-app-menu-nav', this[popupNavHandler]);
+  }
+
   /**
    * Handler for `popup-app-menu` event dispatched by ARC windows.
    * @param {Event} e

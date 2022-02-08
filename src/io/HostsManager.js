@@ -13,11 +13,16 @@ const requestHandler = Symbol('requestHandler');
 export class HostsManager {
   constructor() {
     this.factory = new Hosts();
+    this[requestHandler] = this[requestHandler].bind(this);
   }
 
   listen() {
     logger.debug('Listening for OS hosts events');
-    ipcMain.handle('os-hosts', this[requestHandler].bind(this));
+    ipcMain.handle('os-hosts', this[requestHandler]);
+  }
+
+  unlisten() {
+    ipcMain.removeHandler('os-hosts');
   }
 
   /**

@@ -64,6 +64,17 @@ export class ThemeManager {
     nativeTheme.on('updated', this[osThemeUpdateHandler]);
   }
 
+  unlisten() {
+    ipcMain.removeHandler('theme-manager-read-themes');
+    ipcMain.removeHandler('theme-manager-active-theme-info');
+    ipcMain.removeHandler('theme-manager-activate-theme');
+    ipcMain.removeHandler('theme-manager-install-theme');
+    ipcMain.removeHandler('theme-manager-uninstall-theme');
+    ipcMain.removeHandler('theme-manager-update-property');
+    ipcMain.removeHandler('theme-manager-system-theme');
+    nativeTheme.off('updated', this[osThemeUpdateHandler]);
+  }
+
   /**
    * Reads the current theme info
    * @returns {Promise<ArcThemeStore>}

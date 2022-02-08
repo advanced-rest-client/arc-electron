@@ -1,3 +1,1 @@
-const _require = require("esm")(module);
-
-_require('./arc-preload.esm.js');
+require("esm")(module)('./arc-preload.esm.js');

@@ -3,6 +3,7 @@ import { session, protocol } from 'electron';
 import path from 'path';
 import fs from 'fs-extra';
 import mime from 'mime-types';
+import { fileURLToPath } from 'url';
 import { logger } from './Logger.js';
 import { MainWindowPersist, TaskManagerWindowPersist } from '../common/Constants.js';
 
@@ -32,11 +33,12 @@ const locationPrefixes = ['web_modules', 'node_modules', 'src'];
 export class EsmProtocol {
   constructor() {
     this[requestHandler] = this[requestHandler].bind(this);
+    const base = path.dirname(fileURLToPath(import.meta.url));
     /**
      * Base path to the application folder.
-     * @type {String}
+     * @type {string}
      */
-    this.basePath = path.join(__dirname, '..', '..');
+    this.basePath = path.join(base, '..', '..');
   }
 
   /**
@@ -100,12 +102,12 @@ export class EsmProtocol {
   findFile(filepath, prefixes = locationPrefixes) {
     for (let i = 0, len = prefixes.length; i <len; i++) {
       const prefix = prefixes[i];
-      const loc = path.join(__dirname, '..', '..', prefix, filepath);
+      const loc = path.join(this.basePath, prefix, filepath);
       if (fs.existsSync(loc)) {
         return loc;
       }
     }
-    return path.join(__dirname, '..', '..', filepath);
+    return path.join(this.basePath, filepath);
   }
 
   /**
@@ -146,7 +148,7 @@ export class EsmProtocol {
     if (!absolutePath) {
       return null;
     }
-    const appRoot = path.join(__dirname, '..', '..');
+    const appRoot = this.basePath;
     if (ext) {
       if (!absolutePath.startsWith(appRoot)) {
         // only internal paths are allowed
