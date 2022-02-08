@@ -3,6 +3,7 @@ import { EventEmitter } from 'events';
 import { app, Menu, MenuItem } from 'electron';
 import fs from 'fs-extra';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { logger } from './Logger.js';
 import { WorkspaceHistory } from './models/WorkspaceHistory.js';
 
@@ -65,7 +66,8 @@ export class ApplicationMenu extends EventEmitter {
   async getTemplate() {
     const osName = this.platformToName();
     const name = `${osName}.json`;
-    const file = path.join(app.getAppPath(), 'src', 'menus', name);
+    const base = path.dirname(fileURLToPath(import.meta.url));
+    const file = path.join(base, '..', '..', 'src', 'menus', name);
     logger.debug(`Menu template location: ${file}`);
     return fs.readJson(file);
   }

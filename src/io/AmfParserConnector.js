@@ -2,6 +2,7 @@ import { app, ipcMain } from 'electron';
 import path from 'path';
 import { v4 } from 'uuid';
 import { fork } from 'child_process';
+import { fileURLToPath } from 'url';
 import { logger } from './Logger.js';
 
 /** @typedef {import('child_process').ChildProcess} ChildProcess */
@@ -43,8 +44,8 @@ export class AmfParserConnector {
   }
 
   serviceUrl() {
-    const base = app.getAppPath();
-    return path.join(base, 'services', 'AmfParserService.js');
+    const base = path.dirname(fileURLToPath(import.meta.url));
+    return path.join(base, '..', '..', 'services', 'AmfParserService.js');
   }
 
   /**

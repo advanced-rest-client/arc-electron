@@ -310,7 +310,8 @@ export class WindowsManager {
       },
     });
     if (preload) {
-      options.webPreferences.preload = path.join(app.getAppPath(), 'src', 'preload', preload);
+      const base = path.dirname(url.fileURLToPath(import.meta.url));
+      options.webPreferences.preload = path.join(base, '..', '..', 'src', 'preload', preload);
     }
     return options;
   }

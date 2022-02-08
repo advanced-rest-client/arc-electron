@@ -2,6 +2,7 @@ import { autoUpdater } from 'electron-updater';
 import { EventEmitter } from 'events';
 import { dialog, nativeImage, ipcMain, BrowserWindow, app } from 'electron';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { logger } from './Logger.js';
 
 autoUpdater.logger = logger;
@@ -257,7 +258,8 @@ export class ApplicationUpdater extends EventEmitter {
       detail,
     };
     if (!isError) {
-      const imgPath = path.join(app.getAppPath(), 'assets', 'icon.iconset', 'icon_512x512.png');
+      const base = path.dirname(fileURLToPath(import.meta.url));
+      const imgPath = path.join(base, '..', '..', 'assets', 'icon.iconset', 'icon_512x512.png');
       dialogOpts.icon = nativeImage.createFromPath(imgPath);
     }
     dialog.showMessageBox(dialogOpts);

@@ -1,4 +1,4 @@
-import { ThemeDefaults } from './defaults/ThemeDefaultsNew.js';
+import { ThemeDefaults } from './defaults/ThemeDefaults.js';
 import { WorkspaceDefaults } from  './defaults/WorkspaceDefaults.js';
 import { DataStore } from  './defaults/DataStore.js';
 

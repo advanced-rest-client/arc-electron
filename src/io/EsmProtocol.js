@@ -1,8 +1,9 @@
 /* eslint-disable no-bitwise */
-import { session, protocol, app } from 'electron';
+import { session, protocol } from 'electron';
 import path from 'path';
 import fs from 'fs-extra';
 import mime from 'mime-types';
+import { fileURLToPath } from 'url';
 import { logger } from './Logger.js';
 import { MainWindowPersist, TaskManagerWindowPersist } from '../common/Constants.js';
 
@@ -32,11 +33,12 @@ const locationPrefixes = ['web_modules', 'node_modules', 'src'];
 export class EsmProtocol {
   constructor() {
     this[requestHandler] = this[requestHandler].bind(this);
+    const base = path.dirname(fileURLToPath(import.meta.url));
     /**
      * Base path to the application folder.
-     * @type {String}
+     * @type {string}
      */
-    this.basePath = app.getAppPath();
+    this.basePath = path.join(base, '..', '..');
   }
 
   /**

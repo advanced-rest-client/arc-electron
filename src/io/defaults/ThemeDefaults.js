@@ -1,9 +1,12 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable no-await-in-loop */
-import fs from 'fs-extra';
+import fs from 'fs/promises';
+import fsSync from 'fs';
 import path from 'path';
 import semver from 'semver';
+import { fileURLToPath } from 'url';
 import { logger } from '../Logger.js';
+import * as FsUtils from '../lib/FsUtils.js';
 
 /** @typedef {import('@advanced-rest-client/events').Theme.ArcThemeStore} ArcThemeStore */
 
@@ -19,6 +22,11 @@ import { logger } from '../Logger.js';
  * A class that is responsible for setting up theme defaults.
  */
 export class ThemeDefaults {
+  constructor() {
+    const base = path.dirname(fileURLToPath(import.meta.url));
+    this.appPath = path.join(base, '..', '..', '..');
+  }
+
   /**
    * Sets defaults if the defaults are not yet set.
    * It copies anypoint and default theme to theme location
@@ -41,8 +49,8 @@ export class ThemeDefaults {
    */
   async _readDefaultThemesPackages() {
     logger.silly('Reading local (app) themes info file...');
-    const source = path.join(__dirname, '..', '..', '..', 'appresources', 'themes');
-    logger.silly('Searching for default themes...');
+    const source = path.join(this.appPath, 'appresources', 'themes');
+    logger.silly(`Searching for default themes in ${source}...`);
     const themes = await this._listThemePackages(source);
     if (themes) {
       logger.silly(`Found ${themes.length} default themes.`);
@@ -56,13 +64,16 @@ export class ThemeDefaults {
    * @returns {Promise<DefaultThemeInfo[]|undefined>} 
    */
   async _listThemePackages(themePath, parent) {
+    /** @type string[]|undefined */
     let items;
     try {
-      items = await fs.readdir(themePath, 'utf8');
+      fsSync.readdirSync(themePath);
+      items = await fs.readdir(themePath);
     } catch (e) {
-      logger.error(`Unable to read themes path ${themePath}. Skipping themes initialization.`);
-      logger.error(e);
-      logger.error(e.stack);
+      logger.error(`Unable to read themes path ${themePath}. Skipping themes initialization.\n${e.message}`);
+      if (e.stack) {
+        logger.error(e.stack);
+      }
       return undefined;
     }
     let themePaths = [];
@@ -71,9 +82,9 @@ export class ThemeDefaults {
       const stats = await fs.stat(loc);
       if (stats.isDirectory()) {
         const pkgFile = path.join(loc, 'package.json');
-        const hasPackage = await fs.pathExists(pkgFile);
+        const hasPackage = await FsUtils.canRead(pkgFile);
         if (hasPackage) {
-          const pkgContent = await fs.readJSON(pkgFile, { throws: false });
+          const pkgContent = /** @type DefaultThemeInfo */ (await FsUtils.readJson(pkgFile, { throws: false }));
           const main = this._readMainFile(pkgContent, name);
           if (parent) {
             name = path.join(parent, name);
@@ -146,15 +157,15 @@ export class ThemeDefaults {
    */
   async _ensureTheme(info) {
     const file = path.join(process.env.ARC_THEMES, info.name, info.main);
-    const exists = await fs.pathExists(file);
+    const exists = await FsUtils.canRead(file);
     if (!exists) {
       await this._copyThemeFiles(info);
       return;
     }
     const localPkgFile = path.join(info.location, 'package.json');
-    const localPkg = await fs.readJson(localPkgFile);
+    const localPkg = /** @type any */ (await FsUtils.readJson(localPkgFile));
     const installedPkgFile = path.join(process.env.ARC_THEMES, info.name, 'package.json');
-    const installedPkg = await fs.readJson(installedPkgFile);
+    const installedPkg = /** @type any */ (await FsUtils.readJson(installedPkgFile));
     const localVersion = localPkg.version;
     const installedVersion = installedPkg.version;
     if (semver.gt(localVersion, installedVersion)) {
@@ -173,8 +184,8 @@ export class ThemeDefaults {
     logger.debug(`Creating ${info.name} theme...`);
     const dest = path.join(process.env.ARC_THEMES, info.name);
     try {
-      await fs.emptyDir(dest);
-      await fs.copy(info.location, dest);
+      await FsUtils.emptyDir(dest);
+      await FsUtils.copy(info.location, dest);
       await this._updateThemeVersion(info);
     } catch (cause) {
       logger.error(`Unable to copy default theme from ${info.location} to ${dest}`);
@@ -188,7 +199,7 @@ export class ThemeDefaults {
    */
   async _setThemeInfo() {
     const file = path.join(process.env.ARC_THEMES, 'themes-info.json');
-    const exists = await fs.pathExists(file);
+    const exists = await FsUtils.canRead(file);
     if (exists) {
       logger.debug(`${file} exists. Ensuring info scheme.`);
       await this._ensureThemesInfoVersion(file);
@@ -203,7 +214,7 @@ export class ThemeDefaults {
    * @returns {Promise<void>}
    */
   async _ensureThemesInfoVersion(file) {
-    const data = await fs.readJson(file, { throws: false });
+    const data = /** @type any */ (await FsUtils.readJson(file, { throws: false }));
     if (!data) {
       return this._copyInfoFile();
     }
@@ -229,7 +240,7 @@ export class ThemeDefaults {
    * @return {string} Location of theme info file in local resources.
    */
   get localThemeInfoFile() {
-    return path.join(__dirname, '..', '..', '..', 'appresources', 'themes', 'themes-info.json');
+    return path.join(this.appPath, 'appresources', 'themes', 'themes-info.json');
   }
 
   /**
@@ -238,10 +249,10 @@ export class ThemeDefaults {
    */
   async _copyInfoFile() {
     const dest = process.env.ARC_THEMES_SETTINGS;
-    await fs.ensureDir(process.env.ARC_THEMES);
-    let info = await fs.readJson(this.localThemeInfoFile, { throws: false })
+    await FsUtils.ensureDir(process.env.ARC_THEMES);
+    let info = await FsUtils.readJson(this.localThemeInfoFile, { throws: false })
     info = info || {};
-    await fs.writeJson(dest, info);
+    await FsUtils.writeJson(dest, info);
   }
 
   /**
@@ -255,7 +266,7 @@ export class ThemeDefaults {
    * @returns {Promise<void>}
    */
   async _upgradeInfoFile(file, installed) {
-    let info = await fs.readJson(this.localThemeInfoFile, { throws: false });
+    let info = /** @type any */ (await FsUtils.readJson(this.localThemeInfoFile, { throws: false }));
     if (!info || !info.themes) {
       info = { themes: [] };
     }
@@ -266,7 +277,7 @@ export class ThemeDefaults {
       info.themes.push(item);
     });
     info.systemPreferred = false;
-    await fs.writeJson(file, info);
+    await FsUtils.writeJson(file, info);
   }
 
   /**
@@ -275,7 +286,7 @@ export class ThemeDefaults {
    */
   async _updateThemeVersion(info) {
     const dbFile = process.env.ARC_THEMES_SETTINGS;
-    const db = /** @type ArcThemeStore */ (await fs.readJson(dbFile));
+    const db = /** @type ArcThemeStore */ (await FsUtils.readJson(dbFile));
     // name contains path separator that is different on different platforms.
     const normalizedName = info.name.replace(/[\\/]/g, '');
     const theme = db.themes.find((i) => i.name.replace(/[\\/]/g, '') === normalizedName);
@@ -283,8 +294,8 @@ export class ThemeDefaults {
       return;
     }
     const localPkgFile = path.join(info.location, 'package.json');
-    const localPkg = await fs.readJson(localPkgFile);
+    const localPkg = /** @type any */ (await FsUtils.readJson(localPkgFile));
     theme.version = localPkg.version;
-    await fs.writeJson(dbFile, db);
+    await FsUtils.writeJson(dbFile, db);
   }
 }
