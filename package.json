@@ -42,7 +42,7 @@
   },
   "main": "src/io/main.js",
   "devDependencies": {
-    "@advanced-rest-client/app": "^1.0.1",
+    "@advanced-rest-client/app": "^1.0.4",
     "@advanced-rest-client/icons": "^4.0.0",
     "@advanced-rest-client/idb-store": "^1.0.0",
     "@advanced-rest-client/monaco-support": "^1.0.1",
@@ -67,7 +67,6 @@
     "electron-mocha": "^11.0.2",
     "electron-notarize": "^1.1.1",
     "electron-reloader": "^1.2.1",
-    "electron-windows-store": "^2.1.0",
     "esbuild": "^0.14.1",
     "eslint": "^8.2.0",
     "eslint-config-prettier": "^8.3.0",
