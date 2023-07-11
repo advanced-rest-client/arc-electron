@@ -94,7 +94,7 @@
     "jexl": "^2.3.0",
     "live-plugin-manager": "^0.17.1",
     "mime-types": "^2.1.31",
-    "semver": "^7.3.5",
+    "semver": "^7.5.2",
     "uuid": "^8.3.2",
     "winston": "^3.3.3"
   },
