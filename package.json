@@ -61,7 +61,7 @@
     "chai": "^4.3.4",
     "chance": "^1.1.8",
     "dotenv": "^16.0.0",
-    "electron": "^17.0.0",
+    "electron": "^22.3.25",
     "electron-builder": "^22.13.1",
     "electron-builder-notarize": "^1.2.0",
     "electron-mocha": "^11.0.2",
