@@ -8,7 +8,7 @@ If you are looking for the **documentation** then visit [docs.advancedrestclient
 
 ## Installation
 
-If you are looking to install the application, the go to [the releases page](https://github.com/advanced-rest-client/arc-electron/releases) and download the installer for your system.
+If you are looking to install the application, then go to [the releases page](https://github.com/advanced-rest-client/arc-electron/releases) and download the installer for your system.
 
 1. Find the latest stable release.
 2. Toggle the `Assets` and find the installer for your system. For Windows it will be `arc-setup.exe`. macOS users should download `arc-x.x.x.dmg`, where `x.x.x` is the version number. Linux users should find the distribution corresponding to the system you are using.
