@@ -95,7 +95,7 @@
     "live-plugin-manager": "^0.17.1",
     "mime-types": "^2.1.31",
     "semver": "^7.3.5",
-    "uuid": "^8.3.2",
+    "uuid": "^14.0.0",
     "winston": "^3.3.3"
   },
   "eslintConfig": {
