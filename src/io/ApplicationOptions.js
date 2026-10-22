@@ -56,7 +56,6 @@ export class ApplicationOptions {
       }, {
         // Opens ARC in dev mode (opened console, verbose log)
         name: '--with-devtools',
-        shortcut: '-w',
         type: Boolean
       }, {
         name: '.', // from "npm start" to not print error
