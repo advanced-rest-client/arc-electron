@@ -12,6 +12,13 @@ describe('ApplicationOptions', () => {
       instance = new ApplicationOptions();
     });
 
+    it('does not assign duplicate shortcuts', () => {
+      const shortcuts = instance.availableOptions
+        .map((item) => item.shortcut)
+        .filter(Boolean);
+      assert.equal(new Set(shortcuts).size, shortcuts.length);
+    });
+
     [
       '--settings-file',
       '--state-file',
